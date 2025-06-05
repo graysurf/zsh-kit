@@ -25,36 +25,15 @@ if [[ -f "$ZDOTDIR/scripts/.iterm2_shell_integration.zsh" ]]; then
 fi
 
 # ──────────────────────────────
-# Utility functions
-# ──────────────────────────────
-
-# Reload .zshrc
-reload() {
-  source "$ZDOTDIR/.zshrc" && echo "🔁 Reloaded .zshrc"
-}
-
-# Open Zsh config in VSCode
-edit-zsh() {
-  local cwd="$(pwd)"
-  code "$ZDOTDIR"
-  cd "$cwd" >/dev/null
-}
-
-# Use Yazi to navigate, then cd to result
-y() {
-  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-  yazi "$@" --cwd-file="$tmp"
-  if cwd="$(< "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-    builtin cd -- "$cwd"
-  fi
-  rm -f -- "$tmp"
-}
-
-# ──────────────────────────────
-# Load user-defined scripts with timing (except eza.sh)
+# Load user-defined scripts with timing (except duplicates)
 # ──────────────────────────────
 for file in "$ZDOTDIR/scripts/"*.sh "$ZDOTDIR/.private/"*.sh; do
-  [[ "$file" == *"/eza.sh" ]] && continue
+  case "$file" in
+    *"/env.sh" | *"/plugins.sh" | *"/eza.sh" | *"/.iterm2_shell_integration.zsh")
+      continue
+      ;;
+  esac
+
   [[ ! -f "$file" ]] && continue  # Skip if file doesn't exist
 
   start_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
