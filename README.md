@@ -8,13 +8,11 @@ All plugins are manually sourced with controlled loading for maximum transparenc
 ## Features
 
 - ⚡️ Manual plugin management (no plugin manager required)
-- 💤 Lazy-loading of completions to improve startup time
-- 🧰 Per-language environment setup (Java, Python, Go, Rust, etc.)
-- 🌟 Emoji-powered login messages and inspirational quotes
-- 🚀 Customized [Starship](https://starship.rs) prompt
+- 🌟 Emoji-powered login messages (via custom script)
+- 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
 - 📁 Fast directory jumping with [zsh-z](https://github.com/agkozak/zsh-z)
-- 🔧 Modular script structure under `scripts/`
-- 🧹 Centralized `cache/` and `.private/` folders for clean separation of state and secrets
+- 🔧 Modular and lazy-friendly structure under `scripts/`
+- 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
 ## Directory structure
 
