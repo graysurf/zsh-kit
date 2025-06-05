@@ -20,20 +20,23 @@ if [[ -d "$ZSH_PLUGINS_DIR/zsh-history-substring-search" ]]; then
 fi
 
 # ──────────────────────────────
-# zsh-z (jump around like z, but native zsh)
+# Zoxide smart directory jumping
 # ──────────────────────────────
 
-export _Z_DATA="$ZSH_CACHE_DIR/.z"
+# Initialize zoxide (faster alternative to z/zsh-z)
+eval "$(zoxide init zsh)"
 
-if [ -f "$HOME/bin/.zsh-z/zsh-z.plugin.zsh" ]; then
-  source "$HOME/bin/.zsh-z/zsh-z.plugin.zsh"
-elif [ -f /opt/homebrew/share/zsh-z/zsh-z.plugin.zsh ]; then
-  source /opt/homebrew/share/zsh-z/zsh-z.plugin.zsh
-elif [ -f /usr/local/share/zsh-z/zsh-z.plugin.zsh ]; then
-  source "/usr/local/share/zsh-z/zsh-z.plugin.zsh"
-else
-  echo "⚠️  zsh-z plugin not found."
-fi
+# Override `z` to: jump to matched dir AND run `ll`
+z() {
+  if zoxide query -l "$@" &>/dev/null; then
+    # If there's a match, jump and list contents
+    builtin cd "$(zoxide query "$@")" && ll
+  else
+    # No match found
+    echo "❌ No matching directory for: $*"
+    return 1
+  fi
+}
 
 # ──────────────────────────────
 # Starship prompt
