@@ -26,10 +26,35 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 ├── .private/                 # Gitignored; for vaults, keys, tokens
 ```
 
-## 🛠 Setup Notes
+## Setup
+
+In your `.zshenv`, point `ZDOTDIR` to this configuration:
+
+```bash
+# ~/.zshenv
+export ZDOTDIR="$HOME/.zsh"
+```
+
+Then in your `.zshrc` (which will now be sourced from `$ZDOTDIR`):
+
+```bash
+source "$ZDOTDIR/scripts/env.sh"
+```
+
+Ensure `$ZDOTDIR` is exported **before** Starship or plugin loading begins.
+
+## 🛠 Notes
 
 To enable quote display on login, make sure to create the following file manually:
 
 ```bash
 mkdir -p ~/.zsh/assets
 touch ~/.zsh/assets/quotes.txt
+```
+
+This file is **not tracked by Git** and will be automatically appended with quotes over time.  
+If it does not exist, the system will fall back to a default quote.
+
+## Philosophy
+
+No magic. Fully reproducible. Proudly minimal.
