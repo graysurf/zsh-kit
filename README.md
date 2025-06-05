@@ -28,20 +28,22 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 
 ## Setup
 
-In your `.zshenv`, point `ZDOTDIR` to this configuration:
+In your `~/.zshenv`, define the custom config location:
 
 ```bash
-# ~/.zshenv
 export ZDOTDIR="$HOME/.zsh"
 ```
 
-Then in your `.zshrc` (which will now be sourced from `$ZDOTDIR`):
+Zsh will now source your config from `$ZDOTDIR/.zshrc`.
+
+Make sure that `.zshrc` begins by sourcing the env and plugin setup:
 
 ```bash
 source "$ZDOTDIR/scripts/env.sh"
+source "$ZDOTDIR/scripts/plugins.sh"
 ```
 
-Ensure `$ZDOTDIR` is exported **before** Starship or plugin loading begins.
+This must occur **before** loading Starship or any other tooling.
 
 ## 🛠 Notes
 
