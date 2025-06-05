@@ -43,6 +43,18 @@ else
 fi
 
 # ──────────────────────────────
+# Starship prompt
+# ──────────────────────────────
+
+# Use custom Starship config from zsh-kit repo
+if [[ -f "$ZDOTDIR/config/starship.toml" ]]; then
+  export STARSHIP_CONFIG="$ZDOTDIR/config/starship.toml"
+fi
+
+# Initialize Starship (must be after plugin sourcing)
+eval "$(starship init zsh)"
+
+# ──────────────────────────────
 # Lazy compinit using zsh hooks
 # ──────────────────────────────
 autoload -Uz compinit

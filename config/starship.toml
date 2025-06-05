@@ -1,0 +1,91 @@
+add_newline = true
+
+format = """
+$custom\
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_commit\
+$git_status\
+$kubernetes\
+$docker_context\
+$nodejs\
+$python\
+$golang\
+$rust\
+$java\
+$package\
+$cmd_duration\
+$line_break\
+$jobs\
+$battery\
+$time\
+$status\
+$os\
+$shell\
+$character"""
+
+[custom.emoji]
+command = "~/.config/zsh/tools/random_emoji_cmd.sh"
+when = "true"
+format = "[$output](bold yellow) "
+[hostname]
+ssh_only = false
+format =  "on [$hostname](red) "
+disabled = false
+
+[character]
+success_symbol = "[✔︎](bold green) "
+error_symbol = ""
+vicmd_symbol = "[←](bold white) "
+
+[status]
+disabled = false
+symbol = "✗ "
+
+[package]
+disabled = false
+
+[username]
+style_user = "white bold"
+style_root = "black bold"
+format = "[$user]($style) "
+disabled = false
+show_always = true
+
+[time]
+disabled = false
+style = "bold cyan"
+format = "[$time]($style) "
+time_format = "%T%.3f"
+utc_time_offset = "+8"
+
+[directory]
+truncation_length = 8
+truncate_to_repo = false
+truncation_symbol = "…/"
+
+[cmd_duration]
+min_time = 0
+show_milliseconds = true
+format = "[🕓 $duration]($style) "
+
+[docker_context]
+disabled = false
+format = '[$symbol$context]($style) '
+only_with_files = false
+detect_extensions = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
+
+[kubernetes]
+symbol = '🐋 '
+style = "bold white"
+format = '[$symbol$context]($style) '
+disabled = false
+
+[aws]
+disabled = true
+
+
+[gcloud]
+disabled = true
