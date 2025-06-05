@@ -1,0 +1,12 @@
+.private/
+cache/
+plugins/
+
+.zsh_history
+.zcompdump*
+.z
+
+.zsh-update
+.zsh-custom-update
+
+.zprofile
