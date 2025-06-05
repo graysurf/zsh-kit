@@ -12,11 +12,6 @@ export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 [[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
 
 # ──────────────────────────────
-# Starship prompt
-# ──────────────────────────────
-eval "$(starship init zsh)"
-
-# ──────────────────────────────
 # Source environment and plugins
 # ──────────────────────────────
 source "$ZDOTDIR/scripts/env.sh"
