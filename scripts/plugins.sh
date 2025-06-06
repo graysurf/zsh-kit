@@ -4,19 +4,37 @@
 
 ZSH_PLUGINS_DIR="$ZDOTDIR/plugins"
 
+# fzf-tab (must come before compinit)
+if [[ -f "$ZSH_PLUGINS_DIR/fzf-tab/fzf-tab.plugin.zsh" ]]; then
+  source "$ZSH_PLUGINS_DIR/fzf-tab/fzf-tab.plugin.zsh"
+fi
+
+# fast-syntax-highlighting (replaces zsh-syntax-highlighting)
+if [[ -f "$ZSH_PLUGINS_DIR/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]]; then
+  source "$ZSH_PLUGINS_DIR/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+fi
+
 # zsh-autosuggestions
 if [[ -d "$ZSH_PLUGINS_DIR/zsh-autosuggestions" ]]; then
   source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 fi
 
-# zsh-syntax-highlighting
-if [[ -d "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting" ]]; then
-  source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-fi
-
 # zsh-history-substring-search
 if [[ -d "$ZSH_PLUGINS_DIR/zsh-history-substring-search" ]]; then
   source "$ZSH_PLUGINS_DIR/zsh-history-substring-search/zsh-history-substring-search.zsh"
+fi
+
+# zsh-direnv (Direnv integration for per-project .envrc)
+if [[ -f "$ZSH_PLUGINS_DIR/zsh-direnv/zsh-direnv.plugin.zsh" ]]; then
+  source "$ZSH_PLUGINS_DIR/zsh-direnv/zsh-direnv.plugin.zsh"
+fi
+
+# zsh-abbr (Command-line abbreviation support)
+if [[ -f "$ZSH_PLUGINS_DIR/zsh-abbr/zsh-abbr.plugin.zsh" ]]; then
+  fpath+=("$ZSH_PLUGINS_DIR/zsh-abbr/completions")
+  fpath+=("$ZSH_PLUGINS_DIR/zsh-abbr/zsh-job-queue")
+  source "$ZSH_PLUGINS_DIR/zsh-abbr/zsh-job-queue/zsh-job-queue.plugin.zsh"
+  source "$ZSH_PLUGINS_DIR/zsh-abbr/zsh-abbr.plugin.zsh"
 fi
 
 # ──────────────────────────────
