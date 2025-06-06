@@ -4,7 +4,7 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias git-diff gd git-zip gt gt2 gt3 gt5 2>/dev/null
+unalias git-diff gd gc gl gp gr git-zip gt gt2 gt3 gt5 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git-related aliases
@@ -14,14 +14,26 @@ unalias git-diff gd git-zip gt gt2 gt3 gt5 2>/dev/null
 alias gd='git diff --cached --no-color | tee /dev/tty'
 alias git-diff='gd'
 
-# Export current HEAD as zip file
-alias git-zip='git archive --format zip HEAD -o backup.zip'
+# Commit current staged changes
+alias gc='git commit'
+# Pull latest changes from remote
+alias gl='git pull'
+# Push local commits to remote
+alias gp='git push'
+# Rebase current branch onto another
+alias gr='git rebase'
 
-# Visual tree view of monorepo libs and apps/api
-alias gt='eza -T --color=always --icons libs apps/api'
-alias gt2='eza -T --color=always --icons libs apps/api -L 2'
-alias gt3='eza -T --color=always --icons libs apps/api -L 3'
-alias gt5='eza -T --color=always --icons libs apps/api -L 5'
+# Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
+alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
+
+# Visual tree view of current directory (depth = unlimited)
+alias gt='eza -T --color=always --icons'
+# Tree view limited to depth 2 (e.g. folders + their subfolders)
+alias gt2='eza -T --color=always --icons -L 2'
+# Tree view limited to depth 3 (folders + 2 sub-levels)
+alias gt3='eza -T --color=always --icons -L 3'
+# Tree view limited to depth 5 (for inspecting deeper structures)
+alias gt5='eza -T --color=always --icons -L 5'
 
 # ────────────────────────────────────────────────────────
 # git-summary: author-based contribution report
