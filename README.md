@@ -5,7 +5,7 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 ## Features
 
 - ⚡️ Manual plugin management (no plugin manager required)
-- 🌟 Emoji-powered login messages (via custom script)
+- 🌟 Emoji-powered login messages with random quotes (via custom script)
 - 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
 - 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
 - 🔐 [glock](docs/glock.md): Commit locking system for safe checkpoints, diffs, and tagging
@@ -43,6 +43,8 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 ```
 
 ## 🪄 Startup Snapshot
+
+> Login messages include randomly selected inspirational quotes, stored in a local file that grows over time.
 
 An example Zsh startup log with this config:
 
