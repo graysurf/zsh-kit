@@ -1,3 +1,4 @@
+
 # 📂 Gscope: Git Scope Viewers
 
 Gscope is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
@@ -72,6 +73,74 @@ gscope-untracked
 ```
 
 Lists new files not yet staged, ignoring those excluded via `.gitignore`.
+
+---
+
+### `gscope-commit`
+
+📂 Show tree and metadata of a specific commit
+
+```bash
+gscope-commit HEAD~1
+gscope-commit abc1234
+```
+
+This command displays:
+- The commit hash, message, author, and date
+- A list of all changed files in the commit, with:
+  - Status (A, M, D, etc.)
+  - Added and removed lines
+- A reconstructed directory tree of those files
+
+Useful for:
+- Inspecting what was touched in a given commit
+- Understanding structural impact of a change
+- Reviewing change scope before squashing, rebasing, or cherry-picking
+
+---
+
+### 🧪 Example
+
+```bash
+gscope-commit HEAD~6
+```
+
+**Output:**
+
+```
+🔖 c1597ed feat(rbac): allow EDITOR role access to admin and member APIs
+👤 terrylin <10785178+graysurf@users.noreply.github.com>
+🗓️  Thu Jun 5 08:35:48 2025 +0800
+
+📄 Changed files:
+  ➤ [M] apps/api/src/app/member-export.controller.ts                        [+1 / -1]
+  ➤ [M] libs/graphql-api/src/member-profiles/member-profiles.mutations.ts   [+1 / -1]
+  ➤ [M] libs/graphql-api/src/member-profiles/member-profiles.queries.ts     [+3 / -3]
+  ➤ [M] libs/graphql-api/src/members/members.admin.mutations.ts             [+2 / -2]
+  ➤ [M] libs/graphql-api/src/members/members.admin.queries.ts               [+2 / -2]
+  ➤ [M] libs/graphql-api/src/notifications/notifications.mutations.ts       [+6 / -6]
+  ➤ [M] libs/graphql-api/src/notifications/notifications.queries.ts         [+2 / -2]
+
+📂 Directory tree:
+.
+├── apps
+│   └── api
+│       └── src
+│           └── app
+│               └── member-export.controller.ts
+└── libs
+    └── graphql-api
+        └── src
+            ├── member-profiles
+            │   ├── member-profiles.mutations.ts
+            │   └── member-profiles.queries.ts
+            ├── members
+            │   ├── members.admin.mutations.ts
+            │   └── members.admin.queries.ts
+            └── notifications
+                ├── notifications.mutations.ts
+                └── notifications.queries.ts
+```
 
 ---
 

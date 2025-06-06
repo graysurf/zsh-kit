@@ -6,7 +6,7 @@
 
 unalias gr greset-hard guncommit gpushf gdc groot \
         ghopen ghbranch gundo gpick \
-        gscope gscope-staged gscope-modified gscope-all gscope-untracked \
+        gscope gscope-staged gscope-modified gscope-all gscope-untracked gscope-commit \
         glock gunlock glock-list glock-copy glock-delete glock-diff glock-tag 2>/dev/null
 
 
@@ -136,6 +136,7 @@ gpick() {
 #   gscope-modified   → Tree of modified but unstaged files
 #   gscope-all        → Tree of both staged + modified files
 #   gscope-untracked  → Tree of all untracked (new) files
+#   gscope-commit     → Show tree and metadata for a specific commit
 #
 # Each command warns if no matching files are found.
 
@@ -244,6 +245,53 @@ gscope-untracked() {
     print $0
   }' | sort -u | tree --fromfile -C
 }
+
+# Show detailed tree and metadata for a specific commit
+# - Accepts a commit hash or HEAD reference
+# - Displays commit title, author, and date
+# - Lists all changed files with type (A/M/D/etc) and line diff (+/-)
+# - Renders affected files as a directory tree
+gscope-commit() {
+  local commit="$1"
+  if [[ -z "$commit" ]]; then
+    echo "❗ Usage: gscope-commit <commit-hash | HEAD>"
+    return 1
+  fi
+
+  git log -1 --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n🗓️  %ad" "$commit"
+  echo ""
+
+  echo ""
+  echo "📄 Changed files:"
+
+  paste \
+    <(git show --pretty=format: --name-status "$commit") \
+    <(git show --pretty=format: --numstat "$commit") |
+    awk '
+      BEGIN { OFS = "" }
+      {
+        status = $1
+        file = $2
+        add = $3
+        del = $4
+        if (add == "-") add = "?"
+        if (del == "-") del = "?"
+        print "  ➤ [", status, "] ", file, "  [+", add, " / -", del, "]"
+      }
+    '
+
+  echo ""
+  echo "📂 Directory tree:"
+  git show --pretty=format: --name-only "$commit" | awk -F/ '{
+    path = ""
+    for (i = 1; i < NF; i++) {
+      path = (path ? path "/" $i : $i)
+      print path
+    }
+    print $0
+  }' | sort -u | tree --fromfile -C
+}
+
 
 # ────────────────────────────────────────────────────────
 # Git lock / unlock helpers (manual commit fallback, repo-safe)
