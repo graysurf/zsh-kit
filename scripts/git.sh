@@ -82,7 +82,7 @@ git-summary() {
 git-today() {
   local today
   today=$(date -u +"%Y-%m-%d")
-  echo "📅 Git summary for today: $today"
+  echo -e "\n📅 Git summary for today: $today"
   echo
   git-summary "$today" "$today"
 }
@@ -95,7 +95,7 @@ git-yesterday() {
   else
     yesterday=$(date -u -d "yesterday" +"%Y-%m-%d")
   fi
-  echo "📅 Git summary for yesterday: $yesterday"
+  echo -e "\n📅 Git summary for yesterday: $yesterday"
   echo
   git-summary "$yesterday" "$yesterday"
 }
@@ -105,7 +105,7 @@ git-this-month() {
   local start_date today
   today=$(date -u +"%Y-%m-%d")
   start_date=$(date -u +"%Y-%m-01")
-  echo "🗓 Git summary for this month: $start_date to $today"
+  echo -e "\n📅 Git summary for this month: $start_date to $today"
   echo
   git-summary "$start_date" "$today"
 }
@@ -128,7 +128,7 @@ git-last-week() {
     START_DATE=$(date -u -d "$END_DATE -6 days" +%Y-%m-%d)
   fi
 
-  echo "🗓 Git summary for last week: $START_DATE to $END_DATE"
+  echo -e "\n📅 Git summary for last week: $START_DATE to $END_DATE"
   echo
   git-summary "$START_DATE" "$END_DATE"
 }
@@ -151,7 +151,7 @@ git-weekly() {
     END_DATE=$(date -u -d "$START_DATE +6 days" +%Y-%m-%d)
   fi
 
-  echo "🗓 Git summary for this week: $START_DATE to $END_DATE"
+  echo -e "\n  Git summary for this week: $START_DATE to $END_DATE"
   echo
   git-summary "$START_DATE" "$END_DATE"
 }
