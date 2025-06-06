@@ -47,10 +47,11 @@ eval "$(zoxide init zsh)"
 # Override `z` to: jump to matched dir AND run `ll`
 z() {
   if zoxide query -l "$@" &>/dev/null; then
-    # If there's a match, jump and list contents
-    builtin cd "$(zoxide query "$@")" && ll
+    builtin cd "$(zoxide query "$@")" && {
+      echo -e "\n📁 Now in: $PWD\n"
+      ll
+    }
   else
-    # No match found
     echo "❌ No matching directory for: $*"
     return 1
   fi
