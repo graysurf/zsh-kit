@@ -7,7 +7,9 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 - ⚡️ Manual plugin management (no plugin manager required)
 - 🌟 Emoji-powered login messages (via custom script)
 - 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
-- 📁 Fast directory jumping with [zsh-z](https://github.com/agkozak/zsh-z)
+- 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
+- 🔐 [glock](docs/glock.md): Commit locking system for safe checkpoints, diffs, and tagging
+- 📂 [gscope](docs/gscope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 🔧 Modular and lazy-friendly structure under `scripts/`
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
