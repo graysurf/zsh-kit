@@ -1,0 +1,43 @@
+#compdef gscope
+
+_gscope_completions() {
+  local -a subcommands
+  subcommands=(
+    'tracked:Show all tracked files'
+    'staged:Show staged files'
+    'modified:Show modified files'
+    'all:Show all changed files (staged + modified)'
+    'untracked:Show untracked files'
+    'commit:Show changes in a specific commit'
+    'help:Display help'
+  )
+
+  _arguments -C \
+    '1:command:->subcmds' \
+    '*::arg:->args'
+
+  case $state in
+    subcmds)
+      _describe -t commands 'gscope subcommand' subcommands && return 0
+      ;;
+    args)
+      if [[ ${words[1]} == "commit" ]]; then
+        local -a commit_hashes
+        if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+          commit_hashes=( ${(f)"$(git log --pretty=format:'%h:%s' -n 20 2>/dev/null)"} )
+        else
+          commit_hashes=( )
+        fi
+        _describe -t hashes 'commit hash' commit_hashes && return 0
+      fi
+      ;;
+  esac
+}
+
+
+if [[ -n "$ZSH_VERSION" && -z "$ZSH_COMPLETION_INITIALIZED" ]]; then
+  autoload -Uz compinit && compinit
+  ZSH_COMPLETION_INITIALIZED=1
+fi
+
+compdef _gscope_completions gscope
