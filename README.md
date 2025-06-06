@@ -15,15 +15,28 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 
 ```
 .zsh/
+├── .zshrc                                # Main Zsh entry point; sources all core scripts
+├── cache/                                # Runtime cache directory (e.g. zcompdump, fzf history)
 ├── assets/
-│   └── quotes.txt            # Fallback quote source
-├── cache/                    # Runtime cache (e.g. zcompdump)
-├── scripts/
-│   ├── login.sh              # Login quote logic (with lazy API update)
-│   ├── random_emoji.sh       # Emoji generator
-│   ├── plugins.sh            # Manually sourced plugins
-│   ├── ...
-├── .private/                 # Gitignored; for vaults, keys, tokens
+│   └── quotes.txt                        # Optional quote file for login messages
+├── scripts/                              # All core functionality is modularized here
+│   ├── env.sh                            # Environment variables and path setup
+│   ├── eza.sh                            # Aliases and wrappers for `eza` (ls replacement)
+│   ├── fzf.sh                            # FZF configuration and key bindings
+│   ├── general.sh                        # General-purpose helpers and options
+│   ├── git-tools.sh                      # Git helpers: glock, gscope, summaries, etc.
+│   ├── git.sh                            # Git aliases and utilities
+│   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration script
+│   ├── login.sh                          # Login banner and quote display
+│   ├── mac.sh                            # macOS-specific tweaks and paths
+│   ├── plugins.sh                        # Manual plugin sourcing (no plugin manager)
+│   ├── random_emoji.sh                   # Emoji utility functions
+│   └── tools.sh                          # Miscellaneous CLI tools and aliases
+├── config/
+│   └── starship.toml                     # Starship prompt theme configuration
+├── tools/
+│   └── random_emoji_cmd.sh               # CLI wrapper for emoji generator (used in Starship)
+└── .private/                             # Gitignored secrets (tokens, vaults, custom overrides)
 ```
 
 ## Setup
