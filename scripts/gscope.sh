@@ -6,7 +6,7 @@
 # ───────────────────────────────────────────────
 
 # Render file list with A/M/D tags and color, then show tree
-gscope_render_with_type() {
+_gscope_render_with_type() {
   local input="$1"
 
   if [[ -z "$input" ]]; then
@@ -50,7 +50,7 @@ gscope_render_with_type() {
   }' | sort -u | tree --fromfile -C
 }
 
-gscope_tracked() {
+_gscope_tracked() {
   echo -e "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n"
 
   local files
@@ -66,26 +66,26 @@ gscope_tracked() {
     marked+="-\t${file}"$'\n'
   done <<< "$files"
 
-  gscope_render_with_type "$marked"
+  _gscope_render_with_type "$marked"
 }
 
-gscope_staged() {
+_gscope_staged() {
   echo -e "\n📂 Show tree of staged files (ready to be committed)\n"
   local ns_lines
   ns_lines=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
 
-  gscope_render_with_type "$ns_lines"
+  _gscope_render_with_type "$ns_lines"
 }
 
-gscope_modified() {
+_gscope_modified() {
   echo -e "\n📂 Show tree of modified files (not yet staged)\n"
   local ns_lines
   ns_lines=$(git diff --name-status --diff-filter=ACMRTUXB)
 
-  gscope_render_with_type "$ns_lines"
+  _gscope_render_with_type "$ns_lines"
 }
 
-gscope_all() {
+_gscope_all() {
   echo -e "\n📂 Show tree of all changed files (staged + modified)\n"
   local staged modified
   staged=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
@@ -94,10 +94,10 @@ gscope_all() {
   local combined
   combined=$(printf "%s\n%s" "$staged" "$modified" | grep -v '^$' | sort -u)
 
-  gscope_render_with_type "$combined"
+  _gscope_render_with_type "$combined"
 }
 
-gscope_untracked() {
+_gscope_untracked() {
   echo -e "\n📂 Show tree of untracked files (new files not yet added)\n"
   local files
   files=$(git ls-files --others --exclude-standard)
@@ -112,10 +112,10 @@ gscope_untracked() {
     marked+="U\t${file}"$'\n'
   done <<< "$files"
 
-  gscope_render_with_type "$marked"
+  _gscope_render_with_type "$marked"
 }
 
-gscope_commit() {
+_gscope_commit() {
   local commit="$1"
   if [[ -z "$commit" ]]; then
     echo "❗ Usage: gscope commit <commit-hash | HEAD>"
@@ -182,17 +182,17 @@ gscope() {
 
   case "$sub" in
     ""|track|tracked)
-      gscope_tracked "$@" ;;
+      _gscope_tracked "$@" ;;
     staged)
-      gscope_staged "$@" ;;
+      _gscope_staged "$@" ;;
     modified)
-      gscope_modified "$@" ;;
+      _gscope_modified "$@" ;;
     all)
-      gscope_all "$@" ;;
+      _gscope_all "$@" ;;
     untracked)
-      gscope_untracked "$@" ;;
+      _gscope_untracked "$@" ;;
     commit)
-      gscope_commit "$@" ;;
+      _gscope_commit "$@" ;;
     help|-h|--help)
       echo "Usage: gscope <command> [args...]"
       echo ""
