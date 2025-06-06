@@ -201,7 +201,7 @@ gunlock() {
 # Example:
 #   glock-list
 glock-list() {
-  local repo_id lock_dir lock_files
+  local repo_id lock_dir latest
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
 
@@ -210,38 +210,39 @@ glock-list() {
     return 0
   }
 
-  local latest
-  if [[ -f "$lock_dir/${repo_id}-latest" ]]; then
-    latest=$(cat "$lock_dir/${repo_id}-latest")
-  fi
+  [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(cat "$lock_dir/${repo_id}-latest")
 
-  lock_files=()
+  local file file_info tmp_list=()
   for file in "$lock_dir/${repo_id}-"*.lock; do
-    [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] && lock_files+=("$file")
+    [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
+    local timestamp=$(grep '^timestamp=' "$file" | cut -d '=' -f2-)
+    local epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
+    tmp_list+=("$epoch|$file")
   done
 
-  if [[ ${#lock_files[@]} -eq 0 ]]; then
+  IFS=$'\n' sorted=($(printf '%s\n' "${tmp_list[@]}" | sort -rn))
+
+  if [[ ${#sorted[@]} -eq 0 ]]; then
     echo "📭 No glocks found for [$repo_id]"
     return 0
   fi
 
   echo "🔐 Glock list for [$repo_id]:"
-  for file in "${lock_files[@]}"; do
-    (
-      local name content hash note timestamp
-      name=$(basename "$file" .lock)
-      label=${name#${repo_id}-}
-      content=$(<"$file")
-      hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
-      note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
-      timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  for item in "${sorted[@]}"; do
+    file="${item#*|}"
+    local name content hash note timestamp label
+    name=$(basename "$file" .lock)
+    label=${name#${repo_id}-}
+    content=$(<"$file")
+    hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
+    note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
+    timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
 
-      printf "\n - 🏷️  tag:    %s%s\n" "$label" \
-        "$( [[ "$label" == "$latest" ]] && echo '  ⭐ (latest)' )"
-      printf "   🧬 commit: %s\n" "$hash"
-      [[ -n "$note" ]] && printf "   📝 note:   %s\n" "$note"
-      [[ -n "$timestamp" ]] && printf "   ⏰ time:   %s\n" "$timestamp"
-    )
+    printf "\n - 🏷️  tag:    %s%s\n" "$label" \
+      "$( [[ "$label" == "$latest" ]] && echo '  ⭐ (latest)' )"
+    printf "   🧬 commit: %s\n" "$hash"
+    [[ -n "$note" ]] && printf "   📝 note:   %s\n" "$note"
+    [[ -n "$timestamp" ]] && printf "   ⏰ time:   %s\n" "$timestamp"
   done
 }
 
