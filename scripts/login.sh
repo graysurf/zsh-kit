@@ -13,7 +13,7 @@ QUOTES_FILE="$ZDOTDIR/assets/quotes.txt"
 
 if [[ -f "$QUOTES_FILE" && -s "$QUOTES_FILE" ]]; then
   quote_line=$(shuf -n 1 "$QUOTES_FILE")
-  echo "\n📜 $quote_line"
+  echo -e "\n📜 $quote_line"
 else
   echo "💬 \"Stay hungry, stay foolish.\" — Steve Jobs"
 fi
