@@ -87,10 +87,18 @@ ghbranch() {
 
 # Soft reset last commit with feedback
 gundo() {
-  echo "⚠️  Rewinding 1 commit (soft reset)..."
+  echo "⚠️  This will rewind your last commit (soft reset)"
+  read "confirm?❓ Proceed? [y/N] "
+  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  echo "🔁 Rewinding 1 commit (soft reset)..."
   git reset --soft HEAD~1
   echo "🌀 Your last commit is now unstaged & editable"
 }
+
 
 # FZF pick a commit and checkout to it
 gpick() {
