@@ -38,6 +38,16 @@ gdc() {
   echo "✅ Staged diff copied to clipboard"
 }
 
+# Jump to the root directory of the current Git repository
+groot() {
+  local root
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    echo "❌ Not in a git repository"
+    return 1
+  }
+  cd "$root" && echo "\n 📁 Jumped to Git root: $root"
+}
+
 # ────────────────────────────────────────────────────────
 # GitHub / GitLab remote open helpers
 # ────────────────────────────────────────────────────────
