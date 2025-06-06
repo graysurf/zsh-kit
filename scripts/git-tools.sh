@@ -37,6 +37,49 @@ gdc() {
 }
 
 # ────────────────────────────────────────────────────────
+# GitHub / GitLab remote open helpers
+# ────────────────────────────────────────────────────────
+
+# Open the repository page on GitHub or GitLab
+ghopen() {
+  local url
+  url=$(git remote get-url origin 2>/dev/null | sed \
+    -e 's/^git@/https:\/\//' \
+    -e 's/com:/com\//' \
+    -e 's/\.git$//' \
+    -e 's/^ssh:\/\///' \
+    -e 's/^https:\/\/git@/https:\/\//')
+
+  if [[ -n "$url" ]]; then
+    open "$url"
+    echo "🌐 Opened: $url"
+  else
+    echo "❌ Unable to detect remote URL"
+    return 1
+  fi
+}
+
+# Open the current branch page on GitHub or GitLab
+ghbranch() {
+  local url branch
+  url=$(git remote get-url origin 2>/dev/null | sed \
+    -e 's/^git@/https:\/\//' \
+    -e 's/com:/com\//' \
+    -e 's/\.git$//' \
+    -e 's/^ssh:\/\///' \
+    -e 's/^https:\/\/git@/https:\/\//')
+  branch=$(git rev-parse --abbrev-ref HEAD)
+
+  if [[ -n "$url" && -n "$branch" ]]; then
+    open "$url/tree/$branch"
+    echo "🌿 Opened: $url/tree/$branch"
+  else
+    echo "❌ Failed to resolve URL or branch"
+    return 1
+  fi
+}
+
+# ────────────────────────────────────────────────────────
 # Git workflow helper functions
 # ────────────────────────────────────────────────────────
 
