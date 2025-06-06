@@ -118,10 +118,129 @@ gpick() {
     xargs git checkout
 }
 
-# Preview the structure of staged files using eza
+# ────────────────────────────────────────────────────────
+# Git scope viewers (tree-based file previews)
+# ────────────────────────────────────────────────────────
+#
+# These commands render directory trees based on Git status categories:
+# - All output is visualized using `tree --fromfile -C`
+# - Paths are expanded to ensure complete folder nesting
+# - Helpful for reviewing current working state before commits
+#
+# Included commands:
+#
+#   gscope            → Full tree of all tracked files (entire repo snapshot)
+#   gscope-staged     → Tree of staged files only (git diff --cached)
+#   gscope-modified   → Tree of modified but unstaged files
+#   gscope-all        → Tree of both staged + modified files
+#   gscope-untracked  → Tree of all untracked (new) files
+#
+# Each command warns if no matching files are found.
+
+# Show full directory tree of all files tracked by Git (excluding ignored/untracked)
+# - Expands all intermediate paths for proper nesting
+# - Uses `tree --fromfile` to build a clean hierarchical view
 gscope() {
-  git diff --name-only --cached --diff-filter=ACMRTUXB |
-    xargs eza -T --icons --color=always
+  echo -e "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n"
+  git ls-files | awk -F/ '{
+    path=""
+    for(i=1;i<NF;i++) {
+      path = (path ? path "/" $i : $i)
+      print path
+    }
+    print $0
+  }' | sort -u | tree --fromfile -C
+}
+
+# Show directory tree of staged files only (files ready to be committed)
+# - Works with all tracked staged changes (add, modify, etc.)
+gscope-staged() {
+  echo -e "\n📂 Show tree of staged files (ready to be committed)\n"
+  local files
+  files=$(git diff --name-only --cached --diff-filter=ACMRTUXB)
+
+  if [[ -z "$files" ]]; then
+    echo "⚠️  No staged changes"
+    return 1
+  fi
+
+  echo "$files" | awk -F/ '{
+    path=""
+    for(i=1;i<NF;i++) {
+      path = (path ? path "/" $i : $i)
+      print path
+    }
+    print $0
+  }' | sort -u | tree --fromfile -C
+}
+
+# Show directory tree of modified but unstaged files (working tree only)
+# - Excludes any staged or untracked changes
+gscope-modified() {
+  echo -e "\n📂 Show tree of modified files (not yet staged)\n"
+  local files
+  files=$(git diff --name-only --diff-filter=ACMRTUXB)
+
+  if [[ -z "$files" ]]; then
+    echo "⚠️  No modified files"
+    return 1
+  fi
+
+  echo "$files" | awk -F/ '{
+    path=""
+    for(i=1;i<NF;i++) {
+      path = (path ? path "/" $i : $i)
+      print path
+    }
+    print $0
+  }' | sort -u | tree --fromfile -C
+}
+
+# Show tree of all changed files (both staged and modified)
+# - Combines cached and working directory diffs
+gscope-all() {
+  echo -e "\n📂 Show tree of all changed files (staged + modified)\n"
+  local files
+  files=$(git diff --name-only --cached --diff-filter=ACMRTUXB)
+  files+="\n$(git diff --name-only --diff-filter=ACMRTUXB)"
+
+  files=$(echo "$files" | grep -v '^$' | sort -u)
+
+  if [[ -z "$files" ]]; then
+    echo "⚠️  No changed files (staged or modified)"
+    return 1
+  fi
+
+  echo "$files" | awk -F/ '{
+    path=""
+    for(i=1;i<NF;i++) {
+      path = (path ? path "/" $i : $i)
+      print path
+    }
+    print $0
+  }' | sort -u | tree --fromfile -C
+}
+
+# Show tree of all untracked files (excluding those ignored via .gitignore)
+# - Uses `git ls-files --others --exclude-standard` to match Git defaults
+gscope-untracked() {
+  echo -e "\n📂 Show tree of untracked files (new files not yet added)\n"
+  local files
+  files=$(git ls-files --others --exclude-standard)
+
+  if [[ -z "$files" ]]; then
+    echo "📭 No untracked files"
+    return 1
+  fi
+
+  echo "$files" | awk -F/ '{
+    path=""
+    for(i=1;i<NF;i++) {
+      path = (path ? path "/" $i : $i)
+      print path
+    }
+    print $0
+  }' | sort -u | tree --fromfile -C
 }
 
 # ────────────────────────────────────────────────────────
