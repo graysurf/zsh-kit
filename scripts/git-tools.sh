@@ -4,9 +4,11 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr greset-hard guncommit gpushf gdc ghopen ghbranch \
-        glock gunlock gundo gpick gscope glock-list \
-        glock-copy glock-delete 2>/dev/null
+unalias gr greset-hard guncommit gpushf gdc groot \
+        ghopen ghbranch gundo gpick \
+        gscope gscope-staged gscope-modified gscope-all gscope-untracked \
+        glock gunlock glock-list glock-copy glock-delete glock-diff glock-tag 2>/dev/null
+
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
