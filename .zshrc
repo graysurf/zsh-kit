@@ -52,6 +52,15 @@ for file in "$ZDOTDIR/scripts/"*.sh "$ZDOTDIR/.private/"*.sh; do
 done
 
 # ──────────────────────────────
+# Load custom Zsh completions (e.g. _gscope_completions)
+# Each file in scripts/_completion/ should define and register its own `compdef`
+# This keeps completions modular and avoids polluting main script space
+# ──────────────────────────────
+for file in "$ZDOTDIR/scripts/_completion/"*.zsh; do
+  load_with_timing "$file"
+done
+
+# ──────────────────────────────
 # Load eza.sh last with timing
 # ──────────────────────────────
 eza_script="$ZDOTDIR/scripts/eza.sh"
