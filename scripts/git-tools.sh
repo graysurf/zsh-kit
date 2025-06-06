@@ -430,3 +430,93 @@ glock-diff() {
 
   git log --oneline --graph --decorate "$hash1..$hash2"
 }
+
+# glock-tag: Create a git tag from a saved glock lock file
+#
+# Usage:
+#   glock-tag <glock-label> <tag-name> [-m <tag-message>] [--push]
+#
+# - <glock-label>: Label of the saved glock (e.g., "111")
+# - <tag-name>: Name of the git tag to create
+# - -m: Optional tag message; if omitted, uses the commit's subject
+# - --push: Pushes the tag to origin, then deletes the local tag
+#
+# Behavior:
+# - Reads commit hash from lock file at $ZSH_CACHE_DIR/glocks/<repo>-<label>.lock
+# - Falls back to the commit subject as the tag message if none is provided
+# - Prompts before overwriting existing tags
+
+glock-tag() {
+  local label tag_name tag_msg=""
+  local do_push=false
+  local repo_id lock_dir lock_file hash timestamp line1
+  local -a positional=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --push)
+        do_push=true
+        shift
+        ;;
+      -m)
+        shift
+        tag_msg="$1"
+        shift
+        ;;
+      *)
+        positional+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  label="${positional[1]}"
+  tag_name="${positional[2]}"
+
+  if [[ -z "$label" || -z "$tag_name" ]]; then
+    echo "❌ Usage: glock-tag <glock-label> <tag-name> [-m <tag-message>] [--push]"
+    return 1
+  fi
+
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  : "${ZSH_CACHE_DIR:=$HOME/.config/zsh/cache}"
+  lock_dir="$ZSH_CACHE_DIR/glocks"
+  lock_file="$lock_dir/${repo_id}-${label}.lock"
+
+  if [[ ! -f "$lock_file" ]]; then
+    echo "❌ Glock label [$label] not found in [$lock_dir] for repo [$repo_id]"
+    return 1
+  fi
+
+  line1=$(sed -n '1p' "$lock_file")
+  hash=$(cut -d '#' -f1 <<< "$line1" | xargs)
+  timestamp=$(grep '^timestamp=' "$lock_file" | cut -d '=' -f2-)
+
+  if [[ -z "$tag_msg" ]]; then
+    tag_msg=$(git show -s --format=%s "$hash")
+  fi
+
+  if git rev-parse "$tag_name" >/dev/null 2>&1; then
+    echo "⚠️  Git tag [$tag_name] already exists."
+    read "confirm?❓ Overwrite it? [y/N] "
+    if [[ -z "$confirm" || "$confirm" != [yY] ]]; then
+      echo "🚫 Aborted"
+      return 1
+    fi
+    git tag -d "$tag_name" || {
+      echo "❌ Failed to delete existing tag [$tag_name]"
+      return 1
+    }
+  fi
+
+  git tag -a "$tag_name" "$hash" -m "$tag_msg"
+  echo "🏷️  Created tag [$tag_name] at commit [$hash]"
+  echo "📝 Message: $tag_msg"
+
+  if $do_push; then
+    git push origin "$tag_name"
+    echo "🚀 Pushed tag [$tag_name] to origin"
+
+    git tag -d "$tag_name" && echo "🧹 Deleted local tag [$tag_name]"
+  fi
+}
