@@ -45,7 +45,7 @@ groot() {
     echo "❌ Not in a git repository"
     return 1
   }
-  cd "$root" && echo "\n 📁 Jumped to Git root: $root"
+  cd "$root" && echo -e "\n 📁 Jumped to Git root: $root"
 }
 
 # ────────────────────────────────────────────────────────
