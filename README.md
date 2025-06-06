@@ -38,6 +38,7 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │   └── starship.toml                     # Starship prompt theme configuration
 ├── tools/
 │   └── random_emoji_cmd.sh               # CLI wrapper for emoji generator (used in Starship)
+├── plugins/                              # Manually installed plugin folders (e.g. fzf-tab, zsh-autosuggestions)
 └── .private/                             # Gitignored secrets (tokens, vaults, custom overrides)
 ```
 
