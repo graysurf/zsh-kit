@@ -2,7 +2,7 @@
 
 # Reload .zshrc
 reload() {
-  source "$ZDOTDIR/.zshrc" && echo "🔁 Reloaded .zshrc"
+  source "$ZDOTDIR/.zshrc" && echo -e "\n🔁 Reloaded .zshrc"
 }
 
 # Open Zsh config in VSCode
