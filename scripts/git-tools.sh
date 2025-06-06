@@ -113,22 +113,32 @@ gscope() {
 # Save the current commit hash into a named lock file
 # - Allows optional label (default is "default")
 # - Optional note can be recorded
+# - Optional commit hash can be specified (default is HEAD)
 # - A timestamp is stored for reference
 # - The most recent glock label is saved to a "-latest" file
 # - Lock files are stored under $ZSH_CACHE_DIR/glocks
 #
 # Example:
 #   glock dev "before hotfix"
+#   glock hotfix "old code" HEAD~2
+#   glock release "tag version" v1.0.0
 glock() {
-  local hash label note repo_id lock_dir lock_file latest_file timestamp
-  hash=$(git rev-parse HEAD)
+  local label note commit repo_id lock_dir lock_file latest_file timestamp hash
+
   label="${1:-default}"
   note="$2"
+  commit="${3:-HEAD}"
+
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   latest_file="$lock_dir/${repo_id}-latest"
   timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+
+  hash=$(git rev-parse "$commit" 2>/dev/null) || {
+    echo "❌ Invalid commit: $commit"
+    return 1
+  }
 
   [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
 
@@ -195,7 +205,7 @@ gunlock() {
 }
 
 # Display a list of all saved glocks (labels) in the current repository
-# - Includes commit hash, note, and timestamp for each label
+# - Includes commit hash, note, timestamp, and commit subject
 # - Highlights the latest label with ⭐
 #
 # Example:
@@ -206,7 +216,7 @@ glock-list() {
   lock_dir="$ZSH_CACHE_DIR/glocks"
 
   [[ -d "$lock_dir" ]] || {
-    echo "📭 No glocks found for [$repo_id]"
+    echo "📬 No glocks found for [$repo_id]"
     return 0
   }
 
@@ -223,28 +233,31 @@ glock-list() {
   IFS=$'\n' sorted=($(printf '%s\n' "${tmp_list[@]}" | sort -rn))
 
   if [[ ${#sorted[@]} -eq 0 ]]; then
-    echo "📭 No glocks found for [$repo_id]"
+    echo "📬 No glocks found for [$repo_id]"
     return 0
   fi
 
   echo "🔐 Glock list for [$repo_id]:"
   for item in "${sorted[@]}"; do
     file="${item#*|}"
-    local name content hash note timestamp label
+    local name content hash note timestamp label subject
     name=$(basename "$file" .lock)
     label=${name#${repo_id}-}
     content=$(<"$file")
     hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
     note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
     timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+    subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
-    printf "\n - 🏷️  tag:    %s%s\n" "$label" \
+    printf "\n - 🏷️  tag:     %s%s\n" "$label" \
       "$( [[ "$label" == "$latest" ]] && echo '  ⭐ (latest)' )"
-    printf "   🧬 commit: %s\n" "$hash"
-    [[ -n "$note" ]] && printf "   📝 note:   %s\n" "$note"
-    [[ -n "$timestamp" ]] && printf "   ⏰ time:   %s\n" "$timestamp"
+    printf "   🧬 commit:  %s\n" "$hash"
+    [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
+    [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
+    [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
   done
 }
+
 
 # Copy an existing glock to a new label (preserving all metadata)
 # - Copies both hash and note content as-is to a new lock file
@@ -327,17 +340,19 @@ glock-delete() {
     return 1
   fi
 
-  local content hash note timestamp
+  local content hash note timestamp subject
   content=$(<"$lock_file")
   hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
   timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
   echo "🗑️  Candidate for deletion:"
-  printf "   🏷️  tag:    %s\n" "$label"
-  printf "   🧬 commit: %s\n" "$hash"
-  [[ -n "$note" ]] && printf "   📝 note:   %s\n" "$note"
-  [[ -n "$timestamp" ]] && printf "   ⏰ time:   %s\n" "$timestamp"
+  printf "   🏷️  tag:     %s\n" "$label"
+  printf "   🧬 commit:  %s\n" "$hash"
+  [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
+  [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
+  [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
   echo
 
   read "confirm?⚠️  Delete this glock? [y/N] "
