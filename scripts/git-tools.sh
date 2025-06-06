@@ -303,9 +303,21 @@ glock-copy() {
   cp "$src_file" "$dst_file"
   echo "$dst_label" > "$lock_dir/${repo_id}-latest"
 
+  local content hash note timestamp subject
+  content=$(<"$src_file")
+  hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
+  note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
+  timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
+
   echo "📋 Copied glock [$repo_id:$src_label] → [$repo_id:$dst_label]"
-  echo "   🏷️  $src_label → $dst_label"
+  printf "   🏷️  tag:     %s → %s\n" "$src_label" "$dst_label"
+  printf "   🧬 commit:  %s\n" "$hash"
+  [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
+  [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
+  [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
 }
+
 
 # Delete a glock by label or the most recent one
 # - Displays details of the glock before deletion (hash, note, timestamp)
