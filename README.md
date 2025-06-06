@@ -102,6 +102,10 @@ touch ~/.zsh/assets/quotes.txt
 This file is **not tracked by Git** and will be automatically appended with quotes over time.  
 If it does not exist, the system will fall back to a default quote.
 
+> 🧰 This setup expects you to have your favorite CLI tools installed.  
+> It won't hand-hold you, and assumes tools like `eza`, `tree`, `bat`, or `fzf` are already available.  
+> If something errors out, you're probably just missing a binary — install and carry on.
+
 ## Philosophy
 
 No magic. Fully reproducible. Proudly minimal.
