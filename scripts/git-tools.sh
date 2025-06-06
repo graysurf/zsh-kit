@@ -4,7 +4,7 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr greset-hard guncommit gpushf gdc gundo gpick gscope gpushf 2>/dev/null
+unalias gr greset-hard guncommit gpushf gdc ghopen ghbranch glock gunlock gundo gpick gscope 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
@@ -103,3 +103,63 @@ gscope() {
   git diff --name-only --cached --diff-filter=ACMRTUXB |
     xargs eza -T --icons --color=always
 }
+
+# ────────────────────────────────────────────────────────
+# Git lock / unlock helpers (manual commit fallback, repo-safe)
+# ────────────────────────────────────────────────────────
+
+# Save current commit hash for later restore, with optional note
+glock() {
+  local hash note repo_id lock_file
+  hash=$(git rev-parse HEAD)
+  note="$1"
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  lock_file="$ZSH_CACHE_DIR/glock-${repo_id}.lock"
+
+  if [[ -n "$note" ]]; then
+    echo "$hash # $note" > "$lock_file"
+    echo "🔐 [$repo_id] Locked: $hash  # $note"
+  else
+    echo "$hash" > "$lock_file"
+    echo "🔐 [$repo_id] Locked: $hash"
+  fi
+}
+
+# Reset to the locked commit hash, if present
+gunlock() {
+  local repo_id lock_file
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  lock_file="$ZSH_CACHE_DIR/glock-${repo_id}.lock"
+
+  if [[ ! -f "$lock_file" ]]; then
+    echo "❌ No glock found for $repo_id"
+    return 1
+  fi
+
+  local line hash note
+  line=$(cat "$lock_file")
+  hash=$(echo "$line" | cut -d '#' -f 1 | xargs)
+  note=$(echo "$line" | cut -d '#' -f 2- | xargs)
+
+  local msg
+  msg=$(git log -1 --pretty=format:"%s" "$hash" 2>/dev/null)
+
+  echo "🔐 Found glock for [$repo_id]:"
+  echo "    → $hash"
+  [[ -n "$note" ]] && echo "    # $note"
+  [[ -n "$msg" ]] && echo "    commit message: $msg"
+  echo
+
+  # Allow `gunlock --force` to skip prompt
+  if [[ "$1" != "--force" ]]; then
+    read "confirm?⚠️  Are you sure you want to hard reset to this commit? [y/N] "
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+      echo "🚫 Aborted"
+      return 1
+    fi
+  fi
+
+  git reset --hard "$hash"
+  echo "⏪ [$repo_id] Reset to: $hash${note:+  # $note}"
+}
+
