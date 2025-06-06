@@ -42,6 +42,33 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 └── .private/                             # Gitignored secrets (tokens, vaults, custom overrides)
 ```
 
+## 🪄 Startup Snapshot
+
+An example Zsh startup log with this config:
+
+```text
+📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
+
+✅ Loaded env.sh in 7ms
+✅ Loaded plugins.sh in 70ms
+✅ Loaded iterm2_shell_integration.zsh in 7ms
+✅ Loaded fzf.sh in 6ms
+✅ Loaded general.sh in 4ms
+✅ Loaded git-tools.sh in 4ms
+✅ Loaded git.sh in 3ms
+✅ Loaded login.sh in 4ms
+✅ Loaded mac.sh in 3ms
+✅ Loaded random_emoji.sh in 3ms
+✅ Loaded tools.sh in 3ms
+✅ Loaded language.sh in 3ms
+✅ Loaded secrets.sh in 4ms
+✅ Loaded ssh.sh in 3ms
+✅ Loaded eza.sh (delayed) in 4ms
+
+🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
+12:00:42.133 ✔︎
+```
+
 ## Setup
 
 In your `~/.zshenv`, define the custom config location:
@@ -56,7 +83,7 @@ Make sure that `.zshrc` begins by sourcing the env and plugin setup:
 
 ```bash
 source "$ZDOTDIR/scripts/env.sh"
-source "$ZDOTDIR/scripts/plugins.sh"
+source "$ZDOTDIR/scripts/plugins.sh"  # Loads plugins manually, some are lazy by design
 ```
 
 This must occur **before** loading Starship or any other tooling.
