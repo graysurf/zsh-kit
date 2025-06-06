@@ -258,30 +258,50 @@ gscope-commit() {
     return 1
   fi
 
+  local COLOR_RESET='\033[0m'
+  local ADDED='\033[1;32m'     # Green
+  local MODIFIED='\033[1;33m'  # Yellow
+  local DELETED='\033[1;31m'   # Red
+  local OTHER='\033[1;34m'     # Blue
+
+  echo ""
   git log -1 --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n🗓️  %ad" "$commit"
   echo ""
 
-  echo ""
-  echo "📄 Changed files:"
+  echo -e "\n📄 Changed files:"
 
-  paste \
-    <(git show --pretty=format: --name-status "$commit") \
-    <(git show --pretty=format: --numstat "$commit") |
-    awk '
-      BEGIN { OFS = "" }
-      {
-        status = $1
-        file = $2
-        add = $3
-        del = $4
-        if (add == "-") add = "?"
-        if (del == "-") del = "?"
-        print "  ➤ [", status, "] ", file, "  [+", add, " / -", del, "]"
-      }
-    '
+  local ns_lines
+  ns_lines=$(git show --pretty=format: --name-status "$commit")
+  local numstat_lines
+  numstat_lines=$(git show --pretty=format: --numstat "$commit")
 
-  echo ""
-  echo "📂 Directory tree:"
+  if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
+    echo "  ⚠️  Merge commit detected — no file-level diff shown by default"
+  else
+    while IFS=$'\t' read -r kind file; do
+      local add="-"
+      local del="-"
+
+      unset match_line
+      match_line=$(echo "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
+
+      if [[ -n "$match_line" ]]; then
+        add=$(echo "$match_line" | cut -f1)
+        del=$(echo "$match_line" | cut -f2)
+      fi
+
+      local color="$OTHER"
+      case "$kind" in
+        A) color="$ADDED" ;;
+        M) color="$MODIFIED" ;;
+        D) color="$DELETED" ;;
+      esac
+
+      echo -e "${color}  ➤ [$kind] $file  [+${add} / -${del}]${COLOR_RESET}"
+    done <<< "$ns_lines"
+  fi
+
+  echo -e "\n📂 Directory tree:"
   git show --pretty=format: --name-only "$commit" | awk -F/ '{
     path = ""
     for (i = 1; i < NF; i++) {
@@ -291,7 +311,6 @@ gscope-commit() {
     print $0
   }' | sort -u | tree --fromfile -C
 }
-
 
 # ────────────────────────────────────────────────────────
 # Git lock / unlock helpers (manual commit fallback, repo-safe)
