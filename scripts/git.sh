@@ -12,7 +12,6 @@ unalias git-diff gd gc gl gp gr git-zip gt gt2 gt3 gt5 2>/dev/null
 
 # Show staged changes and write to screen (for commit preview)
 alias gd='git diff --cached --no-color | tee /dev/tty'
-alias git-diff='gd'
 
 # Commit current staged changes
 alias gc='git commit'

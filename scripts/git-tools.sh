@@ -4,7 +4,7 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr greset-hard guncommit gundo gpick gscope gpushf 2>/dev/null
+unalias gr greset-hard guncommit gpushf gdc gundo gpick gscope gpushf 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
@@ -21,6 +21,20 @@ alias guncommit='git reset --soft HEAD~1'
 
 # Force push with lease (safer than --force)
 alias gpushf='git push --force-with-lease'
+
+# Copy staged diff to clipboard (no output)
+gdc() {
+  local diff
+  diff=$(git diff --cached --no-color)
+
+  if [[ -z "$diff" ]]; then
+    echo "⚠️  No staged changes to copy"
+    return 1
+  fi
+
+  printf "%s" "$diff" | pbcopy
+  echo "✅ Staged diff copied to clipboard"
+}
 
 # ────────────────────────────────────────────────────────
 # Git workflow helper functions
