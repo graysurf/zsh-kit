@@ -20,6 +20,12 @@ alias fsc='fzf-scope-commit'
 # ────────────────────────────────────────────────────────
 # Set max depth for fd-based searches
 export FZF_FILE_MAX_DEPTH=5
+export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
+  --preview-window=right:60%:wrap \
+  --bind=ctrl-j:preview-down \
+  --bind=ctrl-k:preview-up \
+  --bind=ctrl-l:preview-page-down \
+  --bind=ctrl-h:preview-page-up"
 
 # FZF key bindings (e.g., Ctrl-R, Ctrl-T, Alt-C)
 source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
@@ -140,9 +146,9 @@ fzf-git-commit() {
 fzf-scope-commit() {
   git log --oneline --no-color |
     fzf --ansi --no-sort \
-        --preview 'git scope commit $(echo {} | awk "{print \$1}")' \
+        --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
         --preview-window=right:60%:wrap \
-        --bind "enter:execute(clear && git scope commit {1})+abort"
+        --bind "enter:execute(clear && git-scope commit {1})+abort"
 }
 
 # ────────────────────────────────────────────────────
