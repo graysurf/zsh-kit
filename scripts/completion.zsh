@@ -7,9 +7,9 @@ zstyle ':completion:*:descriptions' yes
 zstyle ':completion:*:options' description 'yes'
 zstyle ':completion:*:options' auto-description '%d'
 
-autoload -Uz compinit
+unsetopt nomatch
+zmodload zsh/complist
+
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$ZSH_COMPDUMP"
 
-mkdir -p "$(dirname "$ZSH_COMPDUMP")"
-compinit -d "$ZSH_COMPDUMP"

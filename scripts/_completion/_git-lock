@@ -1,10 +1,20 @@
 #compdef git-lock
 
 __git_lock_labels() {
-  ...
+  local repo_id lock_dir
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null)
+  lock_dir="$ZSH_CACHE_DIR/glocks"
+
+  [[ -d "$lock_dir" ]] || return
+
+  for file in "$lock_dir/${repo_id}-"*.lock(N); do
+    [[ -f "$file" ]] || continue
+    basename "$file" | sed "s/^${repo_id}-//;s/\.lock$//"
+  done
 }
 
-_git_lock_completion() {
+
+_git-lock() {
   _arguments -s -C \
     '1:command:((lock\:Save\ commit\ hash\ to\ lock \
                  unlock\:Reset\ to\ a\ saved\ commit \
@@ -43,4 +53,5 @@ _git_lock_completion() {
   esac
 }
 
-compdef _git_lock_completion git-lock
+compdef _git-lock git-lock
+
