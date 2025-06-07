@@ -1,0 +1,4 @@
+#!/bin/zsh
+
+source "$ZDOTDIR/scripts/git/git-lock.sh"
+git-lock "$@" || exit $?
