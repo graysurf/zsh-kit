@@ -127,7 +127,8 @@ _gscope_commit() {
   local OTHER='\033[1;34m'
 
   echo ""
-  git log -1 --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅  %ad" "$commit"
+  git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
+  --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
   echo ""
 
   echo -e "\n📄 Changed files:"

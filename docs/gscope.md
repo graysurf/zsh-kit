@@ -110,16 +110,16 @@ gscope-commit HEAD~6
 ```
 🔖 c1597ed feat(rbac): allow EDITOR role access to admin and member APIs
 👤 terrylin <10785178+graysurf@users.noreply.github.com>
-📅  Thu Jun 5 08:35:48 2025 +0800
+📅 2025-06-04 18:41:35 +0800
 
 📄 Changed files:
-  ➤ [M] apps/api/src/app/member-export.controller.ts                        [+1 / -1]
-  ➤ [M] libs/graphql-api/src/member-profiles/member-profiles.mutations.ts   [+1 / -1]
-  ➤ [M] libs/graphql-api/src/member-profiles/member-profiles.queries.ts     [+3 / -3]
-  ➤ [M] libs/graphql-api/src/members/members.admin.mutations.ts             [+2 / -2]
-  ➤ [M] libs/graphql-api/src/members/members.admin.queries.ts               [+2 / -2]
-  ➤ [M] libs/graphql-api/src/notifications/notifications.mutations.ts       [+6 / -6]
-  ➤ [M] libs/graphql-api/src/notifications/notifications.queries.ts         [+2 / -2]
+  ➤ [M] apps/api/src/app/membesr-export.controller.ts                         [+1 / -1]
+  ➤ [M] libs/graphql-api/src/members-profiles/members-profiles.mutations.ts   [+1 / -1]
+  ➤ [M] libs/graphql-api/src/members-profiles/members-profiles.queries.ts     [+3 / -3]
+  ➤ [M] libs/graphql-api/src/members/members.admin.mutations.ts               [+2 / -2]
+  ➤ [M] libs/graphql-api/src/members/members.admin.queries.ts                 [+2 / -2]
+  ➤ [M] libs/graphql-api/src/notifications/notifications.mutations.ts         [+6 / -6]
+  ➤ [M] libs/graphql-api/src/notifications/notifications.queries.ts           [+2 / -2]
 
 📂 Directory tree:
 .
@@ -127,13 +127,13 @@ gscope-commit HEAD~6
 │   └── api
 │       └── src
 │           └── app
-│               └── member-export.controller.ts
+│               └── members-export.controller.ts
 └── libs
     └── graphql-api
         └── src
-            ├── member-profiles
-            │   ├── member-profiles.mutations.ts
-            │   └── member-profiles.queries.ts
+            ├── members-profiles
+            │   ├── members-profiles.mutations.ts
+            │   └── members-profiles.queries.ts
             ├── members
             │   ├── members.admin.mutations.ts
             │   └── members.admin.queries.ts
