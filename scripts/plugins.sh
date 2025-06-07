@@ -4,40 +4,62 @@
 
 ZSH_PLUGINS_DIR="$ZDOTDIR/plugins"
 
-# fzf-tab (must come before compinit)
-if [[ -f "$ZSH_PLUGINS_DIR/fzf-tab/fzf-tab.plugin.zsh" ]]; then
-  source "$ZSH_PLUGINS_DIR/fzf-tab/fzf-tab.plugin.zsh"
-fi
+# --------------------------------------------
+# Plugin Declaration Table
+# --------------------------------------------
+ZSH_PLUGINS=(
+  "fzf-tab::fzf-tab.plugin.zsh"
+  "fast-syntax-highlighting::fast-syntax-highlighting.plugin.zsh"
+  "zsh-autosuggestions::zsh-autosuggestions.zsh::ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=8"
+  "zsh-history-substring-search"
+  "zsh-direnv"
+  "zsh-abbr::zsh-abbr.plugin.zsh::abbr"
+)
 
-# fast-syntax-highlighting (replaces zsh-syntax-highlighting)
-if [[ -f "$ZSH_PLUGINS_DIR/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]]; then
-  source "$ZSH_PLUGINS_DIR/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
-fi
+# --------------------------------------------
+# Loader Functions
+# --------------------------------------------
 
-# zsh-autosuggestions
-if [[ -d "$ZSH_PLUGINS_DIR/zsh-autosuggestions" ]]; then
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
-  source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+load_plugin_entry() {
+  local entry="$1"
+  local plugin_name main_file extra
+  plugin_name="${entry%%::*}"
+  rest="${entry#*::}"
 
-fi
+  if [[ "$entry" == *"::"* ]]; then
+    main_file="${rest%%::*}"
+    extra="${rest#*::*}"
+  else
+    main_file="${plugin_name}.plugin.zsh"
+    extra=""
+  fi
 
-# zsh-history-substring-search
-if [[ -d "$ZSH_PLUGINS_DIR/zsh-history-substring-search" ]]; then
-  source "$ZSH_PLUGINS_DIR/zsh-history-substring-search/zsh-history-substring-search.zsh"
-fi
+  local plugin_path="$ZSH_PLUGINS_DIR/$plugin_name"
+  local full_path="$plugin_path/$main_file"
 
-# zsh-direnv (Direnv integration for per-project .envrc)
-if [[ -f "$ZSH_PLUGINS_DIR/zsh-direnv/zsh-direnv.plugin.zsh" ]]; then
-  source "$ZSH_PLUGINS_DIR/zsh-direnv/zsh-direnv.plugin.zsh"
-fi
+  if [[ -f "$full_path" ]]; then
+    if [[ "$extra" == "abbr" ]]; then
+      # Special case: zsh-abbr needs fpath and job-queue
+      fpath+=("$plugin_path/completions")
+      fpath+=("$plugin_path/zsh-job-queue")
+      source "$plugin_path/zsh-job-queue/zsh-job-queue.plugin.zsh"
+    fi
 
-# zsh-abbr (Command-line abbreviation support)
-if [[ -f "$ZSH_PLUGINS_DIR/zsh-abbr/zsh-abbr.plugin.zsh" ]]; then
-  fpath+=("$ZSH_PLUGINS_DIR/zsh-abbr/completions")
-  fpath+=("$ZSH_PLUGINS_DIR/zsh-abbr/zsh-job-queue")
-  source "$ZSH_PLUGINS_DIR/zsh-abbr/zsh-job-queue/zsh-job-queue.plugin.zsh"
-  source "$ZSH_PLUGINS_DIR/zsh-abbr/zsh-abbr.plugin.zsh"
-fi
+    # Set any extra env var if provided
+    if [[ "$extra" == *=* ]]; then
+      eval "$extra"
+    fi
+
+    source "$full_path"
+  fi
+}
+
+# --------------------------------------------
+# Load All Declared Plugins
+# --------------------------------------------
+for plugin_entry in "${ZSH_PLUGINS[@]}"; do
+  load_plugin_entry "$plugin_entry"
+done
 
 # ──────────────────────────────
 # Zoxide smart directory jumping
