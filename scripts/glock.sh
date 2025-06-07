@@ -2,6 +2,24 @@
 # Git lock / unlock helpers (manual commit fallback, repo-safe)
 # ────────────────────────────────────────────────────────
 
+# Resolve label from argument or latest fallback
+glock_resolve_label() {
+  local input_label="$1"
+  local repo_id lock_dir latest_file
+
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  lock_dir="$ZSH_CACHE_DIR/glocks"
+  latest_file="$lock_dir/${repo_id}-latest"
+
+  if [[ -n "$input_label" ]]; then
+    echo "$input_label"
+  elif [[ -f "$latest_file" ]]; then
+    cat "$latest_file"
+  else
+    return 1
+  fi
+}
+
 # Save the current commit hash into a named lock file
 # - Allows optional label (default is "default")
 # - Optional note can be recorded
@@ -53,21 +71,16 @@ _glock_lock() {
 # Example:
 #   gunlock dev
 _glock_unlock() {
-  local label repo_id lock_dir lock_file latest_file
+  local repo_id lock_dir label lock_file latest_label
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
-  latest_file="$lock_dir/${repo_id}-latest"
 
   [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
 
-  if [[ -n "$1" ]]; then
-    label="$1"
-  elif [[ -f "$latest_file" ]]; then
-    label=$(cat "$latest_file")
-  else
+  label=$(glock_resolve_label "$1") || {
     echo "❌ No recent glock found for $repo_id"
     return 1
-  fi
+  }
 
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   if [[ ! -f "$lock_file" ]]; then
@@ -76,7 +89,7 @@ _glock_unlock() {
   fi
 
   local line hash note msg
-  line=$(cat "$lock_file")
+  read -r line < "$lock_file"
   hash=$(echo "$line" | cut -d '#' -f 1 | xargs)
   note=$(echo "$line" | cut -d '#' -f 2- | xargs)
   msg=$(git log -1 --pretty=format:"%s" "$hash" 2>/dev/null)
@@ -86,7 +99,7 @@ _glock_unlock() {
   [[ -n "$msg" ]] && echo "    commit message: $msg"
   echo
 
-  read "confirm?⚠️  Hard reset to [$label]? [y/N] "
+  read -r -p "⚠️  Hard reset to [$label]? [y/N] " confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "🚫 Aborted"
     return 1
@@ -95,6 +108,7 @@ _glock_unlock() {
   git reset --hard "$hash"
   echo "⏪ [$repo_id:$label] Reset to: $hash"
 }
+
 
 # Display a list of all saved glocks (labels) in the current repository
 # - Includes commit hash, note, timestamp, and commit subject
@@ -259,7 +273,7 @@ _glock_list() {
 # Example:
 #   glock-copy dev staging
 _glock_copy() {
-  local src_label dst_label repo_id lock_dir src_file dst_file
+  local repo_id lock_dir src_label dst_label src_file dst_file
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
 
@@ -268,13 +282,16 @@ _glock_copy() {
     return 1
   }
 
-  if [[ -z "$1" || -z "$2" ]]; then
+  src_label=$(glock_resolve_label "$1") || {
     echo "❗ Usage: glock-copy <source-label> <target-label>"
     return 1
-  fi
-
-  src_label="$1"
+  }
   dst_label="$2"
+  [[ -z "$dst_label" ]] && {
+    echo "❗ Target label is missing"
+    return 1
+  }
+
   src_file="$lock_dir/${repo_id}-${src_label}.lock"
   dst_file="$lock_dir/${repo_id}-${dst_label}.lock"
 
@@ -284,12 +301,11 @@ _glock_copy() {
   fi
 
   if [[ -f "$dst_file" ]]; then
-    echo "⚠️  Target glock [$repo_id:$dst_label] already exists"
-    read "confirm?❓ Overwrite it? [y/N] "
-    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    read "confirm?⚠️  Target glock [$repo_id:$dst_label] already exists. Overwrite? [y/N] "
+    [[ "$confirm" != [yY] ]] && {
       echo "🚫 Aborted"
       return 1
-    fi
+    }
   fi
 
   cp "$src_file" "$dst_file"
@@ -319,7 +335,7 @@ _glock_copy() {
 # Example:
 #   glock-delete dev
 _glock_delete() {
-  local label repo_id lock_dir lock_file latest_file
+  local repo_id lock_dir label lock_file latest_file latest_label
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
   latest_file="$lock_dir/${repo_id}-latest"
@@ -329,14 +345,10 @@ _glock_delete() {
     return 1
   }
 
-  if [[ -n "$1" ]]; then
-    label="$1"
-  elif [[ -f "$latest_file" ]]; then
-    label=$(cat "$latest_file")
-  else
+  label=$(glock_resolve_label "$1") || {
     echo "❌ No label provided and no latest glock exists"
     return 1
-  fi
+  }
 
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   if [[ ! -f "$lock_file" ]]; then
@@ -359,7 +371,7 @@ _glock_delete() {
   [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
   echo
 
-  read "confirm?⚠️  Delete this glock? [y/N] "
+  read -r -p "⚠️  Delete this glock? [y/N] " confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "🚫 Aborted"
     return 1
@@ -368,9 +380,12 @@ _glock_delete() {
   rm -f "$lock_file"
   echo "🗑️  Deleted glock [$repo_id:$label]"
 
-  if [[ -f "$latest_file" && "$(cat "$latest_file")" == "$label" ]]; then
-    rm -f "$latest_file"
-    echo "🧼 Removed latest marker (was [$label])"
+  if [[ -f "$latest_file" ]]; then
+    latest_label=$(<"$latest_file")
+    if [[ "$label" == "$latest_label" ]]; then
+      rm -f "$latest_file"
+      echo "🧼 Removed latest marker (was [$label])"
+    fi
   fi
 }
 
@@ -381,28 +396,30 @@ _glock_delete() {
 #
 # This will show the commits between the two glock points using: git log <hash1>..<hash2>
 _glock_diff() {
-  local label1 label2 repo_id lock_dir file1 file2 hash1 hash2
+  local repo_id lock_dir label1 label2 file1 file2 hash1 hash2
 
-  if [[ -z "$1" || -z "$2" ]]; then
+  label1=$(glock_resolve_label "$1") || {
     echo "❗ Usage: glock diff <label1> <label2>"
     return 1
-  fi
+  }
+  label2=$(glock_resolve_label "$2") || {
+    echo "❗ Second label not provided or found"
+    return 1
+  }
 
-  label1="$1"
-  label2="$2"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
   file1="$lock_dir/${repo_id}-${label1}.lock"
   file2="$lock_dir/${repo_id}-${label2}.lock"
 
-  if [[ ! -f "$file1" ]]; then
+  [[ -f "$file1" ]] || {
     echo "❌ Glock [$label1] not found for [$repo_id]"
     return 1
-  fi
-  if [[ ! -f "$file2" ]]; then
+  }
+  [[ -f "$file2" ]] || {
     echo "❌ Glock [$label2] not found for [$repo_id]"
     return 1
-  fi
+  }
 
   hash1=$(sed -n '1p' "$file1" | cut -d '#' -f1 | xargs)
   hash2=$(sed -n '1p' "$file2" | cut -d '#' -f1 | xargs)
@@ -431,8 +448,7 @@ _glock_diff() {
 # - Prompts before overwriting existing tags
 
 _glock_tag() {
-  local label tag_name tag_msg=""
-  local do_push=false
+  local label tag_name tag_msg="" do_push=false
   local repo_id lock_dir lock_file hash timestamp line1
   local -a positional=()
 
@@ -440,53 +456,50 @@ _glock_tag() {
     case "$1" in
       --push)
         do_push=true
-        shift
-        ;;
+        shift ;;
       -m)
         shift
         tag_msg="$1"
-        shift
-        ;;
+        shift ;;
       *)
         positional+=("$1")
-        shift
-        ;;
+        shift ;;
     esac
   done
 
-  label="${positional[1]}"
-  tag_name="${positional[2]}"
-
-  if [[ -z "$label" || -z "$tag_name" ]]; then
-    echo "❌ Usage: glock-tag <glock-label> <tag-name> [-m <tag-message>] [--push]"
+  label=$(glock_resolve_label "${positional[0]}") || {
+    echo "❌ Glock label not provided or not found"
     return 1
-  fi
+  }
+
+  tag_name="${positional[1]}"
+  [[ -z "$tag_name" ]] && {
+    echo "❗ Usage: glock-tag <glock-label> <tag-name> [-m <tag-message>] [--push]"
+    return 1
+  }
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  : "${ZSH_CACHE_DIR:=$HOME/.config/zsh/cache}"
   lock_dir="$ZSH_CACHE_DIR/glocks"
   lock_file="$lock_dir/${repo_id}-${label}.lock"
 
-  if [[ ! -f "$lock_file" ]]; then
-    echo "❌ Glock label [$label] not found in [$lock_dir] for repo [$repo_id]"
+  [[ -f "$lock_file" ]] || {
+    echo "❌ Glock [$label] not found in [$lock_dir] for [$repo_id]"
     return 1
-  fi
+  }
 
   line1=$(sed -n '1p' "$lock_file")
   hash=$(cut -d '#' -f1 <<< "$line1" | xargs)
   timestamp=$(grep '^timestamp=' "$lock_file" | cut -d '=' -f2-)
 
-  if [[ -z "$tag_msg" ]]; then
-    tag_msg=$(git show -s --format=%s "$hash")
-  fi
+  [[ -z "$tag_msg" ]] && tag_msg=$(git show -s --format=%s "$hash")
 
   if git rev-parse "$tag_name" >/dev/null 2>&1; then
     echo "⚠️  Git tag [$tag_name] already exists."
     read "confirm?❓ Overwrite it? [y/N] "
-    if [[ -z "$confirm" || "$confirm" != [yY] ]]; then
+    [[ "$confirm" != [yY] ]] && {
       echo "🚫 Aborted"
       return 1
-    fi
+    }
     git tag -d "$tag_name" || {
       echo "❌ Failed to delete existing tag [$tag_name]"
       return 1
@@ -500,7 +513,6 @@ _glock_tag() {
   if $do_push; then
     git push origin "$tag_name"
     echo "🚀 Pushed tag [$tag_name] to origin"
-
     git tag -d "$tag_name" && echo "🧹 Deleted local tag [$tag_name]"
   fi
 }
