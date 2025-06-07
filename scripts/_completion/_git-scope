@@ -34,5 +34,5 @@ _git-scope() {
   esac
 }
 
-# compdef _git-scope git-scope
-# compdef _git-scope 'git-scope.git'
+compdef _git-scope git-scope
+compdef _git-scope 'git-scope.git'
