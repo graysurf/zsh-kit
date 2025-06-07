@@ -117,12 +117,12 @@ A sample `glock-list` might look like:
    🧬 commit:  5a1f9e3
    📄 message: Init core structure
    📝 note:    before breaking change
-   ⏰ time:    2025-06-06 13:45:12
+   📅 time:    2025-06-06 13:45:12
 
  - 🏷️  tag:    release
    🧬 commit:  d0e4ca2
    📄 message: Merge pull request #12 from release
-   ⏰ time:    2025-06-05 18:12:00
+   📅 time:    2025-06-05 18:12:00
 ```
 
 ---
