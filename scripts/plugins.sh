@@ -16,7 +16,9 @@ fi
 
 # zsh-autosuggestions
 if [[ -d "$ZSH_PLUGINS_DIR/zsh-autosuggestions" ]]; then
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
   source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
 fi
 
 # zsh-history-substring-search
@@ -65,14 +67,6 @@ if [[ -f "$ZDOTDIR/config/starship.toml" ]]; then
   export STARSHIP_CONFIG="$ZDOTDIR/config/starship.toml"
 fi
 eval "$(starship init zsh)"
-
-# ──────────────────────────────
-# Completion system (eager load)
-# ──────────────────────────────
-autoload -Uz compinit
-zstyle ':completion:*' use-cache on
-zstyle ':completion:*' cache-path "$ZSH_COMPDUMP"
-compinit -C
 
 # ──────────────────────────────
 # Shell behavior options

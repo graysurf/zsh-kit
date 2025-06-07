@@ -32,6 +32,7 @@ load_with_timing() {
 # ──────────────────────────────
 load_with_timing "$ZDOTDIR/scripts/env.sh"
 load_with_timing "$ZDOTDIR/scripts/plugins.sh"
+load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 
 # ──────────────────────────────
 # iTerm2 shell integration
@@ -43,7 +44,7 @@ load_with_timing "$ZDOTDIR/scripts/iterm2_shell_integration.zsh"
 # ──────────────────────────────
 for file in "$ZDOTDIR/scripts/"*.sh "$ZDOTDIR/.private/"*.sh; do
   case "$file" in
-    *"/env.sh" | *"/plugins.sh" | *"/eza.sh" | *"/.iterm2_shell_integration.zsh")
+    *"/env.sh" | *"/plugins.sh" | *"/completion.zsh" | *"/eza.sh" | *"/.iterm2_shell_integration.zsh")
       continue
       ;;
   esac
