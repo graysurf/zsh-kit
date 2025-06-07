@@ -28,18 +28,38 @@ load_with_timing() {
 }
 
 # ──────────────────────────────
-# Load user-defined scripts with timing (except duplicates)
+# Zsh script directory structure
 # ──────────────────────────────
-excluded_files=(
-  "$ZDOTDIR/scripts/env.sh"
-  "$ZDOTDIR/scripts/plugins.sh"
-  "$ZDOTDIR/scripts/completion.zsh"
+export ZSH_SCRIPT_DIR="$ZDOTDIR/scripts"
+export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
+
+collect_scripts() {
+  for dir in "$@"; do
+    print -l "$dir"/**/*.sh(N)
+  done
+}
+
+ZSH_SCRIPT_PATHS=(
+  ${(f)"$(collect_scripts "$ZSH_SCRIPT_DIR" "$ZSH_PRIVATE_SCRIPT_DIR")"}
 )
 
-for file in "$ZDOTDIR/scripts/"**/*.sh "$ZDOTDIR/.private/"**/*.sh; do
-  for excluded in "${excluded_files[@]}"; do
-    [[ "$file" == "$excluded" ]] && continue 2
-  done
+ZSH_SCRIPT_EXCLUDE=(
+  "$ZSH_SCRIPT_DIR/env.sh"
+  "$ZSH_SCRIPT_DIR/plugins.sh"
+  "$ZSH_SCRIPT_DIR/completion.zsh"
+)
+
+# ──────────────────────────────
+# Load scripts except excluded ones
+# ──────────────────────────────
+ZSH_SCRIPT_PATHS=(
+  ${(f)"$(
+    collect_scripts "$ZSH_SCRIPT_DIR" "$ZSH_PRIVATE_SCRIPT_DIR" |
+    grep -vFxf <(printf "%s\n" "${ZSH_SCRIPT_EXCLUDE[@]}")
+  )"}
+)
+
+for file in "${ZSH_SCRIPT_PATHS[@]}"; do
   load_with_timing "$file"
 done
 
