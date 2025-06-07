@@ -174,7 +174,7 @@ _gscope_commit() {
   }' | sort -u | tree --fromfile -C
 }
 
-gscope() {
+git-scope() {
   local sub="$1"
   shift
 

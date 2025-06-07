@@ -1,6 +1,6 @@
-#compdef gscope
+#compdef git-scope
 
-_gscope_completions() {
+_git_scope_completion() {
   local -a subcommands
   subcommands=(
     'tracked:Show all tracked files'
@@ -34,5 +34,5 @@ _gscope_completions() {
   esac
 }
 
-compdef _gscope_completions gscope
+compdef _git_scope_completion git-scope
 

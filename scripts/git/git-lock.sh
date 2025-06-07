@@ -517,7 +517,7 @@ _glock_tag() {
   fi
 }
 
-glock() {
+git-lock() {
   local cmd="$1"
   shift
 

@@ -1,10 +1,10 @@
-#compdef glock
+#compdef git-lock
 
-__glock_labels() {
+__git_lock_labels() {
   ...
 }
 
-_glock_completion() {
+_git_lock_completion() {
   _arguments -s -C \
     '1:command:((lock\:Save\ commit\ hash\ to\ lock \
                  unlock\:Reset\ to\ a\ saved\ commit \
@@ -17,23 +17,23 @@ _glock_completion() {
 
   case $words[2] in
     unlock|delete)
-      _values 'label' $(__glock_labels)
+      _values 'label' $(__git_lock_labels)
       ;;
     copy)
       if (( CURRENT == 3 )); then
-        _values 'source label' $(__glock_labels)
+        _values 'source label' $(__git_lock_labels)
       elif (( CURRENT == 4 )); then
         _message 'target label'
       fi
       ;;
     diff)
       if (( CURRENT == 3 || CURRENT == 4 )); then
-        _values 'label' $(__glock_labels)
+        _values 'label' $(__git_lock_labels)
       fi
       ;;
     tag)
       if (( CURRENT == 3 )); then
-        _values 'glock label' $(__glock_labels)
+        _values 'glock label' $(__git_lock_labels)
       elif (( CURRENT == 4 )); then
         _message 'git tag name'
       elif [[ $words[CURRENT-1] == "-m" ]]; then
@@ -43,4 +43,4 @@ _glock_completion() {
   esac
 }
 
-compdef _glock_completion glock
+compdef _git_lock_completion git-lock
