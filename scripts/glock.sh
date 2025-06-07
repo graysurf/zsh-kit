@@ -14,7 +14,7 @@
 #   glock dev "before hotfix"
 #   glock hotfix "old code" HEAD~2
 #   glock release "tag version" v1.0.0
-glock() {
+_glock_lock() {
   local label note commit repo_id lock_dir lock_file latest_file timestamp hash
 
   label="${1:-default}"
@@ -52,7 +52,7 @@ glock() {
 #
 # Example:
 #   gunlock dev
-gunlock() {
+_glock_unlock() {
   local label repo_id lock_dir lock_file latest_file
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
@@ -102,7 +102,106 @@ gunlock() {
 #
 # Example:
 #   glock-list
-glock-list() {
+_glock_lock() {
+  local label note commit repo_id lock_dir lock_file latest_file timestamp hash
+
+  label="${1:-default}"
+  note="$2"
+  commit="${3:-HEAD}"
+
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  lock_dir="$ZSH_CACHE_DIR/glocks"
+  lock_file="$lock_dir/${repo_id}-${label}.lock"
+  latest_file="$lock_dir/${repo_id}-latest"
+  timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+
+  hash=$(git rev-parse "$commit" 2>/dev/null) || {
+    echo "❌ Invalid commit: $commit"
+    return 1
+  }
+
+  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
+
+  {
+    echo "$hash # $note"
+    echo "timestamp=$timestamp"
+  } > "$lock_file"
+
+  echo "$label" > "$latest_file"
+
+  echo "🔐 [$repo_id:$label] Locked: $hash${note:+  # $note}"
+  echo "    at $timestamp"
+}
+
+_glock_unlock() {
+  local label repo_id lock_dir lock_file latest_file
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  lock_dir="$ZSH_CACHE_DIR/glocks"
+  latest_file="$lock_dir/${repo_id}-latest"
+
+  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
+
+  if [[ -n "$1" ]]; then
+    label="$1"
+  elif [[ -f "$latest_file" ]]; then
+    label=$(cat "$latest_file")
+  else
+    echo "❌ No recent glock found for $repo_id"
+    return 1
+  fi
+
+  lock_file="$lock_dir/${repo_id}-${label}.lock"
+  if [[ ! -f "$lock_file" ]]; then
+    echo "❌ No glock named '$label' found for $repo_id"
+    return 1
+  fi
+
+  local hash note msg
+  read -r line < "$lock_file"
+  hash=$(echo "$line" | cut -d '#' -f 1 | xargs)
+  note=$(echo "$line" | cut -d '#' -f 2- | xargs)
+  msg=$(git log -1 --pretty=format:"%s" "$hash" 2>/dev/null)
+
+  echo "🔐 Found [$repo_id:$label] → $hash"
+  [[ -n "$note" ]] && echo "    # $note"
+  [[ -n "$msg" ]] && echo "    commit message: $msg"
+  echo
+
+  read -r -p "⚠️  Hard reset to [$label]? [y/N] " confirm
+  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git reset --hard "$hash"
+  echo "⏪ [$repo_id:$label] Reset to: $hash"
+}
+
+_glock_list() {
+  local repo_id lock_dir latest
+  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+  lock_dir="$ZSH_CACHE_DIR/glocks"
+
+  [[ -d "$lock_dir" ]] || {
+    echo "📬 No glocks found for [$repo_id]"
+    return 0
+  }
+
+  [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(<"$lock_dir/${repo_id}-latest")
+
+  # Test without for loop, just declare local variables
+  local tag hash note timestamp subject
+
+  # Check the local variables
+  echo "🔐 [TEST] Glock list for [$repo_id]:"
+  echo "tag: $tag"
+  echo "hash: $hash"
+  echo "note: $note"
+  echo "timestamp: $timestamp"
+  echo "subject: $subject"
+}
+
+_glock_list() {
   local repo_id lock_dir latest
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
@@ -114,11 +213,13 @@ glock-list() {
 
   [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(cat "$lock_dir/${repo_id}-latest")
 
-  local file file_info tmp_list=()
+  local file tmp_list=()
   for file in "$lock_dir/${repo_id}-"*.lock; do
     [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
-    local timestamp=$(grep '^timestamp=' "$file" | cut -d '=' -f2-)
-    local epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
+    local ts_line epoch
+    ts_line=$(grep '^timestamp=' "$file")
+    timestamp=${ts_line#timestamp=}
+    epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
     tmp_list+=("$epoch|$file")
   done
 
@@ -132,13 +233,13 @@ glock-list() {
   echo "🔐 Glock list for [$repo_id]:"
   for item in "${sorted[@]}"; do
     file="${item#*|}"
-    local name content hash note timestamp label subject
+    local name='' hash='' note='' timestamp='' label='' subject='' line=''
     name=$(basename "$file" .lock)
     label=${name#${repo_id}-}
-    content=$(<"$file")
-    hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
-    note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
-    timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+    read -r line < "$file"
+    hash=$(echo "$line" | cut -d '#' -f1 | xargs)
+    note=$(echo "$line" | cut -d '#' -f2- | xargs)
+    timestamp=$(grep '^timestamp=' "$file" | cut -d '=' -f2-)
     subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
     printf "\n - 🏷️  tag:     %s%s\n" "$label" \
@@ -150,7 +251,6 @@ glock-list() {
   done
 }
 
-
 # Copy an existing glock to a new label (preserving all metadata)
 # - Copies both hash and note content as-is to a new lock file
 # - Prompts before overwrite if the target already exists
@@ -158,7 +258,7 @@ glock-list() {
 #
 # Example:
 #   glock-copy dev staging
-glock-copy() {
+_glock_copy() {
   local src_label dst_label repo_id lock_dir src_file dst_file
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
@@ -218,7 +318,7 @@ glock-copy() {
 #
 # Example:
 #   glock-delete dev
-glock-delete() {
+_glock_delete() {
   local label repo_id lock_dir lock_file latest_file
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/glocks"
@@ -280,11 +380,11 @@ glock-delete() {
 #   glock-diff <label1> <label2>
 #
 # This will show the commits between the two glock points using: git log <hash1>..<hash2>
-glock-diff() {
+_glock_diff() {
   local label1 label2 repo_id lock_dir file1 file2 hash1 hash2
 
   if [[ -z "$1" || -z "$2" ]]; then
-    echo "❗ Usage: glock-diff <label1> <label2>"
+    echo "❗ Usage: glock diff <label1> <label2>"
     return 1
   fi
 
@@ -330,7 +430,7 @@ glock-diff() {
 # - Falls back to the commit subject as the tag message if none is provided
 # - Prompts before overwriting existing tags
 
-glock-tag() {
+_glock_tag() {
   local label tag_name tag_msg=""
   local do_push=false
   local repo_id lock_dir lock_file hash timestamp line1
@@ -403,4 +503,43 @@ glock-tag() {
 
     git tag -d "$tag_name" && echo "🧹 Deleted local tag [$tag_name]"
   fi
+}
+
+glock() {
+  local cmd="$1"
+  shift
+
+  case "$cmd" in
+    ""|help|-h|--help)
+      echo "Usage: glock <command> [args...]"
+      echo ""
+      echo "Commands:"
+      echo "  lock [label] [note] [commit]      Save commit hash to lock"
+      echo "  unlock [label]                    Reset to a saved commit"
+      echo "  list                              Show all locks for repo"
+      echo "  copy <from> <to>                  Duplicate a lock label"
+      echo "  delete [label]                    Remove a lock"
+      echo "  diff <label1> <label2>            Compare commits between two locks"
+      echo "  tag <label> <tag> [-m msg]        Create git tag from a lock"
+      echo ""
+      return 0 ;;
+    lock)
+      _glock_lock "$@" ;;
+    unlock)
+      _glock_unlock "$@" ;;
+    list)
+      _glock_list "$@" ;;
+    copy)
+      _glock_copy "$@" ;;
+    delete)
+      _glock_delete "$@" ;;
+    diff)
+      _glock_diff "$@" ;;
+    tag)
+      _glock_tag "$@" ;;
+    *)
+      echo "❗ Unknown command: '$cmd'"
+      echo "Run 'glock help' for usage."
+      return 1 ;;
+  esac
 }
