@@ -53,5 +53,5 @@ _git-lock() {
   esac
 }
 
-compdef _git-lock git-lock
-
+# compdef _git-lock git-lock
+# compdef _git-lock 'git-lock.git'
