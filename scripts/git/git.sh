@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
-unalias gd gc gl gp gr git-zip \
+unalias gd gc gca gl gp gpf gpff gr git-zip \
         lg lgr \
         gt gt2 gt3 gt5 \
         git-summary git-today git-yesterday \
@@ -16,10 +16,19 @@ alias gd='git diff --cached --no-color | tee /dev/tty'
 
 # Commit current staged changes
 alias gc='git commit'
+# Amend the last commit (edit message or add staged changes)
+alias gca='git commit --amend'
+
 # Pull latest changes from remote
 alias gl='git pull'
-# Push local commits to remote
+# Push local commits to the remote (safe default)
+
 alias gp='git push'
+# Force-push with lease: ensures no one has pushed in the meantime (safer than -f)
+alias gpf='git push --force-with-lease'
+# Force-push unconditionally (DANGEROUS: may overwrite remote history)
+alias gpff='git push -f'
+
 # Rebase current branch onto another
 alias gr='git rebase'
 
