@@ -9,8 +9,6 @@ plugins/
 .zsh-update
 .zsh-custom-update
 
-.zprofile
-
 quotes.txt
 
 .iterm2
