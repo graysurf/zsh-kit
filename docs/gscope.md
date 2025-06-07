@@ -110,7 +110,7 @@ gscope-commit HEAD~6
 ```
 🔖 c1597ed feat(rbac): allow EDITOR role access to admin and member APIs
 👤 terrylin <10785178+graysurf@users.noreply.github.com>
-🗓️  Thu Jun 5 08:35:48 2025 +0800
+📅  Thu Jun 5 08:35:48 2025 +0800
 
 📄 Changed files:
   ➤ [M] apps/api/src/app/member-export.controller.ts                        [+1 / -1]
