@@ -34,10 +34,4 @@ _gscope_completions() {
   esac
 }
 
-
-if [[ -n "$ZSH_VERSION" && -z "$ZSH_COMPLETION_INITIALIZED" ]]; then
-  autoload -Uz compinit && compinit
-  ZSH_COMPLETION_INITIALIZED=1
-fi
-
 compdef _gscope_completions gscope
