@@ -28,13 +28,6 @@ load_with_timing() {
 }
 
 # ──────────────────────────────
-# Source environment and plugins
-# ──────────────────────────────
-load_with_timing "$ZDOTDIR/scripts/env.sh"
-load_with_timing "$ZDOTDIR/scripts/plugins.sh"
-load_with_timing "$ZDOTDIR/scripts/completion.zsh"
-
-# ──────────────────────────────
 # iTerm2 shell integration
 # ──────────────────────────────
 load_with_timing "$ZDOTDIR/scripts/iterm2_shell_integration.zsh"
@@ -53,17 +46,23 @@ for file in "$ZDOTDIR/scripts/"**/*.sh "$ZDOTDIR/.private/"**/*.sh; do
 done
 
 # ──────────────────────────────
-# Load custom Zsh completions (e.g. _gscope_completions)
-# Each file in scripts/_completion/ should define and register its own `compdef`
-# This keeps completions modular and avoids polluting main script space
+# Setup completion functions first
 # ──────────────────────────────
-for file in "$ZDOTDIR/scripts/_completion/"*.zsh; do
-  load_with_timing "$file"
-done
+fpath=("$ZDOTDIR/scripts/_completion" $fpath)
+autoload -Uz _git-lock
+autoload -Uz _git-scope
+autoload -Uz compinit
+compinit -d "$ZSH_COMPDUMP"
+
+# ──────────────────────────────
+# Source environment and plugins
+# ──────────────────────────────
+load_with_timing "$ZDOTDIR/scripts/env.sh"
+load_with_timing "$ZDOTDIR/scripts/plugins.sh"
+load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 
 # ──────────────────────────────
 # Load eza.sh last with timing
 # ──────────────────────────────
 eza_script="$ZDOTDIR/scripts/eza.sh"
 [[ -f "$eza_script" ]] && load_with_timing "$eza_script" "$(basename "$eza_script") (delayed)"
-
