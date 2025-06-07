@@ -28,41 +28,36 @@ load_with_timing() {
 }
 
 # ──────────────────────────────
-# iTerm2 shell integration
-# ──────────────────────────────
-load_with_timing "$ZDOTDIR/scripts/iterm2_shell_integration.zsh"
-
-# ──────────────────────────────
 # Load user-defined scripts with timing (except duplicates)
 # ──────────────────────────────
-for file in "$ZDOTDIR/scripts/"**/*.sh "$ZDOTDIR/.private/"**/*.sh; do
-  case "$file" in
-    *"/env.sh" | *"/plugins.sh" | *"/completion.zsh" | *"/eza.sh" | *"/.iterm2_shell_integration.zsh")
-      continue
-      ;;
-  esac
+excluded_files=(
+  "$ZDOTDIR/scripts/env.sh"
+  "$ZDOTDIR/scripts/plugins.sh"
+  "$ZDOTDIR/scripts/completion.zsh"
+)
 
+for file in "$ZDOTDIR/scripts/"**/*.sh "$ZDOTDIR/.private/"**/*.sh; do
+  for excluded in "${excluded_files[@]}"; do
+    [[ "$file" == "$excluded" ]] && continue 2
+  done
   load_with_timing "$file"
 done
 
 # ──────────────────────────────
-# Setup completion functions first
-# ──────────────────────────────
-fpath=("$ZDOTDIR/scripts/_completion" $fpath)
-autoload -Uz _git-lock
-autoload -Uz _git-scope
-autoload -Uz compinit
-compinit -d "$ZSH_COMPDUMP"
-
-# ──────────────────────────────
 # Source environment and plugins
 # ──────────────────────────────
+
+# Load `env.sh` last among early scripts because it sets critical global variables
+# (e.g., PATH, ZDOTDIR). Loading it too early may interfere with plugin or script logic.
 load_with_timing "$ZDOTDIR/scripts/env.sh"
+
+# `plugins.sh` initializes plugin managers like Antidote.
+# It must run after env is fully set up, or some plugins might misbehave
+# (especially if fpath or environment paths aren't ready).
 load_with_timing "$ZDOTDIR/scripts/plugins.sh"
+
+# `completion.zsh` sets up compinit, zstyle, and global completion configs.
+# It must run after plugins are loaded, or some completion definitions will be missing.
+# Running compinit too early can skip over completions provided by plugins.
 load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 
-# ──────────────────────────────
-# Load eza.sh last with timing
-# ──────────────────────────────
-eza_script="$ZDOTDIR/scripts/eza.sh"
-[[ -f "$eza_script" ]] && load_with_timing "$eza_script" "$(basename "$eza_script") (delayed)"
