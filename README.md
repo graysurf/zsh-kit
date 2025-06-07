@@ -41,7 +41,7 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │   ├── completion.zsh                    # Compinit setup and fzf-tab styles
 │   ├── env.sh                            # Environment variables and path setup
 │   ├── eza.sh                            # Aliases for eza (ls replacement)
-│   ├── fzf.sh                            # FZF and preview bindings
+│   ├── fzf-tools.sh                      # Modular FZF launcher for file, git, process, and history workflows
 │   ├── general.sh                        # General-purpose helpers and toggles
 │   ├── iterm2_shell_integration.zsh      # Optional: iTerm2 shell integration
 │   ├── login.sh                          # Banner display and login logic
