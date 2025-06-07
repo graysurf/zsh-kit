@@ -3,7 +3,7 @@
 # ────────────────────────────────────────────────────────
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
-unalias ft fzf-process fzf-env fp fgs fgc ff fv 2>/dev/null
+unalias ft fzf-process fzf-env fp fgs fgc ff fv fsc 2>/dev/null
 
 alias ft='fzf-tools'
 alias fzf-process='ps aux | fzf'
@@ -13,6 +13,7 @@ alias fgs='fzf-git-status'
 alias fgc='fzf-git-commit'
 alias ff='fzf-file'
 alias fv='fzf-vscode'
+alias fsc='fzf-scope-commit'
 
 # ────────────────────────────────────────────────────────
 # Environment config
@@ -136,29 +137,25 @@ fzf-git-commit() {
   }
 }
 
+fzf-scope-commit() {
+  git log --oneline --no-color |
+    fzf --ansi --no-sort \
+        --preview 'git scope commit $(echo {} | awk "{print \$1}")' \
+        --preview-window=right:60%:wrap \
+        --bind "enter:execute(clear && git scope commit {1})+abort"
+}
+
 # ────────────────────────────────────────────────────
 # Main fzf-tools command
 # ────────────────────────────────────────────────────
 
 fzf-tools() {
   case "$1" in
-    history)
-      fzf-history
-      ;;
     cd)
       fzf-cd
       ;;
     directory)
       fzf-eza-directory "$2"
-      ;;
-    kill)
-      fzf-kill "$2"
-      ;;
-    git-status)
-      fzf-git-status
-      ;;
-    git-commit)
-      fzf-git-commit
       ;;
     file)
       fzf-file "$2"
@@ -166,9 +163,25 @@ fzf-tools() {
     vscode)
       fzf-vscode "$2"
       ;;
+    git-status)
+      fzf-git-status
+      ;;
+    git-commit)
+      fzf-git-commit
+      ;;
+    git-scope-commit)
+      fzf-scope-commit
+      ;;
+    kill)
+      fzf-kill "$2"
+      ;;
+    history)
+      fzf-history
+      ;;
     *)
-      echo "Usage: fzf-tools {history|cd|directory|kill|git-status|file}"
+      echo "Usage: fzf-tools {cd|directory|file|vscode|git-status|git-commit|git-scope-commit|kill|history}"
       return 1
       ;;
   esac
 }
+

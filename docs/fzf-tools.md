@@ -115,6 +115,24 @@ Uses `ps` and `xargs kill`, with support for multiselect.
 
 ---
 
+### `fzf-tools git-scope-commit`
+
+🧠 Browse commit log and view full commit scope
+
+```bash
+fzf-tools git-scope-commit
+```
+
+Interactively search your Git history, preview each commit's scope using a custom viewer (`git scope commit`), and display full tree of changed files. No need to enter a hash manually—just scroll, preview, and inspect.
+
+**Ideal for:**
+- Visualizing the scope of past commits
+- Reviewing full change context before cherry-pick or squash
+- Structuring Git workflows with higher context awareness
+
+
+---
+
 ## 🧠 Summary
 
 Fzf Tools enhances your terminal flow by bridging common developer tasks into a single, discoverable command. With `fzf`, `bat`, `eza`, and Git integration, you get a lightweight but powerful toolbox for navigating projects, managing sessions, and inspecting your codebase—without leaving the shell.
