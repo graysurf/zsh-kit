@@ -2,12 +2,8 @@
 # Setup completion functions first
 # ──────────────────────────────
 fpath=("$ZDOTDIR/scripts/_completion" $fpath)
-# autoload -Uz _git-lock
-# autoload -Uz _git-scope
 autoload -Uz compinit
 compinit -d "$ZSH_COMPDUMP"
-
-compdef _git git
 
 # ──────────────────────────────
 # fzf-tab configuration (after compinit)
@@ -37,10 +33,8 @@ zstyle ':completion:*' file-patterns '*(-/):directories' '*:all-files'
 # Optional: Use smart-case matching
 zstyle ':fzf-tab:*' ignore-case smart
 
-
-
 unsetopt nomatch
 zmodload zsh/complist
 
-zstyle ':completion:*' use-cache off
+zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$ZSH_COMPDUMP"
