@@ -51,7 +51,7 @@ z() {
   if zoxide query -l "$@" &>/dev/null; then
     builtin cd "$(zoxide query "$@")" && {
       echo -e "\n📁 Now in: $PWD\n"
-      ll
+      eza -alh --icons --group-directories-first --time-style=iso
     }
   else
     echo "❌ No matching directory for: $*"
