@@ -108,40 +108,56 @@ gscope-commit HEAD~6
 **Output:**
 
 ```
-🔖 c1597ed feat(rbac): allow EDITOR role access to admin and member APIs
+🔖 7e1a706 feat(members): support manual memberNo input and unify fallback account creation error
 👤 terrylin <10785178+graysurf@users.noreply.github.com>
 📅 2025-06-04 18:41:35 +0800
 
+📝 Commit Message:
+   feat(members): support manual memberNo input and unify fallback account creation error
+
+   - Added `memberNo` field to CompleteProfileInput, MemberProfile, and schema.gql
+   - Updated member service to pass memberNo into TunGroupService when creating/updating profile
+   - Added fallback error `ACCOUNT_CREATION_FAILED` for unknown failures during account creation
+   - Replaced InternalServerErrorException with structured AppError for consistency
+
 📄 Changed files:
-  ➤ [M] apps/api/src/app/membesr-export.controller.ts                         [+1 / -1]
-  ➤ [M] libs/graphql-api/src/members-profiles/members-profiles.mutations.ts   [+1 / -1]
-  ➤ [M] libs/graphql-api/src/members-profiles/members-profiles.queries.ts     [+3 / -3]
-  ➤ [M] libs/graphql-api/src/members/members.admin.mutations.ts               [+2 / -2]
-  ➤ [M] libs/graphql-api/src/members/members.admin.queries.ts                 [+2 / -2]
-  ➤ [M] libs/graphql-api/src/notifications/notifications.mutations.ts         [+6 / -6]
-  ➤ [M] libs/graphql-api/src/notifications/notifications.queries.ts           [+2 / -2]
+   ➤ [M] libs/graphql-api/src/members/members.mutations.ts  [+4 / -4]
+   ➤ [M] libs/graphql-objects/src/member-profiles/member-profiles.objects.ts  [+3 / -0]
+   ➤ [M] libs/graphql-objects/src/members/members.inputs.ts  [+3 / -0]
+   ➤ [M] libs/integrations/tun-group/src/tun-group.interface.ts  [+1 / -0]
+   ➤ [M] libs/integrations/tun-group/src/tun-group.service.ts  [+1 / -0]
+   ➤ [M] libs/members/src/errors/members.account.errors.ts  [+9 / -0]
+   ➤ [M] libs/members/src/services/members.service.ts  [+26 / -11]
+   ➤ [M] schema.gql  [+262 / -276]
 
 📂 Directory tree:
 .
-├── apps
-│   └── api
+├── libs
+│   ├── graphql-api
+│   │   └── src
+│   │       └── members
+│   │           └── members.mutations.ts
+│   ├── graphql-objects
+│   │   └── src
+│   │       ├── member-profiles
+│   │       │   └── member-profiles.objects.ts
+│   │       └── members
+│   │           └── members.inputs.ts
+│   ├── integrations
+│   │   └── tun-group
+│   │       └── src
+│   │           ├── tun-group.interface.ts
+│   │           └── tun-group.service.ts
+│   └── members
 │       └── src
-│           └── app
-│               └── members-export.controller.ts
-└── libs
-    └── graphql-api
-        └── src
-            ├── members-profiles
-            │   ├── members-profiles.mutations.ts
-            │   └── members-profiles.queries.ts
-            ├── members
-            │   ├── members.admin.mutations.ts
-            │   └── members.admin.queries.ts
-            └── notifications
-                ├── notifications.mutations.ts
-                └── notifications.queries.ts
-```
+│           ├── errors
+│           │   └── members.account.errors.ts
+│           └── services
+│               └── members.service.ts
+└── schema.gql
 
+16 directories, 8 files
+```
 ---
 
 ## 🧱 Implementation Notes

@@ -128,9 +128,13 @@ _gscope_commit() {
 
   echo ""
   git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
-  --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
-  echo ""
+    --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
 
+  echo -e "\n📝 Commit Message:"
+  git log -1 --pretty=format:%B "$commit" | awk '
+    NR==1 { print "   " $0; print ""; next }
+    NF > 0 { print "   " $0 }'
+  
   echo -e "\n📄 Changed files:"
 
   local ns_lines
@@ -160,7 +164,7 @@ _gscope_commit() {
         D) color="$DELETED" ;;
       esac
 
-      echo -e "  ${color}➤ [$kind] $file  [+${add} / -${del}]${COLOR_RESET}"
+      echo -e "  ${color} ➤ [$kind] $file  [+${add} / -${del}]${COLOR_RESET}"
     done <<< "$ns_lines"
   fi
 
