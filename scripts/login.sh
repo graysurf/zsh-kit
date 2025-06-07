@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Prevent double execution
 [[ -n "$_LOGIN_SH_EXECUTED" ]] && return
 export _LOGIN_SH_EXECUTED=1

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # ───────────────────────────────────────────────
 # gscope - Git scope viewer unified CLI
 # Usage: gscope <command> [args...]

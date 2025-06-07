@@ -1,4 +1,12 @@
-#!/bin/bash
-source ~/.config/zsh/scripts/random_emoji.sh
-random_emoji
+#!/usr/bin/env bash
 
+emojis=(
+  ✨ 🌟 🚀 🧠 🐋 🎯 🔥 🍀 📚 💡 💬 🛠️ 🧩 🧘 🥷 🐾 🍎 🌈 🐱 🐳
+  🍺 🌍 🎵 🌅 🌌 🧃 🎉 🧊 🪄 🪐 ⚡ 🧪 🧬 🧱 ⚙️ 🛸 🔮 🧲 🧨 🧵 🧶
+  🪢 📦 🗃️ 📂 📈 📉 🧾 🪪 🧰 🗜️ 🪛 🪚 🔧 🔩 🪤 🎓 🧑‍💻 👨‍🔬 👩‍🚀
+  🧙‍♂️ 🧙‍♀️ 👁️ 🧿 🪬 🪞 🐧 🐼 🐦 🦊 🐢 🐌 🐝 🐞 🦂 🕸️ 🕷️ 🦜 🦉 🦖
+  🦕 🪴 🌵 🌿 🍂 🍁 🌻 🌼 🌷 🪻 🌺 🌸 🪷 🌞 🌝 🌚 🌜 🌊 🌬️ 🌪️
+)
+total=${#emojis[@]}
+idx=$(( (RANDOM + $(date +%N)) % total + 1 ))
+echo "${emojis[$idx]}"
