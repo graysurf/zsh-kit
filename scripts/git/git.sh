@@ -27,12 +27,12 @@ alias gr='git rebase'
 alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
 
 # List all files with Git status in detailed view
-alias lg='eza -alh --icons --group-directories-first --git --time-style=iso'
+alias lg='eza -alh --icons --group-directories-first --color=always --git --time-style=iso'
 # List directories with Git repo status indicators
-alias lgr='eza -alh --icons --group-directories-first --git --git-repos --time-style=iso'
+alias lgr='eza -alh --icons --group-directories-first --color=always --git --git-repos --time-style=iso'
 
 # Visual tree view of current directory (depth = unlimited)
-alias gt='eza -T --git-ignore --color=always --icons'
+alias gt='eza -aT --git-ignore --group-directories-first --color=always --icons'
 # Tree view limited to depth 2 (e.g. folders + their subfolders)
 alias gt2='gt -L 2'
 # Tree view limited to depth 3 (folders + 2 sub-levels)

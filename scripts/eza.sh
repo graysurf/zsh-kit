@@ -6,10 +6,10 @@ unalias ll lx lt llt lt2 lt3 lt5 \
 # List all files including dotfiles
 alias ll='eza -alh --icons --group-directories-first --time-style=iso'
 # List all files including dotfiles
-alias lx='eza -lh   --icons --group-directories-first --time-style=iso'
+alias lx='eza -lh   --icons --group-directories-first --color=always --time-style=iso'
 
 # Tree view with all files
-alias lt='ll -T'
+alias lt='eza -aT --group-directories-first --color=always --icons'
 # Long-format tree view with all files
 alias llt='ll -T'
 
