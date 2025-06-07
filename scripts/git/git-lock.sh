@@ -261,7 +261,7 @@ _glock_list() {
     printf "   🧬 commit:  %s\n" "$hash"
     [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
     [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
-    [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
+    [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
   done
 }
 
@@ -323,7 +323,7 @@ _glock_copy() {
   printf "   🧬 commit:  %s\n" "$hash"
   [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
   [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
-  [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
+  [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
 }
 
 
@@ -368,7 +368,7 @@ _glock_delete() {
   printf "   🧬 commit:  %s\n" "$hash"
   [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
   [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
-  [[ -n "$timestamp" ]] && printf "   ⏰ time:    %s\n" "$timestamp"
+  [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
   echo
 
   read -r -p "⚠️  Delete this glock? [y/N] " confirm
