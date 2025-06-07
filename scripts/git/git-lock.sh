@@ -230,7 +230,7 @@ _glock_list() {
   local file tmp_list=()
   for file in "$lock_dir/${repo_id}-"*.lock; do
     [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
-    local ts_line epoch
+    local ts_line='' epoch=''
     ts_line=$(grep '^timestamp=' "$file")
     timestamp=${ts_line#timestamp=}
     epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
