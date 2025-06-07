@@ -1,4 +1,5 @@
 #!/bin/zsh
 
 source "$ZDOTDIR/scripts/git/git-scope.sh"
-git-scope "$@" || exit $?
+
+gscope "$@" || exit $?
