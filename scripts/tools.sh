@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Reload .zshrc
 reload() {
   source "$ZDOTDIR/.zshrc" && echo -e "\n🔁 Reloaded .zshrc"

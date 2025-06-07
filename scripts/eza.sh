@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Unalias to avoid redefinition warnings
 unalias ll lla lt llt lgt lg lgr \
         lt2 lt3 lt5 \
