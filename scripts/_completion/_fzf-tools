@@ -4,13 +4,14 @@
 local -a commands
 commands=(
   'cd:Change directory using fzf and eza'
-  'git-status:Interactive git status viewer'
-  'git-commit:Browse commits and open changed files in VSCode'
-  'history:Search and execute command history'
-  'kill:Kill a selected process'
   'directory:Preview file and cd into its folder'
   'file:Search and preview text files'
   'vscode:Search and preview text files in VSCode'
+  'git-status:Interactive git status viewer'
+  'git-commit:Browse commits and open changed files in VSCode'
+  'git-scope-commit:Browse commit log and open scope viewer'
+  'kill:Kill a selected process'
+  'history:Search and execute command history'
 )
 
 # Only complete the first argument with description
