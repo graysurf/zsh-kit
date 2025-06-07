@@ -96,4 +96,3 @@ fzf-git-status() {
     --preview-window=right:60%:wrap
 }
 alias fgs='fzf-git-status'
-

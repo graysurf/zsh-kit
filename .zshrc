@@ -65,3 +65,4 @@ done
 # ──────────────────────────────
 eza_script="$ZDOTDIR/scripts/eza.sh"
 [[ -f "$eza_script" ]] && load_with_timing "$eza_script" "$(basename "$eza_script") (delayed)"
+

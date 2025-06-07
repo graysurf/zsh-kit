@@ -209,4 +209,3 @@ gscope() {
       return 1 ;;
   esac
 }
-
