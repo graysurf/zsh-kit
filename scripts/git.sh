@@ -1,8 +1,11 @@
 # ────────────────────────────────────────────────────────
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
-
-unalias git-diff gd gc gl gp gr git-zip gt gt2 gt3 gt5 2>/dev/null
+unalias gd gc gl gp gr git-zip \
+        lg lgr \
+        gt gt2 gt3 gt5 \
+        git-summary git-today git-yesterday \
+        git-this-month git-last-week git-weekly 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git-related aliases
@@ -23,14 +26,19 @@ alias gr='git rebase'
 # Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
 alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
 
+# List all files with Git status in detailed view
+alias lg='eza -alh --icons --group-directories-first --git --time-style=iso'
+# List directories with Git repo status indicators
+alias lgr='eza -alh --icons --group-directories-first --git --git-repos --time-style=iso'
+
 # Visual tree view of current directory (depth = unlimited)
-alias gt='eza -T --color=always --icons'
+alias gt='eza -T --git-ignore --color=always --icons'
 # Tree view limited to depth 2 (e.g. folders + their subfolders)
-alias gt2='eza -T --color=always --icons -L 2'
+alias gt2='gt -L 2'
 # Tree view limited to depth 3 (folders + 2 sub-levels)
-alias gt3='eza -T --color=always --icons -L 3'
+alias gt3='gt -L 3'
 # Tree view limited to depth 5 (for inspecting deeper structures)
-alias gt5='eza -T --color=always --icons -L 5'
+alias gt5='gt -L 5'
 
 # ────────────────────────────────────────────────────────
 # git-summary: author-based contribution report
