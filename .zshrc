@@ -42,7 +42,7 @@ load_with_timing "$ZDOTDIR/scripts/iterm2_shell_integration.zsh"
 # ──────────────────────────────
 # Load user-defined scripts with timing (except duplicates)
 # ──────────────────────────────
-for file in "$ZDOTDIR/scripts/"*.sh "$ZDOTDIR/.private/"*.sh; do
+for file in "$ZDOTDIR/scripts/"**/*.sh "$ZDOTDIR/.private/"**/*.sh; do
   case "$file" in
     *"/env.sh" | *"/plugins.sh" | *"/completion.zsh" | *"/eza.sh" | *"/.iterm2_shell_integration.zsh")
       continue
