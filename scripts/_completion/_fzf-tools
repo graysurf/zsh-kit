@@ -1,0 +1,22 @@
+#compdef fzf-tools
+
+# List of subcommands with their descriptions
+local -a commands
+commands=(
+  'cd:Change directory using fzf and eza'
+  'git-status:Interactive git status viewer'
+  'git-commit:Browse commits and open changed files in VSCode'
+  'history:Search and execute command history'
+  'kill:Kill a selected process'
+  'directory:Preview file and cd into its folder'
+  'file:Search and preview text files'
+  'vscode:Search and preview text files in VSCode'
+)
+
+# Only complete the first argument with description
+if (( CURRENT == 2 )); then
+  _describe 'subcommand' commands
+  return
+fi
+
+compdef _fzf-tools fzf-tools
