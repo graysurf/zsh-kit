@@ -35,3 +35,4 @@ _gscope_completions() {
 }
 
 compdef _gscope_completions gscope
+
