@@ -120,7 +120,6 @@ fzf-git-commit() {
   local commit_query=""
   local commit_query_restore=""
 
-  # If a parameter is provided → resolve it to a commit hash and truncate to 7 chars for initial query
   if [[ -n "$input_ref" ]]; then
     local full_hash
     full_hash=$(get_commit_hash "$input_ref")
@@ -129,37 +128,75 @@ fzf-git-commit() {
   fi
 
   while true; do
-    # ── Step 1: Pick commit ──
     local result
     result=$(git log --oneline --no-color |
       fzf --ansi --no-sort --reverse \
           --query="$commit_query" \
           --print-query \
           --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"')
-    [[ -z "$result" ]] && return  # ESC: exit flow
+    [[ -z "$result" ]] && return
 
-    # 將 query 與選中的 commit 分別取出
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
-    # ── Step 2: Pick file ──
-    file=$(git diff-tree --no-commit-id --name-only -r "$commit" |
+    local COLOR_RESET='\033[0m'
+    local ADDED='\033[1;32m'
+    local MODIFIED='\033[1;33m'
+    local DELETED='\033[1;31m'
+    local OTHER='\033[1;34m'
+
+    local stats_list=""
+    stats_list=$(git show --numstat --format= "$commit")
+
+    local -a file_list=()
+    while IFS=$'\t' read -r kind filepath; do
+      local color="$OTHER"
+      case "$kind" in
+        A) color="$ADDED" ;;
+        M) color="$MODIFIED" ;;
+        D) color="$DELETED" ;;
+        U) color="$OTHER" ;;
+        *) color="$COLOR_RESET" ;;
+      esac
+
+      local stat_line
+      stat_line=$(echo "$stats_list" | awk -v f="$filepath" '$3 == f {
+        a = ($1 == "-" ? 0 : $1)
+        d = ($2 == "-" ? 0 : $2)
+        printf "  [+" a " / -" d "]"
+      }')
+
+      file_list+=("$(printf "%b[%s] %s%s%b" "$color" "$kind" "$filepath" "$stat_line" "$COLOR_RESET")")
+    done < <(git diff-tree --no-commit-id --name-status -r "$commit")
+
+    file=$(printf "%s\n" "${file_list[@]}" |
       fzf --ansi \
           --prompt="📄 Files in $commit > " \
-          --preview "git show ${commit}:{} | bat --color=always --style=numbers --line-range :100 --file-name={}")
+          --preview='bash -c "
+            filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
+            git show '"${commit}"':\$filepath | bat --color=always --style=numbers --line-range :100 --file-name=\$filepath"' |
+      sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//'
+    )
 
     if [[ -z "$file" ]]; then
-      # On ESC from Step 2 → return to Step 1 and restore the previous query string
       commit_query="$commit_query_restore"
       continue
     fi
 
-    # ── Step 3: Open selected file ──
     tmp="/tmp/git-${commit//\//_}-${file##*/}"
     git show "${commit}:${file}" > "$tmp"
     code "$tmp"
     break
   done
+}
+
+# Fuzzy search git commits with preview using git-scope
+fzf-scope-commit() {
+  git log --oneline --no-color |
+    fzf --ansi --no-sort --reverse \
+        --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
+        --preview-window=right:60%:wrap \
+        --bind "enter:execute(clear && git-scope commit {1})+abort"
 }
 
 # Show delimited preview blocks in FZF and copy selected block to clipboard
