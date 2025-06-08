@@ -15,25 +15,6 @@ alias fv='fzf-vscode'
 alias fsc='fzf-scope-commit'
 
 # ────────────────────────────────────────────────────────
-# Environment config
-# ────────────────────────────────────────────────────────
-# Set max depth for fd-based searches
-export FZF_FILE_MAX_DEPTH=5
-export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-  --preview-window=right:60%:wrap \
-  --bind=ctrl-j:preview-down \
-  --bind=ctrl-k:preview-up \
-  --bind=ctrl-l:preview-page-down \
-  --bind=ctrl-h:preview-page-up"
-
-# FZF key bindings (e.g., Ctrl-R, Ctrl-T, Alt-C)
-source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
-
-export FZF_CTRL_T_COMMAND='fd --type f -t d --hidden --follow --exclude .git -E .cache'
-export FZF_CTRL_T_OPTS="--preview 'bat --color \"always\" {}'"
-export FZF_ALT_C_COMMAND="fd --type d --hidden --follow"
-
-# ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
 # Fuzzy search command history and execute selected entry
@@ -95,8 +76,7 @@ fzf-git-status() {
   git status -s | fzf --no-sort --reverse \
     --preview 'git diff --color=always {2}' \
     --bind=ctrl-j:preview-down \
-    --bind=ctrl-k:preview-up \
-    --preview-window=right:60%:wrap
+    --bind=ctrl-k:preview-up 
 }
 # ────────────────────────────────────────────────────────
 # fzf file preview helper
@@ -104,8 +84,7 @@ fzf-git-status() {
 __fzf_file_select() {
   fd --type f --max-depth=${FZF_FILE_MAX_DEPTH:-5} --hidden 2>/dev/null |
     fzf --ansi \
-        --preview 'bat --color=always --style=numbers --line-range :100 {}' \
-        --preview-window=right:60%:wrap
+        --preview 'bat --color=always --style=numbers --line-range :100 {}'
 }
 
 # Fuzzy search a file and open it with vi
@@ -144,8 +123,7 @@ fzf-git-commit() {
   [[ -z "$commit" ]] && return
 
   file=$(git diff-tree --no-commit-id --name-only -r "$commit" |
-    fzf --preview "git show ${commit}:{} | bat --color=always --style=numbers --line-range :100 --file-name={}" \
-        --preview-window=right:60%:wrap)
+    fzf --preview "git show ${commit}:{} | bat --color=always --style=numbers --line-range :100 --file-name={}")
 
   [[ -n "$file" ]] && {
     tmp="/tmp/git-${commit//\//_}-${file##*/}"
@@ -159,12 +137,8 @@ fzf-scope-commit() {
   git log --oneline --no-color |
     fzf --ansi --no-sort \
         --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
-        --preview-window=right:60%:wrap \
         --bind "enter:execute(clear && git-scope commit {1})+abort"
 }
-
-export FZF_DEF_DELIM='"[FZF-DEF]'
-export FZF_DEF_DELIM_END='[FZF-DEF-END]'
 
 # Show delimited preview blocks in FZF and copy selected block to clipboard
 fzf_block_preview() {
@@ -235,8 +209,7 @@ EOF
     FZF_DEF_DELIM_END="$enddelim" \
     fzf --ansi \
         --prompt="» Select > " \
-        --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile" \
-        --preview-window=right:60%)
+        --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile")
 
   [[ -z "$selected" ]] && { rm -f "$tmpfile" "$previewscript"; return }
 

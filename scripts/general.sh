@@ -63,6 +63,5 @@ fsearch() {
   fd --type f --hidden --exclude .git |
     fzf --preview "bat --color=always --style=numbers {} | rg --color=always --context 5 '$query'" \
         --bind=ctrl-j:preview-down \
-        --bind=ctrl-k:preview-up \
-        --preview-window=right:70%:wrap
+        --bind=ctrl-k:preview-up 
 }
