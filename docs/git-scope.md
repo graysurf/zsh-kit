@@ -1,7 +1,6 @@
-
 # 📂 git-scope: Git Scope Viewers
 
-git-scope is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
+`git-scope` is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
 
 ---
 
@@ -28,61 +27,61 @@ Displays a full tree of files currently under version control.
 
 ---
 
-### `git-scope-staged`
+### `git-scope staged`
 
 📂 Show tree of staged files (ready to be committed)
 
 ```bash
-git-scope-staged
+git-scope staged
 ```
 
 Only includes files in the staging area.
 
 ---
 
-### `git-scope-modified`
+### `git-scope modified`
 
 📂 Show tree of modified files (not yet staged)
 
 ```bash
-git-scope-modified
+git-scope modified
 ```
 
 Lists files changed but not added to staging.
 
 ---
 
-### `git-scope-all`
+### `git-scope all`
 
 📂 Show tree of all changed files (staged + modified)
 
 ```bash
-git-scope-all
+git-scope all
 ```
 
-Combined view of `git-scope-staged` and `git-scope-modified`.
+Combined view of `staged` and `modified`.
 
 ---
 
-### `git-scope-untracked`
+### `git-scope untracked`
 
 📂 Show tree of untracked files (new files not yet added)
 
 ```bash
-git-scope-untracked
+git-scope untracked
 ```
 
 Lists new files not yet staged, ignoring those excluded via `.gitignore`.
 
 ---
 
-### `git-scope-commit`
+### `git-scope commit <hash>`
 
 📂 Show tree and metadata of a specific commit
 
 ```bash
-git-scope-commit HEAD~1
-git-scope-commit abc1234
+git-scope commit HEAD~1
+git-scope commit abc1234
 ```
 
 This command displays:
@@ -99,10 +98,10 @@ Useful for:
 
 ---
 
-### 🧪 Example
+## 🧪 Example
 
 ```bash
-git-scope-commit HEAD~6
+git-scope commit HEAD~6
 ```
 
 **Output:**
@@ -129,6 +128,8 @@ git-scope-commit HEAD~6
    ➤ [M] libs/members/src/errors/members.account.errors.ts  [+9 / -0]
    ➤ [M] libs/members/src/services/members.service.ts  [+26 / -11]
    ➤ [M] schema.gql  [+262 / -276]
+
+   📊 Total: +309 / -291
 
 📂 Directory tree:
 .
@@ -158,6 +159,7 @@ git-scope-commit HEAD~6
 
 16 directories, 8 files
 ```
+
 ---
 
 ## 🧱 Implementation Notes
@@ -171,7 +173,7 @@ git-scope-commit HEAD~6
 
 ## 🧠 Summary
 
-git-scope helps you reason about your Git workspace in a visual way. Each command is meant to answer a simple question like:
+`git-scope` helps you reason about your Git workspace in a visual way. Each command is meant to answer a simple question like:
 
 - What have I staged?
 - What’s new in the working tree?
