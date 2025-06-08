@@ -49,7 +49,8 @@ groot() {
 gu() {
   echo "⚠️  This will rewind your last commit (soft reset)"
   echo "🧠 Your changes will become UNSTAGED. Good for regrouping changes."
-  read "confirm?❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  echo -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "🚫 Aborted"
     return 1
@@ -63,7 +64,8 @@ gu() {
 gum() {
   echo "⚠️  This will undo your last commit (soft reset)"
   echo "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
-  read "confirm?❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  echo -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "🚫 Aborted"
     return 1

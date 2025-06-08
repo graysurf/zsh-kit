@@ -100,7 +100,8 @@ _git_lock_unlock() {
   [[ -n "$msg" ]] && echo "    commit message: $msg"
   echo
 
-  read -r -p "⚠️  Hard reset to [$label]? [y/N] " confirm
+  echo -n "⚠️  Hard reset to [$label]? [y/N] " confirm
+  read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "🚫 Aborted"
     return 1
@@ -182,7 +183,8 @@ _git_lock_unlock() {
   [[ -n "$msg" ]] && echo "    commit message: $msg"
   echo
 
-  read -r -p "⚠️  Hard reset to [$label]? [y/N] " confirm
+  echo -n "⚠️  Hard reset to [$label]? [y/N] " confirm
+  read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "🚫 Aborted"
     return 1
@@ -302,7 +304,8 @@ _git_lock_copy() {
   fi
 
   if [[ -f "$dst_file" ]]; then
-    read "confirm?⚠️  Target git-lock [$repo_id:$dst_label] already exists. Overwrite? [y/N] "
+    echo -n "⚠️  Target git-lock [$repo_id:$dst_label] already exists. Overwrite? [y/N] "
+    read -r confirm
     [[ "$confirm" != [yY] ]] && {
       echo "🚫 Aborted"
       return 1
@@ -496,7 +499,8 @@ _git_lock_tag() {
 
   if git rev-parse "$tag_name" >/dev/null 2>&1; then
     echo "⚠️  Git tag [$tag_name] already exists."
-    read "confirm?❓ Overwrite it? [y/N] "
+    echo -n "❓ Overwrite it? [y/N] "
+    read -r confirm
     [[ "$confirm" != [yY] ]] && {
       echo "🚫 Aborted"
       return 1
