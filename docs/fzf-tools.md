@@ -130,7 +130,6 @@ Interactively search your Git history, preview each commit's scope using a custo
 - Reviewing full change context before cherry-pick or squash
 - Structuring Git workflows with higher context awareness
 
-
 ---
 
 ## 🧠 Summary
