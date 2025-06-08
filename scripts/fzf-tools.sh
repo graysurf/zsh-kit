@@ -101,43 +101,65 @@ fzf-vscode() {
   [[ -n "$file" ]] && code "$file"
 }
 
-# Fuzzy pick a git commit and preview/open its file contents
-fzf-git-commit() {
-  local commit file input
-
-  if [[ -n "$1" ]]; then
-    commit="$1"
-  else
-    echo -n "Enter commit hash (or leave empty to pick): "
-    read -r input
-
-    if [[ -n "$input" ]]; then
-      commit="$input"
-    else
-      commit=$(git log --oneline --color=always |
-        fzf --ansi --no-sort --reverse --height=40% |
-        awk '{print $1}')
-    fi
+# get_commit_hash <ref>
+get_commit_hash() {
+  local ref="$1"
+  if [[ -z "$ref" ]]; then
+    echo "❌ Missing git ref" >&2
+    return 1
   fi
 
-  [[ -z "$commit" ]] && return
+  # Try resolve commit (handles annotated tags too)
+  git rev-parse --verify --quiet "${ref}^{commit}"
+}
 
-  file=$(git diff-tree --no-commit-id --name-only -r "$commit" |
-    fzf --preview "git show ${commit}:{} | bat --color=always --style=numbers --line-range :100 --file-name={}")
+# Fuzzy pick a git commit and preview/open its file contents
+fzf-git-commit() {
+  local input_ref="$1"
+  local commit file tmp
+  local commit_query=""
+  local commit_query_restore=""
 
-  [[ -n "$file" ]] && {
+  # If a parameter is provided → resolve it to a commit hash and truncate to 7 chars for initial query
+  if [[ -n "$input_ref" ]]; then
+    local full_hash
+    full_hash=$(get_commit_hash "$input_ref")
+    [[ -z "$full_hash" ]] && echo "❌ Invalid ref: $input_ref" >&2 && return 1
+    commit_query="${full_hash:0:7}"
+  fi
+
+  while true; do
+    # ── Step 1: Pick commit ──
+    local result
+    result=$(git log --oneline --no-color |
+      fzf --ansi --no-sort --reverse \
+          --query="$commit_query" \
+          --print-query \
+          --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"')
+    [[ -z "$result" ]] && return  # ESC: exit flow
+
+    # 將 query 與選中的 commit 分別取出
+    commit_query_restore=$(sed -n '1p' <<< "$result")
+    commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
+
+    # ── Step 2: Pick file ──
+    file=$(git diff-tree --no-commit-id --name-only -r "$commit" |
+      fzf --ansi \
+          --prompt="📄 Files in $commit > " \
+          --preview "git show ${commit}:{} | bat --color=always --style=numbers --line-range :100 --file-name={}")
+
+    if [[ -z "$file" ]]; then
+      # On ESC from Step 2 → return to Step 1 and restore the previous query string
+      commit_query="$commit_query_restore"
+      continue
+    fi
+
+    # ── Step 3: Open selected file ──
     tmp="/tmp/git-${commit//\//_}-${file##*/}"
     git show "${commit}:${file}" > "$tmp"
     code "$tmp"
-  }
-}
-
-# Fuzzy search git commits with preview using git-scope
-fzf-scope-commit() {
-  git log --oneline --no-color |
-    fzf --ansi --no-sort \
-        --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
-        --bind "enter:execute(clear && git-scope commit {1})+abort"
+    break
+  done
 }
 
 # Show delimited preview blocks in FZF and copy selected block to clipboard
