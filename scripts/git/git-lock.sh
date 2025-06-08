@@ -70,7 +70,7 @@ _git_lock() {
 # - Aborts safely on missing label or user cancellation
 #
 # Example:
-#   gunlock dev
+#   _git_lock_unlock dev
 _git_lock_unlock() {
   local repo_id lock_dir label lock_file latest_label
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")

@@ -3,8 +3,7 @@
 # ────────────────────────────────────────────────────────
 
 unalias gr greset-hard guncommit gpushf gdc groot \
-        ghopen ghbranch gundo gpick \
-        git-lock gunlock git-lock-list git-lock-copy git-lock-delete git-lock-diff git-lock-tag 2>/dev/null
+        ghopen ghbranch gundo gpick 2>/dev/null
 
 
 # ────────────────────────────────────────────────────────

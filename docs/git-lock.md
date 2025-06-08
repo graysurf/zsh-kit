@@ -6,42 +6,38 @@ git-lock is a lightweight commit-locking utility for Git repositories. It allows
 
 ## 📦 Use Cases
 
-- Save a known-good commit before refactoring (`git-lock refactor-start`)
-- Lock a hotfix base before applying changes (`git-lock hotfix-base`)
-- Tag commits after QA review using saved labels (`git-lock-tag qa-passed v1.1.2`)
-- Roll back instantly to a locked commit (`gunlock refactor-start`)
+- Save a known-good commit before refactoring (`git-lock lock refactor-start`)
+- Lock a hotfix base before applying changes (`git-lock lock hotfix-base`)
+- Tag commits after QA review using saved labels (`git-lock tag qa-passed v1.1.2`)
+- Roll back instantly to a locked commit (`git-lock unlock refactor-start`)
 - View or diff commit checkpoints for auditing
 
 ---
 
 ## 🛠 Commands
 
-### `git-lock <label> [note] [commit]`
+### `git-lock lock <label> [note] [commit]`
 
 Locks the current commit (or a specific one) under a label.
 
-- Stores commit hash, optional note, and timestamp.
-- Lock files live in: `$ZSH_CACHE_DIR/git-locks/`
-- Also updates `<repo>-latest` marker for recent access
-
 ```bash
-git-lock dev-start "before breaking change"
-git-lock release-candidate "for QA team" HEAD~1
+git-lock lock dev-start "before breaking change"
+git-lock lock release-candidate "for QA team" HEAD~1
 ```
 
 ---
 
-### `gunlock [label]`
+### `git-lock unlock <label>`
 
 Restores the commit saved under the given label via `git reset --hard`. Prompts before action.
 
 ```bash
-gunlock dev-start
+git-lock unlock dev-start
 ```
 
 ---
 
-### `git-lock-list`
+### `git-lock list`
 
 Lists all saved git-locks for the current repo, including:
 
@@ -54,42 +50,42 @@ Lists all saved git-locks for the current repo, including:
 
 ---
 
-### `git-lock-copy <src-label> <dst-label>`
+### `git-lock copy <src-label> <dst-label>`
 
 Duplicates a saved git-lock (useful for branching or preserving milestones).
 
 ```bash
-git-lock-copy qa-ready staging-review
+git-lock copy qa-ready staging-review
 ```
 
 ---
 
-### `git-lock-delete [label]`
+### `git-lock delete <label>`
 
 Deletes a saved git-lock. Prompts before removal. Also cleans up latest marker if applicable.
 
 ```bash
-git-lock-delete dev-start
+git-lock delete dev-start
 ```
 
 ---
 
-### `git-lock-diff <label1> <label2>`
+### `git-lock diff <label1> <label2>`
 
 Compares two saved git-locks by showing commits between them using `git log`.
 
 ```bash
-git-lock-diff alpha beta
+git-lock diff alpha beta
 ```
 
 ---
 
-### `git-lock-tag <label> <tag-name> [-m <msg>] [--push]`
+### `git-lock tag <label> <tag-name> [-m <msg>] [--push]`
 
 Creates a Git tag from a saved git-lock. Optionally pushes it to origin and deletes it locally.
 
 ```bash
-git-lock-tag rc-1 v1.2.0 -m "Release Candidate 1" --push
+git-lock tag rc-1 v1.2.0 -m "Release Candidate 1" --push
 ```
 
 ---
@@ -100,15 +96,15 @@ git-lock-tag rc-1 v1.2.0 -m "Release Candidate 1" --push
 - File format:
   - Line 1: `commit-hash # optional note`
   - Line 2: `timestamp=YYYY-MM-DD HH:MM:SS`
-- `gunlock` and `git-lock-tag` read from these files
-- `git-lock-list` sorts using timestamps for recent-first ordering
+- `git-lock unlock` and `git-lock tag` read from these files
+- `git-lock list` sorts using timestamps for recent-first ordering
 - `basename` of `git rev-parse --show-toplevel` is used to isolate per-repo locking
 
 ---
 
 ## 📤 Output Preview
 
-A sample `git-lock-list` might look like:
+A sample `git-lock list` might look like:
 
 ```
 🔐 git-lock list for [my-repo]:
