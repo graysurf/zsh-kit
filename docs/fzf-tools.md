@@ -132,6 +132,54 @@ Interactively search your Git history, preview each commit's scope using a custo
 
 ---
 
+### `fzf-tools env`
+
+🌱 Browse environment variables with fuzzy search and preview
+
+```bash
+fzf-tools env
+```
+
+Each environment variable is shown with its full value for quick inspection or copying.
+
+---
+
+### `fzf-tools alias`
+
+🔗 Browse and inspect defined shell aliases
+
+```bash
+fzf-tools alias
+```
+
+See your configured shortcuts in one place, with real evaluated output.
+
+---
+
+### `fzf-tools functions`
+
+🔧 View loaded shell functions with source content
+
+```bash
+fzf-tools functions
+```
+
+Lists all functions in your shell session and shows their implementation.
+
+---
+
+### `fzf-tools defs`
+
+📦 Explore all shell definitions (env, alias, functions)
+
+```bash
+fzf-tools defs
+```
+
+Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
+
+---
+
 ## 🧠 Summary
 
 Fzf Tools enhances your terminal flow by bridging common developer tasks into a single, discoverable command. With `fzf`, `bat`, `eza`, and Git integration, you get a lightweight but powerful toolbox for navigating projects, managing sessions, and inspecting your codebase—without leaving the shell.
