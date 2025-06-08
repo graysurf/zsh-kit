@@ -65,21 +65,24 @@ An example Zsh startup log with this config:
 ```text
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 
-✅ Loaded env.sh in 7ms
-✅ Loaded plugins.sh in 70ms
-✅ Loaded iterm2_shell_integration.zsh in 7ms
-✅ Loaded fzf.sh in 6ms
-✅ Loaded general.sh in 4ms
-✅ Loaded git-tools.sh in 4ms
+✅ Loaded eza.sh in 3ms
+✅ Loaded fzf-tools.sh in 3ms
+✅ Loaded general.sh in 3ms
+✅ Loaded git-lock.sh in 3ms
+✅ Loaded git-scope.sh in 3ms
+✅ Loaded git-tools.sh in 3ms
 ✅ Loaded git.sh in 3ms
-✅ Loaded login.sh in 4ms
+✅ Loaded login.sh in 3ms
 ✅ Loaded mac.sh in 3ms
 ✅ Loaded random_emoji.sh in 3ms
 ✅ Loaded tools.sh in 3ms
 ✅ Loaded language.sh in 3ms
-✅ Loaded secrets.sh in 4ms
+✅ Loaded secrets.sh in 3ms
 ✅ Loaded ssh.sh in 3ms
-✅ Loaded eza.sh (delayed) in 4ms
+✅ Loaded env.sh in 7ms
+✅ Loaded plugins.sh in 53ms
+✅ Loaded completion.zsh in 22ms
+✅ Loaded development.sh (delayed) in 2ms
 
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
 12:00:42.133 ✔︎
