@@ -3,7 +3,7 @@
 __git_lock_labels() {
   local repo_id lock_dir
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null)
-  lock_dir="$ZSH_CACHE_DIR/glocks"
+  lock_dir="$ZSH_CACHE_DIR/git-locks"
 
   [[ -d "$lock_dir" ]] || return
 
@@ -43,7 +43,7 @@ _git-lock() {
       ;;
     tag)
       if (( CURRENT == 3 )); then
-        _values 'glock label' $(__git_lock_labels)
+        _values 'git-lock label' $(__git_lock_labels)
       elif (( CURRENT == 4 )); then
         _message 'git tag name'
       elif [[ $words[CURRENT-1] == "-m" ]]; then

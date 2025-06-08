@@ -8,8 +8,8 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 - 🌟 Emoji-powered login messages with random quotes (via custom script)
 - 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
 - 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
-- 🔐 [glock](docs/glock.md): Commit locking system for safe checkpoints, diffs, and tagging
-- 📂 [gscope](docs/gscope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
+- 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
+- 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 🔧 Modular and lazy-friendly structure under `scripts/`
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
@@ -33,8 +33,8 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │   ├── _completion/                      # Custom completion definitions
 │   │
 │   ├── git/                              # Git-related tools
-│   │   ├── git-lock.sh                   # glock commit locker
-│   │   ├── git-scope.sh                  # gscope commit viewer
+│   │   ├── git-lock.sh                   # git-lock commit locker
+│   │   ├── git-scope.sh                  # git-scope commit viewer
 │   │   ├── git-tools.sh                  # Shared git utilities
 │   │   └── git.sh                        # Git aliases
 │   │

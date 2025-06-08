@@ -18,7 +18,7 @@ _git-scope() {
 
   case $state in
     subcmds)
-      _describe -t commands 'gscope subcommand' subcommands && return 0
+      _describe -t commands 'git-scope subcommand' subcommands && return 0
       ;;
     args)
       if [[ ${words[1]} == "commit" ]]; then

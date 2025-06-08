@@ -4,7 +4,7 @@
 
 unalias gr greset-hard guncommit gpushf gdc groot \
         ghopen ghbranch gundo gpick \
-        glock gunlock glock-list glock-copy glock-delete glock-diff glock-tag 2>/dev/null
+        git-lock gunlock git-lock-list git-lock-copy git-lock-delete git-lock-diff git-lock-tag 2>/dev/null
 
 
 # ────────────────────────────────────────────────────────

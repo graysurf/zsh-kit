@@ -1,7 +1,7 @@
 
-# 📂 Gscope: Git Scope Viewers
+# 📂 git-scope: Git Scope Viewers
 
-Gscope is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
+git-scope is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
 
 ---
 
@@ -16,73 +16,73 @@ Gscope is a collection of tree-based Git viewers for inspecting your working dir
 
 ## 🛠 Commands
 
-### `gscope`
+### `git-scope`
 
 📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)
 
 ```bash
-gscope
+git-scope
 ```
 
 Displays a full tree of files currently under version control.
 
 ---
 
-### `gscope-staged`
+### `git-scope-staged`
 
 📂 Show tree of staged files (ready to be committed)
 
 ```bash
-gscope-staged
+git-scope-staged
 ```
 
 Only includes files in the staging area.
 
 ---
 
-### `gscope-modified`
+### `git-scope-modified`
 
 📂 Show tree of modified files (not yet staged)
 
 ```bash
-gscope-modified
+git-scope-modified
 ```
 
 Lists files changed but not added to staging.
 
 ---
 
-### `gscope-all`
+### `git-scope-all`
 
 📂 Show tree of all changed files (staged + modified)
 
 ```bash
-gscope-all
+git-scope-all
 ```
 
-Combined view of `gscope-staged` and `gscope-modified`.
+Combined view of `git-scope-staged` and `git-scope-modified`.
 
 ---
 
-### `gscope-untracked`
+### `git-scope-untracked`
 
 📂 Show tree of untracked files (new files not yet added)
 
 ```bash
-gscope-untracked
+git-scope-untracked
 ```
 
 Lists new files not yet staged, ignoring those excluded via `.gitignore`.
 
 ---
 
-### `gscope-commit`
+### `git-scope-commit`
 
 📂 Show tree and metadata of a specific commit
 
 ```bash
-gscope-commit HEAD~1
-gscope-commit abc1234
+git-scope-commit HEAD~1
+git-scope-commit abc1234
 ```
 
 This command displays:
@@ -102,7 +102,7 @@ Useful for:
 ### 🧪 Example
 
 ```bash
-gscope-commit HEAD~6
+git-scope-commit HEAD~6
 ```
 
 **Output:**
@@ -171,7 +171,7 @@ gscope-commit HEAD~6
 
 ## 🧠 Summary
 
-Gscope helps you reason about your Git workspace in a visual way. Each command is meant to answer a simple question like:
+git-scope helps you reason about your Git workspace in a visual way. Each command is meant to answer a simple question like:
 
 - What have I staged?
 - What’s new in the working tree?
