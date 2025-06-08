@@ -124,17 +124,21 @@ fzf-vscode() {
 
 # Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
-  local commit file
+  local commit file input
 
-  echo -n "Enter commit hash (or leave empty to pick): "
-  read -r input
-
-  if [[ -n "$input" ]]; then
-    commit="$input"
+  if [[ -n "$1" ]]; then
+    commit="$1"
   else
-    commit=$(git log --oneline --color=always |
-      fzf --ansi --no-sort --reverse --height=40% |
-      awk '{print $1}')
+    echo -n "Enter commit hash (or leave empty to pick): "
+    read -r input
+
+    if [[ -n "$input" ]]; then
+      commit="$input"
+    else
+      commit=$(git log --oneline --color=always |
+        fzf --ansi --no-sort --reverse --height=40% |
+        awk '{print $1}')
+    fi
   fi
 
   [[ -z "$commit" ]] && return
