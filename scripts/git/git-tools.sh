@@ -2,7 +2,7 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr gpo greset-hard gu gum gdc groot \
+unalias gr greset-hard gu gum gdc groot \
         gh-open gh-open-branch \
         gh-open-commit gh-push-open \
         gundo gpick 2>/dev/null
@@ -11,11 +11,11 @@ unalias gr gpo greset-hard gu gum gdc groot \
 # Git operation aliases
 # ────────────────────────────────────────────────────────
 
+# Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
+alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
+
 # Reset staged files (equivalent to "git reset")
 alias gr='git reset'
-
-# Push and open GitHub commit
-alias gpo='gh-push-open'
 
 # Copy staged diff to clipboard (no output)
 gdc() {

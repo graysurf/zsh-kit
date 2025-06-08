@@ -72,13 +72,9 @@ alias gpcapfo='git commit --amend -F <(pbpaste) && git push --force-with-lease &
 # Amend commit using clipboard message, force-push, and open on GitHub (DANGEROUS)
 alias gpcapffo='git commit --amend -F <(pbpaste) && git push -f && gh-open-commit HEAD'
 
-
 # ────────────────────────────────────────────────────────
 # Git utility aliases
 # ────────────────────────────────────────────────────────
-
-# Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
-alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
 
 # List all files with Git status in detailed view
 alias lg='eza -alh --icons --group-directories-first --color=always --git --time-style=iso'
