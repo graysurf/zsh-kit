@@ -34,8 +34,10 @@ export FZF_DEF_DELIM_END
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
   --bind=ctrl-j:preview-down \
   --bind=ctrl-k:preview-up \
-  --bind=ctrl-l:preview-page-down \
-  --bind=ctrl-h:preview-page-up"
+  --bind=ctrl-b:preview-page-up \
+  --bind=ctrl-f:preview-page-down \
+  --bind=ctrl-h:preview-top \
+  --bind=ctrl-l:preview-bottom"
 
 # FZF key bindings (e.g., Ctrl-R, Ctrl-T, Alt-C)
 source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
