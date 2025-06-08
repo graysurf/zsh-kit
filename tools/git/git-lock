@@ -1,5 +1,12 @@
-#!/bin/zsh
+#!/usr/bin/env bash
+
+setopt no_nomatch
 
 source "$ZDOTDIR/scripts/git/git-lock.sh"
 
-glock "$@" || exit $?
+if ! typeset -f git-lock >/dev/null; then
+  echo "❗ 'git-lock' is not defined as a function."
+  exit 1
+fi
+
+git-lock "$@" || exit $?
