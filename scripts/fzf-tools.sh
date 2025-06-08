@@ -156,45 +156,43 @@ fzf-scope-commit() {
 # ────────────────────────────────────────────────────
 
 fzf-tools() {
-  case "$1" in
-    cd)
-      fzf-cd ;;
-    directory)
-      fzf-eza-directory "$2" ;;
-    file)
-      fzf-file "$2" ;;
-    vscode)
-      fzf-vscode "$2" ;;
-    git-status)
-      fzf-git-status ;;
-    git-commit)
-      fzf-git-commit ;;
-    git-scope-commit)
-      fzf-scope-commit ;;
-    kill)
-      fzf-kill "$2" ;;
-    history)
-      fzf-history ;;
-    help|--help|-h|"")
-      echo "Usage: fzf-tools <command> [args...]"
-      echo ""
-      echo "Commands:"
-      printf "  %-18s %s\n" \
-        cd "Change directory using fzf and eza" \
-        directory "Preview file and cd into its folder" \
-        file "Search and preview text files" \
-        vscode "Search and preview text files in VSCode" \
-        git-status "Interactive git status viewer" \
-        git-commit "Browse commits and open changed files in VSCode" \
-        git-scope-commit "Browse commit log and open scope viewer" \
-        kill "Kill a selected process" \
-        history "Search and execute command history"
-      echo ""
-      return 0 ;;
+  local cmd="$1"
+
+  if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
+    echo "Usage: fzf-tools <command> [args...]"
+    echo ""
+    echo "Commands:"
+    printf "  %-18s %s\n" \
+      cd "Change directory using fzf and eza" \
+      directory "Preview file and cd into its folder" \
+      file "Search and preview text files" \
+      vscode "Search and preview text files in VSCode" \
+      git-status "Interactive git status viewer" \
+      git-commit "Browse commits and open changed files in VSCode" \
+      git-scope-commit "Browse commit log and open scope viewer" \
+      kill "Kill a selected process" \
+      history "Search and execute command history"
+    echo ""
+    return 0
+  fi
+
+  shift
+
+  case "$cmd" in
+    cd)               fzf-cd "$@" ;;
+    directory)        fzf-eza-directory "$@" ;;
+    file)             fzf-file "$@" ;;
+    vscode)           fzf-vscode "$@" ;;
+    git-status)       fzf-git-status "$@" ;;
+    git-commit)       fzf-git-commit "$@" ;;
+    git-scope-commit) fzf-scope-commit "$@" ;;
+    kill)             fzf-kill "$@" ;;
+    history)          fzf-history "$@" ;;
     *)
-      echo "❗ Unknown subcommand: '$1'"
-      echo "Run 'fzf-tools help' for available commands."
+      echo "❗ Unknown command: $cmd"
+      echo "Run 'fzf-tools help' for usage."
       return 1 ;;
   esac
 }
+
 
