@@ -51,7 +51,7 @@ groot() {
 # ────────────────────────────────────────────────────────
 
 # Open the repository page on GitHub or GitLab
-ghopen() {
+gh-open() {
   local url
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
@@ -70,7 +70,7 @@ ghopen() {
 }
 
 # Open the current branch page on GitHub or GitLab
-ghbranch() {
+gh-open-branch() {
   local url branch
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
@@ -87,6 +87,49 @@ ghbranch() {
     echo "❌ Failed to resolve URL or branch"
     return 1
   fi
+}
+
+# Open a specific commit on GitHub
+gh-open-commit() {
+  local hash="${1:-HEAD}"
+  local url commit
+
+  url=$(git remote get-url origin 2>/dev/null) || {
+    echo "❌ No remote 'origin' found"
+    return 1
+  }
+
+  url=${url/git@github.com:/https:\/\/github.com\/}
+  url=${url/https:\/\/git@github.com\//https:\/\/github.com\/}
+  url=${url/.git/}
+
+  if [[ "$url" != https://github.com/* ]]; then
+    echo "❗ Only GitHub URLs are supported."
+    return 1
+  fi
+
+  commit=$(git rev-parse "$hash" 2>/dev/null) || {
+    echo "❌ Invalid commit: $hash"
+    return 1
+  }
+
+  local commit_url="$url/commit/$commit"
+  echo "🔗 Opening: $commit_url"
+
+  if command -v open &>/dev/null; then
+    open "$commit_url"
+  elif command -v xdg-open &>/dev/null; then
+    xdg-open "$commit_url"
+  else
+    echo "❌ Cannot open URL (no open/xdg-open)"
+    return 1
+  fi
+}
+
+# Push current branch and open the pushed commit on GitHub or GitLab
+gh-push-open() {
+  git push "$@" || return $?
+  gh-open-commit HEAD
 }
 
 # ────────────────────────────────────────────────────────
