@@ -128,7 +128,7 @@ fzf-git-commit() {
   fi
 
   while true; do
-    local result
+    local result=''
     result=$(git log --oneline --no-color |
       fzf --ansi --no-sort --reverse \
           --query="$commit_query" \
@@ -159,7 +159,7 @@ fzf-git-commit() {
         *) color="$COLOR_RESET" ;;
       esac
 
-      local stat_line
+      local stat_line=''
       stat_line=$(echo "$stats_list" | awk -v f="$filepath" '$3 == f {
         a = ($1 == "-" ? 0 : $1)
         d = ($2 == "-" ? 0 : $2)
@@ -174,7 +174,7 @@ fzf-git-commit() {
           --prompt="📄 Files in $commit > " \
           --preview='bash -c "
             filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
-            git show '"${commit}"':\$filepath | bat --color=always --style=numbers --line-range :100 --file-name=\$filepath"' |
+            git diff --color=always '"${commit}"'^! -- \$filepath | delta"' |
       sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//'
     )
 
