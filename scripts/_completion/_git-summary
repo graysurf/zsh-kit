@@ -1,0 +1,28 @@
+#compdef git-summary
+
+_git-summary() {
+  local -a subcmds
+  subcmds=(
+    "today:Show today's git summary"
+    "yesterday:Show yesterday's git summary"
+    "this-month:Show this month's summary"
+    "last-week:Show summary for last week (Mon–Sun)"
+    "weekly:Show summary for this week (Mon–Sun)"
+    "all:Show summary for entire git history"
+    "help:Show help message"
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe -t subcmds 'preset date range' subcmds
+  elif (( CURRENT == 3 )); then
+    _message 'Start date (YYYY-MM-DD)'
+  elif (( CURRENT == 4 )); then
+    _message 'End date (YYYY-MM-DD)'
+  else
+    _message 'git-summary [preset|<start> <end>]'
+  fi
+}
+
+
+compdef _git-summary git-summary
+compdef _git-summary 'git-summary.git'

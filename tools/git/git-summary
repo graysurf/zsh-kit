@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+
+setopt no_nomatch
+
+source "$ZDOTDIR/scripts/git/git-summary.sh"
+
+if ! typeset -f git-summary >/dev/null; then
+  echo "❗ 'git-summary' is not defined as a function."
+  exit 1
+fi
+
+git-summary "$@" || exit $?
