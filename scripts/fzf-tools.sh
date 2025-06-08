@@ -7,7 +7,6 @@ unalias ft fzf-process fzf-env fp fgs fgc ff fv fsc 2>/dev/null
 
 alias ft='fzf-tools'
 alias fzf-process='ps aux | fzf'
-alias fzf-env='env | fzf'
 alias fp='fzf-eza-directory'
 alias fgs='fzf-git-status'
 alias fgc='fzf-git-commit'
@@ -195,4 +194,153 @@ fzf-tools() {
   esac
 }
 
+export FZF_DEF_DELIM='"[FZF-DEF]'
+export FZF_DEF_DELIM_END='[FZF-DEF-END]'
 
+fzf_block_preview() {
+  local generator="$1"
+  local tmpfile delim enddelim
+  tmpfile="$(mktemp)"
+
+  delim="${FZF_DEF_DELIM}"
+  enddelim="${FZF_DEF_DELIM_END}"
+
+  if [[ -z "$delim" || -z "$enddelim" ]]; then
+    echo "❌ Error: FZF_DEF_DELIM or FZF_DEF_DELIM_END is not set."
+    echo "💡 Please export FZF_DEF_DELIM and FZF_DEF_DELIM_END before running."
+    rm -f "$tmpfile"
+    return 1
+  fi
+
+  $generator > "$tmpfile"
+
+  local previewscript
+  previewscript="$(mktemp)"
+  cat > "$previewscript" <<'EOF'
+#!/usr/bin/env awk -f
+
+# This AWK script is used by fzf preview to extract a specific block
+# from a temp file containing multiple sections delimited by markers.
+#
+# Required ENV variables:
+# - FZF_PREVIEW_TARGET: The block header to match
+# - FZF_DEF_DELIM:       The line that marks the start of each block
+# - FZF_DEF_DELIM_END:   The line that marks the end of each block
+
+BEGIN {
+  target      = ENVIRON["FZF_PREVIEW_TARGET"]
+  start_delim = ENVIRON["FZF_DEF_DELIM"]
+  end_delim   = ENVIRON["FZF_DEF_DELIM_END"]
+  printing    = 0
+}
+
+{
+  # Detect start of block
+  if ($0 == start_delim) {
+    getline header
+    if (header == target) {
+      print header
+      print ""           # Add spacing before content
+      printing = 1
+      next
+    }
+  }
+
+  # Stop when reaching end of block
+  if (printing && $0 == end_delim)
+    exit
+
+  # Print block content
+  if (printing)
+    print
+}
+EOF
+
+  chmod +x "$previewscript"
+
+  local selected
+  selected=$(awk -v delim="$delim" '$0 == delim { getline; print }' "$tmpfile" |
+    FZF_DEF_DELIM="$delim" \
+    FZF_DEF_DELIM_END="$enddelim" \
+    fzf --ansi \
+        --prompt="» Select > " \
+        --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile" \
+        --preview-window=right:60%)
+
+  [[ -z "$selected" ]] && { rm -f "$tmpfile" "$previewscript"; return }
+
+  local result
+  result=$(awk -v target="$selected" -v delim="$delim" -v enddelim="$enddelim" '
+BEGIN { inside=0 }
+{
+  if ($0 == delim) {
+    getline header
+    if (header == target) {
+      print header
+      print ""
+      inside = 1
+      next
+    }
+  }
+  if (inside && $0 == enddelim) exit
+  if (inside) print
+}
+' "$tmpfile")
+
+  echo "$result"
+  echo "$result" | pbcopy  
+  rm -f "$tmpfile" "$previewscript"
+}
+
+
+_gen_env_block() {
+  env | sort | while IFS='=' read -r name value; do
+    echo "$FZF_DEF_DELIM"
+    echo "🌱 $name"
+    printenv "$name"
+    echo "$FZF_DEF_DELIM_END"
+    echo ""
+  done
+}
+
+fzf-env() {
+  fzf_block_preview _gen_env_block
+}
+
+_gen_alias_block() {
+  alias | sort | while IFS='=' read -r name raw; do
+    echo "$FZF_DEF_DELIM"
+    echo "🔗 $name"
+    alias "$name" | sed -E "s/^$name=//; s/^['\"](.*)['\"]$/\1/"
+    echo "$FZF_DEF_DELIM_END"
+    echo ""
+  done
+}
+
+fzf-alias() {
+  fzf_block_preview _gen_alias_block
+}
+
+_gen_function_block() {
+  for fn in ${(k)functions}; do
+    echo "$FZF_DEF_DELIM"
+    echo "🔧 $fn"
+    functions "$fn" 2>/dev/null
+    echo "$FZF_DEF_DELIM_END"
+    echo ""
+  done
+}
+
+fzf-functions() {
+  fzf_block_preview _gen_function_block
+}
+
+_gen_all_defs_block() {
+  _gen_env_block
+  _gen_alias_block
+  _gen_function_block
+}
+
+fzf-defs() {
+  fzf_block_preview _gen_all_defs_block
+}

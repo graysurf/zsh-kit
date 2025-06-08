@@ -4,6 +4,20 @@
 
 alias vi='nvim'
 
+# Show current shell aliases, functions, and environment variables for debugging
+zdef() {
+  echo "🔗 Aliases:"
+  alias
+
+  echo "\n🔧 Functions:"
+  for fn in ${(k)functions}; do
+    echo "$fn"
+  done
+
+  echo "\n🌱 Environment Variables:"
+  printenv | sort
+}
+
 # Override 'cd' to auto-list
 cd() {
   builtin cd "$@" && eza -alh --icons --group-directories-first --time-style=iso
