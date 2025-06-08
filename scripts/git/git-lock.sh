@@ -525,36 +525,32 @@ git-lock() {
   fi
 
   local cmd="$1"
+  if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
+    echo "Usage: git-lock <command> [args...]"
+    echo ""
+    echo "Commands:"
+    printf "  %-30s %s\n" \
+      "lock [label] [note] [commit]"   "Save commit hash to lock" \
+      "unlock [label]"                 "Reset to a saved commit" \
+      "list"                           "Show all locks for repo" \
+      "copy <from> <to>"              "Duplicate a lock label" \
+      "delete [label]"                "Remove a lock" \
+      "diff <label1> <label2>"        "Compare commits between two locks" \
+      "tag <label> <tag> [-m msg]"    "Create git tag from a lock"
+    echo ""
+    return 0
+  fi
+
   shift
 
   case "$cmd" in
-    ""|help|-h|--help)
-      echo "Usage: git-lock <command> [args...]"
-      echo ""
-      echo "Commands:"
-      echo "  lock [label] [note] [commit]      Save commit hash to lock"
-      echo "  unlock [label]                    Reset to a saved commit"
-      echo "  list                              Show all locks for repo"
-      echo "  copy <from> <to>                  Duplicate a lock label"
-      echo "  delete [label]                    Remove a lock"
-      echo "  diff <label1> <label2>            Compare commits between two locks"
-      echo "  tag <label> <tag> [-m msg]        Create git tag from a lock"
-      echo ""
-      return 0 ;;
-    lock)
-      _git_lock "$@" ;;
-    unlock)
-      _git_lock_unlock "$@" ;;
-    list)
-      _git_lock_list "$@" ;;
-    copy)
-      _git_lock_copy "$@" ;;
-    delete)
-      _git_lock_delete "$@" ;;
-    diff)
-      _git_lock_diff "$@" ;;
-    tag)
-      _git_lock_tag "$@" ;;
+    lock)    _git_lock "$@" ;;
+    unlock)  _git_lock_unlock "$@" ;;
+    list)    _git_lock_list "$@" ;;
+    copy)    _git_lock_copy "$@" ;;
+    delete)  _git_lock_delete "$@" ;;
+    diff)    _git_lock_diff "$@" ;;
+    tag)     _git_lock_tag "$@" ;;
     *)
       echo "❗ Unknown command: '$cmd'"
       echo "Run 'git-lock help' for usage."
