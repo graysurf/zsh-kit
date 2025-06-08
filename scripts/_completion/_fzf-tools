@@ -12,6 +12,10 @@ commands=(
   'git-scope-commit:Browse commit log and open scope viewer'
   'kill:Kill a selected process'
   'history:Search and execute command history'
+  'env:Browse environment variables'
+  'alias:Browse shell aliases'
+  'functions:Browse defined shell functions'
+  'defs:Browse all definitions (env, alias, functions)'
 )
 
 # Only complete the first argument with description

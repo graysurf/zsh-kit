@@ -36,6 +36,7 @@ export FZF_ALT_C_COMMAND="fd --type d --hidden --follow"
 # ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
+# Fuzzy search command history and execute selected entry
 fzf-history() {
   local history_output
   if [[ -n "$ZSH_NAME" ]]; then
@@ -53,6 +54,7 @@ fzf-history() {
   [[ -n "$selected" ]] && eval "$selected"
 }
 
+# Fuzzy search files and change to selected file's directory
 fzf-directory() {
   local file dir
   file=$(fd --type f --hidden --exclude .git --max-depth=$FZF_FILE_MAX_DEPTH |
@@ -61,6 +63,7 @@ fzf-directory() {
     cd "$dir"
 }
 
+# Fuzzy select process and kill it with signal (default: SIGKILL)
 fzf-kill() {
   local pid
   pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
@@ -70,6 +73,7 @@ fzf-kill() {
 # ────────────────────────────────────────────────────────
 # fzf + eza integrations
 # ────────────────────────────────────────────────────────
+# Fuzzy change directory using eza to preview directory contents
 fzf-cd() {
   local dir
   dir=$(eza --only-dirs --color=always |
@@ -78,6 +82,7 @@ fzf-cd() {
     cd "$dir"
 }
 
+# Fuzzy search files and cd into the selected file's directory (with eza preview)
 fzf-eza-directory() {
   local file
   file=$(fd --type f --hidden --exclude .git --max-depth=$FZF_FILE_MAX_DEPTH |
@@ -85,6 +90,7 @@ fzf-eza-directory() {
     cd "$(dirname \"$file\")"
 }
 
+# Fuzzy git status with diff preview and navigation bindings
 fzf-git-status() {
   git status -s | fzf --no-sort --reverse \
     --preview 'git diff --color=always {2}' \
@@ -92,7 +98,6 @@ fzf-git-status() {
     --bind=ctrl-k:preview-up \
     --preview-window=right:60%:wrap
 }
-
 # ────────────────────────────────────────────────────────
 # fzf file preview helper
 # ────────────────────────────────────────────────────────
@@ -103,18 +108,21 @@ __fzf_file_select() {
         --preview-window=right:60%:wrap
 }
 
+# Fuzzy search a file and open it with vi
 fzf-file() {
   local file
   file=$(__fzf_file_select)
   [[ -n "$file" ]] && vi "$file"
 }
 
+# Fuzzy search a file and open it with VSCode
 fzf-vscode() {
   local file
   file=$(__fzf_file_select)
   [[ -n "$file" ]] && code "$file"
 }
 
+# Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
   local commit file
 
@@ -142,6 +150,7 @@ fzf-git-commit() {
   }
 }
 
+# Fuzzy search git commits with preview using git-scope
 fzf-scope-commit() {
   git log --oneline --no-color |
     fzf --ansi --no-sort \
@@ -150,58 +159,16 @@ fzf-scope-commit() {
         --bind "enter:execute(clear && git-scope commit {1})+abort"
 }
 
-# ────────────────────────────────────────────────────
-# Main fzf-tools command
-# ────────────────────────────────────────────────────
-
-fzf-tools() {
-  local cmd="$1"
-
-  if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
-    echo "Usage: fzf-tools <command> [args...]"
-    echo ""
-    echo "Commands:"
-    printf "  %-18s %s\n" \
-      cd "Change directory using fzf and eza" \
-      directory "Preview file and cd into its folder" \
-      file "Search and preview text files" \
-      vscode "Search and preview text files in VSCode" \
-      git-status "Interactive git status viewer" \
-      git-commit "Browse commits and open changed files in VSCode" \
-      git-scope-commit "Browse commit log and open scope viewer" \
-      kill "Kill a selected process" \
-      history "Search and execute command history"
-    echo ""
-    return 0
-  fi
-
-  shift
-
-  case "$cmd" in
-    cd)               fzf-cd "$@" ;;
-    directory)        fzf-eza-directory "$@" ;;
-    file)             fzf-file "$@" ;;
-    vscode)           fzf-vscode "$@" ;;
-    git-status)       fzf-git-status "$@" ;;
-    git-commit)       fzf-git-commit "$@" ;;
-    git-scope-commit) fzf-scope-commit "$@" ;;
-    kill)             fzf-kill "$@" ;;
-    history)          fzf-history "$@" ;;
-    *)
-      echo "❗ Unknown command: $cmd"
-      echo "Run 'fzf-tools help' for usage."
-      return 1 ;;
-  esac
-}
-
 export FZF_DEF_DELIM='"[FZF-DEF]'
 export FZF_DEF_DELIM_END='[FZF-DEF-END]'
 
+# Show delimited preview blocks in FZF and copy selected block to clipboard
 fzf_block_preview() {
   local generator="$1"
   local tmpfile delim enddelim
   tmpfile="$(mktemp)"
 
+  # 檢查 delimiter 變數是否設置，未設置就報錯退出
   delim="${FZF_DEF_DELIM}"
   enddelim="${FZF_DEF_DELIM_END}"
 
@@ -292,7 +259,7 @@ BEGIN { inside=0 }
   rm -f "$tmpfile" "$previewscript"
 }
 
-
+# Generate environment variable blocks for preview
 _gen_env_block() {
   env | sort | while IFS='=' read -r name value; do
     echo "$FZF_DEF_DELIM"
@@ -303,10 +270,12 @@ _gen_env_block() {
   done
 }
 
+# Fuzzy search environment variables with preview
 fzf-env() {
   fzf_block_preview _gen_env_block
 }
 
+# Generate alias definition blocks for preview
 _gen_alias_block() {
   alias | sort | while IFS='=' read -r name raw; do
     echo "$FZF_DEF_DELIM"
@@ -317,10 +286,12 @@ _gen_alias_block() {
   done
 }
 
+# Fuzzy search shell aliases with preview
 fzf-alias() {
   fzf_block_preview _gen_alias_block
 }
 
+# Generate function blocks for preview from defined shell functions
 _gen_function_block() {
   for fn in ${(k)functions}; do
     echo "$FZF_DEF_DELIM"
@@ -331,16 +302,72 @@ _gen_function_block() {
   done
 }
 
+# Fuzzy search shell functions with preview
 fzf-functions() {
   fzf_block_preview _gen_function_block
 }
 
+# Generate combined block of env, alias, and function definitions
 _gen_all_defs_block() {
   _gen_env_block
   _gen_alias_block
   _gen_function_block
 }
 
+# Fuzzy search all definitions (env, alias, function) with preview
 fzf-defs() {
   fzf_block_preview _gen_all_defs_block
+}
+
+# ────────────────────────────────────────────────────
+# Main fzf-tools command
+# ────────────────────────────────────────────────────
+
+# Dispatcher and help menu for various fzf-based utilities
+fzf-tools() {
+  local cmd="$1"
+
+  if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
+    echo "Usage: fzf-tools <command> [args...]"
+    echo ""
+    echo "Commands:"
+    printf "  %-18s %s\n" \
+      cd "Change directory using fzf and eza" \
+      directory "Preview file and cd into its folder" \
+      file "Search and preview text files" \
+      vscode "Search and preview text files in VSCode" \
+      git-status "Interactive git status viewer" \
+      git-commit "Browse commits and open changed files in VSCode" \
+      git-scope-commit "Browse commit log and open scope viewer" \
+      kill "Kill a selected process" \
+      history "Search and execute command history" \
+      env "Browse environment variables" \
+      alias "Browse shell aliases" \
+      functions "Browse defined shell functions" \
+      defs "Browse all definitions (env, alias, functions)"
+    echo ""
+    return 0
+  fi
+
+  shift
+
+  case "$cmd" in
+    cd)               fzf-cd "$@" ;;
+    directory)        fzf-eza-directory "$@" ;;
+    file)             fzf-file "$@" ;;
+    vscode)           fzf-vscode "$@" ;;
+    git-status)       fzf-git-status "$@" ;;
+    git-commit)       fzf-git-commit "$@" ;;
+    git-scope-commit) fzf-scope-commit "$@" ;;
+    kill)             fzf-kill "$@" ;;
+    history)          fzf-history "$@" ;;
+    env)              fzf-env "$@" ;;
+    alias)            fzf-alias "$@" ;;
+    functions)        fzf-functions "$@" ;;
+    defs)             fzf-defs "$@" ;;
+    *)
+      echo "❗ Unknown command: $cmd"
+      echo "Run 'fzf-tools help' for usage."
+      return 1 ;;
+  esac
 }
