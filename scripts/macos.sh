@@ -1,19 +1,25 @@
 # ────────────────────────────────────────────────────────
-# Locale settings (prevent encoding issues)
-# ────────────────────────────────────────────────────────
-
-export LANG="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
-
-# ────────────────────────────────────────────────────────
 # PATH setup for macOS tools (Homebrew + VSCode CLI)
 # ────────────────────────────────────────────────────────
 
 export PATH="/usr/local/opt/grep/libexec/gnubin:$PATH"
 export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
 
+# ──────────────────────────────
+# 1Password SSH agent
+# ──────────────────────────────
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/3BUA8C4S2C.com.1password/t/agent.sock"
+
+# ──────────────────────────────
+# Shell integration + session
+# ──────────────────────────────
+export GPG_TTY="$(tty)"
+export SHELL_SESSIONS_DISABLE=1
+
 # ────────────────────────────────────────────────────────
 # macOS-specific convenience aliases
 # ────────────────────────────────────────────────────────
 
 alias f='open'  # Quick open file or dir with default macOS app
+
+alias hidpi='bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"'
