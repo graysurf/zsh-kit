@@ -89,7 +89,7 @@ gh-open-branch() {
   fi
 }
 
-# Open a specific commit on GitHub
+# Open a specific commit on GitHub (supports tag, branch, or commit hash)
 gh-open-commit() {
   local hash="${1:-HEAD}"
   local url commit
@@ -108,8 +108,9 @@ gh-open-commit() {
     return 1
   fi
 
-  commit=$(git rev-parse "$hash" 2>/dev/null) || {
-    echo "❌ Invalid commit: $hash"
+  # Ensure annotated tag resolves to commit, not tag object
+  commit=$(git rev-parse "${hash}^{commit}" 2>/dev/null) || {
+    echo "❌ Invalid commit/tag/branch: $hash"
     return 1
   }
 
