@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
-unalias gd gc gca gl gp gpf gpff \
+unalias gd gc gca gl gp gpf gpff gpo gpfo gpffo \
         gcp gcpo gcapo gcapfo gcapffo \
         gpc gpcp gpcpo gpca gpcapo gpcapfo gpcapffo \
         git-zip \
@@ -29,6 +29,12 @@ alias gp='git push'
 alias gpf='git push --force-with-lease'
 # Force-push unconditionally (DANGEROUS: may overwrite remote history)
 alias gpff='git push -f'
+# Push and open latest commit on GitHub
+alias gpo='git push && gh-open-commit HEAD'
+# Force-push with lease and open latest commit on GitHub (safe force)
+alias gpfo='git push --force-with-lease && gh-open-commit HEAD'
+# Force-push unconditionally and open latest commit on GitHub (DANGEROUS)
+alias gpffo='git push -f && gh-open-commit HEAD'
 
 # ────────────────────────────────────────────────────────
 # Git commit-push automation
