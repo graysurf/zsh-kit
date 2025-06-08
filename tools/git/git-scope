@@ -1,5 +1,12 @@
-#!/bin/zsh
+#!/usr/bin/env bash
+
+setopt no_nomatch
 
 source "$ZDOTDIR/scripts/git/git-scope.sh"
 
-gscope "$@" || exit $?
+if ! typeset -f git-scope >/dev/null; then
+  echo "❗ 'git-scope' is not defined as a function."
+  exit 1
+fi
+
+git-scope "$@" || exit $?

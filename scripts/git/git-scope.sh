@@ -1,10 +1,10 @@
 # ───────────────────────────────────────────────
-# gscope - Git scope viewer unified CLI
-# Usage: gscope <command> [args...]
+# git-scope - Git scope viewer unified CLI
+# Usage: git-scope <command> [args...]
 # ───────────────────────────────────────────────
 
 # Render file list with A/M/D tags and color, then show tree
-_gscope_render_with_type() {
+_git_scope_render_with_type() {
   local input="$1"
 
   if [[ -z "$input" ]]; then
@@ -48,7 +48,7 @@ _gscope_render_with_type() {
   }' | sort -u | tree --fromfile -C
 }
 
-_gscope_tracked() {
+_git_scope_tracked() {
   echo -e "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n"
 
   local files
@@ -64,26 +64,26 @@ _gscope_tracked() {
     marked+="-\t${file}"$'\n'
   done <<< "$files"
 
-  _gscope_render_with_type "$marked"
+  _git_scope_render_with_type "$marked"
 }
 
-_gscope_staged() {
+_git_scope_staged() {
   echo -e "\n📂 Show tree of staged files (ready to be committed)\n"
   local ns_lines
   ns_lines=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
 
-  _gscope_render_with_type "$ns_lines"
+  _git_scope_render_with_type "$ns_lines"
 }
 
-_gscope_modified() {
+_git_scope_modified() {
   echo -e "\n📂 Show tree of modified files (not yet staged)\n"
   local ns_lines
   ns_lines=$(git diff --name-status --diff-filter=ACMRTUXB)
 
-  _gscope_render_with_type "$ns_lines"
+  _git_scope_render_with_type "$ns_lines"
 }
 
-_gscope_all() {
+_git_scope_all() {
   echo -e "\n📂 Show tree of all changed files (staged + modified)\n"
   local staged modified
   staged=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
@@ -92,10 +92,10 @@ _gscope_all() {
   local combined
   combined=$(printf "%s\n%s" "$staged" "$modified" | grep -v '^$' | sort -u)
 
-  _gscope_render_with_type "$combined"
+  _git_scope_render_with_type "$combined"
 }
 
-_gscope_untracked() {
+_git_scope_untracked() {
   echo -e "\n📂 Show tree of untracked files (new files not yet added)\n"
   local files
   files=$(git ls-files --others --exclude-standard)
@@ -110,13 +110,13 @@ _gscope_untracked() {
     marked+="U\t${file}"$'\n'
   done <<< "$files"
 
-  _gscope_render_with_type "$marked"
+  _git_scope_render_with_type "$marked"
 }
 
-_gscope_commit() {
+_git_scope_commit() {
   local commit="$1"
   if [[ -z "$commit" ]]; then
-    echo "❗ Usage: gscope commit <commit-hash | HEAD>"
+    echo "❗ Usage: git-scope commit <commit-hash | HEAD>"
     return 1
   fi
 
@@ -187,25 +187,30 @@ fi
   }' | sort -u | tree --fromfile -C
 }
 
-gscope() {
+git-scope() {
+  if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "❗ Not a Git repository. Run this command inside a Git project."
+    return 1
+  fi
+
   local sub="$1"
   shift
 
   case "$sub" in
     ""|track|tracked)
-      _gscope_tracked "$@" ;;
+      _git_scope_tracked "$@" ;;
     staged)
-      _gscope_staged "$@" ;;
+      _git_scope_staged "$@" ;;
     modified)
-      _gscope_modified "$@" ;;
+      _git_scope_modified "$@" ;;
     all)
-      _gscope_all "$@" ;;
+      _git_scope_all "$@" ;;
     untracked)
-      _gscope_untracked "$@" ;;
+      _git_scope_untracked "$@" ;;
     commit)
-      _gscope_commit "$@" ;;
+      _git_scope_commit "$@" ;;
     help|-h|--help)
-      echo "Usage: gscope <command> [args...]"
+      echo "Usage: git-scope <command> [args...]"
       echo ""
       echo "Commands:"
       echo "  (default)         Tracked file tree (git ls-files)"
@@ -218,7 +223,7 @@ gscope() {
       return 0 ;;
     *)
       echo "❗ Unknown subcommand: '$sub'"
-      echo "Run 'gscope help' for usage."
+      echo "Run 'git-scope help' for usage."
       return 1 ;;
   esac
 }
