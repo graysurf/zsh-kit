@@ -2,11 +2,8 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 unalias gd gc gca gl gp gpf gpff gpo gpfo gpffo \
-        gcp gcpo gcapo gcapfo gcapffo \
-        gpc gpcp gpcpo gpca gpcapo gpcapfo gpcapffo \
         git-zip \
-        lg lgr gt gt2 gt3 gt5  2>/dev/null
-
+        lg lgr gt gt2 gt3 gt5 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git basic workflow aliases
@@ -29,6 +26,7 @@ alias gp='git push'
 alias gpf='git push --force-with-lease'
 # Force-push unconditionally (DANGEROUS: may overwrite remote history)
 alias gpff='git push -f'
+
 # Push and open latest commit on GitHub
 alias gpo='git push && gh-open-commit HEAD'
 # Force-push with lease and open latest commit on GitHub (safe force)
@@ -37,44 +35,11 @@ alias gpfo='git push --force-with-lease && gh-open-commit HEAD'
 alias gpffo='git push -f && gh-open-commit HEAD'
 
 # ────────────────────────────────────────────────────────
-# Git commit-push automation
-# ────────────────────────────────────────────────────────
-
-# Commit staged changes, push
-alias gcp='git commit && git push'
-# Commit staged changes, push, and open the commit on GitHub
-alias gcpo='git commit && git push && gh-open-commit HEAD'
-
-# Amend the last commit, push, and open the new commit on GitHub
-alias gcapo='git commit --amend && git push && gh-open-commit HEAD'
-# Amend the last commit, safely force-push, and open the new commit on GitHub (safer alternative)
-alias gcapfo='git commit --amend && git push --force-with-lease && gh-open-commit HEAD'
-# Amend the last commit, force-push, and open the new commit on GitHub (DANGEROUS)
-alias gcapffo='git commit --amend && git push -f && gh-open-commit HEAD'
-
-# ────────────────────────────────────────────────────────
-# Git clipboard-based commit flow
-# ────────────────────────────────────────────────────────
-
-# Commit staged changes using commit message from clipboard
-alias gpc='git commit -F <(pbpaste)'
-# Commit using clipboard message, then push
-alias gpcp='git commit -F <(pbpaste) && git push'
-# Commit using clipboard message, push, and open the commit on GitHub
-alias gpcpo='git commit -F <(pbpaste) && git push && gh-open-commit HEAD'
-
-# Amend the last commit using commit message from clipboard
-alias gpca='git commit --amend -F <(pbpaste)'
-# Amend commit using clipboard message, then push
-alias gpcapo='git commit --amend -F <(pbpaste) && git push && gh-open-commit HEAD'
-# Amend commit using clipboard message, safely force-push, then open on GitHub
-alias gpcapfo='git commit --amend -F <(pbpaste) && git push --force-with-lease && gh-open-commit HEAD'
-# Amend commit using clipboard message, force-push, and open on GitHub (DANGEROUS)
-alias gpcapffo='git commit --amend -F <(pbpaste) && git push -f && gh-open-commit HEAD'
-
-# ────────────────────────────────────────────────────────
 # Git utility aliases
 # ────────────────────────────────────────────────────────
+
+# Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
+alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
 
 # List all files with Git status in detailed view
 alias lg='eza -alh --icons --group-directories-first --color=always --git --time-style=iso'
