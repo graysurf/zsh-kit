@@ -2,9 +2,10 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr greset-hard guncommit gpushf gdc groot \
-        ghopen ghbranch gundo gpick 2>/dev/null
-
+unalias gr greset-hard gu gum gdc groot \
+        ghopen ghbranch gh-open gh-open-branch \
+        gh-open-commit gh-push-open \
+        gundo gpick gpo 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
@@ -13,14 +14,8 @@ unalias gr greset-hard guncommit gpushf gdc groot \
 # Reset staged files (equivalent to "git reset")
 alias gr='git reset'
 
-# Full reset and clean untracked files — DANGER ZONE
-alias greset-hard='git reset --hard && git clean -fd'
-
-# Undo last commit but keep changes staged
-alias guncommit='git reset --soft HEAD~1'
-
-# Force push with lease (safer than --force)
-alias gpushf='git push --force-with-lease'
+# Push and open GitHub commit
+alias gpo='gh-push-open'
 
 # Copy staged diff to clipboard (no output)
 gdc() {
@@ -44,6 +39,46 @@ groot() {
     return 1
   }
   cd "$root" && echo -e "\n 📁 Jumped to Git root: $root"
+}
+
+# ────────────────────────────────────────────────────────
+# Git workflow helper functions
+# ────────────────────────────────────────────────────────
+
+# Soft reset last commit with confirmation
+gu() {
+  echo "⚠️  This will rewind your last commit (soft reset)"
+  echo "🧠 Your changes will become UNSTAGED. Good for regrouping changes."
+  read "confirm?❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git reset --soft HEAD~1
+  echo "✅ Last commit undone. Your changes are now unstaged & editable."
+}
+
+# Undo last commit but keep changes staged with confirmation
+gum() {
+  echo "⚠️  This will undo your last commit (soft reset)"
+  echo "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
+  read "confirm?❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git reset --soft HEAD~1
+  echo "✅ Last commit undone. Your changes are still staged."
+}
+
+# FZF pick a commit and checkout to it
+gpick() {
+  git log --oneline --color=always |
+    fzf --ansi --no-sort --reverse |
+    cut -d ' ' -f 1 |
+    xargs git checkout
 }
 
 # ────────────────────────────────────────────────────────
@@ -131,31 +166,4 @@ gh-open-commit() {
 gh-push-open() {
   git push "$@" || return $?
   gh-open-commit HEAD
-}
-
-# ────────────────────────────────────────────────────────
-# Git workflow helper functions
-# ────────────────────────────────────────────────────────
-
-# Soft reset last commit with feedback
-gundo() {
-  echo "⚠️  This will rewind your last commit (soft reset)"
-  read "confirm?❓ Proceed? [y/N] "
-  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "🚫 Aborted"
-    return 1
-  fi
-
-  echo "🔁 Rewinding 1 commit (soft reset)..."
-  git reset --soft HEAD~1
-  echo "🌀 Your last commit is now unstaged & editable"
-}
-
-
-# FZF pick a commit and checkout to it
-gpick() {
-  git log --oneline --color=always |
-    fzf --ansi --no-sort --reverse |
-    cut -d ' ' -f 1 |
-    xargs git checkout
 }
