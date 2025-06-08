@@ -137,36 +137,44 @@ _gscope_commit() {
   
   echo -e "\n📄 Changed files:"
 
-  local ns_lines
-  ns_lines=$(git show --pretty=format: --name-status "$commit")
-  local numstat_lines
-  numstat_lines=$(git show --pretty=format: --numstat "$commit")
+local ns_lines
+ns_lines=$(git show --pretty=format: --name-status "$commit")
+local numstat_lines
+numstat_lines=$(git show --pretty=format: --numstat "$commit")
 
-  if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
-    echo "  ⚠️  Merge commit detected — no file-level diff shown by default"
-  else
-    while IFS=$'\t' read -r kind file; do
-      local add="-"
-      local del="-"
+if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
+  echo "  ⚠️  Merge commit detected — no file-level diff shown by default"
+else
+  local total_add=0
+  local total_del=0
 
-      unset match_line
-      match_line=$(echo "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
+  while IFS=$'\t' read -r kind file; do
+    local add="-"
+    local del="-"
 
-      if [[ -n "$match_line" ]]; then
-        add=$(echo "$match_line" | cut -f1)
-        del=$(echo "$match_line" | cut -f2)
-      fi
+    unset match_line
+    match_line=$(echo "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
 
-      local color="$OTHER"
-      case "$kind" in
-        A) color="$ADDED" ;;
-        M) color="$MODIFIED" ;;
-        D) color="$DELETED" ;;
-      esac
+    if [[ -n "$match_line" ]]; then
+      add=$(echo "$match_line" | cut -f1)
+      del=$(echo "$match_line" | cut -f2)
 
-      echo -e "  ${color} ➤ [$kind] $file  [+${add} / -${del}]${COLOR_RESET}"
-    done <<< "$ns_lines"
-  fi
+      [[ "$add" != "-" ]] && total_add=$((total_add + add))
+      [[ "$del" != "-" ]] && total_del=$((total_del + del))
+    fi
+
+    local color="$OTHER"
+    case "$kind" in
+      A) color="$ADDED" ;;
+      M) color="$MODIFIED" ;;
+      D) color="$DELETED" ;;
+    esac
+
+    echo -e "  ${color} ➤ [$kind] $file  [+${add} / -${del}]${COLOR_RESET}"
+  done <<< "$ns_lines"
+
+  echo -e "\n  📊 Total: +$total_add / -$total_del"
+fi
 
   echo -e "\n📂 Directory tree:"
   git show --pretty=format: --name-only "$commit" | awk -F/ '{
