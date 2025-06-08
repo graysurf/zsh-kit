@@ -82,6 +82,7 @@ ZSH_SCRIPT_EXCLUDE=(
   "$ZSH_SCRIPT_DIR/env.sh"
   "$ZSH_SCRIPT_DIR/plugins.sh"
   "$ZSH_SCRIPT_DIR/completion.zsh"
+  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
 )
 
 # ──────────────────────────────
@@ -115,4 +116,10 @@ load_with_timing "$ZDOTDIR/scripts/plugins.sh"
 # It must run after plugins are loaded, or some completion definitions will be missing.
 # Running compinit too early can skip over completions provided by plugins.
 load_with_timing "$ZDOTDIR/scripts/completion.zsh"
+
+# ──────────────────────────────
+# Load development.sh last with timing
+# ──────────────────────────────
+dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+[[ -f "$dev_script" ]] && load_with_timing "$dev_script" "$(basename "$dev_script") (delayed)"
 
