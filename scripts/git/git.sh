@@ -1,36 +1,88 @@
 # ────────────────────────────────────────────────────────
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
-unalias gd gc gca gl gp gpf gpff gr git-zip \
-        lg lgr \
-        gt gt2 gt3 gt5 \
-        git-summary git-today git-yesterday \
-        git-this-month git-last-week git-weekly 2>/dev/null
+unalias \
+  # Core Git workflow
+  gd gc gca gl gp gpf gpff \
+  \
+  # Commit-push automation
+  gcp gcpo gcapo gcapfo gcapffo \
+  \
+  # Clipboard-based commit flow
+  gpc gpcp gpcpo gpca gpcapo gpcapfo gpcapffo \
+  \
+  # Git utility tools
+  git-zip \
+  \
+  # Git-enhanced directory views
+  lg lgr gt gt2 gt3 gt5 \
+  \
+  # Git summary functions
+  git-summary git-today git-yesterday git-this-month git-last-week git-weekly \
+  2>/dev/null
 
 # ────────────────────────────────────────────────────────
-# Git-related aliases
+# Git basic workflow aliases
 # ────────────────────────────────────────────────────────
 
 # Show staged changes and write to screen (for commit preview)
 alias gd='git diff --cached --no-color | tee /dev/tty'
+
+# Pull latest changes from remote
+alias gl='git pull'
 
 # Commit current staged changes
 alias gc='git commit'
 # Amend the last commit (edit message or add staged changes)
 alias gca='git commit --amend'
 
-# Pull latest changes from remote
-alias gl='git pull'
 # Push local commits to the remote (safe default)
-
 alias gp='git push'
 # Force-push with lease: ensures no one has pushed in the meantime (safer than -f)
 alias gpf='git push --force-with-lease'
 # Force-push unconditionally (DANGEROUS: may overwrite remote history)
 alias gpff='git push -f'
 
-# Rebase current branch onto another
-alias gr='git rebase'
+# ────────────────────────────────────────────────────────
+# Git commit-push automation
+# ────────────────────────────────────────────────────────
+
+# Commit staged changes, push
+alias gcp='git commit && git push'
+# Commit staged changes, push, and open the commit on GitHub
+alias gcpo='git commit && git push && gh-open-commit HEAD'
+
+# Amend the last commit, push, and open the new commit on GitHub
+alias gcapo='git commit --amend && git push && gh-open-commit HEAD'
+# Amend the last commit, safely force-push, and open the new commit on GitHub (safer alternative)
+alias gcapfo='git commit --amend && git push --force-with-lease && gh-open-commit HEAD'
+# Amend the last commit, force-push, and open the new commit on GitHub (DANGEROUS)
+alias gcapffo='git commit --amend && git push -f && gh-open-commit HEAD'
+
+# ────────────────────────────────────────────────────────
+# Git clipboard-based commit flow
+# ────────────────────────────────────────────────────────
+
+# Commit staged changes using commit message from clipboard
+alias gpc='git commit -F <(pbpaste)'
+# Commit using clipboard message, then push
+alias gpcp='git commit -F <(pbpaste) && git push'
+# Commit using clipboard message, push, and open the commit on GitHub
+alias gpcpo='git commit -F <(pbpaste) && git push && gh-open-commit HEAD'
+
+# Amend the last commit using commit message from clipboard
+alias gpca='git commit --amend -F <(pbpaste)'
+# Amend commit using clipboard message, then push
+alias gpcapo='git commit --amend -F <(pbpaste) && git push && gh-open-commit HEAD'
+# Amend commit using clipboard message, safely force-push, then open on GitHub
+alias gpcapfo='git commit --amend -F <(pbpaste) && git push --force-with-lease && gh-open-commit HEAD'
+# Amend commit using clipboard message, force-push, and open on GitHub (DANGEROUS)
+alias gpcapffo='git commit --amend -F <(pbpaste) && git push -f && gh-open-commit HEAD'
+
+
+# ────────────────────────────────────────────────────────
+# Git utility aliases
+# ────────────────────────────────────────────────────────
 
 # Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
 alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
@@ -40,6 +92,10 @@ alias lg='eza -alh --icons --group-directories-first --color=always --git --time
 # List directories with Git repo status indicators
 alias lgr='eza -alh --icons --group-directories-first --color=always --git --git-repos --time-style=iso'
 
+# ────────────────────────────────────────────────────────
+# Directory tree view aliases (with Git-aware listings)
+# ────────────────────────────────────────────────────────
+
 # Visual tree view of current directory (depth = unlimited)
 alias gt='eza -aT --git-ignore --group-directories-first --color=always --icons'
 # Tree view limited to depth 2 (e.g. folders + their subfolders)
@@ -48,6 +104,7 @@ alias gt2='gt -L 2'
 alias gt3='gt -L 3'
 # Tree view limited to depth 5 (for inspecting deeper structures)
 alias gt5='gt -L 5'
+
 
 # ────────────────────────────────────────────────────────
 # git-summary: author-based contribution report
