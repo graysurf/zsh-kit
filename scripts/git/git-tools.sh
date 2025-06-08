@@ -2,10 +2,10 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr greset-hard gu gum gdc groot \
-        ghopen ghbranch gh-open gh-open-branch \
+unalias gr gpo greset-hard gu gum gdc groot \
+        gh-open gh-open-branch \
         gh-open-commit gh-push-open \
-        gundo gpick gpo 2>/dev/null
+        gundo gpick 2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
