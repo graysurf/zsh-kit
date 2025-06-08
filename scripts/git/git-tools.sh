@@ -41,6 +41,18 @@ groot() {
   cd "$root" && echo -e "\n 📁 Jumped to Git root: $root"
 }
 
+# get_commit_hash <ref>
+get_commit_hash() {
+  local ref="$1"
+  if [[ -z "$ref" ]]; then
+    echo "❌ Missing git ref" >&2
+    return 1
+  fi
+
+  # Try resolve commit (handles annotated tags too)
+  git rev-parse --verify --quiet "${ref}^{commit}"
+}
+
 # ────────────────────────────────────────────────────────
 # Git workflow helper functions
 # ────────────────────────────────────────────────────────

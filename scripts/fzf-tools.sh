@@ -101,18 +101,6 @@ fzf-vscode() {
   [[ -n "$file" ]] && code "$file"
 }
 
-# get_commit_hash <ref>
-get_commit_hash() {
-  local ref="$1"
-  if [[ -z "$ref" ]]; then
-    echo "❌ Missing git ref" >&2
-    return 1
-  fi
-
-  # Try resolve commit (handles annotated tags too)
-  git rev-parse --verify --quiet "${ref}^{commit}"
-}
-
 # Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
   local input_ref="$1"
@@ -174,7 +162,7 @@ fzf-git-commit() {
           --prompt="📄 Files in $commit > " \
           --preview='bash -c "
             filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
-            git diff --color=always '"${commit}"'^! -- \$filepath | delta"' |
+            git diff --color=always '"${commit}"'^! -- \$filepath | delta --width=100 --line-numbers"' |
       sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//'
     )
 
