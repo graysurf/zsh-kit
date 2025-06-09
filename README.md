@@ -10,7 +10,9 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 - 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
 - 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
 - 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
+- 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
+- 🧠 Unified UX with previewable shell functions, aliases, and env vars
 - 🔧 Modular and lazy-friendly structure under `scripts/`
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
@@ -28,7 +30,7 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 ├── bootstrap/                            # Script loader and logic orchestrator
 │   ├── bootstrap.sh                      # Core loader functions (load_script, load_script_group, etc.)
 │   ├── init.sh                           # Centralized script entrypoint with ordered loading
-│   └── plugins.sh                        # Manual plugin loader
+│   └── plugins.sh                        # Manual plugin loader for third-party or custom plugins
 │
 ├── cache/                                # Runtime cache directory (e.g. zcompdump, fzf history)
 │
@@ -37,34 +39,25 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │
 ├── scripts/                              # Core shell logic (modularized)
 │   ├── _completion/                      # Custom completion definitions
-│   │   ├── _fzf-tools
-│   │   ├── _git-lock
-│   │   ├── _git-scope
-│   │   └── _git-summary
 │   ├── git/                              # Git-related tools
-│   │   ├── git-lock.sh
-│   │   ├── git-magic.sh
-│   │   ├── git-scope.sh
-│   │   ├── git-summary.sh
-│   │   ├── git-tools.sh
-│   │   └── git.sh
-│   ├── completion.zsh
-│   ├── env.sh
-│   ├── eza.sh
-│   ├── fzf-tools.sh
-│   ├── general.sh
-│   ├── iterm2_shell_integration.zsh
-│   ├── login.sh
-│   ├── macos.sh
-│   ├── random_emoji.sh
-│   └── tools.sh
+│   │   ├── git-lock.sh                   # Save, restore, diff, and tag Git commits via custom lock labels (safe checkpoints)
+│   │   ├── git-magic.sh                  # Composite git aliases for commit, push, amend, and GitHub open workflows
+│   │   ├── git-scope.sh                  # Visualize git changes as colored file lists and directory trees by scope or commit
+│   │   ├── git-summary.sh                # Author-based Git contribution summary over custom or preset date ranges
+│   │   ├── git-tools.sh                  # Git utility functions and aliases for reset, navigation, and remote operations
+│   │   └── git.sh                        # Base-level git command customizations
+│   ├── completion.zsh                    # Zsh completion framework setup
+│   ├── env.sh                            # Environment variables and export logic
+│   ├── eza.sh                            # Wrapper and aliases for modern ls replacement (eza)
+│   ├── fzf-tools.sh                      # Interactive FZF utilities for files, git, processes, env, aliases, and shell functions
+│   ├── general.sh                        # General purpose shell utilities and aliases
+│   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration script (for prompt triggers, etc.)
+│   ├── login.sh                          # Display a random login quote with emoji, and asynchronously fetch new quotes for future use
+│   ├── macos.sh                          # macOS-specific settings and system tweaks
+│   ├── random_emoji.sh                   # Random emoji + quote generator for banner use
+│   └── tools.sh                          # Miscellaneous helper functions for reloading, editing config, navigation, and cheat.sh lookup
 │
-└── tools/                                # Executable utilities
-    ├── git/
-    │   ├── git-lock
-    │   ├── git-scope
-    │   └── git-summary
-    └── random_emoji_cmd.sh
+└── tools/                                # Executable utilities (e.g. CLI tools written in any language)
 ```
 
 ## 🪄 Startup Snapshot
@@ -76,23 +69,26 @@ An example Zsh startup log with this config:
 ```text
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 
-✅ Loaded eza.sh in 3ms
-✅ Loaded fzf-tools.sh in 3ms
+✅ Loaded plugins.sh in 89ms
+✅ Loaded eza.sh in 2ms
+✅ Loaded fzf-tools.sh in 2ms
 ✅ Loaded general.sh in 3ms
 ✅ Loaded git-lock.sh in 3ms
-✅ Loaded git-scope.sh in 3ms
+✅ Loaded git-magic.sh in 3ms
+✅ Loaded git-scope.sh in 2ms
+✅ Loaded git-summary.sh in 3ms
 ✅ Loaded git-tools.sh in 3ms
 ✅ Loaded git.sh in 3ms
-✅ Loaded login.sh in 3ms
-✅ Loaded macos.sh in 3ms
+✅ Loaded login.sh in 2ms
+✅ Loaded macos.sh in 6ms
 ✅ Loaded random_emoji.sh in 3ms
-✅ Loaded tools.sh in 3ms
-✅ Loaded language.sh in 3ms
-✅ Loaded secrets.sh in 3ms
-✅ Loaded ssh.sh in 3ms
+✅ Loaded shell-utils.sh in 3ms
 ✅ Loaded env.sh in 7ms
-✅ Loaded plugins.sh in 53ms
-✅ Loaded completion.zsh in 22ms
+✅ Loaded completion.zsh in 19ms
+✅ Loaded infra.sh in 4ms
+✅ Loaded language.sh in 3ms
+✅ Loaded local.sh in 2ms
+✅ Loaded rytass.sh in 4ms
 ✅ Loaded development.sh (delayed) in 2ms
 
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
