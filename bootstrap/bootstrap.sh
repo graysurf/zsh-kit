@@ -34,28 +34,43 @@ load_script() {
   fi
 }
 
-# Load a group of scripts with timing, supporting exclusions
+# Load a group of scripts with timing, supporting exclusions and detailed debug
 load_script_group() {
   typeset group_name="$1"
   typeset base_dir="$2"
   shift 2
-  typeset -a exclude=("$@")  # 接收展開後的 array
+  typeset -a exclude=("$@")  # Exclusion list
 
-  [[ -n "$ZSH_DEBUG" ]] && {
+  typeset -a all_scripts filtered_scripts
+
+  all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
+
+  if (( ${+ZSH_DEBUG} )); then
     echo "🗂 Loading group: $group_name"
     echo "🔽 Base: $base_dir"
     echo "🚫 Exclude:"
-    printf '   - %s\n' "${exclude[@]}"
-  }
+    for ex in "${exclude[@]}"; do
+      echo "   - $ex"
+    done
+    if [[ "$ZSH_DEBUG" -ge 2 ]]; then
+      echo "📦 All collected scripts:"
+      printf '   • %s\n' "${all_scripts[@]}"
+    fi
+  fi
 
-  typeset -a paths
-  paths=(${(f)"$(
-    collect_scripts "$base_dir" | grep -vFxf <(printf "%s\n" "${exclude[@]}")
+  filtered_scripts=(${(f)"$(
+    printf "%s\n" "${all_scripts[@]}" | grep -vFxf <(printf "%s\n" "${exclude[@]}")
   )"})
 
-  for file in "${paths[@]}"; do
+  if [[ "$ZSH_DEBUG" -ge 2 ]]; then
+    echo "✅ Scripts after filtering:"
+    printf '   → %s\n' "${filtered_scripts[@]}"
+  fi
+
+  for file in "${filtered_scripts[@]}"; do
     load_with_timing "$file"
   done
 }
+
 
 
