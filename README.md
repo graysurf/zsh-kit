@@ -25,6 +25,11 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 ├── assets/                               # Static data files
 │   └── quotes.txt                        # Optional: quotes for login banner
 │
+├── bootstrap/                            # Script loader and logic orchestrator
+│   ├── bootstrap.sh                      # Core loader functions (load_script, load_script_group, etc.)
+│   ├── init.sh                           # Centralized script entrypoint with ordered loading
+│   └── plugins.sh                        # Manual plugin loader
+│
 ├── cache/                                # Runtime cache directory (e.g. zcompdump, fzf history)
 │
 ├── config/                               # Config files for third-party tools
@@ -32,28 +37,34 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │
 ├── scripts/                              # Core shell logic (modularized)
 │   ├── _completion/                      # Custom completion definitions
-│   │
+│   │   ├── _fzf-tools
+│   │   ├── _git-lock
+│   │   ├── _git-scope
+│   │   └── _git-summary
 │   ├── git/                              # Git-related tools
-│   │   ├── git-lock.sh                   # git-lock commit locker
-│   │   ├── git-scope.sh                  # git-scope commit viewer
-│   │   ├── git-tools.sh                  # Shared git utilities
-│   │   └── git.sh                        # Git aliases
-│   │
-│   ├── completion.zsh                    # Compinit setup and fzf-tab styles
-│   ├── env.sh                            # Environment variables and path setup
-│   ├── eza.sh                            # Aliases for eza (ls replacement)
-│   ├── fzf-tools.sh                      # Modular FZF launcher for file, git, process, and history workflows
-│   ├── general.sh                        # General-purpose helpers and toggles
-│   ├── iterm2_shell_integration.zsh      # Optional: iTerm2 shell integration
-│   ├── login.sh                          # Banner display and login logic
-│   ├── mac.sh                            # macOS-specific configuration
-│   ├── plugins.sh                        # Plugin manager or manual plugin loader
-│   ├── random_emoji.sh                   # Emoji picker and helpers
-│   └── tools.sh                          # Miscellaneous CLI tools
+│   │   ├── git-lock.sh
+│   │   ├── git-magic.sh
+│   │   ├── git-scope.sh
+│   │   ├── git-summary.sh
+│   │   ├── git-tools.sh
+│   │   └── git.sh
+│   ├── completion.zsh
+│   ├── env.sh
+│   ├── eza.sh
+│   ├── fzf-tools.sh
+│   ├── general.sh
+│   ├── iterm2_shell_integration.zsh
+│   ├── login.sh
+│   ├── macos.sh
+│   ├── random_emoji.sh
+│   └── tools.sh
 │
 └── tools/                                # Executable utilities
-    ├── git/                              # git-related CLI frontends
-    └── random_emoji_cmd.sh               # Emoji picker CLI wrapper
+    ├── git/
+    │   ├── git-lock
+    │   ├── git-scope
+    │   └── git-summary
+    └── random_emoji_cmd.sh
 ```
 
 ## 🪄 Startup Snapshot
@@ -73,7 +84,7 @@ An example Zsh startup log with this config:
 ✅ Loaded git-tools.sh in 3ms
 ✅ Loaded git.sh in 3ms
 ✅ Loaded login.sh in 3ms
-✅ Loaded mac.sh in 3ms
+✅ Loaded macos.sh in 3ms
 ✅ Loaded random_emoji.sh in 3ms
 ✅ Loaded tools.sh in 3ms
 ✅ Loaded language.sh in 3ms
@@ -101,11 +112,10 @@ Zsh will now source your config from `$ZDOTDIR/.zshrc`.
 Make sure that `.zshrc` begins by sourcing the env and plugin setup:
 
 ```bash
-source "$ZDOTDIR/scripts/env.sh"
-source "$ZDOTDIR/scripts/plugins.sh"  # Loads plugins manually, some are lazy by design
+source "$ZDOTDIR/bootstrap/init.sh"
 ```
 
-This must occur **before** loading Starship or any other tooling.
+This will initialize all scripts in proper order via the `load_script_group()` system.
 
 ## 🛠 Notes
 
