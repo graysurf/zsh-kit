@@ -6,7 +6,9 @@ typeset -f load_script &>/dev/null || {
 }
 
 export ZSH_SCRIPT_DIR="$ZDOTDIR/scripts"
+
 export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
+[[ -d "$ZSH_PRIVATE_SCRIPT_DIR" ]] || mkdir -p "$ZSH_PRIVATE_SCRIPT_DIR"
 
 load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.sh"
 
