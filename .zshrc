@@ -39,10 +39,11 @@ collect_scripts() {
   done
 }
 
-ZSH_SCRIPT_PATHS=(
-  ${(f)"$(collect_scripts "$ZSH_SCRIPT_DIR" "$ZSH_PRIVATE_SCRIPT_DIR")"}
-)
 
+
+# ──────────────────────────────
+# Load scripts except excluded ones
+# ──────────────────────────────
 ZSH_SCRIPT_EXCLUDE=(
   "$ZSH_SCRIPT_DIR/env.sh"
   "$ZSH_SCRIPT_DIR/plugins.sh"
@@ -50,12 +51,9 @@ ZSH_SCRIPT_EXCLUDE=(
   "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
 )
 
-# ──────────────────────────────
-# Load scripts except excluded ones
-# ──────────────────────────────
 ZSH_SCRIPT_PATHS=(
   ${(f)"$(
-    collect_scripts "$ZSH_SCRIPT_DIR" "$ZSH_PRIVATE_SCRIPT_DIR" |
+    collect_scripts "$ZSH_SCRIPT_DIR" |
     grep -vFxf <(printf "%s\n" "${ZSH_SCRIPT_EXCLUDE[@]}")
   )"}
 )
@@ -81,6 +79,24 @@ load_with_timing "$ZDOTDIR/scripts/plugins.sh"
 # It must run after plugins are loaded, or some completion definitions will be missing.
 # Running compinit too early can skip over completions provided by plugins.
 load_with_timing "$ZDOTDIR/scripts/completion.zsh"
+
+# ──────────────────────────────
+# Load private scripts
+# ──────────────────────────────
+ZSH_PRIVATE_SCRIPT_EXCLUDE=(
+  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+)
+
+ZSH_PRIVATE_SCRIPT_PATHS=(
+  ${(f)"$(
+    collect_scripts "$ZSH_PRIVATE_SCRIPT_DIR" |
+    grep -vFxf <(printf "%s\n" "${ZSH_PRIVATE_SCRIPT_EXCLUDE[@]}")
+  )"}
+)
+
+for file in "${ZSH_PRIVATE_SCRIPT_PATHS[@]}"; do
+  load_with_timing "$file"
+done
 
 # ──────────────────────────────
 # Load development.sh last with timing
