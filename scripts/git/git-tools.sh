@@ -2,10 +2,12 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr greset-hard gu gum gdc groot \
-        gh-open gh-open-branch \
-        gh-open-commit gh-push-open \
-        gundo gpick 2>/dev/null
+unalias gr grs grm grh gbh gbc \
+        git-reset-soft git-reset-mixed git-reset-hard \
+        git-back-head git-back-checkout \
+        gdc groot gpick \
+        gh-open gh-open-branch gh-open-commit gh-push-open \
+        2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
@@ -57,28 +59,20 @@ get_commit_hash() {
 # Git workflow helper functions
 # ────────────────────────────────────────────────────────
 
-# Soft reset last commit with confirmation
-gu() {
+# Undo the last commit while keeping all changes staged (soft reset)
+#
+# This function performs a `git reset --soft HEAD~1`, which removes the
+# last commit from history but keeps all changes staged. This is useful
+# when you want to rewrite the commit message or make additional edits
+# before recommitting.
+#
+# It is a safer alternative to hard resets and preserves your working state.
+git-reset-soft() {
   echo "⚠️  This will rewind your last commit (soft reset)"
-  echo "🧠 Your changes will become UNSTAGED. Good for regrouping changes."
-  echo -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "🚫 Aborted"
-    return 1
-  fi
-
-  git reset --soft HEAD~1
-  echo "✅ Last commit undone. Your changes are now unstaged & editable."
-}
-
-# Undo last commit but keep changes staged with confirmation
-gum() {
-  echo "⚠️  This will undo your last commit (soft reset)"
   echo "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
   echo -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
   read -r confirm
-  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+  if [[ "$confirm" != [yY] ]]; then
     echo "🚫 Aborted"
     return 1
   fi
@@ -87,13 +81,116 @@ gum() {
   echo "✅ Last commit undone. Your changes are still staged."
 }
 
-# FZF pick a commit and checkout to it
-gpick() {
-  git log --oneline --color=always |
-    fzf --ansi --no-sort --reverse |
-    cut -d ' ' -f 1 |
-    xargs git checkout
+# Hard reset to the previous commit with confirmation (DANGEROUS)
+#
+# This function performs a `git reset --hard HEAD~1`, which removes the last
+# commit and discards all staged and unstaged changes in the working tree.
+# 
+# ⚠️ WARNING: This operation is destructive and cannot be undone.
+# Only use it when you are absolutely sure you want to discard local changes.
+git-reset-hard() {
+  echo "⚠️  This will HARD RESET your repository to the previous commit."
+  echo "🔥 All staged and unstaged changes will be PERMANENTLY LOST."
+  echo "🧨 This is equivalent to: git reset --hard HEAD~1"
+  echo -n "❓ Are you absolutely sure? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git reset --hard HEAD~1
+  echo "✅ Hard reset completed. Your working directory is now clean."
 }
+
+# Undo the last commit and unstage all changes (mixed reset)
+#
+# This function performs a `git reset --mixed HEAD~1`, which removes the
+# last commit and moves all associated changes into the working directory
+# in an unstaged state. This is useful when you want to revise changes
+# more freely before recommitting.
+#
+# This is Git's default reset mode if no flag is given.
+git-reset-mixed() {
+  echo "⚠️  This will rewind your last commit (mixed reset)"
+  echo "🧠 Your changes will become UNSTAGED and editable in working directory."
+  echo "❓ Proceed with 'git reset --mixed HEAD~1'? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git reset --mixed HEAD~1
+  echo "✅ Last commit undone. Your changes are now unstaged."
+}
+
+# Rewind HEAD to its previous position with confirmation
+#
+# This function uses `git rev-parse HEAD@{1}` to retrieve the previous
+# position of HEAD from the reflog. It is useful when you have recently
+# moved HEAD by mistake (e.g., via a reset, commit, or other action),
+# and want to undo that movement without affecting your working tree.
+#
+# Unlike `git-back-checkout()`, which targets the previous checkout action specifically,
+# this function restores HEAD to whatever state it was in before the last
+# movement — not limited to checkouts.
+git-back-head() {
+  local prev_head
+  prev_head=$(git rev-parse HEAD@{1} 2>/dev/null)
+
+  if [[ -z "$prev_head" ]]; then
+    echo "❌ Cannot find previous HEAD in reflog."
+    return 1
+  fi
+
+  echo "⏪ This will move HEAD back to the previous position:"
+  echo "🔁 $(git log --oneline -1 "$prev_head")"
+  echo -n "❓ Proceed with 'git checkout HEAD@{1}'? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git checkout "$prev_head"
+  echo "✅ Restored to previous HEAD: $prev_head"
+}
+
+# Restore HEAD to the previous checkout location with confirmation
+# 
+# This function looks up the Git reflog to find the last checkout action
+# (e.g., switching branches or checking out a commit), and moves HEAD back
+# to that commit. It is useful when you've checked out something temporarily
+# and want to return to where you were before.
+git-back-checkout() {
+  local prev_ref
+  prev_ref=$(git reflog | awk '/checkout/ {print $1}' | sed -n '2p')
+
+  if [[ -z "$prev_ref" ]]; then
+    echo "❌ Cannot find previous checkout location in reflog."
+    return 1
+  fi
+
+  echo "⏪ This will move HEAD back to the previous checkout position:"
+  echo "🔁 $(git log --oneline -1 "$prev_ref")"
+  echo -n "❓ Proceed with 'git checkout $prev_ref'? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git checkout "$prev_ref"
+  echo "✅ Restored to previous checkout state: $prev_ref"
+}
+
+# Short aliases for common undo/reset operations
+alias grs='git-reset-soft'
+alias grm='git-reset-mixed'
+alias grh='git-reset-hard'
+alias gbh='git-back-head'
+alias gbc='git-back-checkout'
 
 # ────────────────────────────────────────────────────────
 # GitHub / GitLab remote open helpers
