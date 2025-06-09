@@ -24,14 +24,15 @@ export FZF_DEF_DELIM
 export FZF_DEF_DELIM_END
 
 # Ensure FZF_DEFAULT_OPTS is initialized
-: "${FZF_DEFAULT_OPTS:=}"
-export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
+FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
+  --preview-window=$FZF_PREVIEW_WINDOW \
   --bind=ctrl-j:preview-down \
   --bind=ctrl-k:preview-up \
   --bind=ctrl-b:preview-page-up \
   --bind=ctrl-f:preview-page-down \
   --bind=ctrl-h:preview-top \
   --bind=ctrl-l:preview-bottom"
+export FZF_DEFAULT_OPTS
 
 # FZF key bindings (e.g., Ctrl-R, Ctrl-T, Alt-C)
 source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"

@@ -73,7 +73,7 @@ fzf-eza-directory() {
 
 # Fuzzy git status with diff preview and navigation bindings
 fzf-git-status() {
-  git status -s | fzf --no-sort --reverse \
+  git status -s | fzf --no-sort \
     --preview 'git diff --color=always {2}' \
     --bind=ctrl-j:preview-down \
     --bind=ctrl-k:preview-up 
@@ -101,6 +101,43 @@ fzf-vscode() {
   [[ -n "$file" ]] && code "$file"
 }
 
+# FZF pick a commit and checkout to it
+fzf-git-checkout() {
+  local ref
+  ref=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
+    --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
+    fzf --ansi --no-sort --reverse \
+        --delimiter=' ' \
+        --with-nth=2.. \
+        --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
+        --preview='git-scope commit {1} | sed "s/^📅.*/&\\n/"' |
+    awk '{print $1}')
+
+  [[ -z "$ref" ]] && return
+
+  if git checkout "$ref"; then
+    return 0
+  fi
+
+  echo "⚠️  Checkout to '$ref' failed. Likely due to local changes."
+
+  echo -n "📦 Stash your current changes and retry checkout? [y/N] "
+  read -r confirm
+  [[ "$confirm" != [yY] ]] && echo "🚫 Aborted." && return 1
+
+  # combine stash message： current time + HEAD subject
+  local timestamp subject
+  timestamp=$(date +%F_%H%M)
+  subject=$(git log -1 --pretty=%s HEAD)
+  local stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
+
+  git stash push -u -m "$stash_msg"
+  echo "📦 Changes stashed: $stash_msg"
+
+  # checkout again
+  git checkout "$ref" && echo "✅ Checked out to $ref"
+}
+
 # Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
   local input_ref="$1"
@@ -120,6 +157,7 @@ fzf-git-commit() {
     result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
       --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --no-sort --reverse \
+          --preview-window='right:50%:wrap' \
           --query="$commit_query" \
           --print-query \
           --preview 'git-scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"')
@@ -161,6 +199,7 @@ fzf-git-commit() {
     file=$(printf "%s\n" "${file_list[@]}" |
       fzf --ansi \
           --prompt="📄 Files in $commit > " \
+          --preview-window='right:50%:wrap' \
           --preview='bash -c "
             filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
             git diff --color=always '"${commit}"'^! -- \$filepath | delta --width=100 --line-numbers"' |
@@ -181,10 +220,11 @@ fzf-git-commit() {
 
 # Fuzzy search git commits with preview using git-scope
 fzf-scope-commit() {
-  git log --oneline --no-color |
+  git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
+      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
     fzf --ansi --no-sort --reverse \
+        --preview-window='right:50%:wrap' \
         --preview 'git-scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
-        --preview-window=right:60%:wrap \
         --bind "enter:execute(clear && git-scope commit {1})+abort"
 }
 
@@ -257,6 +297,7 @@ EOF
     FZF_DEF_DELIM_END="$enddelim" \
     fzf --ansi \
         --prompt="» Select > " \
+        --preview-window='right:70%:wrap' \
         --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile")
 
   [[ -z "$selected" ]] && { rm -f "$tmpfile" "$previewscript"; return }
