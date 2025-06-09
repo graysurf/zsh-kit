@@ -117,11 +117,12 @@ fzf-git-commit() {
 
   while true; do
     local result=''
-    result=$(git log --oneline --no-color |
+    result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
+      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --no-sort --reverse \
           --query="$commit_query" \
           --print-query \
-          --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"')
+          --preview 'git-scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"')
     [[ -z "$result" ]] && return
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
@@ -182,7 +183,7 @@ fzf-git-commit() {
 fzf-scope-commit() {
   git log --oneline --no-color |
     fzf --ansi --no-sort --reverse \
-        --preview 'git scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
+        --preview 'git-scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
         --preview-window=right:60%:wrap \
         --bind "enter:execute(clear && git-scope commit {1})+abort"
 }
