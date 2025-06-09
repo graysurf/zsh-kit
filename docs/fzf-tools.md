@@ -101,6 +101,25 @@ You can enter a hash like `HEAD~1`, or interactively pick from log.
 - Commit-specific snapshot
 - Automatic temp file export to open in VSCode
 
+### 🧭 Two-step interaction
+
+1. **Step 1: Pick a commit**  
+   Use fuzzy search to select a commit from your history.  
+   The right panel previews the full commit scope (message, files, stats).
+
+2. **Step 2: Pick a file**  
+   After selecting a commit, choose a modified file.  
+   The preview shows a colorized `git diff` via `delta`.  
+   Upon selection, the file's snapshot is extracted and opened in VSCode.
+
+#### 📌 Step 1: Commit selection with scope preview
+
+![fzf-git-commit-1](../assets/fzf-git-commit-1.png)
+
+#### 📄 Step 2: File selection with diff preview
+
+![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
+
 ---
 
 ### `fzf-tools kill`
@@ -142,6 +161,8 @@ fzf-tools env
 
 Each environment variable is shown with its full value for quick inspection or copying.
 
+![fzf-env](../assets/fzf-env.png)
+
 ---
 
 ### `fzf-tools alias`
@@ -153,6 +174,8 @@ fzf-tools alias
 ```
 
 See your configured shortcuts in one place, with real evaluated output.
+
+![fzf-alias](../assets/fzf-alias.png)
 
 ---
 
@@ -166,6 +189,8 @@ fzf-tools functions
 
 Lists all functions in your shell session and shows their implementation.
 
+![fzf-functions](../assets/fzf-functions.png)
+
 ---
 
 ### `fzf-tools defs`
@@ -177,6 +202,8 @@ fzf-tools defs
 ```
 
 Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
+
+![fzf-defs](../assets/fzf-defs.png)
 
 ---
 
