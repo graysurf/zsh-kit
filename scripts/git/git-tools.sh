@@ -8,9 +8,10 @@ unalias \
   gdc groot gpick          \
   gh-open                  \
   gh-open-branch           \
+  gh-open-default-branch   \
   gh-open-commit           \
   gh-push-open             \
-  goc gob god              \
+  gop god goc gob          \
   2>/dev/null
 
 # ────────────────────────────────────────────────────────
@@ -279,7 +280,7 @@ gh-open-commit() {
 }
 
 # Open default branch (main or master)
-god() {
+gh-open-default-branch() {
   local url default_branch
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
@@ -298,6 +299,12 @@ god() {
     return 1
   fi
 }
+
+# Open the repository page on GitHub or GitLab
+alias gop='gh-open'
+
+# Open default branch
+alias god='gh-open-default-branch'
 
 # Open current HEAD commit
 alias goc='gh-open-commit'
