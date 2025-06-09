@@ -139,3 +139,12 @@ If it does not exist, the system will fall back to a default quote.
 
 No magic. Fully reproducible. Proudly minimal.
 
+## 🪪 License
+
+[![License: CC0-1.0](https://img.shields.io/badge/License-CC0%201.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
+
+This repository is dedicated to the public domain under the [CC0 1.0 Universal license](https://creativecommons.org/publicdomain/zero/1.0/).
+You are free to copy, modify, distribute, and use any part of this work, even for commercial purposes, without asking for permission or giving credit.
+
+
+
