@@ -26,7 +26,7 @@ alias gr='git reset'
 
 # Copy staged diff to clipboard (no output)
 gdc() {
-  local diff
+  typeset diff
   diff=$(git diff --cached --no-color)
 
   if [[ -z "$diff" ]]; then
@@ -40,7 +40,7 @@ gdc() {
 
 # Jump to the root directory of the current Git repository
 groot() {
-  local root
+  typeset root
   root=$(git rev-parse --show-toplevel 2>/dev/null) || {
     echo "❌ Not in a git repository"
     return 1
@@ -50,7 +50,7 @@ groot() {
 
 # get_commit_hash <ref>
 get_commit_hash() {
-  local ref="$1"
+  typeset ref="$1"
   if [[ -z "$ref" ]]; then
     echo "❌ Missing git ref" >&2
     return 1
@@ -141,7 +141,7 @@ git-reset-mixed() {
 # this function restores HEAD to whatever state it was in before the last
 # movement — not limited to checkouts.
 git-back-head() {
-  local prev_head
+  typeset prev_head
   prev_head=$(git rev-parse HEAD@{1} 2>/dev/null)
 
   if [[ -z "$prev_head" ]]; then
@@ -169,7 +169,7 @@ git-back-head() {
 # to that commit. It is useful when you've checked out something temporarily
 # and want to return to where you were before.
 git-back-checkout() {
-  local prev_ref
+  typeset prev_ref
   prev_ref=$(git reflog | awk '/checkout/ {print $1}' | sed -n '2p')
 
   if [[ -z "$prev_ref" ]]; then
@@ -203,7 +203,7 @@ alias gbc='git-back-checkout'
 
 # Open the repository page on GitHub or GitLab
 gh-open() {
-  local url
+  typeset url
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
     -e 's/com:/com\//' \
@@ -222,7 +222,7 @@ gh-open() {
 
 # Open the current branch page on GitHub or GitLab
 gh-open-branch() {
-  local url branch
+  typeset url branch
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
     -e 's/com:/com\//' \
@@ -242,8 +242,8 @@ gh-open-branch() {
 
 # Open a specific commit on GitHub (supports tag, branch, or commit hash)
 gh-open-commit() {
-  local hash="${1:-HEAD}"
-  local url commit
+  typeset hash="${1:-HEAD}"
+  typeset url commit
 
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
@@ -266,7 +266,7 @@ gh-open-commit() {
     return 1
   }
 
-  local commit_url="$url/commit/$commit"
+  typeset commit_url="$url/commit/$commit"
   echo "🔗 Opening: $commit_url"
 
   if command -v open &>/dev/null; then
@@ -281,7 +281,7 @@ gh-open-commit() {
 
 # Open default branch (main or master)
 gh-open-default-branch() {
-  local url default_branch
+  typeset url default_branch
   url=$(git remote get-url origin 2>/dev/null | sed \
     -e 's/^git@/https:\/\//' \
     -e 's/com:/com\//' \

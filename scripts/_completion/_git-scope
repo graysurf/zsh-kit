@@ -1,7 +1,7 @@
 #compdef git-scope
 
 _git-scope() {
-  local -a subcommands
+  typeset -a subcommands
   subcommands=(
     'tracked:Show all tracked files'
     'staged:Show staged files'
@@ -22,7 +22,7 @@ _git-scope() {
       ;;
     args)
       if [[ ${words[1]} == "commit" ]]; then
-        local -a commit_hashes
+        typeset -a commit_hashes
         if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
           commit_hashes=( ${(f)"$(git log --pretty=format:'%h:%s' -n 20 2>/dev/null)"} )
         else

@@ -17,14 +17,14 @@ alias fsc='fzf-scope-commit'
 # ────────────────────────────────────────────────────────
 # Fuzzy search command history and execute selected entry
 fzf-history() {
-  local history_output
+  typeset history_output
   if [[ -n "$ZSH_NAME" ]]; then
     history_output=$(fc -l 1)
   else
     history_output=$(history)
   fi
 
-  local selected
+  typeset selected
   selected=$(echo "$history_output" |
     fzf +s --tac |
     sed -E 's/ *[0-9]*\*? *//' |
@@ -35,7 +35,7 @@ fzf-history() {
 
 # Fuzzy search files and change to selected file's directory
 fzf-directory() {
-  local file dir
+  typeset file dir
   file=$(fd --type f --hidden --exclude .git --max-depth=$FZF_FILE_MAX_DEPTH |
     fzf --preview 'bat --color "always" {}' +m -q "$1") &&
     dir=$(dirname "$file") &&
@@ -44,7 +44,7 @@ fzf-directory() {
 
 # Fuzzy select process and kill it with signal (default: SIGKILL)
 fzf-kill() {
-  local pid
+  typeset pid
   pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
   [[ -n "$pid" ]] && echo $pid | xargs kill -${1:-9}
 }
@@ -54,7 +54,7 @@ fzf-kill() {
 # ────────────────────────────────────────────────────────
 # Fuzzy change directory using eza to preview directory contents
 fzf-cd() {
-  local dir
+  typeset dir
   dir=$(eza --only-dirs --color=always |
     fzf --ansi \
         --preview "eza -alh --icons --group-directories-first --color=always {}") &&
@@ -63,7 +63,7 @@ fzf-cd() {
 
 # Fuzzy search files and cd into the selected file's directory (with eza preview)
 fzf-eza-directory() {
-  local file
+  typeset file
   file=$(fd --type f --hidden --exclude .git --max-depth=$FZF_FILE_MAX_DEPTH |
     fzf --preview 'eza -al --color=always $(dirname {})') &&
     cd "$(dirname \"$file\")"
@@ -87,21 +87,21 @@ __fzf_file_select() {
 
 # Fuzzy search a file and open it with vi
 fzf-file() {
-  local file
+  typeset file
   file=$(__fzf_file_select)
   [[ -n "$file" ]] && vi "$file"
 }
 
 # Fuzzy search a file and open it with VSCode
 fzf-vscode() {
-  local file
+  typeset file
   file=$(__fzf_file_select)
   [[ -n "$file" ]] && code "$file"
 }
 
 # FZF pick a commit and checkout to it
 fzf-git-checkout() {
-  local ref
+  typeset ref
   ref=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
     --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
     fzf --ansi --no-sort --reverse \
@@ -124,10 +124,10 @@ fzf-git-checkout() {
   [[ "$confirm" != [yY] ]] && echo "🚫 Aborted." && return 1
 
   # combine stash message： current time + HEAD subject
-  local timestamp subject
+  typeset timestamp subject
   timestamp=$(date +%F_%H%M)
   subject=$(git log -1 --pretty=%s HEAD)
-  local stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
+  typeset stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
 
   git stash push -u -m "$stash_msg"
   echo "📦 Changes stashed: $stash_msg"
@@ -138,20 +138,20 @@ fzf-git-checkout() {
 
 # Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
-  local input_ref="$1"
-  local commit file tmp
-  local commit_query=""
-  local commit_query_restore=""
+  typeset input_ref="$1"
+  typeset commit file tmp
+  typeset commit_query=""
+  typeset commit_query_restore=""
 
   if [[ -n "$input_ref" ]]; then
-    local full_hash
+    typeset full_hash
     full_hash=$(get_commit_hash "$input_ref")
     [[ -z "$full_hash" ]] && echo "❌ Invalid ref: $input_ref" >&2 && return 1
     commit_query="${full_hash:0:7}"
   fi
 
   while true; do
-    local result=''
+    typeset result=''
     result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
       --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --no-sort --reverse \
@@ -164,18 +164,18 @@ fzf-git-commit() {
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
-    local COLOR_RESET='\033[0m'
-    local ADDED='\033[1;32m'
-    local MODIFIED='\033[1;33m'
-    local DELETED='\033[1;31m'
-    local OTHER='\033[1;34m'
+    typeset COLOR_RESET='\033[0m'
+    typeset ADDED='\033[1;32m'
+    typeset MODIFIED='\033[1;33m'
+    typeset DELETED='\033[1;31m'
+    typeset OTHER='\033[1;34m'
 
-    local stats_list=""
+    typeset stats_list=""
     stats_list=$(git show --numstat --format= "$commit")
 
-    local -a file_list=()
+    typeset -a file_list=()
     while IFS=$'\t' read -r kind filepath; do
-      local color="$OTHER"
+      typeset color="$OTHER"
       case "$kind" in
         A) color="$ADDED" ;;
         M) color="$MODIFIED" ;;
@@ -184,7 +184,7 @@ fzf-git-commit() {
         *) color="$COLOR_RESET" ;;
       esac
 
-      local stat_line=''
+      typeset stat_line=''
       stat_line=$(echo "$stats_list" | awk -v f="$filepath" '$3 == f {
         a = ($1 == "-" ? 0 : $1)
         d = ($2 == "-" ? 0 : $2)
@@ -228,8 +228,8 @@ fzf-scope-commit() {
 
 # Show delimited preview blocks in FZF and copy selected block to clipboard
 fzf_block_preview() {
-  local generator="$1"
-  local tmpfile delim enddelim
+  typeset generator="$1"
+  typeset tmpfile delim enddelim
   tmpfile="$(mktemp)"
 
   # 檢查 delimiter 變數是否設置，未設置就報錯退出
@@ -245,7 +245,7 @@ fzf_block_preview() {
 
   $generator > "$tmpfile"
 
-  local previewscript
+  typeset previewscript
   previewscript="$(mktemp)"
   cat > "$previewscript" <<'EOF'
 #!/usr/bin/env awk -f
@@ -289,7 +289,7 @@ EOF
 
   chmod +x "$previewscript"
 
-  local selected
+  typeset selected
   selected=$(awk -v delim="$delim" '$0 == delim { getline; print }' "$tmpfile" |
     FZF_DEF_DELIM="$delim" \
     FZF_DEF_DELIM_END="$enddelim" \
@@ -300,7 +300,7 @@ EOF
 
   [[ -z "$selected" ]] && { rm -f "$tmpfile" "$previewscript"; return }
 
-  local result
+  typeset result
   result=$(awk -v target="$selected" -v delim="$delim" -v enddelim="$enddelim" '
 BEGIN { inside=0 }
 {
@@ -389,7 +389,7 @@ fzf-defs() {
 
 # Dispatcher and help menu for various fzf-based utilities
 fzf-tools() {
-  local cmd="$1"
+  typeset cmd="$1"
 
   if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
     echo "Usage: fzf-tools <command> [args...]"

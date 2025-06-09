@@ -5,26 +5,26 @@
 
 # Render file list with A/M/D tags and color, then show tree
 _git_scope_render_with_type() {
-  local input="$1"
+  typeset input="$1"
 
   if [[ -z "$input" ]]; then
     echo "⚠️  No matching files"
     return 1
   fi
 
-  local COLOR_RESET='\033[0m'
-  local ADDED='\033[1;32m'
-  local MODIFIED='\033[1;33m'
-  local DELETED='\033[1;31m'
-  local OTHER='\033[1;34m'
+  typeset COLOR_RESET='\033[0m'
+  typeset ADDED='\033[1;32m'
+  typeset MODIFIED='\033[1;33m'
+  typeset DELETED='\033[1;31m'
+  typeset OTHER='\033[1;34m'
 
   echo -e "\n📄 Changed files:"
 
-  local tree_files=""
+  typeset tree_files=""
   echo "$input" | while IFS=$'\t' read -r kind file; do
     [[ -z "$file" ]] && continue
 
-    local color="$OTHER"
+    typeset color="$OTHER"
     case "$kind" in
       A) color="$ADDED" ;;
       M) color="$MODIFIED" ;;
@@ -51,7 +51,7 @@ _git_scope_render_with_type() {
 _git_scope_tracked() {
   echo -e "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n"
 
-  local files
+  typeset files
   files=$(git ls-files)
 
   if [[ -z "$files" ]]; then
@@ -59,7 +59,7 @@ _git_scope_tracked() {
     return 1
   fi
 
-  local marked=""
+  typeset marked=""
   while IFS= read -r file; do
     marked+="-\t${file}"$'\n'
   done <<< "$files"
@@ -69,7 +69,7 @@ _git_scope_tracked() {
 
 _git_scope_staged() {
   echo -e "\n📂 Show tree of staged files (ready to be committed)\n"
-  local ns_lines
+  typeset ns_lines
   ns_lines=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
 
   _git_scope_render_with_type "$ns_lines"
@@ -77,7 +77,7 @@ _git_scope_staged() {
 
 _git_scope_modified() {
   echo -e "\n📂 Show tree of modified files (not yet staged)\n"
-  local ns_lines
+  typeset ns_lines
   ns_lines=$(git diff --name-status --diff-filter=ACMRTUXB)
 
   _git_scope_render_with_type "$ns_lines"
@@ -85,11 +85,11 @@ _git_scope_modified() {
 
 _git_scope_all() {
   echo -e "\n📂 Show tree of all changed files (staged + modified)\n"
-  local staged modified
+  typeset staged modified
   staged=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
   modified=$(git diff --name-status --diff-filter=ACMRTUXB)
 
-  local combined
+  typeset combined
   combined=$(printf "%s\n%s" "$staged" "$modified" | grep -v '^$' | sort -u)
 
   _git_scope_render_with_type "$combined"
@@ -97,7 +97,7 @@ _git_scope_all() {
 
 _git_scope_untracked() {
   echo -e "\n📂 Show tree of untracked files (new files not yet added)\n"
-  local files
+  typeset files
   files=$(git ls-files --others --exclude-standard)
 
   if [[ -z "$files" ]]; then
@@ -105,7 +105,7 @@ _git_scope_untracked() {
     return 1
   fi
 
-  local marked=""
+  typeset marked=""
   while IFS= read -r file; do
     marked+="U\t${file}"$'\n'
   done <<< "$files"
@@ -114,17 +114,17 @@ _git_scope_untracked() {
 }
 
 _git_scope_commit() {
-  local commit="$1"
+  typeset commit="$1"
   if [[ -z "$commit" ]]; then
     echo "❗ Usage: git-scope commit <commit-hash | HEAD>"
     return 1
   fi
 
-  local COLOR_RESET='\033[0m'
-  local ADDED='\033[1;32m'
-  local MODIFIED='\033[1;33m'
-  local DELETED='\033[1;31m'
-  local OTHER='\033[1;34m'
+  typeset COLOR_RESET='\033[0m'
+  typeset ADDED='\033[1;32m'
+  typeset MODIFIED='\033[1;33m'
+  typeset DELETED='\033[1;31m'
+  typeset OTHER='\033[1;34m'
 
   echo ""
   git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
@@ -137,20 +137,20 @@ _git_scope_commit() {
   
   echo -e "\n📄 Changed files:"
 
-local ns_lines
+typeset ns_lines
 ns_lines=$(git show --pretty=format: --name-status "$commit")
-local numstat_lines
+typeset numstat_lines
 numstat_lines=$(git show --pretty=format: --numstat "$commit")
 
 if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
   echo "  ⚠️  Merge commit detected — no file-level diff shown by default"
 else
-  local total_add=0
-  local total_del=0
+  typeset total_add=0
+  typeset total_del=0
 
   while IFS=$'\t' read -r kind file; do
-    local add="-"
-    local del="-"
+    typeset add="-"
+    typeset del="-"
 
     unset match_line
     match_line=$(echo "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
@@ -163,7 +163,7 @@ else
       [[ "$del" != "-" ]] && total_del=$((total_del + del))
     fi
 
-    local color="$OTHER"
+    typeset color="$OTHER"
     case "$kind" in
       A) color="$ADDED" ;;
       M) color="$MODIFIED" ;;
@@ -193,7 +193,7 @@ git-scope() {
     return 1
   fi
 
-  local sub="$1"
+  typeset sub="$1"
   shift
 
   case "$sub" in

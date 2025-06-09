@@ -7,15 +7,15 @@
 # Generate a contribution summary by author over a given date range.
 # Accepts two parameters: start date and end date (YYYY-MM-DD).
 _git_summary() {
-  local since_param="$1"
-  local until_param="$2"
-  local log_args=()
+  typeset since_param="$1"
+  typeset until_param="$2"
+  typeset log_args=()
 
   if [[ -z "$since_param" && -z "$until_param" ]]; then
     log_args=(--no-merges)
   else
-    local tz_offset_hours=8
-    local since_utc until_utc
+    typeset tz_offset_hours=8
+    typeset since_utc until_utc
 
     if [[ "$(uname)" == "Darwin" ]]; then
       since_utc=$(date -j -f "%Y-%m-%d" -v0H -v0M -v0S -v -"${tz_offset_hours}"H "$since_param" +"%Y-%m-%dT%H:%M:%S")
@@ -59,7 +59,7 @@ _git_summary() {
 
 # Show a summary of today's commits (local timezone).
 _git_today() {
-  local today=$(date +"%Y-%m-%d")
+  typeset today=$(date +"%Y-%m-%d")
   echo -e "\n📅 Git summary for today: $today"
   echo
   _git_summary "$today" "$today"
@@ -67,7 +67,7 @@ _git_today() {
 
 # Show a summary of yesterday's commits (cross-platform).
 _git_yesterday() {
-  local yesterday
+  typeset yesterday
   if [[ "$(uname)" == "Darwin" ]]; then
     yesterday=$(date -v -1d +"%Y-%m-%d")
   else
@@ -80,8 +80,8 @@ _git_yesterday() {
 
 # Show a summary from the first day of the month to today.
 _git_this_month() {
-  local today=$(date +"%Y-%m-%d")
-  local start_date=$(date +"%Y-%m-01")
+  typeset today=$(date +"%Y-%m-%d")
+  typeset start_date=$(date +"%Y-%m-01")
   echo -e "\n📅 Git summary for this month: $start_date to $today"
   echo
   _git_summary "$start_date" "$today"
@@ -89,7 +89,7 @@ _git_this_month() {
 
 # Show a summary for the last full week (Monday to Sunday).
 _git_last_week() {
-  local CURRENT_DATE WEEKDAY START_DATE END_DATE
+  typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
   CURRENT_DATE=$(date +"%Y-%m-%d")
 
   if [[ "$(uname)" == "Darwin" ]]; then
@@ -109,7 +109,7 @@ _git_last_week() {
 
 # Show a summary for the current week (Monday to Sunday).
 _git_weekly() {
-  local CURRENT_DATE WEEKDAY START_DATE END_DATE
+  typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
   CURRENT_DATE=$(date +"%Y-%m-%d")
 
   if [[ "$(uname)" == "Darwin" ]]; then

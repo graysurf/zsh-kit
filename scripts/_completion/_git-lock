@@ -1,7 +1,7 @@
 #compdef git-lock
 
 __git_lock_labels() {
-  local repo_id lock_dir
+  typeset repo_id lock_dir
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null)
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 

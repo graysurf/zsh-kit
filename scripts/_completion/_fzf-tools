@@ -1,7 +1,7 @@
 #compdef fzf-tools
 
 # List of subcommands with their descriptions
-local -a commands
+typeset -a commands
 commands=(
   'cd:Change directory using fzf and eza'
   'directory:Preview file and cd into its folder'

@@ -4,8 +4,8 @@
 
 # Resolve label from argument or latest fallback
 _git_lock_resolve_label() {
-  local input_label="$1"
-  local repo_id lock_dir latest_file
+  typeset input_label="$1"
+  typeset repo_id lock_dir latest_file
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
@@ -34,7 +34,7 @@ _git_lock_resolve_label() {
 #   git-lock hotfix "old code" HEAD~2
 #   git-lock release "tag version" v1.0.0
 _git_lock() {
-  local label note commit repo_id lock_dir lock_file latest_file timestamp hash
+  typeset label note commit repo_id lock_dir lock_file latest_file timestamp hash
 
   label="${1:-default}"
   note="$2"
@@ -72,7 +72,7 @@ _git_lock() {
 # Example:
 #   _git_lock_unlock dev
 _git_lock_unlock() {
-  local repo_id lock_dir label lock_file latest_label
+  typeset repo_id lock_dir label lock_file latest_label
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
@@ -89,7 +89,7 @@ _git_lock_unlock() {
     return 1
   fi
 
-  local line hash note msg
+  typeset line hash note msg
   read -r line < "$lock_file"
   hash=$(echo "$line" | cut -d '#' -f 1 | xargs)
   note=$(echo "$line" | cut -d '#' -f 2- | xargs)
@@ -119,7 +119,7 @@ _git_lock_unlock() {
 # Example:
 #   git-lock-list
 _git_lock() {
-  local label note commit repo_id lock_dir lock_file latest_file timestamp hash
+  typeset label note commit repo_id lock_dir lock_file latest_file timestamp hash
 
   label="${1:-default}"
   note="$2"
@@ -150,7 +150,7 @@ _git_lock() {
 }
 
 _git_lock_unlock() {
-  local label repo_id lock_dir lock_file latest_file
+  typeset label repo_id lock_dir lock_file latest_file
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
   latest_file="$lock_dir/${repo_id}-latest"
@@ -172,7 +172,7 @@ _git_lock_unlock() {
     return 1
   fi
 
-  local hash note msg
+  typeset hash note msg
   read -r line < "$lock_file"
   hash=$(echo "$line" | cut -d '#' -f 1 | xargs)
   note=$(echo "$line" | cut -d '#' -f 2- | xargs)
@@ -195,7 +195,7 @@ _git_lock_unlock() {
 }
 
 _git_lock_list() {
-  local repo_id lock_dir latest
+  typeset repo_id lock_dir latest
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
@@ -206,10 +206,10 @@ _git_lock_list() {
 
   [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(<"$lock_dir/${repo_id}-latest")
 
-  # Test without for loop, just declare local variables
-  local tag hash note timestamp subject
+  # Test without for loop, just declare typeset variables
+  typeset tag hash note timestamp subject
 
-  # Check the local variables
+  # Check the typeset variables
   echo "🔐 [TEST] git-lock list for [$repo_id]:"
   echo "tag: $tag"
   echo "hash: $hash"
@@ -219,7 +219,7 @@ _git_lock_list() {
 }
 
 _git_lock_list() {
-  local repo_id lock_dir latest
+  typeset repo_id lock_dir latest
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
@@ -230,10 +230,10 @@ _git_lock_list() {
 
   [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(cat "$lock_dir/${repo_id}-latest")
 
-  local file tmp_list=()
+  typeset file tmp_list=()
   for file in "$lock_dir/${repo_id}-"*.lock; do
     [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
-    local ts_line='' epoch=''
+    typeset ts_line='' epoch=''
     ts_line=$(grep '^timestamp=' "$file")
     timestamp=${ts_line#timestamp=}
     epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
@@ -250,7 +250,7 @@ _git_lock_list() {
   echo "🔐 git-lock list for [$repo_id]:"
   for item in "${sorted[@]}"; do
     file="${item#*|}"
-    local name='' hash='' note='' timestamp='' label='' subject='' line=''
+    typeset name='' hash='' note='' timestamp='' label='' subject='' line=''
     name=$(basename "$file" .lock)
     label=${name#${repo_id}-}
     read -r line < "$file"
@@ -276,7 +276,7 @@ _git_lock_list() {
 # Example:
 #   git-lock-copy dev staging
 _git_lock_copy() {
-  local repo_id lock_dir src_label dst_label src_file dst_file
+  typeset repo_id lock_dir src_label dst_label src_file dst_file
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
@@ -315,7 +315,7 @@ _git_lock_copy() {
   cp "$src_file" "$dst_file"
   echo "$dst_label" > "$lock_dir/${repo_id}-latest"
 
-  local content hash note timestamp subject
+  typeset content hash note timestamp subject
   content=$(<"$src_file")
   hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
@@ -339,7 +339,7 @@ _git_lock_copy() {
 # Example:
 #   git-lock-delete dev
 _git_lock_delete() {
-  local repo_id lock_dir label lock_file latest_file latest_label
+  typeset repo_id lock_dir label lock_file latest_file latest_label
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
   latest_file="$lock_dir/${repo_id}-latest"
@@ -360,7 +360,7 @@ _git_lock_delete() {
     return 1
   fi
 
-  local content hash note timestamp subject
+  typeset content hash note timestamp subject
   content=$(<"$lock_file")
   hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
@@ -400,7 +400,7 @@ _git_lock_delete() {
 #
 # This will show the commits between the two git-lock points using: git log <hash1>..<hash2>
 _git_lock_diff() {
-  local repo_id lock_dir label1 label2 file1 file2 hash1 hash2
+  typeset repo_id lock_dir label1 label2 file1 file2 hash1 hash2
 
   label1=$(_git_lock_resolve_label "$1") || {
     echo "❗ Usage: git-lock diff <label1> <label2>"
@@ -452,9 +452,9 @@ _git_lock_diff() {
 # - Prompts before overwriting existing tags
 
 _git_lock_tag() {
-  local label tag_name tag_msg="" do_push=false
-  local repo_id lock_dir lock_file hash timestamp line1
-  local -a positional=()
+  typeset label tag_name tag_msg="" do_push=false
+  typeset repo_id lock_dir lock_file hash timestamp line1
+  typeset -a positional=()
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -518,7 +518,7 @@ _git_lock_tag() {
   if $do_push; then
     git push origin "$tag_name"
     echo "🚀 Pushed tag [$tag_name] to origin"
-    git tag -d "$tag_name" && echo "🧹 Deleted local tag [$tag_name]"
+    git tag -d "$tag_name" && echo "🧹 Deleted typeset tag [$tag_name]"
   fi
 }
 
@@ -528,7 +528,7 @@ git-lock() {
     return 1
   fi
 
-  local cmd="$1"
+  typeset cmd="$1"
   if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
     echo "Usage: git-lock <command> [args...]"
     echo ""

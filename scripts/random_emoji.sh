@@ -1,12 +1,12 @@
 random_emoji() {
-  local emojis=(
+  typeset emojis=(
     ✨ 🌟 🚀 🧠 🐋 🎯 🔥 🍀 📚 💡 💬 🛠️ 🧩 🧘 🥷 🐾 🍎 🌈 🐱 🐳
     🍺 🌍 🎵 🌅 🌌 🧃 🎉 🧊 🪄 🪐 ⚡ 🧪 🧬 🧱 ⚙️ 🛸 🔮 🧲 🧨 🧵 🧶
     🪢 📦 🗃️ 📂 📈 📉 🧾 🪪 🧰 🗜️ 🪛 🪚 🔧 🔩 🪤 🎓 🧑‍💻 👨‍🔬 👩‍🚀
     🧙‍♂️ 🧙‍♀️ 👁️ 🧿 🪬 🪞 🐧 🐼 🐦 🦊 🐢 🐌 🐝 🐞 🦂 🕸️ 🕷️ 🦜 🦉 🦖
     🦕 🪴 🌵 🌿 🍂 🍁 🌻 🌼 🌷 🪻 🌺 🌸 🪷 🌞 🌝 🌚 🌜 🌊 🌬️ 🌪️
   )
-  local total=${#emojis[@]}
-  local idx=$(( (RANDOM + $(date +%N)) % total + 1 ))
+  typeset total=${#emojis[@]}
+  typeset idx=$(( (RANDOM + $(date +%N)) % total + 1 ))
   echo "${emojis[$idx]}"
 }

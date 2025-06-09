@@ -42,7 +42,7 @@ if [[ -o interactive ]]; then
     fi
 
     iterm2_print_state_data() {
-      local _iterm2_hostname="${iterm2_hostname-}"
+      typeset _iterm2_hostname="${iterm2_hostname-}"
       if [ -z "${iterm2_hostname:-}" ]; then
         _iterm2_hostname=$(hostname -f 2>/dev/null)
       fi
@@ -114,7 +114,7 @@ if [[ -o interactive ]]; then
       # Add our escape sequences just before the prompt is shown.
       # Use ITERM2_SQUELCH_MARK for people who can't modify PS1 directly, like powerlevel9k users.
       # This is gross but I had a heck of a time writing a correct if statetment for zsh 5.0.2.
-      local PREFIX=""
+      typeset PREFIX=""
       if [[ $PS1 == *"$(iterm2_prompt_mark)"* ]]; then
         PREFIX=""
       elif [[ "${ITERM2_SQUELCH_MARK-}" != "" ]]; then
@@ -127,7 +127,7 @@ if [[ -o interactive ]]; then
     }
 
     iterm2_precmd() {
-      local STATUS="$?"
+      typeset STATUS="$?"
       if [ -z "${ITERM2_SHOULD_DECORATE_PROMPT-}" ]; then
         # You pressed ^C while entering a command (iterm2_preexec did not run)
         iterm2_before_cmd_executes

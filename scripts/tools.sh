@@ -5,14 +5,14 @@ reload() {
 
 # Open Zsh config in VSCode
 edit-zsh() {
-  local cwd="$(pwd)"
+  typeset cwd="$(pwd)"
   code "$ZDOTDIR"
   cd "$cwd" >/dev/null
 }
 
 # Use Yazi to navigate, then cd to result
 y() {
-  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  typeset tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
   yazi "$@" --cwd-file="$tmp"
   if cwd="$(< "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
     builtin cd -- "$cwd"

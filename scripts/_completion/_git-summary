@@ -1,7 +1,7 @@
 #compdef git-summary
 
 _git-summary() {
-  local -a subcmds
+  typeset -a subcmds
   subcmds=(
     "today:Show today's git summary"
     "yesterday:Show yesterday's git summary"

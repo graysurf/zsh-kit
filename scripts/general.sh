@@ -59,7 +59,7 @@ alias bff='bat-all'
 
 # fsearch: search for file content and preview with bat + ripgrep
 fsearch() {
-  local query="$1"
+  typeset query="$1"
   fd --type f --hidden --exclude .git |
     fzf --preview "bat --color=always --style=numbers {} | rg --color=always --context 5 '$query'" \
         --bind=ctrl-j:preview-down \

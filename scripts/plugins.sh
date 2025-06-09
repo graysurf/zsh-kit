@@ -1,5 +1,5 @@
 # ──────────────────────────────
-# Load local zsh plugins manually
+# Load typeset zsh plugins manually
 # ──────────────────────────────
 
 ZSH_PLUGINS_DIR="$ZDOTDIR/plugins"
@@ -21,8 +21,8 @@ ZSH_PLUGINS=(
 # --------------------------------------------
 
 load_plugin_entry() {
-  local entry="$1"
-  local plugin_name main_file extra
+  typeset entry="$1"
+  typeset plugin_name main_file extra
   plugin_name="${entry%%::*}"
   rest="${entry#*::}"
 
@@ -34,8 +34,8 @@ load_plugin_entry() {
     extra=""
   fi
 
-  local plugin_path="$ZSH_PLUGINS_DIR/$plugin_name"
-  local full_path="$plugin_path/$main_file"
+  typeset plugin_path="$ZSH_PLUGINS_DIR/$plugin_name"
+  typeset full_path="$plugin_path/$main_file"
 
   if [[ -f "$full_path" ]]; then
     if [[ "$extra" == "abbr" ]]; then
