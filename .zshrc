@@ -14,5 +14,3 @@ export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 export ZSH_BOOTSTRAP_SCRIPT_DIR="$ZDOTDIR/bootstrap"
 
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/init.sh"
-
-

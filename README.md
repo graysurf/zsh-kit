@@ -139,6 +139,14 @@ If it does not exist, the system will fall back to a default quote.
 
 No magic. Fully reproducible. Proudly minimal.
 
+## 🧑‍💻 Why I Made This
+
+This setup is the result of many hours spent refining my shell environment.  
+It includes several tools I built myself—some small, some extensive.  
+Among them, [git-magic](scripts/git/git-magic.sh) remains my favorite and most-used.  
+
+If there’s something you use every day, it’s worth taking the time to make it yours.
+
 ## 🪪 License
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0%201.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
