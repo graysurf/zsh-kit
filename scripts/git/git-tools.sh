@@ -2,12 +2,16 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias gr grs grm grh gbh gbc \
-        git-reset-soft git-reset-mixed git-reset-hard \
-        git-back-head git-back-checkout \
-        gdc groot gpick \
-        gh-open gh-open-branch gh-open-commit gh-push-open \
-        2>/dev/null
+unalias \
+  gr grs grm grh           \
+  gbh gbc                  \
+  gdc groot gpick          \
+  gh-open                  \
+  gh-open-branch           \
+  gh-open-commit           \
+  gh-push-open             \
+  goc gob god              \
+  2>/dev/null
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases
@@ -240,14 +244,15 @@ gh-open-commit() {
   local hash="${1:-HEAD}"
   local url commit
 
-  url=$(git remote get-url origin 2>/dev/null) || {
+  url=$(git remote get-url origin 2>/dev/null | sed \
+    -e 's/^git@/https:\/\//' \
+    -e 's/com:/com\//' \
+    -e 's/\.git$//' \
+    -e 's/^ssh:\/\///' \
+    -e 's/^https:\/\/git@/https:\/\//') || {
     echo "❌ No remote 'origin' found"
     return 1
   }
-
-  url=${url/git@github.com:/https:\/\/github.com\/}
-  url=${url/https:\/\/git@github.com\//https:\/\/github.com\/}
-  url=${url/.git/}
 
   if [[ "$url" != https://github.com/* ]]; then
     echo "❗ Only GitHub URLs are supported."
@@ -272,6 +277,33 @@ gh-open-commit() {
     return 1
   fi
 }
+
+# Open default branch (main or master)
+god() {
+  local url default_branch
+  url=$(git remote get-url origin 2>/dev/null | sed \
+    -e 's/^git@/https:\/\//' \
+    -e 's/com:/com\//' \
+    -e 's/\.git$//' \
+    -e 's/^ssh:\/\///' \
+    -e 's/^https:\/\/git@/https:\/\//')
+
+  default_branch=$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')
+
+  if [[ -n "$url" && -n "$default_branch" ]]; then
+    open "$url/tree/$default_branch"
+    echo "🌿 Opened: $url/tree/$default_branch"
+  else
+    echo "❌ Failed to resolve remote or default branch"
+    return 1
+  fi
+}
+
+# Open current HEAD commit
+alias goc='gh-open-commit'
+
+# Open current working branch
+alias gob='gh-open-branch'
 
 # Push current branch and open the pushed commit on GitHub or GitLab
 gh-push-open() {
