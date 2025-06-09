@@ -1,5 +1,5 @@
-[[ -n "$__BOOTSTRAP_LOADED" ]] && return
-__BOOTSTRAP_LOADED=1
+[[ -n "$ZSH_BOOTSTRAP_LOADED" ]] && return
+export ZSH_BOOTSTRAP_LOADED=1
 
 # Load a script and measure how long it takes
 load_with_timing() {
@@ -21,6 +21,17 @@ collect_scripts() {
   for dir in "$@"; do
     print -l "$dir"/**/*.sh(N)
   done
+}
+
+# Load a single script file with timing and optional debug log
+load_script() {
+  typeset file="$1"
+
+  if [[ -f "$file" ]]; then
+    load_with_timing "$file"
+  else
+    echo "⚠️  File not found: $file" >&2
+  fi
 }
 
 # Load a group of scripts with timing, supporting exclusions
@@ -46,3 +57,5 @@ load_script_group() {
     load_with_timing "$file"
   done
 }
+
+
