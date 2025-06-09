@@ -2,19 +2,27 @@
 
 A minimalist, high-performance Zsh environment with manual plugin control, emoji-powered login messages, and lazy-loaded utilities for speed and clarity.
 
-## Features
+## ✨ Core Features
+
+> This Zsh environment provides a clean structure and several built-in tools.
 
 - ⚡️ Manual plugin management (no plugin manager required)
 - 🌟 Emoji-powered login messages with random quotes (via custom script)
 - 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
 - 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
+- 🔧 Modular and lazy-friendly structure under `scripts/`
+- 🧩 [plugin-system](docs/plugin-system.md): Declarative plugin loader with extra setup support
+- 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
+
+## 🛠 Built-in CLI Tools
+
+> The following tools are developed as part of this environment and tightly integrated.
+> Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
+
 - 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
 - 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
-- 🧠 Unified UX with previewable shell functions, aliases, and env vars
-- 🔧 Modular and lazy-friendly structure under `scripts/`
-- 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
 ## Structure
 
@@ -87,8 +95,6 @@ An example Zsh startup log with this config:
 ✅ Loaded completion.zsh in 19ms
 ✅ Loaded infra.sh in 4ms
 ✅ Loaded language.sh in 3ms
-✅ Loaded local.sh in 2ms
-✅ Loaded rytass.sh in 4ms
 ✅ Loaded development.sh (delayed) in 2ms
 
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
@@ -132,3 +138,4 @@ If it does not exist, the system will fall back to a default quote.
 ## Philosophy
 
 No magic. Fully reproducible. Proudly minimal.
+
