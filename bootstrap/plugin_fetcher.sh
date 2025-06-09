@@ -1,3 +1,6 @@
+# Only define once
+typeset -f plugin_fetch_if_missing_from_entry >/dev/null && return
+
 # plugin_fetcher.sh – fetch/update Zsh plugins
 
 ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-$ZDOTDIR/plugins}"

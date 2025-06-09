@@ -3,8 +3,8 @@
 # Use for small config changes without restarting shell
 # ────────────────────────────────────────────────────────
 reload() {
-  if source "$ZDOTDIR/bootstrap/init.sh"; then
-    echo -e "\n🔁 Reloaded bootstrap/init.sh"
+  if source "$ZDOTDIR/bootstrap/bootstrap.sh"; then
+    echo -e "\n🔁 Reloaded bootstrap/bootstrap.sh"
     echo -e "💡 For major changes, consider running: execz"
   else
     echo -e "\n❌ Failed to reload Zsh environment"

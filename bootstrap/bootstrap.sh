@@ -1,76 +1,54 @@
-# Only define once
-typeset -f load_script >/dev/null && return
+source "$ZSH_BOOTSTRAP_SCRIPT_DIR/define-loaders.sh"
 
-# Load a script and measure how long it takes
-load_with_timing() {
-  typeset file="$1"
-  typeset label="${2:-$(basename "$file")}"
-  [[ ! -f "$file" ]] && return
-
-  typeset start_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
-  [[ -n "$ZSH_DEBUG" ]] && echo "🔍 Loading: $file"
-  source "$file"
-  typeset end_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
-  typeset duration=$((end_time - start_time))
-
-  printf "✅ Loaded %s in %dms\n" "$label" "$duration"
+# Ensure load_script function is defined before proceeding
+typeset -f load_script &>/dev/null || {
+  echo "❌ load_script not defined. Check bootstrap/define-loaders.sh"
+  return 1
 }
 
-# Recursively collect all .sh files under given directories
-collect_scripts() {
-  for dir in "$@"; do
-    print -l "$dir"/**/*.sh(N)
-  done
-}
+# Attempt to load the plugin system, but allow fallback if it fails
+if ! load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.sh"; then
+  echo "⚠️  Plugin system failed to load, continuing without plugins."
+fi
 
-# Load a single script file with timing and optional debug log
-load_script() {
-  typeset file="$1"
+export ZSH_SCRIPT_DIR="$ZDOTDIR/scripts"
 
-  if [[ -f "$file" ]]; then
-    load_with_timing "$file"
-  else
-    echo "⚠️  File not found: $file" >&2
-  fi
-}
+export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
+[[ -d "$ZSH_PRIVATE_SCRIPT_DIR" ]] || mkdir -p "$ZSH_PRIVATE_SCRIPT_DIR"
 
-# Load a group of scripts with timing, supporting exclusions and detailed debug
-load_script_group() {
-  typeset group_name="$1"
-  typeset base_dir="$2"
-  shift 2
-  typeset -a exclude=("$@")  # Exclusion list
+# ──────────────────────────────
+# Exclude list (array version)
+# ──────────────────────────────
+ZSH_SCRIPT_EXCLUDE_LIST=(
+  "$ZSH_SCRIPT_DIR/env.sh"
+  "$ZSH_SCRIPT_DIR/plugins.sh"
+  "$ZSH_SCRIPT_DIR/completion.zsh"
+  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+)
 
-  typeset -a all_scripts filtered_scripts
+ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
+  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+)
 
-  all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
+# ──────────────────────────────
+# Load public scripts (excluding special core scripts)
+# ──────────────────────────────
+load_script_group "Public Scripts" "$ZSH_SCRIPT_DIR" "${ZSH_SCRIPT_EXCLUDE_LIST[@]}"
 
-  if (( ${+ZSH_DEBUG} )); then
-    echo "🗂 Loading group: $group_name"
-    echo "🔽 Base: $base_dir"
-    echo "🚫 Exclude:"
-    for ex in "${exclude[@]}"; do
-      echo "   - $ex"
-    done
-    if [[ "$ZSH_DEBUG" -ge 2 ]]; then
-      echo "📦 All collected scripts:"
-      printf '   • %s\n' "${all_scripts[@]}"
-    fi
-  fi
+# ──────────────────────────────
+# Source environment and plugins
+# ──────────────────────────────
+load_with_timing "$ZDOTDIR/scripts/env.sh"
+load_with_timing "$ZDOTDIR/scripts/plugins.sh"
+load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 
-  filtered_scripts=(${(f)"$(
-    printf "%s\n" "${all_scripts[@]}" | grep -vFxf <(printf "%s\n" "${exclude[@]}")
-  )"})
+# ──────────────────────────────
+# Load private scripts
+# ──────────────────────────────
+load_script_group "Private Scripts" "$ZSH_PRIVATE_SCRIPT_DIR" "${ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST[@]}"
 
-  if [[ "$ZSH_DEBUG" -ge 2 ]]; then
-    echo "✅ Scripts after filtering:"
-    printf '   → %s\n' "${filtered_scripts[@]}"
-  fi
-
-  for file in "${filtered_scripts[@]}"; do
-    load_with_timing "$file"
-  done
-}
-
-
-
+# ──────────────────────────────
+# Load development.sh last with timing
+# ──────────────────────────────
+dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+[[ -f "$dev_script" ]] && load_with_timing "$dev_script" "$(basename "$dev_script") (delayed)"

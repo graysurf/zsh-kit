@@ -28,7 +28,7 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 
 ```
 .zsh/
-├── .zshrc                                # Main Zsh entry; sources bootstrap/init.sh
+├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.sh
 ├── .zprofile                             # Minimal login initializer for login shells
 │
 ├── assets/                               # Static data files
@@ -36,8 +36,8 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 ├── docs/                                 # Markdown documentation for key modules
 │
 ├── bootstrap/                            # Script orchestrator and plugin logic
-│   ├── bootstrap.sh                      # Base loader helpers (load_script, load_group, etc.)
-│   ├── init.sh                           # Centralized Zsh entrypoint (called from .zshrc)
+│   ├── define-loaders.sh                 # Base loader helpers (load_script, load_group, etc.)
+│   ├── bootstrap.sh                      # Centralized Zsh entrypoint (called from .zshrc)
 │   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
 │   └── plugins.sh                        # Plugin declaration + loading logic
 │
@@ -115,7 +115,7 @@ Zsh will now source your config from `$ZDOTDIR/.zshrc`.
 Make sure that `.zshrc` begins by sourcing the env and plugin setup:
 
 ```bash
-source "$ZDOTDIR/bootstrap/init.sh"
+source "$ZDOTDIR/bootstrap/bootstrap.sh"
 ```
 
 This will initialize all scripts in proper order via the `load_script_group()` system.

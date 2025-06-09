@@ -4,6 +4,11 @@
 
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugin_fetcher.sh"
 
+typeset -f plugin_fetch_if_missing_from_entry &>/dev/null || {
+  echo "❌ plugin_fetch_if_missing_from_entry not defined. Check bootstrap/plugin_fetcher.sh"
+  return 1
+}
+
 ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-$ZDOTDIR/plugins}"
 ZSH_PLUGIN_LIST_FILE="${ZSH_PLUGIN_LIST_FILE:-$ZDOTDIR/config/plugins.list}"
 
