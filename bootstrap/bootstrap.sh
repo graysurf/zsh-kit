@@ -1,5 +1,5 @@
-[[ -n "$ZSH_BOOTSTRAP_LOADED" ]] && return
-export ZSH_BOOTSTRAP_LOADED=1
+# Only define once
+typeset -f load_script >/dev/null && return
 
 # Load a script and measure how long it takes
 load_with_timing() {
