@@ -16,6 +16,98 @@ Fzf Tools is a modular, keyboard-driven launcher that lets you browse and act on
 
 ## 🛠 Commands
 
+### `fzf-tools env`
+
+🌱 Browse environment variables with fuzzy search and preview
+
+```bash
+fzf-tools env
+```
+
+Each environment variable is shown with its full value for quick inspection or copying.
+
+![fzf-env](../assets/fzf-env.png)
+
+---
+
+### `fzf-tools alias`
+
+🔗 Browse and inspect defined shell aliases
+
+```bash
+fzf-tools alias
+```
+
+See your configured shortcuts in one place, with real evaluated output.
+
+![fzf-alias](../assets/fzf-alias.png)
+
+---
+
+### `fzf-tools functions`
+
+🔧 View loaded shell functions with source content
+
+```bash
+fzf-tools functions
+```
+
+Lists all functions in your shell session and shows their implementation.
+
+![fzf-functions](../assets/fzf-functions.png)
+
+---
+
+### `fzf-tools defs`
+
+📦 Explore all shell definitions (env, alias, functions)
+
+```bash
+fzf-tools defs
+```
+
+Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
+
+![fzf-defs](../assets/fzf-defs.png)
+
+---
+
+### `fzf-tools git-commit`
+
+🔍 Browse commit history, preview files in any commit, and open in VSCode
+
+```bash
+fzf-tools git-commit
+```
+
+You can enter a hash like `HEAD~1`, or interactively pick from log.
+
+**Preview includes:**
+- `bat`-highlighted file content
+- Commit-specific snapshot
+- Automatic temp file export to open in VSCode
+
+### 🧭 Two-step interaction
+
+1. **Step 1: Pick a commit**  
+   Use fuzzy search to select a commit from your history.  
+   The right panel previews the full commit scope (message, files, stats).
+
+2. **Step 2: Pick a file**  
+   After selecting a commit, choose a modified file.  
+   The preview shows a colorized `git diff` via `delta`.  
+   Upon selection, the file's snapshot is extracted and opened in VSCode.
+
+#### 📌 Step 1: Commit selection with scope preview
+
+![fzf-git-commit-1](../assets/fzf-git-commit-1.png)
+
+#### 📄 Step 2: File selection with diff preview
+
+![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
+
+---
+
 ### `fzf-tools history`
 
 📜 Search and run from recent shell commands
@@ -86,42 +178,6 @@ Shows inline diffs and lets you quickly inspect file changes.
 
 ---
 
-### `fzf-tools git-commit`
-
-🔍 Browse commit history, preview files in any commit, and open in VSCode
-
-```bash
-fzf-tools git-commit
-```
-
-You can enter a hash like `HEAD~1`, or interactively pick from log.
-
-**Preview includes:**
-- `bat`-highlighted file content
-- Commit-specific snapshot
-- Automatic temp file export to open in VSCode
-
-### 🧭 Two-step interaction
-
-1. **Step 1: Pick a commit**  
-   Use fuzzy search to select a commit from your history.  
-   The right panel previews the full commit scope (message, files, stats).
-
-2. **Step 2: Pick a file**  
-   After selecting a commit, choose a modified file.  
-   The preview shows a colorized `git diff` via `delta`.  
-   Upon selection, the file's snapshot is extracted and opened in VSCode.
-
-#### 📌 Step 1: Commit selection with scope preview
-
-![fzf-git-commit-1](../assets/fzf-git-commit-1.png)
-
-#### 📄 Step 2: File selection with diff preview
-
-![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
-
----
-
 ### `fzf-tools kill`
 
 💀 Select and terminate one or more running processes
@@ -131,79 +187,6 @@ fzf-tools kill
 ```
 
 Uses `ps` and `xargs kill`, with support for multiselect.
-
----
-
-### `fzf-tools git-scope-commit`
-
-🧠 Browse commit log and view full commit scope
-
-```bash
-fzf-tools git-scope-commit
-```
-
-Interactively search your Git history, preview each commit's scope using a custom viewer (`git scope commit`), and display full tree of changed files. No need to enter a hash manually—just scroll, preview, and inspect.
-
-**Ideal for:**
-- Visualizing the scope of past commits
-- Reviewing full change context before cherry-pick or squash
-- Structuring Git workflows with higher context awareness
-
----
-
-### `fzf-tools env`
-
-🌱 Browse environment variables with fuzzy search and preview
-
-```bash
-fzf-tools env
-```
-
-Each environment variable is shown with its full value for quick inspection or copying.
-
-![fzf-env](../assets/fzf-env.png)
-
----
-
-### `fzf-tools alias`
-
-🔗 Browse and inspect defined shell aliases
-
-```bash
-fzf-tools alias
-```
-
-See your configured shortcuts in one place, with real evaluated output.
-
-![fzf-alias](../assets/fzf-alias.png)
-
----
-
-### `fzf-tools functions`
-
-🔧 View loaded shell functions with source content
-
-```bash
-fzf-tools functions
-```
-
-Lists all functions in your shell session and shows their implementation.
-
-![fzf-functions](../assets/fzf-functions.png)
-
----
-
-### `fzf-tools defs`
-
-📦 Explore all shell definitions (env, alias, functions)
-
-```bash
-fzf-tools defs
-```
-
-Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
-
-![fzf-defs](../assets/fzf-defs.png)
 
 ---
 

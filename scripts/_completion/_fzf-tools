@@ -9,7 +9,6 @@ commands=(
   'vscode:Search and preview text files in VSCode'
   'git-status:Interactive git status viewer'
   'git-commit:Browse commits and open changed files in VSCode'
-  'git-scope-commit:Browse commit log and open scope viewer'
   'kill:Kill a selected process'
   'history:Search and execute command history'
   'env:Browse environment variables'

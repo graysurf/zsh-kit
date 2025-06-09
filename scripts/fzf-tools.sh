@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
-unalias ft fzf-process fzf-env fp fgs fgc ff fv fsc 2>/dev/null
+unalias ft fzf-process fzf-env fp fgs fgc ff fv 2>/dev/null
 
 alias ft='fzf-tools'
 alias fzf-process='ps aux | fzf'
@@ -10,7 +10,6 @@ alias fgs='fzf-git-status'
 alias fgc='fzf-git-commit'
 alias ff='fzf-file'
 alias fv='fzf-vscode'
-alias fsc='fzf-scope-commit'
 
 # ────────────────────────────────────────────────────────
 # fzf utilities
@@ -216,16 +215,6 @@ fzf-git-commit() {
   done
 }
 
-# Fuzzy search git commits with preview using git-scope
-fzf-scope-commit() {
-  git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
-      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
-    fzf --ansi --no-sort --reverse \
-        --preview-window='right:50%:wrap' \
-        --preview 'git-scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"'\
-        --bind "enter:execute(clear && git-scope commit {1})+abort"
-}
-
 # Show delimited preview blocks in FZF and copy selected block to clipboard
 fzf_block_preview() {
   typeset generator="$1"
@@ -402,7 +391,6 @@ fzf-tools() {
       vscode "Search and preview text files in VSCode" \
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
-      git-scope-commit "Browse commit log and open scope viewer" \
       kill "Kill a selected process" \
       history "Search and execute command history" \
       env "Browse environment variables" \
@@ -422,7 +410,6 @@ fzf-tools() {
     vscode)           fzf-vscode "$@" ;;
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;
-    git-scope-commit) fzf-scope-commit "$@" ;;
     kill)             fzf-kill "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
