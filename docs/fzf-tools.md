@@ -106,6 +106,10 @@ You can enter a hash like `HEAD~1`, or interactively pick from log.
 
 ![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
 
+> Press `Enter` to open the selected file snapshot in **VSCode**.  
+> You can customize the editor by changing the command inside the script—  
+> for example, replace `code` with `nvim` or any other editor you prefer.
+
 ---
 
 ### `fzf-tools history`
