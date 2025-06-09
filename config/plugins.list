@@ -1,0 +1,6 @@
+fzf-tab::fzf-tab.plugin.zsh::git=https://github.com/Aloxaf/fzf-tab.git
+fast-syntax-highlighting::fast-syntax-highlighting.plugin.zsh::git=https://github.com/zdharma-continuum/fast-syntax-highlighting.git
+zsh-autosuggestions::zsh-autosuggestions.zsh::ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=8::git=https://github.com/zsh-users/zsh-autosuggestions.git
+zsh-history-substring-search::::git=https://github.com/zsh-users/zsh-history-substring-search.git
+zsh-direnv::::git=https://github.com/direnv/direnv.git
+zsh-abbr::zsh-abbr.plugin.zsh::abbr::git=https://github.com/olets/zsh-abbr.git

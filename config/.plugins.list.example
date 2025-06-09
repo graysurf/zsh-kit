@@ -1,0 +1,34 @@
+# .plugins.list.example
+# Zsh plugin declaration format for zsh-kit
+#
+# Format: id::main-file::extra::git=URL
+# Use :: to preserve field positions even if values are omitted.
+# You may leave main-file or extra blank to fall back to defaults.
+
+# ──────────────────────────────
+# Basic Examples
+# ──────────────────────────────
+
+# Only plugin ID (uses default main file: <id>.plugin.zsh, no extras)
+zsh-history-substring-search::::git=https://github.com/zsh-users/zsh-history-substring-search.git
+
+# Plugin with custom main file
+fzf-tab::fzf-tab.plugin.zsh::::git=https://github.com/Aloxaf/fzf-tab.git
+
+# Plugin with extra environment setup
+zsh-autosuggestions::zsh-autosuggestions.zsh::ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=8::git=https://github.com/zsh-users/zsh-autosuggestions.git
+
+# Plugin with special loader flag (abbr) and a Git URL
+zsh-abbr::zsh-abbr.plugin.zsh::abbr::git=https://github.com/olets/zsh-abbr.git
+
+# Plugin with both extra env and loader behavior
+# (not common, but supported)
+example-plugin::entry.zsh::EXTRA_MODE=1,custom::git=https://github.com/example/example-plugin.git
+
+# ──────────────────────────────
+# Notes
+# ──────────────────────────────
+# - You MUST use :: to retain empty fields.
+# - git= is required if you want plugin_fetcher to auto-clone it.
+# - extra can include env vars or keywords like `abbr`.
+# - Each plugin is expected to live under $ZDOTDIR/plugins/<id>/
