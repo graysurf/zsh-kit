@@ -3,6 +3,9 @@
 `git-scope` is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
 
 ```
+🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
+12:00:42.133 ✔︎ git-scope
+
 📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)
 
 📄 Changed files:
