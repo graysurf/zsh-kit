@@ -88,44 +88,6 @@ The loader:
 
 ---
 
-## 🧭 Directory Navigation Enhancer: Zoxide
-
-```zsh
-eval "$(zoxide init zsh)"
-```
-
-Overrides the `z` command to provide smart directory jumping **with `eza` preview**.
-
----
-
-## 💫 Prompt: Starship
-
-If `config/starship.toml` is found, it will be loaded as the custom Starship configuration:
-
-```zsh
-export STARSHIP_CONFIG="$ZDOTDIR/config/starship.toml"
-eval "$(starship init zsh)"
-```
-
----
-
-## 🔑 Shell Behavior & Keybindings
-
-```zsh
-setopt nocaseglob nocasematch extended_glob
-```
-
-### History Search
-
-Arrow keys (`↑ ↓`) and `j/k` in vi-mode support substring-based history search:
-
-```zsh
-bindkey "$terminfo[kcuu1]" history-substring-search-up
-bindkey "$terminfo[kcud1]" history-substring-search-down
-```
-
----
-
 ## 🧠 Summary
 
 This plugin loader provides a clean, minimal, and controlled way to configure Zsh behavior and features — without relying on fragile plugin managers.  
