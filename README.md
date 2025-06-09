@@ -6,12 +6,12 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 
 > This Zsh environment provides a clean structure and several built-in tools.
 
-- ⚡️ Manual plugin management (no plugin manager required)
+- ⚡️ Plugin system with full manual control (no third-party manager)
 - 🌟 Emoji-powered login messages with random quotes (via custom script)
 - 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
 - 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
 - 🔧 Modular and lazy-friendly structure under `scripts/`
-- 🧩 [plugin-system](docs/plugin-system.md): Declarative plugin loader with extra setup support
+- 🧩 [plugin-system](docs/plugin-system.md): Git-powered declarative loader with auto-clone and update support
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
 ## 🛠 Built-in CLI Tools

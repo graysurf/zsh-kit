@@ -1,94 +1,118 @@
-# ⚙️ Plugin System: `plugins.sh` Overview
+# 🧩 Plugin System: `plugins.sh` + `plugin_fetcher.sh`
 
-This Zsh environment uses a **manual plugin loader** strategy to keep control over plugin order, reduce startup latency, and avoid plugin manager bloat.
+This Zsh environment implements a **manual plugin loader system** 
+with structured declarations and Git-based fetching — offering full control without external plugin managers.
 
 ---
 
-## 🧩 Why Manual Plugin Loading?
+## ⚙️ Why Manual Plugin Loading?
 
-- ✅ No external plugin managers (like Oh-My-Zsh or Antibody)
-- ✅ Precise control over plugin order and configuration
-- ✅ Lazy-load capable and script-friendly
-- ✅ Unified environment across machines without bootstrap complexity
+- ✅ No external plugin managers (like Oh-My-Zsh, Antibody, Antidote)
+- ✅ Exact control over plugin order, configuration, and versioning
+- ✅ Git-aware fetcher with dry-run, force, and auto-update support
+- ✅ Machine-agnostic and bootstrap-friendly with a clean `plugins.list`
 
-All plugins are stored under:  
+Plugins are stored under:
+
 ```
-$ZDOTDIR/plugins/<plugin-name>/
+$ZDOTDIR/plugins/<plugin-id>/
 ```
 
-Each plugin is declared in the `ZSH_PLUGINS` array with its main file and optional extras.
+Each plugin is declared in a standalone file:
+
+```
+$ZDOTDIR/config/plugins.list
+```
 
 ---
 
 ## 📦 Plugin Declarations
 
+Each plugin entry in `plugins.list` follows the format:
+
+```
+<id>[::main-file][::extra][::git=url]
+```
+
+Where:
+
+- `id` is the directory name and plugin key
+- `main-file` is the main plugin file (defaults to `<id>.plugin.zsh`)
+- `extra` can be:
+
+  - environment variables (e.g. `FOO=bar`)
+  - special loader flags (e.g. `abbr`)
+- `git=` is the source URL used to clone the plugin if missing
+
+### Example
+
 ```zsh
-ZSH_PLUGINS=(
-  "fzf-tab::fzf-tab.plugin.zsh"
-  "fast-syntax-highlighting::fast-syntax-highlighting.plugin.zsh"
-  "zsh-autosuggestions::zsh-autosuggestions.zsh::ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=8"
-  "zsh-history-substring-search"
-  "zsh-direnv"
-  "zsh-abbr::zsh-abbr.plugin.zsh::abbr"
-)
+zsh-abbr::zsh-abbr.plugin.zsh::abbr::git=https://github.com/olets/zsh-abbr.git
 ```
 
 ---
 
-## 🔍 Plugin Rationale
+## 🔄 Git Fetching & Updates
 
-### ✅ `fzf-tab`
+Plugins are automatically cloned if not present. The fetch logic supports:
 
-> Enables `<Tab>` autocompletion with fuzzy-matching and preview, powered by FZF.  
-Useful for directories, Git branches, commands, and more.
+- 🔍 Dry-run mode (`PLUGIN_FETCH_DRY_RUN=true`)
+- 💥 Forced re-clone (`PLUGIN_FETCH_FORCE=true`)
+- 📆 Automatic update every 30 days (tracked in `$ZSH_CACHE_DIR/plugin.last_update`)
 
-### ✅ `fast-syntax-highlighting`
+To manually update:
 
-> Lightweight and performant syntax highlighter for Zsh.  
-Highlights valid/invalid commands, options, and more.
+```zsh
+plugin_update_all
+```
 
-### ✅ `zsh-autosuggestions`
+To view status:
 
-> Real-time autosuggestions in the style of Fish shell.  
-Configured to be subtle (`fg=8`) to reduce visual noise.
-
-### ✅ `zsh-history-substring-search`
-
-> Enables history search by typing part of a previous command and using arrow keys to cycle.
-
-### ✅ `zsh-direnv`
-
-> Integrates `.envrc` handling with `direnv` for per-project environment configuration.  
-Automatically loads/unloads environment variables based on current directory.
-
-### ✅ `zsh-abbr`
-
-> Command abbreviations with support for expansion, job queue, and completions.  
-Needs extra setup (completions, job-queue) and is handled via special case in loader.
+```zsh
+plugin_print_status
+```
 
 ---
 
-## 🔄 Plugin Loader Design
+## 🛠️ Plugin Loader Behavior
 
-Each plugin declaration follows this format:
+Each entry is parsed and loaded via `load_plugin_entry`, which:
+
+- Clones the plugin if missing (via `plugin_fetch_if_missing_from_entry`)
+- Loads the main plugin file (or default)
+- Applies optional `extra` setup (e.g., env vars, `fpath`, loader hooks)
+
+Special-case logic (e.g., `abbr`) is hardcoded for known plugins needing extra steps.
+
+---
+
+## 📁 File Structure
 
 ```
-<plugin-name>[::main-file][::extra]
+.zsh/
+├── bootstrap/
+│   ├── plugins.sh              # Main loader
+│   └── plugin_fetcher.sh       # Git-aware fetch logic
+├── config/
+│   ├── plugins.list            # Active plugin declarations
+│   └── .plugins.list.example   # Documented example template
 ```
 
-Examples:
-- `zsh-autosuggestions::zsh-autosuggestions.zsh::ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=8`
-- `zsh-abbr::zsh-abbr.plugin.zsh::abbr` (triggers special-case setup)
+---
 
-The loader:
+## 🔍 See Also
 
-- Constructs the plugin path
-- Sources the plugin file
-- Optionally sets environment variables or adds to `fpath` for plugin-specific needs
+- [.plugins.list.example](../config/.plugins.list.example) — contains examples and format notes
+- [interactive.md](./interactive.md) — runtime behaviors like Starship, Zoxide, keybinds
 
 ---
 
 ## 🧠 Summary
 
-This plugin loader provides a clean, minimal, and controlled way to configure Zsh behavior and features — without relying on fragile plugin managers.  
-It is extensible, shell-native, and compatible across macOS/Linux environments.
+This plugin system is:
+
+- Shell-native and portable
+- Git-powered but manager-free
+- Structured, readable, and declarative
+
+Ideal for users who want minimalism **without sacrificing automation**.
