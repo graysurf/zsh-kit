@@ -3,7 +3,8 @@
 # ────────────────────────────────────────────────────────
 unalias \
   gcp gcpo gcapo gcapfo gcapffo \
-  gpc gpcp gpcpo gpca gpcapo gpcapfo gpcapffo \
+  gpc gpcp gpcpo gpcpfo gpcpffo \
+  gpca gpcapo gpcapfo gpcapffo \
   2>/dev/null
 
 # ────────────────────────────────────────────────────────
@@ -14,7 +15,7 @@ unalias \
 
 # Commit staged changes, then push
 alias gcp='git commit && git push'
-# CAmend the last commit, then push
+# Amend the last commit, then push
 alias gcap='git commit --amend && git push'
 
 # Commit staged changes, push, and open the commit on GitHub
@@ -27,7 +28,6 @@ alias gcapf='git commit --amend && git push --force-with-lease'
 # Amend the last commit, safely force-push, and open on GitHub (safer)
 alias gcapfo='git commit --amend && git push --force-with-lease && gh-open-commit HEAD'
 # Amend the last commit, force-push
-
 alias gcapff='git commit --amend && git push -f'
 # Amend the last commit, force-push, and open on GitHub (DANGEROUS)
 alias gcapffo='git commit --amend && git push -f && gh-open-commit HEAD'
@@ -38,15 +38,17 @@ alias gpc='git commit -F <(pbpaste)'
 alias gpcp='git commit -F <(pbpaste) && git push'
 # Commit using clipboard, push, and open on GitHub
 alias gpcpo='git commit -F <(pbpaste) && git push && gh-open-commit HEAD'
+# Commit using clipboard, safely force-push, and open on GitHub (safer)
+alias gpcpfo='git commit -F <(pbpaste) && git push --force-with-lease && gh-open-commit HEAD'
+# Commit using clipboard, force-push, and open on GitHub (DANGEROUS)
+alias gpcpffo='git commit -F <(pbpaste) && git push -f && gh-open-commit HEAD'
 
 # Amend commit using clipboard message
 alias gpca='git commit --amend -F <(pbpaste)'
-
 # Amend using clipboard, push
 alias gpcap='git commit --amend -F <(pbpaste) && git push'
 # Amend using clipboard, push, and open on GitHub
 alias gpcapo='git commit --amend -F <(pbpaste) && git push && gh-open-commit HEAD'
-
 # Amend using clipboard, safely force-push, and open on GitHub (safer)
 alias gpcapfo='git commit --amend -F <(pbpaste) && git push --force-with-lease && gh-open-commit HEAD'
 # Amend using clipboard, force-push, and open on GitHub (DANGEROUS)
