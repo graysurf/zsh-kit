@@ -194,7 +194,7 @@ git-scope() {
   fi
 
   typeset sub="$1"
-  shift
+  [[ $# -gt 0 ]] && shift
 
   case "$sub" in
     ""|track|tracked)
@@ -208,6 +208,10 @@ git-scope() {
     untracked)
       _git_scope_untracked "$@" ;;
     commit)
+      if [[ $# -lt 1 ]]; then
+        echo "❗ Missing commit hash. Usage: git-scope commit <hash>"
+        return 1
+      fi
       _git_scope_commit "$@" ;;
     help|-h|--help)
       echo "Usage: git-scope <command> [args...]"
