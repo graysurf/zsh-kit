@@ -221,7 +221,6 @@ fzf_block_preview() {
   typeset tmpfile delim enddelim
   tmpfile="$(mktemp)"
 
-  # 檢查 delimiter 變數是否設置，未設置就報錯退出
   delim="${FZF_DEF_DELIM}"
   enddelim="${FZF_DEF_DELIM_END}"
 
