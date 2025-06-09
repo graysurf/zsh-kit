@@ -20,6 +20,7 @@ load_with_timing() {
   [[ ! -f "$file" ]] && return
 
   local start_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
+  [[ -n "$ZSH_DEBUG" ]] && echo "🔍 Loading: $file"
   source "$file"
   local end_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
   local duration=$((end_time - start_time))
@@ -39,33 +40,48 @@ collect_scripts() {
   done
 }
 
+# ──────────────────────────────
+# Load script group with exclusion and debug
+# ──────────────────────────────
+load_script_group() {
+  local group_name="$1"
+  local base_dir="$2"
+  local -a exclude=("${(@f)$(< "$3")}")
+  local -a paths
 
+  [[ -n "$ZSH_DEBUG" ]] && {
+    echo "🗂 Loading group: $group_name"
+    echo "🔽 Base: $base_dir"
+    echo "🚫 Exclude:"
+    printf '   - %s\n' "${exclude[@]}"
+  }
+
+  paths=(${(f)"$(
+    collect_scripts "$base_dir" |
+    grep -vFxf <(printf "%s\n" "${exclude[@]}")
+  )"})
+
+  for file in "${paths[@]}"; do
+    load_with_timing "$file"
+  done
+}
 
 # ──────────────────────────────
-# Load scripts except excluded ones
+# Load public scripts (excluding special core scripts)
 # ──────────────────────────────
-ZSH_SCRIPT_EXCLUDE=(
-  "$ZSH_SCRIPT_DIR/env.sh"
-  "$ZSH_SCRIPT_DIR/plugins.sh"
-  "$ZSH_SCRIPT_DIR/completion.zsh"
-  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
-)
+ZSH_SCRIPT_EXCLUDE_LIST=$(mktemp)
+cat > "$ZSH_SCRIPT_EXCLUDE_LIST" <<EOF
+$ZSH_SCRIPT_DIR/env.sh
+$ZSH_SCRIPT_DIR/plugins.sh
+$ZSH_SCRIPT_DIR/completion.zsh
+$ZSH_PRIVATE_SCRIPT_DIR/development.sh
+EOF
 
-ZSH_SCRIPT_PATHS=(
-  ${(f)"$(
-    collect_scripts "$ZSH_SCRIPT_DIR" |
-    grep -vFxf <(printf "%s\n" "${ZSH_SCRIPT_EXCLUDE[@]}")
-  )"}
-)
-
-for file in "${ZSH_SCRIPT_PATHS[@]}"; do
-  load_with_timing "$file"
-done
+load_script_group "Public Scripts" "$ZSH_SCRIPT_DIR" "$ZSH_SCRIPT_EXCLUDE_LIST"
 
 # ──────────────────────────────
 # Source environment and plugins
 # ──────────────────────────────
-
 # Load `env.sh` last among early scripts because it sets critical global variables
 # (e.g., PATH, ZDOTDIR). Loading it too early may interfere with plugin or script logic.
 load_with_timing "$ZDOTDIR/scripts/env.sh"
@@ -83,20 +99,12 @@ load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 # ──────────────────────────────
 # Load private scripts
 # ──────────────────────────────
-ZSH_PRIVATE_SCRIPT_EXCLUDE=(
-  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
-)
+ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=$(mktemp)
+cat > "$ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST" <<EOF
+$ZSH_PRIVATE_SCRIPT_DIR/development.sh
+EOF
 
-ZSH_PRIVATE_SCRIPT_PATHS=(
-  ${(f)"$(
-    collect_scripts "$ZSH_PRIVATE_SCRIPT_DIR" |
-    grep -vFxf <(printf "%s\n" "${ZSH_PRIVATE_SCRIPT_EXCLUDE[@]}")
-  )"}
-)
-
-for file in "${ZSH_PRIVATE_SCRIPT_PATHS[@]}"; do
-  load_with_timing "$file"
-done
+load_script_group "Private Scripts" "$ZSH_PRIVATE_SCRIPT_DIR" "$ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST"
 
 # ──────────────────────────────
 # Load development.sh last with timing
@@ -104,3 +112,5 @@ done
 dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
 [[ -f "$dev_script" ]] && load_with_timing "$dev_script" "$(basename "$dev_script") (delayed)"
 
+# Cleanup temporary exclude files
+rm -f "$ZSH_SCRIPT_EXCLUDE_LIST" "$ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST"
