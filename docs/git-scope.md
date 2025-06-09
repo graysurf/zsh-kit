@@ -2,6 +2,33 @@
 
 `git-scope` is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
 
+```
+📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)
+
+📄 Changed files:
+  ➤ [-] .gitignore
+  ➤ [-] .zprofile
+  ➤ [-] .zshrc
+  ➤ [-] README.md
+  ➤ [-] scripts/login.sh
+  ➤ [-] scripts/macos.sh
+  ➤ [-] tools/git/git-summary
+  ➤ [-] tools/random_emoji_cmd.sh
+
+📂 Directory tree:
+.
+├── .gitignore
+├── .zprofile
+├── .zshrc
+├── README.md
+├── scripts
+│   ├── login.sh
+│   ├── macos.sh
+└── tools
+    ├── git
+    │   └── git-summary
+    └── random_emoji_cmd.sh
+```
 ---
 
 ## 📦 Use Cases
