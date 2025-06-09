@@ -1,4 +1,20 @@
 # ────────────────────────────────────────────────────────
+# Clipboard abstraction (macOS pbpaste, Linux xclip/xsel)
+# ────────────────────────────────────────────────────────
+get_clipboard() {
+  if command -v pbpaste >/dev/null 2>&1; then
+    pbpaste
+  elif command -v xclip >/dev/null 2>&1; then
+    xclip -selection clipboard -o
+  elif command -v xsel >/dev/null 2>&1; then
+    xsel --clipboard --output
+  else
+    echo "❌ No clipboard tool found (requires pbpaste, xclip, or xsel)" >&2
+    return 1
+  fi
+}
+
+# ────────────────────────────────────────────────────────
 # Git magic aliases (composite actions)
 # ────────────────────────────────────────────────────────
 unalias \
@@ -10,7 +26,7 @@ unalias \
 # ────────────────────────────────────────────────────────
 # Git magic: compound commit + push + GitHub open flows
 # These aliases combine multiple actions into automated flows.
-# Requires: pbpaste (macOS), gh CLI authenticated
+# Requires: get_clipboard, gh CLI authenticated
 # ────────────────────────────────────────────────────────
 
 # Commit staged changes, then push
@@ -33,23 +49,23 @@ alias gcapff='git commit --amend && git push -f'
 alias gcapffo='git commit --amend && git push -f && gh-open-commit HEAD'
 
 # Commit using clipboard message
-alias gpc='git commit -F <(pbpaste)'
+alias gpc='git commit -F <(get_clipboard)'
 # Commit using clipboard, then push
-alias gpcp='git commit -F <(pbpaste) && git push'
+alias gpcp='git commit -F <(get_clipboard) && git push'
 # Commit using clipboard, push, and open on GitHub
-alias gpcpo='git commit -F <(pbpaste) && git push && gh-open-commit HEAD'
+alias gpcpo='git commit -F <(get_clipboard) && git push && gh-open-commit HEAD'
 # Commit using clipboard, safely force-push, and open on GitHub (safer)
-alias gpcpfo='git commit -F <(pbpaste) && git push --force-with-lease && gh-open-commit HEAD'
+alias gpcpfo='git commit -F <(get_clipboard) && git push --force-with-lease && gh-open-commit HEAD'
 # Commit using clipboard, force-push, and open on GitHub (DANGEROUS)
-alias gpcpffo='git commit -F <(pbpaste) && git push -f && gh-open-commit HEAD'
+alias gpcpffo='git commit -F <(get_clipboard) && git push -f && gh-open-commit HEAD'
 
 # Amend commit using clipboard message
-alias gpca='git commit --amend -F <(pbpaste)'
+alias gpca='git commit --amend -F <(get_clipboard)'
 # Amend using clipboard, push
-alias gpcap='git commit --amend -F <(pbpaste) && git push'
+alias gpcap='git commit --amend -F <(get_clipboard) && git push'
 # Amend using clipboard, push, and open on GitHub
-alias gpcapo='git commit --amend -F <(pbpaste) && git push && gh-open-commit HEAD'
+alias gpcapo='git commit --amend -F <(get_clipboard) && git push && gh-open-commit HEAD'
 # Amend using clipboard, safely force-push, and open on GitHub (safer)
-alias gpcapfo='git commit --amend -F <(pbpaste) && git push --force-with-lease && gh-open-commit HEAD'
+alias gpcapfo='git commit --amend -F <(get_clipboard) && git push --force-with-lease && gh-open-commit HEAD'
 # Amend using clipboard, force-push, and open on GitHub (DANGEROUS)
-alias gpcapffo='git commit --amend -F <(pbpaste) && git push -f && gh-open-commit HEAD'
+alias gpcapffo='git commit --amend -F <(get_clipboard) && git push -f && gh-open-commit HEAD'
