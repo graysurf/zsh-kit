@@ -28,44 +28,45 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 
 ```
 .zsh/
-├── .private/                             # Gitignored secrets (tokens, vaults, custom overrides)
-├── .zshrc                                # Main Zsh entry; sources all scripts via loader
-├── .zprofile                             # Minimal login initializer (optional)
+├── .zshrc                                # Main Zsh entry; sources bootstrap/init.sh
+├── .zprofile                             # Minimal login initializer for login shells
 │
 ├── assets/                               # Static data files
-│   └── quotes.txt                        # Optional: quotes for login banner
+├── cache/                                # Runtime cache dir (zcompdump, plugin update timestamps, etc.)
+├── docs/                                 # Markdown documentation for key modules
 │
-├── bootstrap/                            # Script loader and logic orchestrator
-│   ├── bootstrap.sh                      # Core loader functions (load_script, load_script_group, etc.)
-│   ├── init.sh                           # Centralized script entrypoint with ordered loading
-│   └── plugins.sh                        # Manual plugin loader for third-party or custom plugins
+├── bootstrap/                            # Script orchestrator and plugin logic
+│   ├── bootstrap.sh                      # Base loader helpers (load_script, load_group, etc.)
+│   ├── init.sh                           # Centralized Zsh entrypoint (called from .zshrc)
+│   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
+│   └── plugins.sh                        # Plugin declaration + loading logic
 │
-├── cache/                                # Runtime cache directory (e.g. zcompdump, fzf history)
+├── config/                               # Configuration files for third-party tools
+│   ├── plugins.list                      # Active plugin list used by loader (declarative)
+│   └── starship.toml                     # Starship prompt config (theme, modules, etc.)
 │
-├── config/                               # Config files for third-party tools
-│   └── starship.toml                     # Starship prompt theme config
+├── scripts/                              # Modular Zsh behavior scripts
+│   ├── _completion/                      # Custom completions for CLI tools or aliases
+│   ├── git/                              # Git workflow tools and custom logic
+│   │   ├── git-lock.sh                   # Lock and restore git commits with labels
+│   │   ├── git-magic.sh                  # Composite git workflows (push, fixup, review)
+│   │   ├── git-scope.sh                  # Show git changes by scope, diff, or tree
+│   │   ├── git-summary.sh                # Git contributions by author/date
+│   │   ├── git-tools.sh                  # Git utilities for reset, rebase, remotes
+│   │   └── git.sh                        # General Git aliases and settings
+│   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
+│   ├── env.sh                            # Environment variable exports and init logic
+│   ├── eza.sh                            # Aliases for eza (modern ls)
+│   ├── fzf-tools.sh                      # FZF-based UI helpers for git, files, processes, etc.
+│   ├── general.sh                        # Misc shell helpers and overrides
+│   ├── interactive.sh                    # Runtime UX (prompt, zoxide, keybindings)
+│   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration triggers
+│   ├── login.sh                          # Show emoji + quote banner on login
+│   ├── macos.sh                          # macOS-specific system tweaks
+│   ├── random_emoji.sh                   # Random emoji + quote selector
+│   └── shell-utils.sh                    # Reload functions, config helpers, cheat.sh integration
 │
-├── scripts/                              # Core shell logic (modularized)
-│   ├── _completion/                      # Custom completion definitions
-│   ├── git/                              # Git-related tools
-│   │   ├── git-lock.sh                   # Save, restore, diff, and tag Git commits via custom lock labels (safe checkpoints)
-│   │   ├── git-magic.sh                  # Composite git aliases for commit, push, amend, and GitHub open workflows
-│   │   ├── git-scope.sh                  # Visualize git changes as colored file lists and directory trees by scope or commit
-│   │   ├── git-summary.sh                # Author-based Git contribution summary over custom or preset date ranges
-│   │   ├── git-tools.sh                  # Git utility functions and aliases for reset, navigation, and remote operations
-│   │   └── git.sh                        # Base-level git command customizations
-│   ├── completion.zsh                    # Zsh completion framework setup
-│   ├── env.sh                            # Environment variables and export logic
-│   ├── eza.sh                            # Wrapper and aliases for modern ls replacement (eza)
-│   ├── fzf-tools.sh                      # Interactive FZF utilities for files, git, processes, env, aliases, and shell functions
-│   ├── general.sh                        # General purpose shell utilities and aliases
-│   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration script (for prompt triggers, etc.)
-│   ├── login.sh                          # Display a random login quote with emoji, and asynchronously fetch new quotes for future use
-│   ├── macos.sh                          # macOS-specific settings and system tweaks
-│   ├── random_emoji.sh                   # Random emoji + quote generator for banner use
-│   └── tools.sh                          # Miscellaneous helper functions for reloading, editing config, navigation, and cheat.sh lookup
-│
-└── tools/                                # Executable utilities (e.g. CLI tools written in any language)
+└── tools/                                # Standalone executable scripts or compiled helpers
 ```
 
 ## 🪄 Startup Snapshot
