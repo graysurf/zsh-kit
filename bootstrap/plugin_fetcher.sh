@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Only define once
 typeset -f plugin_fetch_if_missing_from_entry >/dev/null && return
 
@@ -23,21 +25,21 @@ plugin_fetch_if_missing_from_entry() {
     fi
   done
 
-  typeset path="$ZSH_PLUGINS_DIR/$plugin_name"
+  typeset plugin_path="$ZSH_PLUGINS_DIR/$plugin_name"
 
-  if [[ "$PLUGIN_FETCH_FORCE" == true && -d "$path" ]]; then
+  if [[ "$PLUGIN_FETCH_FORCE" == true && -d "$plugin_path" ]]; then
     echo "💥 Forcing re-clone: $plugin_name"
-    [[ "$PLUGIN_FETCH_DRY_RUN" == false ]] && rm -rf "$path"
+    [[ "$PLUGIN_FETCH_DRY_RUN" == false ]] && rm -rf "$plugin_path"
   fi
 
-  if [[ -d "$path" ]]; then
+  if [[ -d "$plugin_path" ]]; then
     return 0
   fi
 
   if [[ -n "$git_url" ]]; then
     echo "🌐 Cloning $plugin_name from $git_url"
     [[ "$PLUGIN_FETCH_DRY_RUN" == false ]] && \
-      git clone --depth=1 "$git_url" "$path" || {
+      git clone --depth=1 "$git_url" "$plugin_path" || {
         echo "❌ Failed to clone: $plugin_name"
         return 1
       }
