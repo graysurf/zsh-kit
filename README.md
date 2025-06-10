@@ -1,6 +1,6 @@
 # zsh-kit
 
-A minimalist, high-performance Zsh environment with manual plugin control, emoji-powered login messages, and lazy-loaded utilities for speed and clarity.
+A modular, self-contained Zsh environment focused on manual control, clean structure, and script-based extensibility — with emoji-powered UX and built-in Git tools.
 
 ## ✨ Core Features
 
@@ -141,7 +141,8 @@ If it does not exist, the system will fall back to a default quote.
 
 ## Philosophy
 
-No magic. Fully reproducible. Proudly minimal.
+No magic. Fully reproducible.  
+Modular by design, manual by default.
 
 ## 🧑‍💻 Why I Made This
 
