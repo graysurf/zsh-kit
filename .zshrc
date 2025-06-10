@@ -1,7 +1,6 @@
 # ──────────────────────────────
 # Define Zsh environment paths early (must be first!)
 # ──────────────────────────────
-export ZDOTDIR="$HOME/.config/zsh"
 export ZSH_CACHE_DIR="${ZSH_CACHE_DIR:-$ZDOTDIR/cache}"
 export ZSH_COMPDUMP="$ZSH_CACHE_DIR/zcompdump"
 export _Z_DATA="$ZSH_CACHE_DIR/.z"
