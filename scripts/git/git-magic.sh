@@ -20,7 +20,8 @@ get_clipboard() {
 unalias \
   gcp gcpo gcapo gcapfo gcapffo \
   gpc gpcp gpcpo gpcpfo gpcpffo \
-  gpca gpcapo gpcapfo gpcapffo \
+  gpca gpcap  gpcapf gpcapff \
+  gpcapo gpcapfo gpcapffo \
   2>/dev/null
 
 # ────────────────────────────────────────────────────────
@@ -63,6 +64,10 @@ alias gpcpffo='git commit -F <(get_clipboard) && git push -f && gh-open-commit H
 alias gpca='git commit --amend -F <(get_clipboard)'
 # Amend using clipboard, push
 alias gpcap='git commit --amend -F <(get_clipboard) && git push'
+# Amend using clipboard, safely force-push (no open)
+alias gpcapf='git commit --amend -F <(get_clipboard) && git push --force-with-lease'
+# Amend using clipboard, force-push (DANGEROUS, no open)
+alias gpcapff='git commit --amend -F <(get_clipboard) && git push -f'
 # Amend using clipboard, push, and open on GitHub
 alias gpcapo='git commit --amend -F <(get_clipboard) && git push && gh-open-commit HEAD'
 # Amend using clipboard, safely force-push, and open on GitHub (safer)
