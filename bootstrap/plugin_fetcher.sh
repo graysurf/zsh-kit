@@ -38,11 +38,21 @@ plugin_fetch_if_missing_from_entry() {
 
   if [[ -n "$git_url" ]]; then
     echo "🌐 Cloning $plugin_name from $git_url"
-    [[ "$PLUGIN_FETCH_DRY_RUN" == false ]] && \
-      git clone --depth=1 "$git_url" "$plugin_path" || {
+    if [[ "$PLUGIN_FETCH_DRY_RUN" == false ]]; then
+      git clone "$git_url" "$plugin_path" || {
         echo "❌ Failed to clone: $plugin_name"
         return 1
       }
+
+      # ✅ 檢查是否需要初始化 submodules
+      if [[ -f "$plugin_path/.gitmodules" ]]; then
+        echo "🔗 Initializing submodules for $plugin_name"
+        git -C "$plugin_path" submodule update --init --recursive || {
+          echo "❌ Failed to init submodules for: $plugin_name"
+          return 1
+        }
+      fi
+    fi
   else
     echo "⚠️  No git URL defined for: $plugin_name"
   fi
