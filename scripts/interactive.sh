@@ -5,18 +5,14 @@
 # Initialize zoxide (faster alternative to z/zsh-z)
 eval "$(zoxide init zsh)"
 
-# Override `z` to: jump to matched dir AND run `ll`
-z() {
-  if zoxide query -l "$@" &>/dev/null; then
-    builtin cd "$(zoxide query "$@")" && {
-      echo -e "\n📁 Now in: $PWD\n"
-      eza -alh --icons --group-directories-first --time-style=iso
-    }
-  else
-    echo "❌ No matching directory for: $*"
-    return 1
-  fi
+# Wrapper to execute `eza -alh` after directory jump
+__zoxide_cd() {
+  builtin cd -- "$1" || return
+  echo -e "\n📁 Now in: $PWD\n"
+  eza -alh --icons --group-directories-first --time-style=iso
 }
+
+alias z=__zoxide_z
 
 # ──────────────────────────────
 # Starship prompt
