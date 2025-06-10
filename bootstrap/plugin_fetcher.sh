@@ -11,13 +11,16 @@ PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.last_update"
 # Fetch plugin if not present, or force-refetch if requested
 plugin_fetch_if_missing_from_entry() {
   typeset entry="$1"
+  typeset -a parts
   typeset plugin_name git_url
 
-  IFS='::' read -A parts <<< "$entry"
+  parts=("${(@s/::/)entry}")
   plugin_name="${parts[1]}"
 
   for part in "${parts[@]:2}"; do
-    [[ "$part" == git=* ]] && git_url="${part#git=}"
+    if [[ "$part" == git=* ]]; then
+      git_url="${part#git=}"
+    fi
   done
 
   typeset path="$ZSH_PLUGINS_DIR/$plugin_name"
