@@ -39,11 +39,13 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │   ├── define-loaders.sh                 # Base loader helpers (load_script, load_group, etc.)
 │   ├── bootstrap.sh                      # Centralized Zsh entrypoint (called from .zshrc)
 │   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
-│   └── plugins.sh                        # Plugin declaration + loading logic
+│   ├── plugins.sh                        # Plugin declaration + loading logic
+│   └── install-tools.sh                  # Tool installer with dry-run and quiet support
 │
 ├── config/                               # Configuration files for third-party tools
 │   ├── plugins.list                      # Active plugin list used by loader (declarative)
-│   └── starship.toml                     # Starship prompt config (theme, modules, etc.)
+│   ├── starship.toml                     # Starship prompt config (theme, modules, etc.)
+│   └── tools.list                        # CLI tools declaration (tool::brew-name::comment)
 │
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases
@@ -66,7 +68,8 @@ A minimalist, high-performance Zsh environment with manual plugin control, emoji
 │   ├── random_emoji.sh                   # Random emoji + quote selector
 │   └── shell-utils.sh                    # Reload functions, config helpers, cheat.sh integration
 │
-└── tools/                                # Standalone executable scripts or compiled helpers
+├── tools/                                # Standalone executable scripts or compiled helpers
+└── install-tools.sh                      # Root-level wrapper for bootstrap/install-tools.sh
 ```
 
 ## 🪄 Startup Snapshot
@@ -134,7 +137,7 @@ If it does not exist, the system will fall back to a default quote.
 
 > 🧰 This setup expects you to have your favorite CLI tools installed.  
 > It won't hand-hold you, and assumes tools like `eza`, `tree`, `bat`, or `fzf` are already available.  
-> If something errors out, you're probably just missing a binary — install and carry on.
+> If something errors out, you're probably just missing a binary — install and carry on.  
 
 ## Philosophy
 
@@ -154,6 +157,3 @@ If there’s something you use every day, it’s worth taking the time to make i
 
 This repository is dedicated to the public domain under the [CC0 1.0 Universal license](https://creativecommons.org/publicdomain/zero/1.0/).
 You are free to copy, modify, distribute, and use any part of this work, even for commercial purposes, without asking for permission or giving credit.
-
-
-
