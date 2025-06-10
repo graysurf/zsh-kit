@@ -1,0 +1,11 @@
+# tool::brew-name::comment
+bat::bat::Syntax highlighter
+curl::curl::Used for remote fetch
+eza::eza::Modern ls replacement
+fd::fd::Fast find (fzf helper)
+fzf::fzf::Fuzzy finder
+gh::gh::GitHub CLI
+git::git::Core version control
+rg::ripgrep::Fast grep engine
+tree::tree::Directory structure view
+zoxide::zoxide::Smart cd
