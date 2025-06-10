@@ -27,7 +27,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 ## Structure
 
 ```
-.zsh/
+.
 ├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.sh
 ├── .zprofile                             # Minimal login initializer for login shells
 │
@@ -110,7 +110,7 @@ An example Zsh startup log with this config:
 In your `~/.zshenv`, define the custom config location:
 
 ```bash
-export ZDOTDIR="$HOME/.zsh"
+export ZDOTDIR="$HOME/.config/zsh"
 ```
 
 Zsh will now source your config from `$ZDOTDIR/.zshrc`.
@@ -128,8 +128,8 @@ This will initialize all scripts in proper order via the `load_script_group()` s
 To enable quote display on login, make sure to create the following file manually:
 
 ```bash
-mkdir -p ~/.zsh/assets
-touch ~/.zsh/assets/quotes.txt
+mkdir -p $ZDOTDIR/assets
+touch $ZDOTDIR/assets/quotes.txt
 ```
 
 This file is **not tracked by Git** and will be automatically appended with quotes over time.  
