@@ -9,3 +9,5 @@ git::git::Core version control
 rg::ripgrep::Fast grep engine
 tree::tree::Directory structure view
 zoxide::zoxide::Smart cd
+starship::starship::Customizable prompt
+
