@@ -112,6 +112,18 @@ You can enter a hash like `HEAD~1`, or interactively pick from log.
 
 ---
 
+### `fzf-tools git-checkout`
+
+🌀 Checkout a previous commit using fuzzy log navigation
+
+```bash
+fzf-tools git-checkout
+```
+
+Select a past commit and checkout to it. If local changes block it, you’ll be prompted to stash.
+
+---
+
 ### `fzf-tools history`
 
 📜 Search and run from recent shell commands
@@ -191,6 +203,42 @@ fzf-tools kill
 ```
 
 Uses `ps` and `xargs kill`, with support for multiselect.
+
+---
+
+### `fzf-tools process`
+
+🧪 View and inspect running processes (non-interactive kill)
+
+```bash
+fzf-tools process
+```
+
+Lightweight fallback using `ps aux | fzf` for diagnostic use.
+
+---
+
+### `fzf-tools fdf`
+
+📄 Fuzzy-find and open a file with `$EDITOR`
+
+```bash
+fzf-tools fdf
+```
+
+Search hidden files and follow symlinks, previewing each with `bat`.
+
+---
+
+### `fzf-tools fdd`
+
+📁 Fuzzy-find a directory and cd into it
+
+```bash
+fzf-tools fdd
+```
+
+Previews directory contents using `eza`, or falls back to `ls`.
 
 ---
 
