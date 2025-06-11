@@ -54,33 +54,37 @@ bindkey '^T' fzf-tools-launcher-widget
 
 # Extract command history and strip line numbers
 fzf-history-select() {
-  iconv -f utf-8 -t utf-8 -c "$HISTFILE" |  # 移除非法 multibyte
-  awk -F'[;:]' '
+  iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
+  awk -F';' '
     /^:/ {
-      cmd = substr($0, index($0, $5))
-      gsub(/\\/, "\\\\", cmd)  # 避免反斜線破壞 ZLE
-      
-      ts_cmd = "date -r " $2 " +\"%Y-%m-%d %H:%M:%S\""
+      split($1, meta, ":")
+      ts_cmd = "date -r " meta[2] " +\"%Y-%m-%d %H:%M:%S\""
       ts_cmd | getline ts
       close(ts_cmd)
 
-      printf "%s | %4d | %s\n", ts, NR, cmd
+      cmd = $2
+      gsub(/\\/, "\\\\", cmd)
+      printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
   ' | fzf --ansi --no-sort --reverse --height=50% \
          --preview 'echo {}' \
          --bind 'ctrl-j:preview-down,ctrl-k:preview-up'
 }
 
+
 fzf-history-widget() {
   local selected cmd
-  selected="$(fzf-history-select)"
+  selected="$(fzf-history-select | head -n1)"
   cmd="$(echo "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+
+  cmd="$(echo "$cmd" | perl -CSD -pe 's/^\p{Emoji_Presentation}\s*//')"
+
+
   if [[ -n "$cmd" ]]; then
     BUFFER="$cmd"
     CURSOR=${#BUFFER}
   fi
 }
-
 
 # Register ZLE widget and bind to Ctrl+R
 zle -N fzf-history-widget
