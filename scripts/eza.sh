@@ -1,7 +1,7 @@
 # Unalias to avoid redefinition warnings
 safe_unalias ll lx lt llt lt2 lt3 lt5 \
         llt2 llt3 llt5 \
-        lxt lxt2 lxt3 lxt5 2>/dev/null
+        lxt lxt2 lxt3 lxt5
 
 # List all files including dotfiles
 alias ll='eza -alh --icons --group-directories-first --time-style=iso'

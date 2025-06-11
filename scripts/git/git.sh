@@ -1,9 +1,8 @@
 # ────────────────────────────────────────────────────────
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
-safe_unalias gd gc gca gl gp gpf gpff gpo gpfo gpffo \
-        git-zip \
-        lg lgr gt gt2 gt3 gt5 2>/dev/null
+safe_unalias gd gc gca gl gp gpf gpff gpo gpfo gpffo git-zip \
+             lg lgr gt gt2 gt3 gt5
 
 # ────────────────────────────────────────────────────────
 # Git basic workflow aliases

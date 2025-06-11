@@ -5,8 +5,7 @@ safe_unalias \
   gcp gcpo gcapo gcapfo gcapffo \
   gpc gpcp gpcpo gpcpfo gpcpffo \
   gpca gpcap  gpcapf gpcapff \
-  gpcapo gpcapfo gpcapffo \
-  2>/dev/null
+  gpcapo gpcapfo gpcapffo
 
 # ────────────────────────────────────────────────────────
 # Git magic: compound commit + push + GitHub open flows

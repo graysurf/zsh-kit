@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
-safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv 2>/dev/null
+safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
 
 alias ft='fzf-tools'
 alias fzf-process='ps aux | fzf'
