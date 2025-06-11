@@ -2,16 +2,25 @@
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
 
-unalias \
-  gr grs grm grh           \
-  gbh gbc                  \
-  gdc groot gpick          \
-  gh-open                  \
-  gh-open-branch           \
-  gh-open-default-branch   \
-  gh-open-commit           \
-  gh-push-open             \
-  gop god goc gob          \
+safe_unalias                    \
+  gr grs grm grh                \
+  gbh gbc                       \
+  gdc groot                     \
+  gop god goc gob               \
+  gh-open                       \
+  gh-open-branch                \
+  gh-open-default-branch        \
+  gh-open-commit                \
+  gh-push-open                  \
+  git-commit-context gcc        \
+  git-reset-hard                \
+  git-reset-soft                \
+  git-reset-mixed               \
+  git-reset-undo                \
+  git-back-head                 \
+  git-back-checkout             \
+  git-zip                       \
+  get_commit_hash               \
   2>/dev/null
 
 # ────────────────────────────────────────────────────────
@@ -130,6 +139,30 @@ git-reset-mixed() {
   echo "✅ Last commit undone. Your changes are now unstaged."
 }
 
+# Undo the last `git reset --hard` by restoring previous HEAD state
+#
+# This function resets the repository to the previous HEAD using
+# `git reset --hard HEAD@{1}`. It is useful when you've recently run
+# a destructive `git reset --hard` command and want to recover the
+# state before that reset — including working directory and staging area.
+#
+# Unlike `git-back-head()` or `git-back-checkout()`, which are non-destructive
+# and only move HEAD, this operation fully restores the previous commit state,
+# overwriting all uncommitted changes.
+git-reset-undo() {
+  echo "🕰  Attempting to undo the last hard reset..."
+  echo "📜 This will reset your repository back to: HEAD@{1}"
+  echo -n "❓ Proceed with git reset --hard HEAD@{1}? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    echo "🚫 Aborted"
+    return 1
+  fi
+
+  git reset --hard HEAD@{1}
+  echo "✅ Repository reset back to previous HEAD (before last reset)."
+}
+
 # Rewind HEAD to its previous position with confirmation
 #
 # This function uses `git rev-parse HEAD@{1}` to retrieve the previous
@@ -190,13 +223,6 @@ git-back-checkout() {
   echo "✅ Restored to previous checkout state: $prev_ref"
 }
 
-# Short aliases for common undo/reset operations
-alias grs='git-reset-soft'
-alias grm='git-reset-mixed'
-alias grh='git-reset-hard'
-alias gbh='git-back-head'
-alias gbc='git-back-checkout'
-
 # ────────────────────────────────────────────────────────
 # GitHub / GitLab remote open helpers
 # ────────────────────────────────────────────────────────
@@ -219,6 +245,13 @@ gh-open() {
     return 1
   fi
 }
+
+# Short aliases for common undo/reset operations
+alias grs='git-reset-soft'
+alias grm='git-reset-mixed'
+alias grh='git-reset-hard'
+alias gbh='git-back-head'
+alias gbc='git-back-checkout'
 
 # Open the current branch page on GitHub or GitLab
 gh-open-branch() {
@@ -317,3 +350,97 @@ gh-push-open() {
   git push "$@" || return $?
   gh-open-commit HEAD
 }
+
+# git-commit-context
+#
+# This function generates a comprehensive Markdown-formatted summary of the current staged Git changes,
+# to assist with writing a precise and valid commit message (especially for use with commitlint rules).
+#
+# It performs the following steps:
+#  1. Collects the full diff of staged files (`git diff --cached`).
+#  2. Generates a file scope summary and directory tree using `git-scope staged`.
+#  3. Iterates through each staged file to include its HEAD version (before changes).
+#     - For added files: marks them as new.
+#     - For modified/deleted files: includes the original content from HEAD.
+#  4. Formats all this into a Markdown document, including:
+#     - 📄 Git staged diff (as `diff` block)
+#     - 📂 Scope and directory tree (as `bash` block)
+#     - 📚 Original file contents (as `ts` blocks per file)
+#
+# The result is piped to both:
+#  - `pbcopy` for immediate pasting into ChatGPT or documentation tools.
+#  - A temporary file via `mktemp` for future reference/debugging.
+#
+# ⚠️ The resulting document also includes instructions for generating Semantic Commit messages
+#     that follow commitlint standards.
+#
+# Example usage:
+#   $ git add .
+#   $ git-commit-context-md
+#
+# Output: Markdown commit context is copied to clipboard and logged to a temp file.
+git-commit-context () {
+  typeset tmpfile diff scope contents
+
+  tmpfile="$(mktemp -t commit-context.md.XXXXXX)"
+  diff="$(git diff --cached --no-color)"
+  scope="$(git-scope staged | sed 's/\x1b\[[0-9;]*m//g')"
+
+  if [[ -z "$diff" ]]; then
+    printf "⚠️  No staged changes to record\n"
+    return 1
+  fi
+
+  contents="$(
+    git diff --cached --name-status | while IFS=$'\t' read -r fstatus file; do
+      printf "### %s (%s)\n\n" "$file" "$fstatus"
+
+      if [[ "$fstatus" == "A" ]]; then
+        printf "[New file, no HEAD version]\n\n"
+      elif [[ "$fstatus" == "M" || "$fstatus" == "D" ]]; then
+        printf '```ts\n'
+        git show HEAD:"$file" 2>/dev/null || printf '[HEAD version not found]\n'
+        printf '```\n\n'
+      else
+        printf "[Unhandled status: %s]\n\n" "$fstatus"
+      fi
+    done
+  )"
+
+  printf "%s\n" "# Commit Context
+
+Please help generate a clear and accurate commit message using the information below.
+
+⚠️ Commit message must follow this format (used with commitlint):
+
+- Use Semantic Commit format: \`type(scope): subject\`, all lowercase, in English.
+- Enclose the message in a Markdown code block for easy copying.
+- The subject (first line) must be under 100 characters.
+- The body must detail the major changes, with each line under 100 characters.
+- Each bullet point or sentence must start with a capital letter.
+
+---
+
+## 📂 Scope and file tree:
+
+\`\`\`bash
+$scope
+\`\`\`
+
+## 📄 Git staged diff:
+
+\`\`\`diff
+$diff
+\`\`\`
+
+## 📚 Original file contents (HEAD version):
+
+$contents" | tee "$tmpfile" | pbcopy
+
+  printf "✅ Commit context copied to clipboard with:\n"
+  printf "  • Diff\n"
+  printf "  • Scope summary (via git-scope staged)\n"
+  printf "  • Original file contents (HEAD version)\n"
+}
+
+alias gcc='git-commit-context'
