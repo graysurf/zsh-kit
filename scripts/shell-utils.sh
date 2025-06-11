@@ -5,7 +5,6 @@ safe_unalias \
   reload execz histflush \
   history his fzf-history-wrapper
 
-
 # ────────────────────────────────────────────────────────
 # Basic editors & overrides
 # ────────────────────────────────────────────────────────
