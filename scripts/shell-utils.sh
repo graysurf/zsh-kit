@@ -1,24 +1,11 @@
-safe_unalias fdf fdd batp bff cat vi z
+safe_unalias vicd fdf fdd cat batp bat-all bff zdefs \
+             fsearch reload execz histflush edit-zsh y cheat
 
 # ────────────────────────────────────────────────────────
 # Basic editors & overrides
 # ────────────────────────────────────────────────────────
 
 alias vi='nvim'
-
-# Show current shell aliases, functions, and environment variables for debugging
-zdef() {
-  echo "🔗 Aliases:"
-  alias
-
-  echo "\n🔧 Functions:"
-  for fn in ${(k)functions}; do
-    echo "$fn"
-  done
-
-  echo "\n🌱 Environment Variables:"
-  printenv | sort
-}
 
 # Override 'cd' to auto-list
 cd() {
@@ -53,6 +40,22 @@ bat-all() {
 }
 alias bff='bat-all'
 
+# Show current shell aliases, functions, and environment variables for debugging
+zdefs() {
+  {
+    echo "🔗 Aliases:"
+    alias | sed 's/^/  /'
+
+    echo "\n🔧 Functions:"
+    for fn in ${(k)functions}; do
+      echo "  $fn"
+    done
+
+    echo "\n🌱 Environment Variables:"
+    printenv | sort | sed 's/^/  /'
+  } | fzf --ansi --header="🔍 Zsh Definitions (aliases, functions, env)" --preview-window=wrap
+}
+
 # fsearch: search for file content and preview with bat + ripgrep
 fsearch() {
   typeset query="$1"
@@ -61,7 +64,6 @@ fsearch() {
         --bind=ctrl-j:preview-down \
         --bind=ctrl-k:preview-up 
 }
-
 
 # ────────────────────────────────────────────────────────
 # Reload the Zsh environment via bootstrap init
@@ -85,6 +87,15 @@ execz() {
   echo -e "🧼 This will start a clean session using current configs.\n"
   exec zsh
 }
+
+# ────────────────────────────────────────────────────────
+# Force flush memory history to file
+# reload latest history entries
+# ────────────────────────────────────────────────────────
+histflush() {
+  fc -AI  # Append memory history, re-read file
+}
+
 
 # ────────────────────────────────────────────────────────
 # Open your Zsh config directory in VSCode
