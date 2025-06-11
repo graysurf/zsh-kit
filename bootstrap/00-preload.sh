@@ -43,3 +43,31 @@ safe_unalias() {
     fi
   done
 }
+
+# Clipboard abstraction (macOS pbpaste, Linux xclip/xsel)
+get_clipboard() {
+  if command -v pbpaste >/dev/null 2>&1; then
+    pbpaste
+  elif command -v xclip >/dev/null 2>&1; then
+    xclip -selection clipboard -o
+  elif command -v xsel >/dev/null 2>&1; then
+    xsel --clipboard --output
+  else
+    echo "❌ No clipboard tool found (requires pbpaste, xclip, or xsel)" >&2
+    return 1
+  fi
+}
+
+# Clipboard abstraction for writing (macOS pbcopy, Linux xclip/xsel)
+set_clipboard() {
+  if command -v pbcopy >/dev/null 2>&1; then
+    pbcopy
+  elif command -v xclip >/dev/null 2>&1; then
+    xclip -selection clipboard -i
+  elif command -v xsel >/dev/null 2>&1; then
+    xsel --clipboard --input
+  else
+    echo "❌ No clipboard tool found (requires pbcopy, xclip, or xsel)" >&2
+    return 1
+  fi
+}

@@ -1,23 +1,7 @@
 # ────────────────────────────────────────────────────────
-# Clipboard abstraction (macOS pbpaste, Linux xclip/xsel)
-# ────────────────────────────────────────────────────────
-get_clipboard() {
-  if command -v pbpaste >/dev/null 2>&1; then
-    pbpaste
-  elif command -v xclip >/dev/null 2>&1; then
-    xclip -selection clipboard -o
-  elif command -v xsel >/dev/null 2>&1; then
-    xsel --clipboard --output
-  else
-    echo "❌ No clipboard tool found (requires pbpaste, xclip, or xsel)" >&2
-    return 1
-  fi
-}
-
-# ────────────────────────────────────────────────────────
 # Git magic aliases (composite actions)
 # ────────────────────────────────────────────────────────
-unalias \
+safe_unalias \
   gcp gcpo gcapo gcapfo gcapffo \
   gpc gpcp gpcpo gpcpfo gpcpffo \
   gpca gpcap  gpcapf gpcapff \

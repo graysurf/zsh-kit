@@ -43,7 +43,7 @@ gdc() {
     return 1
   fi
 
-  printf "%s" "$diff" | pbcopy
+  printf "%s" "$diff" | set_clipboard
   echo "✅ Staged diff copied to clipboard"
 }
 
@@ -368,7 +368,7 @@ gh-push-open() {
 #     - 📚 Original file contents (as `ts` blocks per file)
 #
 # The result is piped to both:
-#  - `pbcopy` for immediate pasting into ChatGPT or documentation tools.
+#  - `set_clipboard` for immediate pasting into ChatGPT or documentation tools.
 #  - A temporary file via `mktemp` for future reference/debugging.
 #
 # ⚠️ The resulting document also includes instructions for generating Semantic Commit messages
@@ -435,7 +435,7 @@ $diff
 
 ## 📚 Original file contents (HEAD version):
 
-$contents" | tee "$tmpfile" | pbcopy
+$contents" | tee "$tmpfile" | set_clipboard
 
   printf "✅ Commit context copied to clipboard with:\n"
   printf "  • Diff\n"

@@ -307,7 +307,7 @@ BEGIN { inside=0 }
 ' "$tmpfile")
 
   echo "$result"
-  echo "$result" | pbcopy  
+  echo "$result" | set_clipboard  
   rm -f "$tmpfile" "$previewscript"
 }
 
