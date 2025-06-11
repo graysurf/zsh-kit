@@ -42,9 +42,32 @@ EOF
 # Register ZLE widget and bind to Ctrl+F
 zle -N fzf-tools-launcher-widget
 bindkey '^F' fzf-tools-launcher-widget
-bindkey -r '^T' 
-bindkey '^T' fzf-tools-launcher-widget
 
+# ────────────────────────────────────────────────────────
+# Bind `fzf-tools defs` to Ctrl+T
+# ────────────────────────────────────────────────────────
+
+fzf-tools-defs-widget() {
+  BUFFER="fzf-tools defs"
+  CURSOR=${#BUFFER}
+  zle accept-line
+}
+
+zle -N fzf-tools-defs-widget
+bindkey '^T' fzf-tools-defs-widget
+
+# ────────────────────────────────────────────────────────
+# Bind `fzf-tools git-commit` to Ctrl+G
+# ────────────────────────────────────────────────────────
+
+fzf-tools-git-commit-widget() {
+  BUFFER="fzf-tools git-commit"
+  CURSOR=${#BUFFER}
+  zle accept-line
+}
+
+zle -N fzf-tools-git-commit-widget
+bindkey '^G' fzf-tools-git-commit-widget
 
 # ────────────────────────────────────────────────────────
 # Interactive command history search using fzf
@@ -67,8 +90,7 @@ fzf-history-select() {
       printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
   ' | fzf --ansi --no-sort --reverse --height=50% \
-         --preview 'echo {}' \
-         --bind 'ctrl-j:preview-down,ctrl-k:preview-up'
+         --preview 'echo {}'
 }
 
 

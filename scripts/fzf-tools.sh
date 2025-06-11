@@ -259,7 +259,7 @@ EOF
   selected=$(awk -v delim="$delim" '$0 == delim { getline; print }' "$tmpfile" |
     FZF_DEF_DELIM="$delim" \
     FZF_DEF_DELIM_END="$enddelim" \
-    fzf --ansi \
+    fzf --ansi --no-sort --reverse --height=50% \
         --prompt="» Select > " \
         --preview-window='right:70%:wrap' \
         --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile")
