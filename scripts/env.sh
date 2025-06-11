@@ -34,9 +34,6 @@ FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
   --bind=ctrl-l:preview-bottom"
 export FZF_DEFAULT_OPTS
 
-# FZF key bindings (e.g., Ctrl-R, Ctrl-T, Alt-C)
-source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
-
 export FZF_CTRL_T_COMMAND='fd --type f -t d --hidden --follow --exclude .git -E .cache'
 export FZF_CTRL_T_OPTS="--preview 'bat --color \"always\" {}'"
 export FZF_ALT_C_COMMAND="fd --type d --hidden --follow"

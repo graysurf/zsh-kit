@@ -42,6 +42,8 @@ EOF
 # Register ZLE widget and bind to Ctrl+F
 zle -N fzf-tools-launcher-widget
 bindkey '^F' fzf-tools-launcher-widget
+bindkey -r '^T' 
+bindkey '^T' fzf-tools-launcher-widget
 
 
 # ────────────────────────────────────────────────────────
@@ -52,28 +54,35 @@ bindkey '^F' fzf-tools-launcher-widget
 
 # Extract command history and strip line numbers
 fzf-history-select() {
-  typeset history_output
-  if [[ -n "$ZSH_NAME" ]]; then
-    history_output=$(fc -l 1)
-  else
-    history_output=$(history)
-  fi
+  iconv -f utf-8 -t utf-8 -c "$HISTFILE" |  # 移除非法 multibyte
+  awk -F'[;:]' '
+    /^:/ {
+      cmd = substr($0, index($0, $5))
+      gsub(/\\/, "\\\\", cmd)  # 避免反斜線破壞 ZLE
+      
+      ts_cmd = "date -r " $2 " +\"%Y-%m-%d %H:%M:%S\""
+      ts_cmd | getline ts
+      close(ts_cmd)
 
-  echo "$history_output" |
-    fzf +s --tac |                             # Reverse order (most recent top)
-    sed -E 's/ *[0-9]*\*? *//' |               # Remove history number and markers
-    sed -E 's/\\/\\\\/g'                       # Escape backslashes for Zsh compatibility
+      printf "%s | %4d | %s\n", ts, NR, cmd
+    }
+  ' | fzf --ansi --no-sort --reverse --height=50% \
+         --preview 'echo {}' \
+         --bind 'ctrl-j:preview-down,ctrl-k:preview-up'
 }
 
-# Widget to insert selected command into prompt without executing
 fzf-history-widget() {
-  local selected="$(fzf-history-select)"
-  if [[ -n "$selected" ]]; then
-    BUFFER="$selected"
+  local selected cmd
+  selected="$(fzf-history-select)"
+  cmd="$(echo "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+  if [[ -n "$cmd" ]]; then
+    BUFFER="$cmd"
     CURSOR=${#BUFFER}
   fi
 }
 
+
 # Register ZLE widget and bind to Ctrl+R
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
+

@@ -6,17 +6,18 @@ export ZSH_COMPDUMP="$ZSH_CACHE_DIR/zcompdump"
 export _Z_DATA="$ZSH_CACHE_DIR/.z"
 export ZSHZ_DATA="$_Z_DATA"
 
+# History config
 export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 export HISTSIZE=10000
-export SAVEHIST=20000
+export SAVEHIST=10000
 
-setopt HIST_IGNORE_DUPS
-setopt HIST_IGNORE_ALL_DUPS
-setopt HIST_REDUCE_BLANKS
-setopt HIST_VERIFY
-setopt INC_APPEND_HISTORY
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_SPACE
+# Enhanced history settings
+setopt HIST_IGNORE_DUPS HIST_IGNORE_ALL_DUPS HIST_REDUCE_BLANKS
+setopt HIST_VERIFY HIST_IGNORE_SPACE INC_APPEND_HISTORY SHARE_HISTORY
+setopt EXTENDED_HISTORY HIST_FIND_NO_DUPS HIST_SAVE_NO_DUPS
+
+# Show formatted timestamps when using `history`
+export HISTTIMEFORMAT='%F %T '
 
 # Ensure cache dir exists
 [[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
