@@ -371,6 +371,34 @@ fzf-defs() {
   fzf_block_preview _gen_all_defs_block
 }
 
+# ────────────────────────────────────────────────────────
+# Select a file using `fd` and `fzf`, then open it with $EDITOR
+# - Shows hidden files and follows symlinks
+# - Uses `bat` for preview (requires bat installed)
+# - Falls back cleanly if no file is selected
+# ────────────────────────────────────────────────────────
+fzf-fdf() {
+  typeset file
+  file=$(fd --type f --hidden --follow --exclude .git \
+    | fzf --ansi --preview 'bat --style=numbers --color=always --line-range :100 {}')
+
+  [[ -n "$file" ]] && "${EDITOR:-nvim}" "$file"
+}
+
+# ────────────────────────────────────────────────────────
+# Select a directory using `fd` and `fzf`, then cd into it
+# - Shows hidden directories and follows symlinks
+# - Uses `eza` to preview contents (fallback to `ls` if not available)
+# - Falls back cleanly if no directory is selected
+# ────────────────────────────────────────────────────────
+fzf-fdd() {
+  typeset dir
+  dir=$(fd --type d --hidden --follow --exclude .git \
+    | fzf --ansi --preview 'command -v eza >/dev/null && eza -alh --color=always {} || ls -la {}')
+
+  [[ -n "$dir" ]] && cd "$dir"
+}
+
 # ────────────────────────────────────────────────────
 # Main fzf-tools command
 # ────────────────────────────────────────────────────
@@ -388,6 +416,8 @@ fzf-tools() {
       directory "Preview file and cd into its folder" \
       file "Search and preview text files" \
       vscode "Search and preview text files in VSCode" \
+      fdf "Search files and open with \$EDITOR" \
+      fdd "Search directories and cd into selection" \
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
       kill "Kill a selected process" \
@@ -407,6 +437,8 @@ fzf-tools() {
     directory)        fzf-eza-directory "$@" ;;
     file)             fzf-file "$@" ;;
     vscode)           fzf-vscode "$@" ;;
+    fdf)              fzf-fdf "$@" ;;
+    fdd)              fzf-fdd "$@" ;;
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;
     kill)             fzf-kill "$@" ;;
@@ -421,3 +453,4 @@ fzf-tools() {
       return 1 ;;
   esac
 }
+

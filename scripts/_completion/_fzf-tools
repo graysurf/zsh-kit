@@ -7,6 +7,8 @@ commands=(
   'directory:Preview file and cd into its folder'
   'file:Search and preview text files'
   'vscode:Search and preview text files in VSCode'
+  'fdf:Search files and open with $EDITOR'
+  'fdd:Search directories and cd into selection'
   'git-status:Interactive git status viewer'
   'git-commit:Browse commits and open changed files in VSCode'
   'kill:Kill a selected process'
