@@ -117,39 +117,6 @@ fzf-history-wrapper() {
 }
 
 # ────────────────────────────────────────────────────────
-# Interactive command history search using fzf
-# Integrates with Ctrl+R keybinding via ZLE widget
-# ────────────────────────────────────────────────────────
-
-# Select command from history using fzf (pure output, no execution)
-fzf-history-select() {
-  typeset history_output
-  if [[ -n "$ZSH_NAME" ]]; then
-    history_output=$(fc -l 1)
-  else
-    history_output=$(history)
-  fi
-
-  echo "$history_output" |
-    fzf +s --tac |
-    sed -E 's/ *[0-9]*\*? *//' |
-    sed -E 's/\\/\\\\/g'
-}
-
-# ZLE widget to insert selected command into shell prompt (no auto-execute)
-fzf-history-widget() {
-  local selected="$(fzf-history-select)"
-  if [[ -n "$selected" ]]; then
-    BUFFER="$selected"
-    CURSOR=${#BUFFER}
-  fi
-}
-zle -N fzf-history-widget
-
-# Bind Ctrl+R to fzf-powered history search
-bindkey '^R' fzf-history-widget
-
-# ────────────────────────────────────────────────────────
 # Open your Zsh config directory in VSCode
 # ────────────────────────────────────────────────────────
 edit-zsh() {

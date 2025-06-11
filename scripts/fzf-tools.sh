@@ -4,7 +4,6 @@
 safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
 
 alias ft='fzf-tools'
-alias fp='fzf-eza-directory'
 alias fgs='fzf-git-status'
 alias fgc='fzf-git-commit'
 alias ff='fzf-file'
@@ -16,8 +15,18 @@ alias fv='fzf-vscode'
 
 # Fuzzy select and kill a process (simple fallback)
 fzf-process() {
-  ps aux | fzf
+  local kill_mode="$1"
+  local line
+
+  line=$(ps -ef | sed 1d | fzf -m --preview 'echo {}') || return
+
+  local pids=$(echo "$line" | awk '{print $2}')
+
+  if [[ "$kill_mode" == "--kill" && -n "$pids" ]]; then
+    echo "$pids" | xargs kill -9
+  fi
 }
+
 # Fuzzy search command history and execute selected entry
 fzf-history() {
   typeset history_output
@@ -36,49 +45,6 @@ fzf-history() {
   [[ -n "$selected" ]] && eval "$selected"
 }
 
-# Fuzzy search files and change to selected file's directory
-fzf-directory() {
-  typeset file dir
-  file=$(fd --type f --hidden --exclude .git --max-depth=$FZF_FILE_MAX_DEPTH |
-    fzf --preview 'bat --color "always" {}' +m -q "$1") &&
-    dir=$(dirname "$file") &&
-    cd "$dir"
-}
-
-# Fuzzy select process and kill it with signal (default: SIGKILL)
-fzf-kill() {
-  typeset pid
-  pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
-  [[ -n "$pid" ]] && echo $pid | xargs kill -${1:-9}
-}
-
-# ────────────────────────────────────────────────────────
-# fzf + eza integrations
-# ────────────────────────────────────────────────────────
-# Fuzzy change directory using eza to preview directory contents
-fzf-cd() {
-  typeset dir
-  dir=$(eza --only-dirs --color=always |
-    fzf --ansi \
-        --preview "eza -alh --icons --group-directories-first --color=always {}") &&
-    cd "$dir"
-}
-
-# Fuzzy search files and cd into the selected file's directory (with eza preview)
-fzf-eza-directory() {
-  typeset file
-  file=$(fd --type f --hidden --exclude .git --max-depth=$FZF_FILE_MAX_DEPTH |
-    fzf --preview 'eza -al --color=always $(dirname {})') &&
-    cd "$(dirname \"$file\")"
-}
-
-# Fuzzy git status with diff preview and navigation bindings
-fzf-git-status() {
-  git status -s | fzf --no-sort \
-    --preview 'git diff --color=always {2}' \
-    --bind=ctrl-j:preview-down \
-    --bind=ctrl-k:preview-up 
-}
 # ────────────────────────────────────────────────────────
 # fzf file preview helper
 # ────────────────────────────────────────────────────────
@@ -100,6 +66,14 @@ fzf-vscode() {
   typeset file
   file=$(__fzf_file_select)
   [[ -n "$file" ]] && code "$file"
+}
+
+# Fuzzy git status with diff preview and navigation bindings
+fzf-git-status() {
+  git status -s | fzf --no-sort \
+    --preview 'git diff --color=always {2}' \
+    --bind=ctrl-j:preview-down \
+    --bind=ctrl-k:preview-up 
 }
 
 # FZF pick a commit and checkout to it
@@ -416,8 +390,6 @@ fzf-tools() {
     echo ""
     echo "Commands:"
     printf "  %-18s %s\n" \
-      cd "Change directory using fzf and eza" \
-      directory "Preview file and cd into its folder" \
       file "Search and preview text files" \
       vscode "Search and preview text files in VSCode" \
       fdf "Search files and open with \$EDITOR" \
@@ -425,7 +397,6 @@ fzf-tools() {
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
-      kill "Kill a selected process" \
       process "Browse and kill running processes" \
       history "Search and execute command history" \
       env "Browse environment variables" \
@@ -439,8 +410,6 @@ fzf-tools() {
   shift
 
   case "$cmd" in
-    cd)               fzf-cd "$@" ;;
-    directory)        fzf-eza-directory "$@" ;;
     file)             fzf-file "$@" ;;
     vscode)           fzf-vscode "$@" ;;
     fdf)              fzf-fdf "$@" ;;
@@ -448,7 +417,6 @@ fzf-tools() {
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;
     git-checkout)     fzf-git-checkout "$@" ;;
-    kill)             fzf-kill "$@" ;;
     process)          fzf-process "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
