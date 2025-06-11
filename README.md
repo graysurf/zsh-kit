@@ -60,13 +60,12 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── env.sh                            # Environment variable exports and init logic
 │   ├── eza.sh                            # Aliases for eza (modern ls)
 │   ├── fzf-tools.sh                      # FZF-based UI helpers for git, files, processes, etc.
-│   ├── general.sh                        # Misc shell helpers and overrides
 │   ├── interactive.sh                    # Runtime UX (prompt, zoxide, keybindings)
 │   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration triggers
 │   ├── login.sh                          # Show emoji + quote banner on login
 │   ├── macos.sh                          # macOS-specific system tweaks
 │   ├── random_emoji.sh                   # Random emoji + quote selector
-│   └── shell-utils.sh                    # Reload functions, config helpers, cheat.sh integration
+│   └── shell-utils.sh                    # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
 ├── tools/                                # Standalone executable scripts or compiled helpers
 └── install-tools.sh                      # Root-level wrapper for bootstrap/install-tools.sh
@@ -84,7 +83,6 @@ An example Zsh startup log with this config:
 ✅ Loaded plugins.sh in 89ms
 ✅ Loaded eza.sh in 2ms
 ✅ Loaded fzf-tools.sh in 2ms
-✅ Loaded general.sh in 3ms
 ✅ Loaded git-lock.sh in 3ms
 ✅ Loaded git-magic.sh in 3ms
 ✅ Loaded git-scope.sh in 2ms
