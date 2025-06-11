@@ -4,7 +4,6 @@
 safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
 
 alias ft='fzf-tools'
-alias fzf-process='ps aux | fzf'
 alias fp='fzf-eza-directory'
 alias fgs='fzf-git-status'
 alias fgc='fzf-git-commit'
@@ -14,6 +13,11 @@ alias fv='fzf-vscode'
 # ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
+
+# Fuzzy select and kill a process (simple fallback)
+fzf-process() {
+  ps aux | fzf
+}
 # Fuzzy search command history and execute selected entry
 fzf-history() {
   typeset history_output
@@ -394,7 +398,7 @@ fzf-fdf() {
 fzf-fdd() {
   typeset dir
   dir=$(fd --type d --hidden --follow --exclude .git \
-    | fzf --ansi --preview 'command -v eza >/dev/null && eza -alhT --color=always {} || ls -la {}')
+    | fzf --ansi --preview 'command -v eza >/dev/null && eza -alhT --level=2 --color=always {} || ls -la {}')
 
   [[ -n "$dir" ]] && cd "$dir"
 }
@@ -420,7 +424,9 @@ fzf-tools() {
       fdd "Search directories and cd into selection" \
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
+      git-checkout "Pick and checkout a previous commit" \
       kill "Kill a selected process" \
+      process "Browse and kill running processes" \
       history "Search and execute command history" \
       env "Browse environment variables" \
       alias "Browse shell aliases" \
@@ -441,7 +447,9 @@ fzf-tools() {
     fdd)              fzf-fdd "$@" ;;
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;
+    git-checkout)     fzf-git-checkout "$@" ;;
     kill)             fzf-kill "$@" ;;
+    process)          fzf-process "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;
@@ -453,4 +461,3 @@ fzf-tools() {
       return 1 ;;
   esac
 }
-
