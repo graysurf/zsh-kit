@@ -1,5 +1,10 @@
-safe_unalias vicd fdf fdd cat batp bat-all bff zdefs \
-             fsearch reload execz histflush edit-zsh y cheat
+safe_unalias \
+  vicd cd edit-zsh y \
+  fdf fdd cat batp bat-all bff \
+  fsearch zdefs cheat \
+  reload execz histflush \
+  history his fzf-history-wrapper
+
 
 # ────────────────────────────────────────────────────────
 # Basic editors & overrides
@@ -96,6 +101,54 @@ histflush() {
   fc -AI  # Append memory history, re-read file
 }
 
+# ────────────────────────────────────────────────────────
+# Override `history` to launch fzf-history interactively when called with no arguments.
+# Falls back to the original builtin `history` when arguments are passed (e.g. -d, -c, etc).
+# ────────────────────────────────────────────────────────
+alias history='fzf-history-wrapper'
+alias his='fzf-history-wrapper'
+
+fzf-history-wrapper() {
+  if [[ "$1" == "" ]]; then
+    # Fuzzy search command history and execute selected entry
+    fzf-history
+  else
+    builtin history "$@"
+  fi
+}
+
+# ────────────────────────────────────────────────────────
+# Interactive command history search using fzf
+# Integrates with Ctrl+R keybinding via ZLE widget
+# ────────────────────────────────────────────────────────
+
+# Select command from history using fzf (pure output, no execution)
+fzf-history-select() {
+  typeset history_output
+  if [[ -n "$ZSH_NAME" ]]; then
+    history_output=$(fc -l 1)
+  else
+    history_output=$(history)
+  fi
+
+  echo "$history_output" |
+    fzf +s --tac |
+    sed -E 's/ *[0-9]*\*? *//' |
+    sed -E 's/\\/\\\\/g'
+}
+
+# ZLE widget to insert selected command into shell prompt (no auto-execute)
+fzf-history-widget() {
+  local selected="$(fzf-history-select)"
+  if [[ -n "$selected" ]]; then
+    BUFFER="$selected"
+    CURSOR=${#BUFFER}
+  fi
+}
+zle -N fzf-history-widget
+
+# Bind Ctrl+R to fzf-powered history search
+bindkey '^R' fzf-history-widget
 
 # ────────────────────────────────────────────────────────
 # Open your Zsh config directory in VSCode
