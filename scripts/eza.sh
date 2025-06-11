@@ -1,5 +1,5 @@
 # Unalias to avoid redefinition warnings
-unalias ll lx lt llt lt2 lt3 lt5 \
+safe_unalias ll lx lt llt lt2 lt3 lt5 \
         llt2 llt3 llt5 \
         lxt lxt2 lxt3 lxt5 2>/dev/null
 

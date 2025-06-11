@@ -6,6 +6,8 @@ typeset -f load_script &>/dev/null || {
   return 1
 }
 
+load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.sh"
+
 # Attempt to load the plugin system, but allow fallback if it fails
 if ! load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.sh"; then
   echo "⚠️  Plugin system failed to load, continuing without plugins."

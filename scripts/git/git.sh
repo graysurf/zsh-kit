@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────
 # Unalias to avoid redefinition
 # ────────────────────────────────────────────────────────
-unalias gd gc gca gl gp gpf gpff gpo gpfo gpffo \
+safe_unalias gd gc gca gl gp gpf gpff gpo gpfo gpffo \
         git-zip \
         lg lgr gt gt2 gt3 gt5 2>/dev/null
 
