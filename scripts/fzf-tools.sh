@@ -394,7 +394,7 @@ fzf-fdf() {
 fzf-fdd() {
   typeset dir
   dir=$(fd --type d --hidden --follow --exclude .git \
-    | fzf --ansi --preview 'command -v eza >/dev/null && eza -alh --color=always {} || ls -la {}')
+    | fzf --ansi --preview 'command -v eza >/dev/null && eza -alhT --color=always {} || ls -la {}')
 
   [[ -n "$dir" ]] && cd "$dir"
 }
