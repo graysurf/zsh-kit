@@ -89,7 +89,7 @@ fzf-history-select() {
       gsub(/\\/, "\\\\", cmd)
       printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
-  ' | fzf --ansi --no-sort --reverse --height=50% \
+  ' | fzf --ansi --reverse --height=50% \
          --preview 'echo {}'
 }
 

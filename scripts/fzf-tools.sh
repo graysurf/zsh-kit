@@ -70,7 +70,7 @@ fzf-vscode() {
 
 # Fuzzy git status with diff preview and navigation bindings
 fzf-git-status() {
-  git status -s | fzf --no-sort \
+  git status -s | fzf \
     --preview 'git diff --color=always {2}' \
     --bind=ctrl-j:preview-down \
     --bind=ctrl-k:preview-up 
@@ -81,7 +81,7 @@ fzf-git-checkout() {
   typeset ref
   ref=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
     --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
-    fzf --ansi --no-sort --reverse \
+    fzf --ansi --reverse \
         --delimiter=' ' \
         --with-nth=2.. \
         --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
@@ -131,7 +131,7 @@ fzf-git-commit() {
     typeset result=''
     result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
       --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
-      fzf --ansi --no-sort --reverse \
+      fzf --ansi --reverse \
           --preview-window='right:50%:wrap' \
           --query="$commit_query" \
           --print-query \
@@ -259,7 +259,7 @@ EOF
   selected=$(awk -v delim="$delim" '$0 == delim { getline; print }' "$tmpfile" |
     FZF_DEF_DELIM="$delim" \
     FZF_DEF_DELIM_END="$enddelim" \
-    fzf --ansi --no-sort --reverse --height=50% \
+    fzf --ansi --reverse --height=50% \
         --prompt="» Select > " \
         --preview-window='right:70%:wrap' \
         --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile")
