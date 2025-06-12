@@ -294,7 +294,7 @@ _gen_env_block() {
   env | sort | while IFS='=' read -r name value; do
     echo "$FZF_DEF_DELIM"
     echo "🌱 $name"
-    printenv "$name"
+    printenv "$name" | sed 's/^/  /'
     echo "$FZF_DEF_DELIM_END"
     echo ""
   done
