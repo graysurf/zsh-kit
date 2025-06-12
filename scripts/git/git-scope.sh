@@ -1,44 +1,35 @@
-# ───────────────────────────────────────────────
-# git-scope - Git scope viewer unified CLI
-# Usage: git-scope <command> [args...]
-# ───────────────────────────────────────────────
+safe_unalias \
+        gsc gst
 
-# Render file list with A/M/D tags and color, then show tree
-_git_scope_render_with_type() {
-  typeset input="$1"
+alias gsc='git-scope commit'
+alias gst='git-scope tracked'
 
-  if [[ -z "$input" ]]; then
-    echo "⚠️  No matching files"
+# Return ANSI color code based on file change kind
+_git_scope_kind_color() {
+  typeset kind="$1"
+
+  case "$kind" in
+    A) printf '\033[1;32m'  ;; # Green for Added
+    M) printf '\033[1;33m'  ;; # Yellow for Modified
+    D) printf '\033[1;31m'  ;; # Red for Deleted
+    U) printf '\033[1;34m'  ;; # Blue for Untracked/Unknown
+    -) printf '\033[0m'     ;; # Reset for neutral
+    *) printf '\033[1;34m'  ;; # Fallback color
+  esac
+}
+
+# Render directory tree from a list of file paths
+_git_scope_render_tree() {
+  typeset -a file_list=("${(@f)}$1")
+
+  if [[ "${#file_list[@]}" -eq 0 ]]; then
+    printf "⚠️ No files to render as tree\n"
     return 1
   fi
 
-  typeset COLOR_RESET='\033[0m'
-  typeset ADDED='\033[1;32m'
-  typeset MODIFIED='\033[1;33m'
-  typeset DELETED='\033[1;31m'
-  typeset OTHER='\033[1;34m'
+  printf "\n📂 Directory tree:\n"
 
-  echo -e "\n📄 Changed files:"
-
-  typeset tree_files=""
-  echo "$input" | while IFS=$'\t' read -r kind file; do
-    [[ -z "$file" ]] && continue
-
-    typeset color="$OTHER"
-    case "$kind" in
-      A) color="$ADDED" ;;
-      M) color="$MODIFIED" ;;
-      D) color="$DELETED" ;;
-      U) color="$OTHER" ;;
-      -) color="$COLOR_RESET" ;;
-    esac
-
-    echo -e "  ${color}➤ [$kind] $file${COLOR_RESET}"
-    tree_files+="$file"$'\n'
-  done
-
-  echo -e "\n📂 Directory tree:"
-  echo "$tree_files" | awk -F/ '{
+  printf "%s\n" "${file_list[@]}" | awk -F/ '{
     path=""
     for(i=1;i<NF;i++) {
       path = (path ? path "/" $i : $i)
@@ -48,177 +39,91 @@ _git_scope_render_with_type() {
   }' | sort -u | tree --fromfile -C
 }
 
-_git_scope_tracked() {
-  printf "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n\n"
 
-  typeset print_content=false
-  typeset -a prefixes=()
+# Render file list with A/M/D tags and color, then show tree
+_git_scope_render_with_type() {
+  typeset input="$1"
 
-  # 解析參數
-  for arg in "$@"; do
-    case "$arg" in
-      -p|--print)
-        print_content=true ;;
-      *)
-        prefixes+=("$arg") ;;
-    esac
-  done
-
-  typeset files all_filtered
-  files=$(git ls-files)
-
-  if [[ -z "$files" ]]; then
-    printf "📭 No tracked files in working directory\n"
+  if [[ -z "$input" ]]; then
+    printf "⚠️  No matching files\n"
     return 1
   fi
 
-  if [[ "${#prefixes[@]}" -gt 0 ]]; then
-    for prefix in "${prefixes[@]}"; do
-      all_filtered+=$'\n'$(echo "$files" | grep "^${prefix}/")
-    done
-    files="$(echo "$all_filtered" | grep -v '^$' | sort -u)"
-    if [[ -z "$files" ]]; then
-      printf "📭 No tracked files under specified prefix(es)\n"
-      return 1
-    fi
-  fi
+  typeset COLOR_RESET='\033[0m'
+  typeset -a files=()
 
-  typeset marked=""
-  typeset -a file_list=()
-  while IFS= read -r file; do
-    marked+="-\t${file}"$'\n'
-    file_list+=("$file")
-  done <<< "$files"
+  printf "\n📄 Changed files:\n"
 
-  _git_scope_render_with_type "$marked"
+  while IFS=$'\t' read -r kind file; do
+    [[ -z "$file" ]] && continue
+    files+=("$file")
+    typeset color="$(_git_scope_kind_color "$kind")"
+    printf "  %b➔ [%s] %s%b\n" "$color" "$kind" "$file" "$COLOR_RESET"
+  done <<< "$input"
 
-  if [[ "$print_content" == true ]]; then
+  _git_scope_render_tree "${(F)files}"
+
+  if [[ "$_git_scope_should_print" == true ]]; then
     printf "\n📦 Printing file contents:\n"
-    for f in "${file_list[@]}"; do
-      print_file_content "$f"
+    for file in "${files[@]}"; do
+      print_file_content "$file"
       printf "\n"
     done
   fi
 }
 
-_git_scope_staged() {
-  echo -e "\n📂 Show tree of staged files (ready to be committed)\n"
-  typeset ns_lines
-  ns_lines=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
 
-  _git_scope_render_with_type "$ns_lines"
-}
+# Common file status collector
+_git_scope_collect() {
+  typeset mode="$1"
+  shift
 
-_git_scope_modified() {
-  echo -e "\n📂 Show tree of modified files (not yet staged)\n"
-  typeset ns_lines
-  ns_lines=$(git diff --name-status --diff-filter=ACMRTUXB)
+  typeset -a args=()
+  _git_scope_should_print=false
 
-  _git_scope_render_with_type "$ns_lines"
-}
-
-_git_scope_all() {
-  echo -e "\n📂 Show tree of all changed files (staged + modified)\n"
-  typeset staged modified
-  staged=$(git diff --cached --name-status --diff-filter=ACMRTUXB)
-  modified=$(git diff --name-status --diff-filter=ACMRTUXB)
-
-  typeset combined
-  combined=$(printf "%s\n%s" "$staged" "$modified" | grep -v '^$' | sort -u)
-
-  _git_scope_render_with_type "$combined"
-}
-
-_git_scope_untracked() {
-  echo -e "\n📂 Show tree of untracked files (new files not yet added)\n"
-  typeset files
-  files=$(git ls-files --others --exclude-standard)
-
-  if [[ -z "$files" ]]; then
-    echo "📭 No untracked files"
-    return 1
-  fi
-
-  typeset marked=""
-  while IFS= read -r file; do
-    marked+="U\t${file}"$'\n'
-  done <<< "$files"
-
-  _git_scope_render_with_type "$marked"
-}
-
-_git_scope_commit() {
-  typeset commit="$1"
-  if [[ -z "$commit" ]]; then
-    echo "❗ Usage: git-scope commit <commit-hash | HEAD>"
-    return 1
-  fi
-
-  typeset COLOR_RESET='\033[0m'
-  typeset ADDED='\033[1;32m'
-  typeset MODIFIED='\033[1;33m'
-  typeset DELETED='\033[1;31m'
-  typeset OTHER='\033[1;34m'
-
-  echo ""
-  git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
-    --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
-
-  echo -e "\n📝 Commit Message:"
-  git log -1 --pretty=format:%B "$commit" | awk '
-    NR==1 { print "   " $0; print ""; next }
-    NF > 0 { print "   " $0 }'
-  
-  echo -e "\n📄 Changed files:"
-
-typeset ns_lines
-ns_lines=$(git show --pretty=format: --name-status "$commit")
-typeset numstat_lines
-numstat_lines=$(git show --pretty=format: --numstat "$commit")
-
-if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
-  echo "  ⚠️  Merge commit detected — no file-level diff shown by default"
-else
-  typeset total_add=0
-  typeset total_del=0
-
-  while IFS=$'\t' read -r kind file; do
-    typeset add="-"
-    typeset del="-"
-
-    unset match_line
-    match_line=$(echo "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
-
-    if [[ -n "$match_line" ]]; then
-      add=$(echo "$match_line" | cut -f1)
-      del=$(echo "$match_line" | cut -f2)
-
-      [[ "$add" != "-" ]] && total_add=$((total_add + add))
-      [[ "$del" != "-" ]] && total_del=$((total_del + del))
-    fi
-
-    typeset color="$OTHER"
-    case "$kind" in
-      A) color="$ADDED" ;;
-      M) color="$MODIFIED" ;;
-      D) color="$DELETED" ;;
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -p|--print)
+        _git_scope_should_print=true ;;
+      *)
+        args+=("$1") ;;
     esac
+    shift
+  done
 
-    echo -e "  ${color} ➤ [$kind] $file  [+${add} / -${del}]${COLOR_RESET}"
-  done <<< "$ns_lines"
-
-  echo -e "\n  📊 Total: +$total_add / -$total_del"
-fi
-
-  echo -e "\n📂 Directory tree:"
-  git show --pretty=format: --name-only "$commit" | awk -F/ '{
-    path = ""
-    for (i = 1; i < NF; i++) {
-      path = (path ? path "/" $i : $i)
-      print path
-    }
-    print $0
-  }' | sort -u | tree --fromfile -C
+  case "$mode" in
+    staged)
+      git diff --cached --name-status --diff-filter=ACMRTUXB ;;
+    modified)
+      git diff --name-status --diff-filter=ACMRTUXB ;;
+    all)
+      printf "%s\n%s" \
+        "$(git diff --cached --name-status --diff-filter=ACMRTUXB)" \
+        "$(git diff --name-status --diff-filter=ACMRTUXB)" | grep -v '^$' | sort -u ;;
+    tracked)
+      typeset -a prefixes=("${args[@]}")
+      typeset files all_filtered
+      files=$(git ls-files)
+      if [[ ${#prefixes[@]} -gt 0 ]]; then
+        for prefix in "${prefixes[@]}"; do
+          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${prefix}/")
+        done
+        files="$(printf '%s\n' "$all_filtered" | grep -v '^$' | sort -u)"
+      fi
+      printf '%s\n' "$files" | while IFS= read -r f; do
+        [[ -n "$f" ]] && printf "-\t%s\n" "$f"
+      done ;;
+    untracked)
+      git ls-files --others --exclude-standard | while IFS= read -r f; do
+        [[ -n "$f" ]] && printf "U\t%s\n" "$f"
+      done ;;
+    commit)
+      typeset commit="${args[1]}"
+      git show --pretty=format: --name-status "$commit" ;;
+    *)
+      printf "⚠️ Unknown collect mode: %s\n" "$mode" >&2
+      return 1 ;;
+  esac
 }
 
 # Print full content of a given file, from working tree or HEAD fallback
@@ -241,7 +146,6 @@ print_file_content() {
       printf '\n```\n'
     fi
   elif git cat-file -e "HEAD:$file" 2>/dev/null; then
-    # Extract file to temp and detect MIME
     typeset tmp
     tmp="$(mktemp)"
     git show "HEAD:$file" > "$tmp"
@@ -263,48 +167,178 @@ print_file_content() {
   fi
 }
 
+# Command handlers
+_git_scope_tracked()   { _git_scope_render_with_type "$(_git_scope_collect tracked "$@")"; }
+_git_scope_staged()    { _git_scope_render_with_type "$(_git_scope_collect staged "$@")"; }
+_git_scope_modified()  { _git_scope_render_with_type "$(_git_scope_collect modified "$@")"; }
+_git_scope_all()       { _git_scope_render_with_type "$(_git_scope_collect all "$@")"; }
+_git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untracked "$@")"; }
+
+# ─────────────────────────────────────────────────────────────
+# _git_scope_commit - Show detailed information of a git commit
+#
+# Unlike other git-scope commands (e.g., `staged`, `tracked`), which operate
+# on the working directory or index, this command analyzes a historical commit
+# and renders its metadata, commit message, changed files, and optionally
+# prints the file contents if they are retrievable from HEAD or working tree.
+#
+# Features:
+#   • Displays commit hash, author, date, and message with formatting
+#   • Parses both name-status and numstat to show per-file diff counts
+#   • Computes total lines added and deleted across all files
+#   • Renders affected directory structure using `tree --fromfile`
+#   • Supports `-p` to print file contents (text or binary placeholder)
+#
+# Usage:
+#   git-scope commit <commit-ish> [-p]
+#
+# Example:
+#   git-scope commit HEAD~1         # Show summary of an old commit
+#   git-scope commit a1b2c3 -p      # Show and print files changed in a commit
+#
+# Note:
+#   Internally, it isolates display output from file path data, ensuring
+#   clean separation of UI and logic. It uses a temporary file to pass
+#   changed file paths from the rendering function back to the dispatcher.
+#
+# This command is especially useful for code review, audit trails, or
+# inspecting past changes in high detail.
+# ─────────────────────────────────────────────────────────────
+_git_scope_commit() {
+  typeset commit="$1"
+  if [[ -z "$commit" ]]; then
+    printf "❗ Usage: git-scope commit <commit-hash | HEAD>\n"
+    return 1
+  fi
+
+  _git_scope_print_commit_metadata "$commit"
+  _git_scope_print_commit_message "$commit"
+  _git_scope_render_commit_files "$commit"
+
+  typeset -a file_list
+  file_list=("${(@f)$(< /tmp/.git-scope-filelist)}")
+
+  if [[ "$_git_scope_should_print" == true ]]; then
+    printf "\n📦 Printing file contents:\n"
+    for file in "${file_list[@]}"; do
+      print_file_content "$file"
+      printf "\n"
+    done
+  fi
+}
+
+
+
+# Print commit header info (hash, author, date)
+_git_scope_print_commit_metadata() {
+  typeset commit="$1"
+
+  printf "\n"
+  git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
+    --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
+}
+
+# Pretty print commit message body
+_git_scope_print_commit_message() {
+  typeset commit="$1"
+
+  printf "\n\n📝 Commit Message:\n"
+  git log -1 --pretty=format:%B "$commit" | awk '
+    NR==1 { print "   " $0; print ""; next }
+    NF > 0 { print "   " $0 }'
+}
+
+# Render file change list with color and stats
+_git_scope_render_commit_files() {
+  typeset commit="$1"
+  typeset -a file_list=()
+
+  typeset ns_lines numstat_lines
+  ns_lines=$(git show --pretty=format: --name-status "$commit")
+  numstat_lines=$(git show --pretty=format: --numstat "$commit")
+
+  if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
+    printf "\n📄 Changed files:\n"
+    printf "  ⚠️  Merge commit detected — no file-level diff shown by default\n"
+    return
+  fi
+
+  typeset total_add=0 total_del=0
+
+  printf "\n📄 Changed files:\n"
+
+  while IFS=$'\t' read -r kind file; do
+    [[ -z "$file" ]] && continue
+    file_list+=("$file")
+
+    typeset add="-"
+    typeset del="-"
+    typeset match_line=""
+    match_line=$(echo "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
+
+    if [[ -n "$match_line" ]]; then
+      add=$(cut -f1 <<< "$match_line")
+      del=$(cut -f2 <<< "$match_line")
+      [[ "$add" != "-" ]] && total_add=$((total_add + add))
+      [[ "$del" != "-" ]] && total_del=$((total_del + del))
+    fi
+
+    typeset color="$(_git_scope_kind_color "$kind")"
+    printf "  %b➤ [%s] %s  [+%s / -%s]%b\n" "$color" "$kind" "$file" "$add" "$del" '\033[0m'
+  done <<< "$ns_lines"
+
+  printf "\n  📊 Total: +%d / -%d\n" "$total_add" "$total_del"
+  _git_scope_render_tree "${(F)file_list}"
+
+  printf "%s\n" "${file_list[@]}" > /tmp/.git-scope-filelist
+}
+
+# Main entry point
 git-scope() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    printf "❗ Not a Git repository. Run this command inside a Git project.\n"
+    printf "⚠️ Not a Git repository. Run this command inside a Git project.\n"
     return 1
   fi
 
   typeset sub="$1"
-  [[ $# -gt 0 ]] && shift
+  shift
+
+  # Detect -p flag (print file content)
+  _git_scope_should_print=false
+  typeset -a args=()
+  for arg in "$@"; do
+    if [[ "$arg" == "-p" || "$arg" == "--print" ]]; then
+      _git_scope_should_print=true
+    else
+      args+=("$arg")
+    fi
+  done
 
   case "$sub" in
-    ""|track|tracked)
-      _git_scope_tracked "$@" ;;
+    tracked)
+      _git_scope_tracked "${args[@]}" ;;
     staged)
-      _git_scope_staged "$@" ;;
+      _git_scope_staged "${args[@]}" ;;
     modified)
-      _git_scope_modified "$@" ;;
+      _git_scope_modified "${args[@]}" ;;
     all)
-      _git_scope_all "$@" ;;
+      _git_scope_all "${args[@]}" ;;
     untracked)
-      _git_scope_untracked "$@" ;;
+      _git_scope_untracked "${args[@]}" ;;
     commit)
-      if [[ $# -lt 1 ]]; then
-        printf "❗ Missing commit hash. Usage: git-scope commit <hash>\n"
-        return 1
-      fi
-      _git_scope_commit "$@" ;;
-    help|-h|--help)
+      _git_scope_commit "${args[@]}" ;;
+    help|-h|--help|"")
       printf "Usage: git-scope <command> [args...]\n"
-      printf "\n"
       printf "Commands:\n"
-      printf "  (default), tracked [prefix] [-p]  Show all tracked files (from git ls-files)\n"
-      printf "                                    Optional: filter by prefix and print contents\n"
-      printf "  staged                            Show staged files (ready to commit)\n"
-      printf "  modified                          Show modified but unstaged files\n"
-      printf "  all                               Show all changed files (staged + modified)\n"
-      printf "  untracked                         Show untracked files (not added)\n"
-      printf "  commit <hash>                     Show file-level changes in a specific commit\n"
-      printf "\n"
-      return 0 ;;
+      printf "  tracked     Show files tracked by Git (optionally filtered by prefix)\n"
+      printf "  staged      Show files staged for commit\n"
+      printf "  modified    Show unstaged modified files\n"
+      printf "  all         Show all changes (staged + unstaged)\n"
+      printf "  untracked   Show untracked files\n"
+      printf "  commit <id> Show detailed info for a given commit (use -p to print content)\n"
+      ;;
     *)
-      printf "❗ Unknown subcommand: '%s'\n" "$sub"
-      printf "Run 'git-scope help' for usage.\n"
+      printf "⚠️ Unknown subcommand: '%s'\n" "$sub"
       return 1 ;;
   esac
 }
