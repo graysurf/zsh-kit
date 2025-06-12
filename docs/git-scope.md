@@ -1,6 +1,24 @@
 # 📂 git-scope: Git Scope Viewers
 
-`git-scope` is a collection of tree-based Git viewers for inspecting your working directory by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
+`git-scope` is a collection of tree-based Git viewers for inspecting your working directory or commits by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
+
+---
+
+## 📦 Use Cases
+
+- Review project structure before making a commit
+- Visualize modified vs. staged vs. untracked files
+- Inspect changes introduced by a specific commit
+- Debug repo state during complex merges or rebases
+- Audit commit scope and verify change impact
+
+---
+
+### 💡 Output Preview
+
+The following is a sample output from `git-scope`, illustrating how changed files are listed by status  
+(e.g., `[-]` for tracked, `[M]` for modified), followed by a visual directory tree. This format is shared  
+across most subcommands, providing a consistent, readable view of file status and structure.
 
 ```
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
@@ -32,14 +50,6 @@
     │   └── git-summary
     └── random_emoji_cmd.sh
 ```
----
-
-## 📦 Use Cases
-
-- Review project structure before making a commit
-- Visualize modified vs. staged vs. untracked files
-- Avoid committing files unintentionally by seeing their layout
-- Debug repo state during complex merges or rebases
 
 ---
 
@@ -53,7 +63,7 @@
 git-scope
 ```
 
-Displays a full tree of files currently under version control.
+Displays a full tree of files currently under version control. You can pass optional path prefixes or use `-p` to print file contents.
 
 ---
 
@@ -65,7 +75,7 @@ Displays a full tree of files currently under version control.
 git-scope staged
 ```
 
-Only includes files in the staging area.
+Only includes files in the staging area. Supports `-p` to print their contents.
 
 ---
 
@@ -77,7 +87,7 @@ Only includes files in the staging area.
 git-scope modified
 ```
 
-Lists files changed but not added to staging.
+Lists files changed but not added to staging. Use `-p` to print file contents.
 
 ---
 
@@ -89,7 +99,7 @@ Lists files changed but not added to staging.
 git-scope all
 ```
 
-Combined view of `staged` and `modified`.
+Combined view of `staged` and `modified`. Can print all files with `-p`.
 
 ---
 
@@ -105,30 +115,38 @@ Lists new files not yet staged, ignoring those excluded via `.gitignore`.
 
 ---
 
-### `git-scope commit <hash>`
+### `git-scope commit <hash> [-p]`
 
-📂 Show tree and metadata of a specific commit
+🔍 Show tree and metadata of a specific commit (historical inspection mode)
 
 ```bash
 git-scope commit HEAD~1
-git-scope commit abc1234
+git-scope commit abc1234 -p
 ```
 
-This command displays:
-- The commit hash, message, author, and date
-- A list of all changed files in the commit, with:
+This command inspects a specific Git commit and displays:
+
+- 🔖 Commit hash, author, date, and formatted commit message
+- 📄 List of changed files in the commit:
   - Status (A, M, D, etc.)
-  - Added and removed lines
-- A reconstructed directory tree of those files
+  - Line counts for additions and deletions (from `--numstat`)
+- 📂 Reconstructed directory tree of affected files
+
+Optional:
+
+- `-p`, `--print`: Print contents of each file from HEAD or working tree
+  - Text files are printed inline
+  - Binary files are replaced with a placeholder
+
+This command differs from others in that it inspects historical commit objects rather than your current working directory.
 
 Useful for:
-- Inspecting what was touched in a given commit
-- Understanding structural impact of a change
-- Reviewing change scope before squashing, rebasing, or cherry-picking
 
----
+- Code reviews and commit audits
+- Inspecting a squashed or rebased history
+- Understanding structural impact of changes
 
-## 🧪 Example
+**Example:**
 
 ```bash
 git-scope commit HEAD~6
@@ -138,7 +156,7 @@ git-scope commit HEAD~6
 
 ```
 🔖 7e1a706 feat(members): support manual memberNo input and unify fallback account creation error
-👤 terrylin <10785178+graysurf@users.noreply.github.com>
+👤 graysurf <10785178+graysurf@users.noreply.github.com>
 📅 2025-06-04 18:41:35 +0800
 
 📝 Commit Message:
@@ -194,20 +212,15 @@ git-scope commit HEAD~6
 
 ## 🧱 Implementation Notes
 
-- Uses `git diff --name-only`, `git ls-files`, and `awk` for full path decomposition
-- `tree --fromfile` renders deeply nested directory views from flat file paths
-- Outputs include clear warnings when no files match the filter
-- Works best with `tree` installed and available in `$PATH`
+- Uses `git diff`, `git show`, `git ls-files` for data collection
+- Directory trees rendered via `tree --fromfile`
+- Uses `awk` to reconstruct full directory hierarchy
+- File content display supports both text and binary-aware output
+- Internally manages file state parsing using unified helpers
 
 ---
 
 ## 🧠 Summary
 
-`git-scope` helps you reason about your Git workspace in a visual way. Each command is meant to answer a simple question like:
+`git-scope` helps you reason about your Git repository visually. Whether you're preparing to commit or reviewing a historical change, it gives you a structured way to see what’s going on — file by file, tree by tree.
 
-- What have I staged?
-- What’s new in the working tree?
-- What’s untracked?
-- What’s the full layout of my repo?
-
-It’s a small but powerful addition to your CLI Git workflow.
