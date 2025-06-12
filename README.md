@@ -36,6 +36,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 ├── docs/                                 # Markdown documentation for key modules
 │
 ├── bootstrap/                            # Script orchestrator and plugin logic
+│   ├── 00-preload.sh                     # Early global helpers (safe_unalias, clipboard I/O, etc.)
 │   ├── define-loaders.sh                 # Base loader helpers (load_script, load_group, etc.)
 │   ├── bootstrap.sh                      # Centralized Zsh entrypoint (called from .zshrc)
 │   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
@@ -80,6 +81,7 @@ An example Zsh startup log with this config:
 ```text
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 
+✅ Loaded 00-preload.sh in 3ms
 ✅ Loaded plugins.sh in 89ms
 ✅ Loaded eza.sh in 2ms
 ✅ Loaded fzf-tools.sh in 2ms
