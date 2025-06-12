@@ -145,9 +145,18 @@ git-reset-mixed() {
 # and only move HEAD, this operation fully restores the previous commit state,
 # overwriting all uncommitted changes.
 git-reset-undo() {
+  typeset prev_commit
+  prev_commit=$(git rev-parse HEAD@{1} 2>/dev/null)
+
+  if [[ -z "$prev_commit" ]]; then
+    echo "❌ Cannot resolve HEAD@{1}."
+    return 1
+  fi
+
   echo "🕰  Attempting to undo the last hard reset..."
-  echo "📜 This will reset your repository back to: HEAD@{1}"
-  echo -n "❓ Proceed with git reset --hard HEAD@{1}? [y/N] "
+  echo "📜 This will reset your repository back to:"
+  git log --oneline -1 "$prev_commit"
+  echo -n "❓ Proceed with 'git reset --hard HEAD@{1}'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
     echo "🚫 Aborted"
@@ -155,7 +164,7 @@ git-reset-undo() {
   fi
 
   git reset --hard HEAD@{1}
-  echo "✅ Repository reset back to previous HEAD (before last reset)."
+  echo "✅ Repository reset back to previous HEAD: $prev_commit"
 }
 
 # Rewind HEAD to its previous position with confirmation
@@ -190,32 +199,37 @@ git-back-head() {
   echo "✅ Restored to previous HEAD: $prev_head"
 }
 
-# Restore HEAD to the previous checkout location with confirmation
-# 
-# This function looks up the Git reflog to find the last checkout action
-# (e.g., switching branches or checking out a commit), and moves HEAD back
-# to that commit. It is useful when you've checked out something temporarily
-# and want to return to where you were before.
+# Restore HEAD to previous checkout branch (avoids detached HEAD)
+# This finds the last checkout operation that moved from a branch to another branch,
+# skipping over cases where you checked out a commit SHA.
 git-back-checkout() {
-  typeset prev_ref
-  prev_ref=$(git reflog | awk '/checkout/ {print $1}' | sed -n '2p')
+  typeset current_branch from_branch
 
-  if [[ -z "$prev_ref" ]]; then
-    echo "❌ Cannot find previous checkout location in reflog."
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  from_branch=$(
+    git reflog |
+      grep "checkout: moving from " |
+      grep "to $current_branch" |
+      sed -n 's/.*moving from \([^ ]*\) to '"$current_branch"'/\1/p' |
+      head -n 1
+  )
+
+  if [[ -z "$from_branch" ]]; then
+    echo "❌ Could not find a previous branch that switched to $current_branch."
     return 1
   fi
 
-  echo "⏪ This will move HEAD back to the previous checkout position:"
-  echo "🔁 $(git log --oneline -1 "$prev_ref")"
-  echo -n "❓ Proceed with 'git checkout $prev_ref'? [y/N] "
+  echo "⏪ This will move HEAD back to previous branch: $from_branch"
+  echo -n "❓ Proceed with 'git checkout $from_branch'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
     echo "🚫 Aborted"
     return 1
   fi
 
-  git checkout "$prev_ref"
-  echo "✅ Restored to previous checkout state: $prev_ref"
+  git checkout "$from_branch"
+  echo "✅ Restored to previous branch: $from_branch"
 }
 
 # ────────────────────────────────────────────────────────
