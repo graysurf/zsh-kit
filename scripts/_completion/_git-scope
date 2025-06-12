@@ -3,13 +3,13 @@
 _git-scope() {
   typeset -a subcommands
   subcommands=(
-    'tracked:Show all tracked files (optionally with prefix filter and -p to print)'
-    'staged:Show staged files'
-    'modified:Show modified files'
-    'all:Show all changed files (staged + modified)'
-    'untracked:Show untracked files'
-    'commit:Show changes in a specific commit'
-    'help:Display help message'
+    'tracked:Show all tracked files (filtered by prefix, supports -p)'
+    'staged:Show staged files (index contents, supports -p)'
+    'modified:Show modified files (not yet staged, supports -p)'
+    'all:Show all changed files (staged + modified, supports -p)'
+    'untracked:Show untracked files (not added to Git, supports -p)'
+    'commit:Inspect a specific commit (metadata, file list, and optionally file contents)'
+    'help:Display help message for git-scope'
   )
 
   _arguments -C \
@@ -29,12 +29,15 @@ _git-scope() {
           else
             commit_hashes=( )
           fi
-          _describe -t hashes 'commit hash' commit_hashes && return 0
-          ;;
-        tracked)
           _arguments \
-            '--print[Print the content of each tracked file]' \
-            '-p[Print the content of each tracked file]' \
+            '--print[Print contents of each file in the commit (from HEAD or working tree)]' \
+            '-p[Print contents of each file in the commit (from HEAD or working tree)]' \
+            '1:commit hash:_describe "commit hash" commit_hashes' && return 0
+          ;;
+        tracked|staged|modified|all|untracked)
+          _arguments \
+            '--print[Print the contents of each file]' \
+            '-p[Print the contents of each file]' \
             '*:prefix:_files -/' && return 0
           ;;
       esac
