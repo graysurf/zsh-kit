@@ -3,13 +3,13 @@
 _git-scope() {
   typeset -a subcommands
   subcommands=(
-    'tracked:Show all tracked files'
+    'tracked:Show all tracked files (optionally with prefix filter and -p to print)'
     'staged:Show staged files'
     'modified:Show modified files'
     'all:Show all changed files (staged + modified)'
     'untracked:Show untracked files'
     'commit:Show changes in a specific commit'
-    'help:Display help'
+    'help:Display help message'
   )
 
   _arguments -C \
@@ -21,15 +21,23 @@ _git-scope() {
       _describe -t commands 'git-scope subcommand' subcommands && return 0
       ;;
     args)
-      if [[ ${words[1]} == "commit" ]]; then
-        typeset -a commit_hashes
-        if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-          commit_hashes=( ${(f)"$(git log --pretty=format:'%h:%s' -n 20 2>/dev/null)"} )
-        else
-          commit_hashes=( )
-        fi
-        _describe -t hashes 'commit hash' commit_hashes && return 0
-      fi
+      case "${words[1]}" in
+        commit)
+          typeset -a commit_hashes
+          if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+            commit_hashes=( ${(f)"$(git log --pretty=format:'%h:%s' -n 20 2>/dev/null)"} )
+          else
+            commit_hashes=( )
+          fi
+          _describe -t hashes 'commit hash' commit_hashes && return 0
+          ;;
+        tracked)
+          _arguments \
+            '--print[Print the content of each tracked file]' \
+            '-p[Print the content of each tracked file]' \
+            '*:prefix:_files -/' && return 0
+          ;;
+      esac
       ;;
   esac
 }

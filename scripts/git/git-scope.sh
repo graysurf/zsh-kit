@@ -49,22 +49,56 @@ _git_scope_render_with_type() {
 }
 
 _git_scope_tracked() {
-  echo -e "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n"
+  printf "\n📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)\n\n"
 
-  typeset files
+  typeset print_content=false
+  typeset -a prefixes=()
+
+  # 解析參數
+  for arg in "$@"; do
+    case "$arg" in
+      -p|--print)
+        print_content=true ;;
+      *)
+        prefixes+=("$arg") ;;
+    esac
+  done
+
+  typeset files all_filtered
   files=$(git ls-files)
 
   if [[ -z "$files" ]]; then
-    echo "📭 No tracked files in working directory"
+    printf "📭 No tracked files in working directory\n"
     return 1
   fi
 
+  if [[ "${#prefixes[@]}" -gt 0 ]]; then
+    for prefix in "${prefixes[@]}"; do
+      all_filtered+=$'\n'$(echo "$files" | grep "^${prefix}/")
+    done
+    files="$(echo "$all_filtered" | grep -v '^$' | sort -u)"
+    if [[ -z "$files" ]]; then
+      printf "📭 No tracked files under specified prefix(es)\n"
+      return 1
+    fi
+  fi
+
   typeset marked=""
+  typeset -a file_list=()
   while IFS= read -r file; do
     marked+="-\t${file}"$'\n'
+    file_list+=("$file")
   done <<< "$files"
 
   _git_scope_render_with_type "$marked"
+
+  if [[ "$print_content" == true ]]; then
+    printf "\n📦 Printing file contents:\n"
+    for f in "${file_list[@]}"; do
+      print_file_content "$f"
+      printf "\n"
+    done
+  fi
 }
 
 _git_scope_staged() {
@@ -187,9 +221,51 @@ fi
   }' | sort -u | tree --fromfile -C
 }
 
+# Print full content of a given file, from working tree or HEAD fallback
+print_file_content() {
+  typeset file="$1"
+
+  if [[ -z "$file" ]]; then
+    printf "❗ Missing file path\n"
+    return 1
+  fi
+
+  if [[ -f "$file" ]]; then
+    if file --mime "$file" | grep -q 'charset=binary'; then
+      printf "📄 %s (binary file in working tree)\n" "$file"
+      printf "🔹 [Binary file content omitted]\n"
+    else
+      printf "📄 %s (working tree)\n" "$file"
+      printf '```\n'
+      cat -- "$file"
+      printf '\n```\n'
+    fi
+  elif git cat-file -e "HEAD:$file" 2>/dev/null; then
+    # Extract file to temp and detect MIME
+    typeset tmp
+    tmp="$(mktemp)"
+    git show "HEAD:$file" > "$tmp"
+
+    if file --mime "$tmp" | grep -q 'charset=binary'; then
+      printf "📄 %s (binary file in HEAD)\n" "$file"
+      printf "🔹 [Binary file content omitted]\n"
+    else
+      printf "📄 %s (from HEAD)\n" "$file"
+      printf '```\n'
+      cat -- "$tmp"
+      printf '\n```\n'
+    fi
+
+    rm -f "$tmp"
+  else
+    printf "❗ File not found: %s\n" "$file"
+    return 1
+  fi
+}
+
 git-scope() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo "❗ Not a Git repository. Run this command inside a Git project."
+    printf "❗ Not a Git repository. Run this command inside a Git project.\n"
     return 1
   fi
 
@@ -209,25 +285,26 @@ git-scope() {
       _git_scope_untracked "$@" ;;
     commit)
       if [[ $# -lt 1 ]]; then
-        echo "❗ Missing commit hash. Usage: git-scope commit <hash>"
+        printf "❗ Missing commit hash. Usage: git-scope commit <hash>\n"
         return 1
       fi
       _git_scope_commit "$@" ;;
     help|-h|--help)
-      echo "Usage: git-scope <command> [args...]"
-      echo ""
-      echo "Commands:"
-      echo "  (default)         Tracked file tree (git ls-files)"
-      echo "  staged            Staged files (git diff --cached)"
-      echo "  modified          Modified files (not staged)"
-      echo "  all               All changed files (staged + modified)"
-      echo "  untracked         New untracked files"
-      echo "  commit <hash>     Show a specific commit's changes"
-      echo ""
+      printf "Usage: git-scope <command> [args...]\n"
+      printf "\n"
+      printf "Commands:\n"
+      printf "  (default), tracked [prefix] [-p]  Show all tracked files (from git ls-files)\n"
+      printf "                                    Optional: filter by prefix and print contents\n"
+      printf "  staged                            Show staged files (ready to commit)\n"
+      printf "  modified                          Show modified but unstaged files\n"
+      printf "  all                               Show all changed files (staged + modified)\n"
+      printf "  untracked                         Show untracked files (not added)\n"
+      printf "  commit <hash>                     Show file-level changes in a specific commit\n"
+      printf "\n"
       return 0 ;;
     *)
-      echo "❗ Unknown subcommand: '$sub'"
-      echo "Run 'git-scope help' for usage."
+      printf "❗ Unknown subcommand: '%s'\n" "$sub"
+      printf "Run 'git-scope help' for usage.\n"
       return 1 ;;
   esac
 }
