@@ -22,6 +22,7 @@ export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
 # Exclude list (array version)
 # ──────────────────────────────
 ZSH_SCRIPT_EXCLUDE_LIST=(
+  "$ZSH_SCRIPT_DIR/login.sh"
   "$ZSH_SCRIPT_DIR/env.sh"
   "$ZSH_SCRIPT_DIR/plugins.sh"
   "$ZSH_SCRIPT_DIR/completion.zsh"
