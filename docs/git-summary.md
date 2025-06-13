@@ -3,6 +3,8 @@
 `git-summary` is a CLI utility for generating author-level contribution summaries in Git.  
 It provides commit counts, added/deleted lines, and commit date ranges — grouped by email and sorted by net contribution.
 
+## 💡 Output Preview
+
 ```
 Name                      Email                                       Added  Deleted      Net  Commits        First         Last
 ----------------------------------------------------------------------------------------------------------------------------------------
