@@ -1,5 +1,7 @@
-safe_unalias \
-        gsc gst
+# Safe unalias fallback
+if command -v safe_unalias >/dev/null; then
+  safe_unalias gsc gst
+fi
 
 alias gsc='git-scope commit'
 alias gst='git-scope tracked'

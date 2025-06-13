@@ -29,21 +29,6 @@ safe_unalias() {
   done
 }
 
-safe_unalias() {
-  typeset verbose=false
-  if [[ "$1" == "-v" ]]; then
-    verbose=true
-    shift
-  fi
-
-  for name in "$@"; do
-    if alias "$name" &>/dev/null; then
-      $verbose && echo "🔁 Unaliasing $name"
-      unalias "$name"
-    fi
-  done
-}
-
 # Clipboard abstraction (macOS pbpaste, Linux xclip/xsel)
 get_clipboard() {
   if command -v pbpaste >/dev/null 2>&1; then
