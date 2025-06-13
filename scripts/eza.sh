@@ -9,14 +9,43 @@ if command -v safe_unalias >/dev/null; then
 fi
 
 # List all files including dotfiles
-alias ll='eza -alh --icons --group-directories-first --time-style=iso'
-# List all files including dotfiles
-alias lx='eza -lh   --icons --group-directories-first --color=always --time-style=iso'
+ll() {
+  # If first argument is a number, treat it as depth (-L)
+  local level_flag=()
+  if [[ "$1" =~ '^[0-9]+$' ]]; then
+    level_flag=(-L "$1")
+    shift
+  fi
+  eza -alh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
+}
+
+# List all files including dotfiles (with color=always)
+lx() {
+  # If first argument is a number, treat it as depth (-L)
+  local level_flag=()
+  if [[ "$1" =~ '^[0-9]+$' ]]; then
+    level_flag=(-L "$1")
+    shift
+  fi
+  eza -lh --icons --group-directories-first --color=always --time-style=iso "${level_flag[@]}" "$@"
+}
 
 # Tree view with all files
-alias lt='eza -aT --group-directories-first --color=always --icons'
+lt() {
+  # If first argument is a number, treat it as depth (-L)
+  local level_flag=()
+  if [[ "$1" =~ '^[0-9]+$' ]]; then
+    level_flag=(-L "$1")
+    shift
+  fi
+  eza -aT --group-directories-first --color=always --icons "${level_flag[@]}" "$@"
+}
+
 # Long-format tree view with all files
-alias llt='ll -T'
+llt() {
+  # Inherit ll logic and add tree flag (-T)
+  ll "$@" -T
+}
 
 # Tree views with depth limits
 alias lt2='ll -T -L 2'
