@@ -1,22 +1,27 @@
-safe_unalias \
-  gr grs grm grh \
-  gbh gbc \
-  gdc groot \
-  gop god goc gob \
-  gh-open \
-  gh-open-branch \
-  gh-open-default-branch \
-  gh-open-commit \
-  gh-push-open \
-  git-commit-context gcc \
-  git-reset-hard \
-  git-reset-soft \
-  git-reset-mixed \
-  git-reset-undo \
-  git-back-head \
-  git-back-checkout \
-  git-zip \
-  get_commit_hash
+# ────────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias \
+    gr grs grm grh \
+    gbh gbc \
+    gdc groot \
+    gop god goc gob \
+    gh-open \
+    gh-open-branch \
+    gh-open-default-branch \
+    gh-open-commit \
+    gh-push-open \
+    git-commit-context gcc \
+    git-reset-hard \
+    git-reset-soft \
+    git-reset-mixed \
+    git-reset-undo \
+    git-back-head \
+    git-back-checkout \
+    git-zip \
+    get_commit_hash
+fi
 
 # ────────────────────────────────────────────────────────
 # Git operation aliases

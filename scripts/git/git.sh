@@ -1,6 +1,15 @@
-safe_unalias \
-  gd gc gca gl gp gpf gpff gpo gpfo gpffo git-zip \
-  lg lgr gt gt2 gt3 gt5
+# ────────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias \
+    gd gc gca \
+    gl gp gpf gpff \
+    gpo gpfo gpffo \
+    git-zip \
+    lg lgr \
+    gt gt2 gt3 gt5
+fi
 
 # ────────────────────────────────────────────────────────
 # Git basic workflow aliases

@@ -1,11 +1,13 @@
 # ────────────────────────────────────────────────────────
-# Git magic aliases (composite actions)
+# Aliases and Unalias
 # ────────────────────────────────────────────────────────
-safe_unalias \
-  gcp gcpo gcapo gcapfo gcapffo \
-  gpc gpcp gpcpo gpcpfo gpcpffo \
-  gpca gpcap  gpcapf gpcapff \
-  gpcapo gpcapfo gpcapffo
+if command -v safe_unalias >/dev/null; then
+  safe_unalias \
+    gcp gcpo gcapo gcapfo gcapffo \
+    gpc gpcp gpcpo gpcpfo gpcpffo \
+    gpca gpcap  gpcapf gpcapff \
+    gpcapo gpcapfo gpcapffo
+fi
 
 # ────────────────────────────────────────────────────────
 # Git magic: compound commit + push + GitHub open flows

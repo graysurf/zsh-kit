@@ -1,4 +1,6 @@
-# Safe unalias fallback
+# ────────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
   safe_unalias gsc gst
 fi

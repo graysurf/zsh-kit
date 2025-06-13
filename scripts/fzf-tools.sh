@@ -1,7 +1,9 @@
 # ────────────────────────────────────────────────────────
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
-safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
+if command -v safe_unalias >/dev/null; then
+  safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
+fi
 
 alias ft='fzf-tools'
 alias fgs='fzf-git-status'

@@ -2,6 +2,14 @@
 # Git lock / unlock helpers (manual commit fallback, repo-safe)
 # ────────────────────────────────────────────────────────
 
+
+# ────────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias _git_lock
+fi
+
 # Resolve label from argument or latest fallback
 _git_lock_resolve_label() {
   typeset input_label="$1"

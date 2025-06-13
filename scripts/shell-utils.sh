@@ -1,9 +1,14 @@
-safe_unalias \
-  vicd cd edit-zsh y \
-  fdf fdd cat batp bat-all bff \
-  fsearch zdefs cheat \
-  reload execz histflush \
-  history his fzf-history-wrapper
+# ───────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias \
+    vicd cd edit-zsh y \
+    fdf fdd cat batp bat-all bff \
+    fsearch zdefs cheat \
+    reload execz histflush \
+    history his fzf-history-wrapper
+fi
 
 # ────────────────────────────────────────────────────────
 # Basic editors & overrides

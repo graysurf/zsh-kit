@@ -2,7 +2,15 @@
 # git-summary: author-based contribution report
 # Usage: git-summary "2024-01-01" "2024-12-31"
 # Supports macOS and Linux with timezone correction (UTC+8)
+# ───────────────────────────────────────────────────────
+
+
+# ───────────────────────────────────────────────────────
+# Aliases and Unalias
 # ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias _git_summary
+fi
 
 # Generate a contribution summary by author over a given date range.
 # Accepts two parameters: start date and end date (YYYY-MM-DD).
