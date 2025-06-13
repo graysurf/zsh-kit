@@ -23,6 +23,9 @@ export FZF_DEF_DELIM
 : "${FZF_DEF_DELIM_END:="[FZF-DEF-END]"}"
 export FZF_DEF_DELIM_END
 
+# Apply Night Owl lowlight theme for fzf (color config only)
+source "$ZDOTDIR/tools/fzf-night-owl.zsh"
+
 # Ensure FZF_DEFAULT_OPTS is initialized
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
   --preview-window=$FZF_PREVIEW_WINDOW \
