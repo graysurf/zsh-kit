@@ -9,14 +9,14 @@ $directory\
 $git_branch\
 $git_commit\
 $git_status\
-$kubernetes\
-$docker_context\
 $nodejs\
 $python\
 $golang\
 $rust\
 $java\
 $package\
+$kubernetes\
+$docker_context\
 $cmd_duration\
 $line_break\
 $jobs\
@@ -30,16 +30,17 @@ $character"""
 [custom.emoji]
 command = "~/.config/zsh/tools/random_emoji_cmd.sh"
 when = "true"
-format = "[$output](bold yellow) "
+format = "[$output](bold #ffcb6b) "
+
 [hostname]
 ssh_only = false
-format =  "on [$hostname](red) "
+format =  "on [$hostname](#c792ea) "
 disabled = false
 
 [character]
-success_symbol = "[✔︎](bold green) "
+success_symbol = "[✔︎](bold #addb67) "
 error_symbol = ""
-vicmd_symbol = "[←](bold white) "
+vicmd_symbol = "[←](bold #82aaff) "
 
 [status]
 disabled = false
@@ -47,17 +48,18 @@ symbol = "✗ "
 
 [package]
 disabled = false
+style = "bold #7fdbca"
 
 [username]
-style_user = "white bold"
-style_root = "black bold"
+style_user = "bold #ffffff"
+style_root = "bold #f78c6c"
 format = "[$user]($style) "
 disabled = false
 show_always = true
 
 [time]
 disabled = false
-style = "bold cyan"
+style = "bold #637777"
 format = "[$time]($style) "
 time_format = "%T%.3f"
 utc_time_offset = "+8"
@@ -66,27 +68,45 @@ utc_time_offset = "+8"
 truncation_length = 8
 truncate_to_repo = false
 truncation_symbol = "…/"
+style = "bold #7fdbca"
+read_only = "🔒"
+read_only_style = "bold #ffcb6b"
 
 [cmd_duration]
 min_time = 0
 show_milliseconds = true
-format = "[🕓 $duration]($style) "
+format = "[🕓 $duration](bold #ffcb6b) "
 
 [docker_context]
 disabled = false
-format = '[$symbol$context]($style) '
+format = '[$symbol$context](#7fdbca) '
 only_with_files = false
 detect_extensions = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
 
 [kubernetes]
 symbol = '🐋 '
-style = "bold white"
+style = "bold #82aaff"
 format = '[$symbol$context]($style) '
 disabled = false
 
+[nodejs]
+symbol = " "
+style = "bold #7fdbca"
+
+[python]
+symbol = "🐍 "
+style = "bold #ecc48d"
+
+[rust]
+symbol = "🦀 "
+style = "bold #ffcb6b"
+
+[java]
+symbol = "☕ "
+style = "bold #c792ea"
+
 [aws]
 disabled = true
-
 
 [gcloud]
 disabled = true
