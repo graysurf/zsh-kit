@@ -164,13 +164,13 @@ git-summary() {
       ;;
     ""|help|--help|-h)
       echo "Usage:"
-      echo "  git-summary all                   # Entire history"
-      echo "  git-summary <from> <to>           # Custom date range"
-      echo "  git-summary today                 # Today only"
-      echo "  git-summary yesterday             # Yesterday only"
-      echo "  git-summary this-month            # 1st to today"
-      echo "  git-summary last-week             # Last Mon–Sun"
-      echo "  git-summary weekly                # This Mon–Sun"
+      echo "  git-summary all            Entire history"
+      echo "  git-summary <from> <to>    Custom date range"
+      echo "  git-summary today          Today only"
+      echo "  git-summary yesterday      Yesterday only"
+      echo "  git-summary this-month     1st to today"
+      echo "  git-summary last-week      Last Mon–Sun"
+      echo "  git-summary weekly         This Mon–Sun"
       return 1
       ;;
     *)
