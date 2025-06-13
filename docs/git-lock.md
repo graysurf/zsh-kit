@@ -106,7 +106,7 @@ git-lock tag rc-1 v1.2.0 -m "Release Candidate 1" --push
 
 A sample `git-lock list` might look like:
 
-```
+```text
 🔐 git-lock list for [my-repo]:
 
  - 🏷️  tag:    dev-start  ⭐ (latest)

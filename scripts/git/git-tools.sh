@@ -437,7 +437,7 @@ Please help generate a clear and accurate commit message using the information b
 
 ## 📂 Scope and file tree:
 
-\`\`\`bash
+\`\`\`text
 $scope
 \`\`\`
 

@@ -20,7 +20,7 @@ The following is a sample output from `git-scope`, illustrating how changed file
 (e.g., `[-]` for tracked, `[M]` for modified), followed by a visual directory tree. This format is shared  
 across most subcommands, providing a consistent, readable view of file status and structure.
 
-```
+```text
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
 12:00:42.133 ✔︎ git-scope
 
@@ -154,7 +154,7 @@ git-scope commit HEAD~6
 
 **Output:**
 
-```
+```text
 🔖 7e1a706 feat(members): support manual memberNo input and unify fallback account creation error
 👤 graysurf <10785178+graysurf@users.noreply.github.com>
 📅 2025-06-04 18:41:35 +0800

@@ -26,7 +26,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ## Structure
 
-```
+```text
 .
 ├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.sh
 ├── .zprofile                             # Minimal login initializer for login shells

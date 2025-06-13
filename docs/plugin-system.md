@@ -14,13 +14,13 @@ with structured declarations and Git-based fetching — offering full control wi
 
 Plugins are stored under:
 
-```
+```zsh
 $ZDOTDIR/plugins/<plugin-id>/
 ```
 
 Each plugin is declared in a standalone file:
 
-```
+```zsh
 $ZDOTDIR/config/plugins.list
 ```
 
@@ -30,7 +30,7 @@ $ZDOTDIR/config/plugins.list
 
 Each plugin entry in `plugins.list` follows the format:
 
-```
+```zsh
 <id>[::main-file][::extra][::git=url]
 ```
 
@@ -88,7 +88,7 @@ Special-case logic (e.g., `abbr`) is hardcoded for known plugins needing extra s
 
 ## 📁 File Structure
 
-```
+```text
 .zsh/
 ├── bootstrap/
 │   ├── plugins.sh              # Main loader

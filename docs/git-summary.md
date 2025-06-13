@@ -5,7 +5,7 @@ It provides commit counts, added/deleted lines, and commit date ranges — group
 
 ## 💡 Output Preview
 
-```
+```text
 Name                      Email                                       Added  Deleted      Net  Commits        First         Last
 ----------------------------------------------------------------------------------------------------------------------------------------
 yourname                  10888888+yourname@users.noreply.github.c     6691     1095     5596       34   2025-06-03   2025-06-09
