@@ -135,7 +135,7 @@ fzf-git-commit() {
           --preview-window='right:50%:wrap' \
           --query="$commit_query" \
           --print-query \
-          --preview 'git-scope commit $(echo {} | awk "{print \$1}") | sed "s/^📅.*/&\\n/"')
+          --preview 'git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\\n/"')
     [[ -z "$result" ]] && return
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
