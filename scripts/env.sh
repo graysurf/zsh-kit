@@ -41,6 +41,15 @@ export FZF_CTRL_T_COMMAND='fd --type f -t d --hidden --follow --exclude .git -E 
 export FZF_CTRL_T_OPTS="--preview 'bat --color \"always\" {}'"
 export FZF_ALT_C_COMMAND="fd --type d --hidden --follow"
 
+# ────────────────────────────────────────────────────────
+# BAT theme config with fallback
+# ────────────────────────────────────────────────────────
+if bat --list-themes 2>/dev/null | grep -q "Night-Owl"; then
+  export BAT_THEME="Night-Owl"
+else
+  export BAT_THEME="Monokai Extended"
+fi
+
 
 
 
