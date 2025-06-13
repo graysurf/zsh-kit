@@ -6,7 +6,7 @@ if command -v safe_unalias >/dev/null; then
     vicd cd edit-zsh y \
     fdf fdd cat batp bat-all bff \
     fsearch zdefs cheat \
-    reload execz histflush \
+    reload execz zz histflush \
     history his fzf-history-wrapper
 fi
 
@@ -96,6 +96,8 @@ execz() {
   echo -e "🧼 This will start a clean session using current configs.\n"
   exec zsh
 }
+
+alias zz='execz'
 
 # ────────────────────────────────────────────────────────
 # Force flush memory history to file
