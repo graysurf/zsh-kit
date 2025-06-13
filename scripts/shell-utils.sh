@@ -52,17 +52,17 @@ alias bff='bat-all'
 # Show current shell aliases, functions, and environment variables for debugging
 zdefs() {
   {
-    echo "🔗 Aliases:"
-    alias | sed 's/^/  /'
+  printf "🔗 Aliases:\n"
+      alias | sed 's/^/  /'
 
-    echo "\n🔧 Functions:"
-    for fn in ${(k)functions}; do
-      echo "  $fn"
-    done
+  printf "\n🔧 Functions:\n"
+      for fn in ${(k)functions}; do
+  printf "  $fn\n"
+      done
 
-    echo "\n🌱 Environment Variables:"
-    printenv | sort | sed 's/^/  /'
-  } | fzf --ansi --header="🔍 Zsh Definitions (aliases, functions, env)" --preview-window=wrap
+  printf "\n🌱 Environment Variables:\n"
+      printenv | sort | sed 's/^/  /'
+    } | fzf --ansi --header="🔍 Zsh Definitions (aliases, functions, env)" --preview-window=wrap
 }
 
 # fsearch: search for file content and preview with bat + ripgrep
@@ -79,11 +79,12 @@ fsearch() {
 # Use for small config changes without restarting shell
 # ────────────────────────────────────────────────────────
 reload() {
-  if source "$ZDOTDIR/bootstrap/bootstrap.sh"; then
-    echo -e "\n🔁 Reloaded bootstrap/bootstrap.sh"
-    echo -e "💡 For major changes, consider running: execz"
-  else
-    echo -e "\n❌ Failed to reload Zsh environment"
+  printf "\n"
+  printf "🔁 Reloading bootstrap/bootstrap.sh...\n"
+  printf "💡 For major changes, consider running: execz\n\n"
+
+  if ! source "$ZDOTDIR/bootstrap/bootstrap.sh"; then
+    printf "❌ Failed to reload Zsh environment\n\n"
   fi
 }
 
@@ -92,9 +93,9 @@ reload() {
 # Useful after modifying core loader, plugin system, etc.
 # ────────────────────────────────────────────────────────
 execz() {
-  echo -e "\n🚪 Restarting Zsh shell (exec zsh)..."
-  echo -e "🧼 This will start a clean session using current configs.\n"
-  exec zsh
+  printf "\n🚪 Restarting Zsh shell (exec zsh)...\n"
+  printf "🧼 This will start a clean session using current configs.\n\n"
+    exec zsh
 }
 
 alias zz='execz'
