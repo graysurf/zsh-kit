@@ -38,6 +38,10 @@ alias gcapffo='git commit --amend && git push -f && gh-open-commit HEAD'
 alias gpc='git commit -F <(get_clipboard)'
 # Commit using clipboard, then push
 alias gpcp='git commit -F <(get_clipboard) && git push'
+# Commit using clipboard, safely force-push (safer)
+alias gpcpf='git commit -F <(get_clipboard) && git push --force-with-lease'
+# Commit using clipboard, force-push (DANGEROUS)
+alias gpcff='git commit -F <(get_clipboard) && git push -f'
 # Commit using clipboard, push, and open on GitHub
 alias gpcpo='git commit -F <(get_clipboard) && git push && gh-open-commit HEAD'
 # Commit using clipboard, safely force-push, and open on GitHub (safer)
