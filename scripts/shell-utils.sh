@@ -36,7 +36,7 @@ alias fdd='fd --type d --hidden --follow --exclude .git'
 alias cat='bat --style=plain --pager=never'
 
 # Pretty bat view: line numbers, paging, theme
-alias batp='bat --style=numbers --paging=always --theme="TwoDark"'
+alias batp='bat --style=numbers --paging=always'
 
 # ────────────────────────────────────────────────────────
 # fd + bat + fzf integration functions

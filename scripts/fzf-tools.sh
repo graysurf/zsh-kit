@@ -179,7 +179,9 @@ fzf-git-commit() {
           --preview-window='right:50%:wrap' \
           --preview='bash -c "
             filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
-            git diff --color=always '"${commit}"'^! -- \$filepath | delta --width=100 --line-numbers"' |
+            git diff --color=always '"${commit}"'^! -- \$filepath |
+            delta --width=100 --line-numbers |
+            awk '\''NR==1 && NF==0 {next} {print}'\''"' |
       sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//'
     )
 
