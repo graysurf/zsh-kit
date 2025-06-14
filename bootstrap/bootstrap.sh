@@ -2,15 +2,16 @@ source "$ZSH_BOOTSTRAP_SCRIPT_DIR/define-loaders.sh"
 
 # Ensure load_script function is defined before proceeding
 typeset -f load_script &>/dev/null || {
-  echo "❌ load_script not defined. Check bootstrap/define-loaders.sh"
+  printf "❌ load_script not defined. Check bootstrap/define-loaders.sh\n"
   return 1
 }
+
 
 load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.sh"
 
 # Attempt to load the plugin system, but allow fallback if it fails
 if ! load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.sh"; then
-  echo "⚠️  Plugin system failed to load, continuing without plugins."
+  printf "⚠️  Plugin system failed to load, continuing without plugins.\n"
 fi
 
 export ZSH_SCRIPT_DIR="$ZDOTDIR/scripts"

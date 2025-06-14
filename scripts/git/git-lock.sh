@@ -21,7 +21,7 @@ _git_lock_resolve_label() {
   latest_file="$lock_dir/${repo_id}-latest"
 
   if [[ -n "$input_label" ]]; then
-    echo "$input_label"
+    printf "%s\n" "$input_label"
   elif [[ -f "$latest_file" ]]; then
     cat "$latest_file"
   else
@@ -29,18 +29,6 @@ _git_lock_resolve_label() {
   fi
 }
 
-# Save the current commit hash into a named lock file
-# - Allows optional label (default is "default")
-# - Optional note can be recorded
-# - Optional commit hash can be specified (default is HEAD)
-# - A timestamp is stored for reference
-# - The most recent git-lock label is saved to a "-latest" file
-# - Lock files are stored under $ZSH_CACHE_DIR/git-locks
-#
-# Example:
-#   git-lock dev "before hotfix"
-#   git-lock hotfix "old code" HEAD~2
-#   git-lock release "tag version" v1.0.0
 _git_lock() {
   typeset label note commit repo_id lock_dir lock_file latest_file timestamp hash
 
@@ -55,30 +43,25 @@ _git_lock() {
   timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
   hash=$(git rev-parse "$commit" 2>/dev/null) || {
-    echo "❌ Invalid commit: $commit"
+    printf "❌ Invalid commit: %s\n" "$commit"
     return 1
   }
 
   [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
 
   {
-    echo "$hash # $note"
-    echo "timestamp=$timestamp"
+    printf "%s # %s\n" "$hash" "$note"
+    printf "timestamp=%s\n" "$timestamp"
   } > "$lock_file"
 
-  echo "$label" > "$latest_file"
+  printf "%s\n" "$label" > "$latest_file"
 
-  echo "🔐 [$repo_id:$label] Locked: $hash${note:+  # $note}"
-  echo "    at $timestamp"
+  printf "🔐 [%s:%s] Locked: %s" "$repo_id" "$label" "$hash"
+  [[ -n "$note" ]] && printf "  # %s" "$note"
+  printf "\n"
+  printf "    at %s\n" "$timestamp"
 }
 
-# Restore a previously saved commit hash by label (or the most recent one)
-# - Prompts user before performing a hard reset
-# - Retrieves note and original commit message for context
-# - Aborts safely on missing label or user cancellation
-#
-# Example:
-#   _git_lock_unlock dev
 _git_lock_unlock() {
   typeset repo_id lock_dir label lock_file latest_label
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
@@ -87,13 +70,13 @@ _git_lock_unlock() {
   [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
 
   label=$(_git_lock_resolve_label "$1") || {
-    echo "❌ No recent git-lock found for $repo_id"
+    printf "❌ No recent git-lock found for %s\n" "$repo_id"
     return 1
   }
 
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   if [[ ! -f "$lock_file" ]]; then
-    echo "❌ No git-lock named '$label' found for $repo_id"
+    printf "❌ No git-lock named '%s' found for %s\n" "$label" "$repo_id"
     return 1
   fi
 
@@ -103,22 +86,21 @@ _git_lock_unlock() {
   note=$(echo "$line" | cut -d '#' -f 2- | xargs)
   msg=$(git log -1 --pretty=format:"%s" "$hash" 2>/dev/null)
 
-  echo "🔐 Found [$repo_id:$label] → $hash"
-  [[ -n "$note" ]] && echo "    # $note"
-  [[ -n "$msg" ]] && echo "    commit message: $msg"
-  echo
+  printf "🔐 Found [%s:%s] → %s\n" "$repo_id" "$label" "$hash"
+  [[ -n "$note" ]] && printf "    # %s\n" "$note"
+  [[ -n "$msg" ]] && printf "    commit message: %s\n" "$msg"
+  printf "\n"
 
-  echo -n "⚠️  Hard reset to [$label]? [y/N] " confirm
+  printf "⚠️  Hard reset to [%s]? [y/N] " "$label"
   read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "🚫 Aborted"
+    printf "🚫 Aborted\n"
     return 1
   fi
 
   git reset --hard "$hash"
-  echo "⏪ [$repo_id:$label] Reset to: $hash"
+  printf "⏪ [%s:%s] Reset to: %s\n" "$repo_id" "$label" "$hash"
 }
-
 
 # Display a list of all saved git-locks (labels) in the current repository
 # - Includes commit hash, note, timestamp, and commit subject
@@ -140,21 +122,23 @@ _git_lock() {
   timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
   hash=$(git rev-parse "$commit" 2>/dev/null) || {
-    echo "❌ Invalid commit: $commit"
+    printf "❌ Invalid commit: %s\n" "$commit"
     return 1
   }
 
   [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
 
   {
-    echo "$hash # $note"
-    echo "timestamp=$timestamp"
+    printf "%s # %s\n" "$hash" "$note"
+    printf "timestamp=%s\n" "$timestamp"
   } > "$lock_file"
 
-  echo "$label" > "$latest_file"
+  printf "%s\n" "$label" > "$latest_file"
 
-  echo "🔐 [$repo_id:$label] Locked: $hash${note:+  # $note}"
-  echo "    at $timestamp"
+  printf "🔐 [%s:%s] Locked: %s" "$repo_id" "$label" "$hash"
+  [[ -n "$note" ]] && printf "  # %s" "$note"
+  printf "\n"
+  printf "    at %s\n" "$timestamp"
 }
 
 _git_lock_unlock() {
@@ -170,13 +154,13 @@ _git_lock_unlock() {
   elif [[ -f "$latest_file" ]]; then
     label=$(cat "$latest_file")
   else
-    echo "❌ No recent git-lock found for $repo_id"
+    printf "❌ No recent git-lock found for %s\n" "$repo_id"
     return 1
   fi
 
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   if [[ ! -f "$lock_file" ]]; then
-    echo "❌ No git-lock named '$label' found for $repo_id"
+    printf "❌ No git-lock named '%s' found for %s\n" "$label" "$repo_id"
     return 1
   fi
 
@@ -186,20 +170,20 @@ _git_lock_unlock() {
   note=$(echo "$line" | cut -d '#' -f 2- | xargs)
   msg=$(git log -1 --pretty=format:"%s" "$hash" 2>/dev/null)
 
-  echo "🔐 Found [$repo_id:$label] → $hash"
-  [[ -n "$note" ]] && echo "    # $note"
-  [[ -n "$msg" ]] && echo "    commit message: $msg"
-  echo
+  printf "🔐 Found [%s:%s] → %s\n" "$repo_id" "$label" "$hash"
+  [[ -n "$note" ]] && printf "    # %s\n" "$note"
+  [[ -n "$msg" ]] && printf "    commit message: %s\n" "$msg"
+  printf "\n"
 
-  echo -n "⚠️  Hard reset to [$label]? [y/N] " confirm
+  printf "⚠️  Hard reset to [%s]? [y/N] " "$label"
   read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "🚫 Aborted"
+    printf "🚫 Aborted\n"
     return 1
   fi
 
   git reset --hard "$hash"
-  echo "⏪ [$repo_id:$label] Reset to: $hash"
+  printf "⏪ [%s:%s] Reset to: %s\n" "$repo_id" "$label" "$hash"
 }
 
 _git_lock_list() {
@@ -208,22 +192,20 @@ _git_lock_list() {
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
   [[ -d "$lock_dir" ]] || {
-    echo "📬 No git-locks found for [$repo_id]"
+    printf "📬 No git-locks found for [%s]\n" "$repo_id"
     return 0
   }
 
   [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(<"$lock_dir/${repo_id}-latest")
 
-  # Test without for loop, just declare typeset variables
   typeset tag hash note timestamp subject
 
-  # Check the typeset variables
-  echo "🔐 [TEST] git-lock list for [$repo_id]:"
-  echo "tag: $tag"
-  echo "hash: $hash"
-  echo "note: $note"
-  echo "timestamp: $timestamp"
-  echo "subject: $subject"
+  printf "🔐 [TEST] git-lock list for [%s]:\n" "$repo_id"
+  printf "tag: %s\n" "$tag"
+  printf "hash: %s\n" "$hash"
+  printf "note: %s\n" "$note"
+  printf "timestamp: %s\n" "$timestamp"
+  printf "subject: %s\n" "$subject"
 }
 
 _git_lock_list() {
@@ -232,7 +214,7 @@ _git_lock_list() {
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
   [[ -d "$lock_dir" ]] || {
-    echo "📬 No git-locks found for [$repo_id]"
+    printf "📬 No git-locks found for [%s]\n" "$repo_id"
     return 0
   }
 
@@ -251,11 +233,11 @@ _git_lock_list() {
   IFS=$'\n' sorted=($(printf '%s\n' "${tmp_list[@]}" | sort -rn))
 
   if [[ ${#sorted[@]} -eq 0 ]]; then
-    echo "📬 No git-locks found for [$repo_id]"
+    printf "📬 No git-locks found for [%s]\n" "$repo_id"
     return 0
   fi
 
-  echo "🔐 git-lock list for [$repo_id]:"
+  printf "🔐 git-lock list for [%s]:\n" "$repo_id"
   for item in "${sorted[@]}"; do
     file="${item#*|}"
     typeset name='' hash='' note='' timestamp='' label='' subject='' line=''
@@ -289,17 +271,17 @@ _git_lock_copy() {
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
   [[ -d "$lock_dir" ]] || {
-    echo "❌ No git-locks found"
+    printf "❌ No git-locks found\n"
     return 1
   }
 
   src_label=$(_git_lock_resolve_label "$1") || {
-    echo "❗ Usage: git-lock-copy <source-label> <target-label>"
+    printf "❗ Usage: git-lock-copy <source-label> <target-label>\n"
     return 1
   }
   dst_label="$2"
   [[ -z "$dst_label" ]] && {
-    echo "❗ Target label is missing"
+    printf "❗ Target label is missing\n"
     return 1
   }
 
@@ -307,21 +289,21 @@ _git_lock_copy() {
   dst_file="$lock_dir/${repo_id}-${dst_label}.lock"
 
   if [[ ! -f "$src_file" ]]; then
-    echo "❌ Source git-lock [$repo_id:$src_label] not found"
+    printf "❌ Source git-lock [%s:%s] not found\n" "$repo_id" "$src_label"
     return 1
   fi
 
   if [[ -f "$dst_file" ]]; then
-    echo -n "⚠️  Target git-lock [$repo_id:$dst_label] already exists. Overwrite? [y/N] "
+    printf "⚠️  Target git-lock [%s:%s] already exists. Overwrite? [y/N] " "$repo_id" "$dst_label"
     read -r confirm
     [[ "$confirm" != [yY] ]] && {
-      echo "🚫 Aborted"
+      printf "🚫 Aborted\n"
       return 1
     }
   fi
 
   cp "$src_file" "$dst_file"
-  echo "$dst_label" > "$lock_dir/${repo_id}-latest"
+  printf "%s\n" "$dst_label" > "$lock_dir/${repo_id}-latest"
 
   typeset content hash note timestamp subject
   content=$(<"$src_file")
@@ -330,14 +312,13 @@ _git_lock_copy() {
   timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
   subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
-  echo "📋 Copied git-lock [$repo_id:$src_label] → [$repo_id:$dst_label]"
+  printf "📋 Copied git-lock [%s:%s] → [%s:%s]\n" "$repo_id" "$src_label" "$repo_id" "$dst_label"
   printf "   🏷️  tag:     %s → %s\n" "$src_label" "$dst_label"
   printf "   🧬 commit:  %s\n" "$hash"
   [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
   [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
   [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
 }
-
 
 # Delete a git-lock by label or the most recent one
 # - Displays details of the git-lock before deletion (hash, note, timestamp)
@@ -353,18 +334,18 @@ _git_lock_delete() {
   latest_file="$lock_dir/${repo_id}-latest"
 
   [[ -d "$lock_dir" ]] || {
-    echo "❌ No git-locks found"
+    printf "❌ No git-locks found\n"
     return 1
   }
 
   label=$(_git_lock_resolve_label "$1") || {
-    echo "❌ No label provided and no latest git-lock exists"
+    printf "❌ No label provided and no latest git-lock exists\n"
     return 1
   }
 
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   if [[ ! -f "$lock_file" ]]; then
-    echo "❌ git-lock [$label] not found"
+    printf "❌ git-lock [%s] not found\n" "$label"
     return 1
   fi
 
@@ -375,28 +356,28 @@ _git_lock_delete() {
   timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
   subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
-  echo "🗑️  Candidate for deletion:"
+  printf "🗑️  Candidate for deletion:\n"
   printf "   🏷️  tag:     %s\n" "$label"
   printf "   🧬 commit:  %s\n" "$hash"
   [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
   [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
   [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
-  echo
+  printf "\n"
 
   read -r -p "⚠️  Delete this git-lock? [y/N] " confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "🚫 Aborted"
+    printf "🚫 Aborted\n"
     return 1
   fi
 
   rm -f "$lock_file"
-  echo "🗑️  Deleted git-lock [$repo_id:$label]"
+  printf "🗑️  Deleted git-lock [%s:%s]\n" "$repo_id" "$label"
 
   if [[ -f "$latest_file" ]]; then
     latest_label=$(<"$latest_file")
     if [[ "$label" == "$latest_label" ]]; then
       rm -f "$latest_file"
-      echo "🧼 Removed latest marker (was [$label])"
+      printf "🧼 Removed latest marker (was [%s])\n" "$label"
     fi
   fi
 }
@@ -411,11 +392,11 @@ _git_lock_diff() {
   typeset repo_id lock_dir label1 label2 file1 file2 hash1 hash2
 
   label1=$(_git_lock_resolve_label "$1") || {
-    echo "❗ Usage: git-lock diff <label1> <label2>"
+    printf "❗ Usage: git-lock diff <label1> <label2>\n"
     return 1
   }
   label2=$(_git_lock_resolve_label "$2") || {
-    echo "❗ Second label not provided or found"
+    printf "❗ Second label not provided or found\n"
     return 1
   }
 
@@ -425,24 +406,25 @@ _git_lock_diff() {
   file2="$lock_dir/${repo_id}-${label2}.lock"
 
   [[ -f "$file1" ]] || {
-    echo "❌ git-lock [$label1] not found for [$repo_id]"
+    printf "❌ git-lock [%s] not found for [%s]\n" "$label1" "$repo_id"
     return 1
   }
   [[ -f "$file2" ]] || {
-    echo "❌ git-lock [$label2] not found for [$repo_id]"
+    printf "❌ git-lock [%s] not found for [%s]\n" "$label2" "$repo_id"
     return 1
   }
 
   hash1=$(sed -n '1p' "$file1" | cut -d '#' -f1 | xargs)
   hash2=$(sed -n '1p' "$file2" | cut -d '#' -f1 | xargs)
 
-  echo "🧮 Comparing commits: [$repo_id:$label1] → [$label2]"
-  echo "   🔖 $label1: $hash1"
-  echo "   🔖 $label2: $hash2"
-  echo
+  printf "🧮 Comparing commits: [%s:%s] → [%s]\n" "$repo_id" "$label1" "$label2"
+  printf "   🔖 %s: %s\n" "$label1" "$hash1"
+  printf "   🔖 %s: %s\n" "$label2" "$hash2"
+  printf "\n"
 
   git log --oneline --graph --decorate "$hash1..$hash2"
 }
+
 
 # git-lock-tag: Create a git tag from a saved git-lock lock file
 #
@@ -458,7 +440,6 @@ _git_lock_diff() {
 # - Reads commit hash from lock file at $ZSH_CACHE_DIR/git-locks/<repo>-<label>.lock
 # - Falls back to the commit subject as the tag message if none is provided
 # - Prompts before overwriting existing tags
-
 _git_lock_tag() {
   typeset label tag_name tag_msg="" do_push=false
   typeset repo_id lock_dir lock_file hash timestamp line1
@@ -480,13 +461,13 @@ _git_lock_tag() {
   done
 
   label=$(_git_lock_resolve_label "${positional[0]}") || {
-    echo "❌ git-lock label not provided or not found"
+    printf "❌ git-lock label not provided or not found\n"
     return 1
   }
 
   tag_name="${positional[1]}"
   [[ -z "$tag_name" ]] && {
-    echo "❗ Usage: git-lock-tag <git-lock-label> <tag-name> [-m <tag-message>] [--push]"
+    printf "❗ Usage: git-lock-tag <git-lock-label> <tag-name> [-m <tag-message>] [--push]\n"
     return 1
   }
 
@@ -495,7 +476,7 @@ _git_lock_tag() {
   lock_file="$lock_dir/${repo_id}-${label}.lock"
 
   [[ -f "$lock_file" ]] || {
-    echo "❌ git-lock [$label] not found in [$lock_dir] for [$repo_id]"
+    printf "❌ git-lock [%s] not found in [%s] for [%s]\n" "$label" "$lock_dir" "$repo_id"
     return 1
   }
 
@@ -506,41 +487,41 @@ _git_lock_tag() {
   [[ -z "$tag_msg" ]] && tag_msg=$(git show -s --format=%s "$hash")
 
   if git rev-parse "$tag_name" >/dev/null 2>&1; then
-    echo "⚠️  Git tag [$tag_name] already exists."
-    echo -n "❓ Overwrite it? [y/N] "
+    printf "⚠️  Git tag [%s] already exists.\n" "$tag_name"
+    printf "❓ Overwrite it? [y/N] "
     read -r confirm
     [[ "$confirm" != [yY] ]] && {
-      echo "🚫 Aborted"
+      printf "🚫 Aborted\n"
       return 1
     }
     git tag -d "$tag_name" || {
-      echo "❌ Failed to delete existing tag [$tag_name]"
+      printf "❌ Failed to delete existing tag [%s]\n" "$tag_name"
       return 1
     }
   fi
 
   git tag -a "$tag_name" "$hash" -m "$tag_msg"
-  echo "🏷️  Created tag [$tag_name] at commit [$hash]"
-  echo "📝 Message: $tag_msg"
+  printf "🏷️  Created tag [%s] at commit [%s]\n" "$tag_name" "$hash"
+  printf "📝 Message: %s\n" "$tag_msg"
 
   if $do_push; then
     git push origin "$tag_name"
-    echo "🚀 Pushed tag [$tag_name] to origin"
-    git tag -d "$tag_name" && echo "🧹 Deleted typeset tag [$tag_name]"
+    printf "🚀 Pushed tag [%s] to origin\n" "$tag_name"
+    git tag -d "$tag_name" && printf "🧹 Deleted typeset tag [%s]\n" "$tag_name"
   fi
 }
 
 git-lock() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo "❗ Not a Git repository. Run this command inside a Git project."
+    printf "❗ Not a Git repository. Run this command inside a Git project.\n"
     return 1
   fi
 
   typeset cmd="$1"
   if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
-    echo "Usage: git-lock <command> [args...]"
-    echo ""
-    echo "Commands:"
+    printf "Usage: git-lock <command> [args...]\n"
+    printf "\n"
+    printf "Commands:\n"
     printf "  %-30s %s\n" \
       "lock [label] [note] [commit]"   "Save commit hash to lock" \
       "unlock [label]"                 "Reset to a saved commit" \
@@ -549,7 +530,7 @@ git-lock() {
       "delete [label]"                "Remove a lock" \
       "diff <label1> <label2>"        "Compare commits between two locks" \
       "tag <label> <tag> [-m msg]"    "Create git tag from a lock"
-    echo ""
+    printf "\n"
     return 0
   fi
 
@@ -564,8 +545,8 @@ git-lock() {
     diff)    _git_lock_diff "$@" ;;
     tag)     _git_lock_tag "$@" ;;
     *)
-      echo "❗ Unknown command: '$cmd'"
-      echo "Run 'git-lock help' for usage."
+      printf "❗ Unknown command: '%s'\n" "$cmd"
+      printf "Run 'git-lock help' for usage.\n"
       return 1 ;;
   esac
 }

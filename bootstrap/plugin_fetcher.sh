@@ -28,7 +28,7 @@ plugin_fetch_if_missing_from_entry() {
   typeset plugin_path="$ZSH_PLUGINS_DIR/$plugin_name"
 
   if [[ "$PLUGIN_FETCH_FORCE" == true && -d "$plugin_path" ]]; then
-    echo "💥 Forcing re-clone: $plugin_name"
+    printf "💥 Forcing re-clone: %s\n" "$plugin_name"
     [[ "$PLUGIN_FETCH_DRY_RUN" == false ]] && rm -rf "$plugin_path"
   fi
 
@@ -37,36 +37,35 @@ plugin_fetch_if_missing_from_entry() {
   fi
 
   if [[ -n "$git_url" ]]; then
-    echo "🌐 Cloning $plugin_name from $git_url"
+    printf "🌐 Cloning %s from %s\n" "$plugin_name" "$git_url"
     if [[ "$PLUGIN_FETCH_DRY_RUN" == false ]]; then
       git clone "$git_url" "$plugin_path" || {
-        echo "❌ Failed to clone: $plugin_name"
+        printf "❌ Failed to clone: %s\n" "$plugin_name"
         return 1
       }
 
-      # ✅ 檢查是否需要初始化 submodules
       if [[ -f "$plugin_path/.gitmodules" ]]; then
-        echo "🔗 Initializing submodules for $plugin_name"
+        printf "🔗 Initializing submodules for %s\n" "$plugin_name"
         git -C "$plugin_path" submodule update --init --recursive || {
-          echo "❌ Failed to init submodules for: $plugin_name"
+          printf "❌ Failed to init submodules for: %s\n" "$plugin_name"
           return 1
         }
       fi
     fi
   else
-    echo "⚠️  No git URL defined for: $plugin_name"
+    printf "⚠️  No git URL defined for: %s\n" "$plugin_name"
   fi
 }
 
 plugin_update_all() {
-  echo -e "🔄 Updating plugins in: $ZSH_PLUGINS_DIR\n"
+  printf "🔄 Updating plugins in: %s\n\n" "$ZSH_PLUGINS_DIR"
   for dir in "$ZSH_PLUGINS_DIR"/*; do
     [[ -d "$dir/.git" ]] || continue
     plugin_name="${dir##*/}"
-    echo -e "🔧 Updating $plugin_name ..."
+    printf "🔧 Updating %s ...\n" "$plugin_name"
 
     if [[ "$PLUGIN_FETCH_DRY_RUN" == true ]]; then
-      echo -e "    ↪ [dry-run] git -C $dir pull --ff-only"
+      printf "    ↪ [dry-run] git -C %s pull --ff-only\n" "$dir"
       continue
     fi
 
@@ -77,16 +76,16 @@ plugin_update_all() {
       short_after="${after:0:7}"
       if [[ "$before" == "$after" ]]; then
         if grep -q "Already up to date" <<< "$output"; then
-          echo -e "    ↪ Already up to date. (at $short_after)"
+          printf "    ↪ Already up to date. (at %s)\n" "$short_after"
         else
-          echo -e "$output" | sed 's/^/    ↪ /'
+          printf "%s\n" "$output" | sed 's/^/    ↪ /'
         fi
       else
-        echo -e "    ↪ Updated to $short_after"
+        printf "    ↪ Updated to %s\n" "$short_after"
       fi
     else
-      echo -e "$output" | sed 's/^/    ❌ /'
-      echo -e "    ❌ Failed to update $plugin_name"
+      printf "%s\n" "$output" | sed 's/^/    ❌ /'
+      printf "    ❌ Failed to update %s\n" "$plugin_name"
     fi
   done
 }
@@ -103,16 +102,16 @@ plugin_maybe_auto_update() {
   fi
 
   if (( now_epoch - last_epoch > 7 * 86400 )); then
-    echo -e "📦 Auto-updating Zsh plugins (last update over 7 days ago)...\n"
+    printf "📦 Auto-updating Zsh plugins (last update over 7 days ago)...\n\n"
     plugin_update_all
-    echo -e "$now_epoch" > "$PLUGIN_UPDATE_FILE"
+    printf "%s\n" "$now_epoch" > "$PLUGIN_UPDATE_FILE"
   fi
 }
 
 plugin_print_status() {
   if [[ ! -f "$PLUGIN_UPDATE_FILE" ]]; then
-    echo "📦 Plugin update status: never updated"
-    echo "⏱  Next auto-update expected: now"
+    printf "📦 Plugin update status: never updated\n"
+    printf "⏱  Next auto-update expected: now\n"
     return
   fi
 
@@ -122,11 +121,10 @@ plugin_print_status() {
   days_left=$(( 30 - days_ago ))
   last_date=$(date -j -f %s "$last_epoch" +"%Y-%m-%d" 2>/dev/null || date -d "@$last_epoch" +"%Y-%m-%d")
 
-  echo "📦 Plugin last updated: $last_date ($days_ago days ago)"
+  printf "📦 Plugin last updated: %s (%d days ago)\n" "$last_date" "$days_ago"
   if (( days_left <= 0 )); then
-    echo "⏱  Next auto-update expected: now"
+    printf "⏱  Next auto-update expected: now\n"
   else
-    echo "⏱  Next auto-update expected in: $days_left days"
+    printf "⏱  Next auto-update expected in: %d days\n" "$days_left"
   fi
 }
-

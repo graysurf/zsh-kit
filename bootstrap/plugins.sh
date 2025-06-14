@@ -5,7 +5,7 @@
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugin_fetcher.sh"
 
 typeset -f plugin_fetch_if_missing_from_entry &>/dev/null || {
-  echo "❌ plugin_fetch_if_missing_from_entry not defined. Check bootstrap/plugin_fetcher.sh"
+  printf "❌ plugin_fetch_if_missing_from_entry not defined. Check bootstrap/plugin_fetcher.sh\n"
   return 1
 }
 

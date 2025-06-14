@@ -8,7 +8,7 @@ load_with_timing() {
   [[ ! -f "$file" ]] && return
 
   typeset start_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
-  [[ -n "$ZSH_DEBUG" ]] && echo "🔍 Loading: $file"
+  [[ -n "$ZSH_DEBUG" ]] && printf "🔍 Loading: %s\n" "$file"
   source "$file"
   typeset end_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
   typeset duration=$((end_time - start_time))
@@ -30,7 +30,7 @@ load_script() {
   if [[ -f "$file" ]]; then
     load_with_timing "$file"
   else
-    echo "⚠️  File not found: $file" >&2
+    printf "⚠️  File not found: %s\n" "$file" >&2
   fi
 }
 
@@ -46,14 +46,14 @@ load_script_group() {
   all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
 
   if (( ${+ZSH_DEBUG} )); then
-    echo "🗂 Loading group: $group_name"
-    echo "🔽 Base: $base_dir"
-    echo "🚫 Exclude:"
+    printf "🗂 Loading group: %s\n" "$group_name"
+    printf "🔽 Base: %s\n" "$base_dir"
+    printf "🚫 Exclude:\n"
     for ex in "${exclude[@]}"; do
-      echo "   - $ex"
+      printf "   - %s\n" "$ex"
     done
     if [[ "$ZSH_DEBUG" -ge 2 ]]; then
-      echo "📦 All collected scripts:"
+      printf "📦 All collected scripts:\n"
       printf '   • %s\n' "${all_scripts[@]}"
     fi
   fi
@@ -63,7 +63,7 @@ load_script_group() {
   )"})
 
   if [[ "$ZSH_DEBUG" -ge 2 ]]; then
-    echo "✅ Scripts after filtering:"
+    printf "✅ Scripts after filtering:\n"
     printf '   → %s\n' "${filtered_scripts[@]}"
   fi
 
@@ -71,6 +71,3 @@ load_script_group() {
     load_with_timing "$file"
   done
 }
-
-
-

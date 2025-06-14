@@ -23,7 +23,7 @@ safe_unalias() {
 
   for name in "$@"; do
     if alias "$name" &>/dev/null; then
-      $verbose && echo "🔁 Unaliasing $name"
+      $verbose && printf "🔁 Unaliasing %s\n" "$name"
       unalias "$name"
     fi
   done
@@ -38,7 +38,7 @@ get_clipboard() {
   elif command -v xsel >/dev/null 2>&1; then
     xsel --clipboard --output
   else
-    echo "❌ No clipboard tool found (requires pbpaste, xclip, or xsel)" >&2
+    printf "❌ No clipboard tool found (requires pbpaste, xclip, or xsel)\n" >&2
     return 1
   fi
 }
@@ -52,7 +52,7 @@ set_clipboard() {
   elif command -v xsel >/dev/null 2>&1; then
     xsel --clipboard --input
   else
-    echo "❌ No clipboard tool found (requires pbcopy, xclip, or xsel)" >&2
+    printf "❌ No clipboard tool found (requires pbcopy, xclip, or xsel)\n" >&2
     return 1
   fi
 }
