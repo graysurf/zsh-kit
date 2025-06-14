@@ -131,7 +131,7 @@ fzf-git-commit() {
 
   while true; do
     typeset result=''
-    result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M'  \
+    result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M' \
       --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --reverse \
           --preview-window='right:50%:wrap' \
@@ -144,25 +144,14 @@ fzf-git-commit() {
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
     typeset COLOR_RESET='\033[0m'
-    typeset ADDED='\033[1;32m'
-    typeset MODIFIED='\033[1;33m'
-    typeset DELETED='\033[1;31m'
-    typeset OTHER='\033[1;34m'
-
     typeset stats_list=""
     stats_list=$(git show --numstat --format= "$commit")
 
     typeset -a file_list=()
     while IFS=$'\t' read -r kind filepath; do
-      typeset color="$OTHER"
-      case "$kind" in
-        A) color="$ADDED" ;;
-        M) color="$MODIFIED" ;;
-        D) color="$DELETED" ;;
-        U) color="$OTHER" ;;
-        *) color="$COLOR_RESET" ;;
-      esac
+      [[ -z "$filepath" ]] && continue
 
+      typeset color="$(_git_scope_kind_color "$kind")"
       typeset stat_line=''
       stat_line=$(echo "$stats_list" | awk -v f="$filepath" '$3 == f {
         a = ($1 == "-" ? 0 : $1)

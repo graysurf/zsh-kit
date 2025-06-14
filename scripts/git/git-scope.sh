@@ -10,15 +10,13 @@ alias gst='git-scope tracked'
 
 # Return ANSI color code based on file change kind
 _git_scope_kind_color() {
-  typeset kind="$1"
-
-  case "$kind" in
-    A) printf '\033[1;32m'  ;; # Green for Added
-    M) printf '\033[1;33m'  ;; # Yellow for Modified
-    D) printf '\033[1;31m'  ;; # Red for Deleted
-    U) printf '\033[1;34m'  ;; # Blue for Untracked/Unknown
-    -) printf '\033[0m'     ;; # Reset for neutral
-    *) printf '\033[1;34m'  ;; # Fallback color
+  case "$1" in
+    A) printf '\033[38;5;66m'  ;;  # Added    → #3d6f6f (Delta plus-style)
+    M) printf '\033[38;5;110m' ;;  # Modified → #add6ff (Delta file-style)
+    D) printf '\033[38;5;95m'  ;;  # Deleted  → #5a3e39 (Delta minus-style)
+    U) printf '\033[38;5;110m' ;;  # Unknown  → fallback Owl Blue (#82aaff)
+    -) printf '\033[0m'        ;;  # Reset
+    *) printf '\033[38;5;110m' ;;  # Fallback
   esac
 }
 
