@@ -77,6 +77,8 @@ bindkey '^G' fzf-tools-git-commit-widget
 
 # Extract command history and strip line numbers
 fzf-history-select() {
+  local default_query="${BUFFER:-}"
+
   iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
   awk -F';' '
     /^:/ {
@@ -96,6 +98,7 @@ fzf-history-select() {
       printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
   ' | fzf --ansi --reverse --height=50% \
+         --query="$default_query" \
          --preview-window='right:40%:wrap' \
          --preview='ts=$(cut -d"|" -f1 <<< {} | sed "s/[[:space:]]*$//"); cmd=$(cut -d"|" -f3- <<< {} | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); printf "%s\n\n%s" "$ts" "$cmd"' \
          --expect=enter
