@@ -8,5 +8,5 @@ emojis=(
   🦕 🪴 🌵 🌿 🍂 🍁 🌻 🌼 🌷 🪻 🌺 🌸 🪷 🌞 🌝 🌚 🌜 🌊 🌬️ 🌪️
 )
 total=${#emojis[@]}
-idx=$(( (RANDOM + $(date +%N)) % total + 1 ))
+idx=$(((RANDOM + 10#$(date +%N)) % total))
 printf "%s\n" "${emojis[$idx]}"
