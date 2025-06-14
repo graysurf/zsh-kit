@@ -65,7 +65,6 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration triggers
 │   ├── login.sh                          # Show emoji + quote banner on login
 │   ├── macos.sh                          # macOS-specific system tweaks
-│   ├── random_emoji.sh                   # Random emoji + quote selector
 │   └── shell-utils.sh                    # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
 ├── tools/                                # Standalone executable scripts or compiled helpers
@@ -81,6 +80,8 @@ An example Zsh startup log with this config:
 ```text
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 
+🌿  Thinking shell initialized. Expect consequences...
+
 ✅ Loaded 00-preload.sh in 3ms
 ✅ Loaded plugins.sh in 89ms
 ✅ Loaded eza.sh in 2ms
@@ -91,9 +92,7 @@ An example Zsh startup log with this config:
 ✅ Loaded git-summary.sh in 3ms
 ✅ Loaded git-tools.sh in 3ms
 ✅ Loaded git.sh in 3ms
-✅ Loaded login.sh in 2ms
 ✅ Loaded macos.sh in 6ms
-✅ Loaded random_emoji.sh in 3ms
 ✅ Loaded shell-utils.sh in 3ms
 ✅ Loaded env.sh in 7ms
 ✅ Loaded completion.zsh in 19ms
