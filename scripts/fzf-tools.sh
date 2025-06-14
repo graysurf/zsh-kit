@@ -117,6 +117,11 @@ fzf-git-checkout() {
 
 # Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    printf "❌ Not inside a Git repository. Aborting.\n" >&2
+    return 1
+  fi
+
   typeset input_ref="$1" # $2 = BUFFER (optional)
   typeset commit file tmp
   typeset commit_query=""
