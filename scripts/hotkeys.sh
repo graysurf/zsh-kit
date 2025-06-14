@@ -80,18 +80,24 @@ fzf-history-select() {
   iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
   awk -F';' '
     /^:/ {
+      if (NF < 2) next
       split($1, meta, ":")
+      cmd = $2
+
+      if (cmd ~ /^[[:space:]]*$/) next
+      if (cmd ~ /^[[:cntrl:][:punct:][:space:]]*$/) next
+      if (cmd ~ /[^[:print:]]/) next
+
       ts_cmd = "date -r " meta[2] " +\"%Y-%m-%d %H:%M:%S\""
       ts_cmd | getline ts
       close(ts_cmd)
 
-      cmd = $2
       gsub(/\\/, "\\\\", cmd)
       printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
   ' | fzf --ansi --reverse --height=50% \
          --preview-window='right:40%:wrap' \
-         --preview 'echo {} | cut -d"|" -f3- | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"' \
+         --preview='ts=$(cut -d"|" -f1 <<< {} | sed "s/[[:space:]]*$//"); cmd=$(cut -d"|" -f3- <<< {} | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); printf "%s\n\n%s" "$ts" "$cmd"' \
          --expect=enter
 }
 
