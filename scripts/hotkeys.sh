@@ -90,7 +90,8 @@ fzf-history-select() {
       printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
   ' | fzf --ansi --reverse --height=50% \
-         --preview 'echo {}' \
+         --preview-window='right:40%:wrap' \
+         --preview 'echo {} | cut -d"|" -f3- | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"' \
          --expect=enter
 }
 
