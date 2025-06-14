@@ -1,5 +1,7 @@
 # tool::brew-name::comment
+
 bat::bat::Syntax highlighter
+coreutils::coreutils::GNU tools (for shuf, realpath, gseq, gdate, etc)
 curl::curl::Used for remote fetch
 eza::eza::Modern ls replacement
 fd::fd::Fast find (fzf helper)
@@ -10,4 +12,3 @@ rg::ripgrep::Fast grep engine
 tree::tree::Directory structure view
 zoxide::zoxide::Smart cd
 starship::starship::Customizable prompt
-
