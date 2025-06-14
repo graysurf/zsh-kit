@@ -17,14 +17,15 @@ Overrides the `z` command to provide smart directory jumping **with `eza` previe
 z() {
   if zoxide query -l "$@" &>/dev/null; then
     builtin cd "$(zoxide query "$@")" && {
-      echo -e "\n📁 Now in: $PWD\n"
+      printf "\n📁 Now in: %s\n\n" "$PWD"
       eza -alh --icons --group-directories-first --time-style=iso
     }
   else
-    echo "❌ No matching directory for: $*"
+    printf "❌ No matching directory for: %s\n" "$*"
     return 1
   fi
 }
+
 ```
 
 ---

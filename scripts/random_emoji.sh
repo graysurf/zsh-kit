@@ -8,5 +8,5 @@ random_emoji() {
   )
   typeset total=${#emojis[@]}
   typeset idx=$(( (RANDOM + $(date +%N)) % total + 1 ))
-  echo "${emojis[$idx]}"
+  printf "%s\n" "${emojis[$idx]}"
 }

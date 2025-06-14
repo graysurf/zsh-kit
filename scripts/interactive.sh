@@ -8,7 +8,7 @@ eval "$(zoxide init zsh)"
 # Wrapper to execute `eza -alh` after directory jump
 __zoxide_cd() {
   builtin cd -- "$1" || return
-  echo -e "\n📁 Now in: $PWD\n"
+  printf "\n📁 Now in: %s\n\n" "$PWD"
   eza -alh --icons --group-directories-first --time-style=iso
 }
 
