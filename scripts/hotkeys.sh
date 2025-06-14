@@ -106,13 +106,13 @@ fzf-history-widget() {
 
   # fzf returns two lines: 1) key pressed, 2) selected entry
   output="$(fzf-history-select)"
-  selected="$(echo "$output" | sed -n '2p')"
+  selected="$(printf "%s\n" "$output" | sed -n '2p')"
 
   # Extract command column
-  cmd="$(echo "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+  cmd="$(printf "%s\n" "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
 
   # Remove leading emoji (🖥️ or others)
-  cmd="$(echo "$cmd" | sed -E 's/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//')"
+  cmd="$(printf "%s\n" "$cmd" | sed -E 's/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//')"
 
   if [[ -n "$cmd" ]]; then
     BUFFER="$cmd"

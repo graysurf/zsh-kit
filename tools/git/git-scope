@@ -5,7 +5,7 @@ setopt no_nomatch
 source "$ZDOTDIR/scripts/git/git-scope.sh"
 
 if ! typeset -f git-scope >/dev/null; then
-  echo "❗ 'git-scope' is not defined as a function."
+  printf "❗ 'git-scope' is not defined as a function.\n"
   exit 1
 fi
 

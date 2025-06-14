@@ -9,4 +9,4 @@ emojis=(
 )
 total=${#emojis[@]}
 idx=$(( (RANDOM + $(date +%N)) % total + 1 ))
-echo "${emojis[$idx]}"
+printf "%s\n" "${emojis[$idx]}"

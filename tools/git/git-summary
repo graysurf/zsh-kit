@@ -5,7 +5,7 @@ setopt no_nomatch
 source "$ZDOTDIR/scripts/git/git-summary.sh"
 
 if ! typeset -f git-summary >/dev/null; then
-  echo "❗ 'git-summary' is not defined as a function."
+  printf "❗ 'git-summary' is not defined as a function.\n"
   exit 1
 fi
 

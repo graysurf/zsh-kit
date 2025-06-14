@@ -5,7 +5,7 @@ setopt no_nomatch
 source "$ZDOTDIR/scripts/git/git-lock.sh"
 
 if ! typeset -f git-lock >/dev/null; then
-  echo "❗ 'git-lock' is not defined as a function."
+  printf "❗ 'git-lock' is not defined as a function.\n"
   exit 1
 fi
 
