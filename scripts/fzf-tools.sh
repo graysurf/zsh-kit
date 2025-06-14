@@ -117,7 +117,7 @@ fzf-git-checkout() {
 
 # Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
-  typeset input_ref="$1"
+  typeset input_ref="$1" # $2 = BUFFER (optional)
   typeset commit file tmp
   typeset commit_query=""
   typeset commit_query_restore=""
@@ -189,6 +189,7 @@ fzf-git-commit() {
 # Show delimited preview blocks in FZF and copy selected block to clipboard
 fzf_block_preview() {
   typeset generator="$1"
+  typeset default_query="${2:-}"  # $2 = BUFFER (optional)
   typeset tmpfile delim enddelim
   tmpfile="$(mktemp)"
 
@@ -254,6 +255,7 @@ EOF
     FZF_DEF_DELIM_END="$enddelim" \
     fzf --ansi --reverse --height=50% \
         --prompt="» Select > " \
+        --query="$default_query" \
         --preview-window='right:70%:wrap' \
         --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile")
 
@@ -295,7 +297,7 @@ _gen_env_block() {
 
 # Fuzzy search environment variables with preview
 fzf-env() {
-  fzf_block_preview _gen_env_block
+  fzf_block_preview _gen_env_block ${1:-}
 }
 
 # Generate alias definition blocks for preview
@@ -311,7 +313,7 @@ _gen_alias_block() {
 
 # Fuzzy search shell aliases with preview
 fzf-alias() {
-  fzf_block_preview _gen_alias_block
+  fzf_block_preview _gen_alias_block ${1:-}
 }
 
 # Generate function blocks for preview from defined shell functions
@@ -327,7 +329,7 @@ _gen_function_block() {
 
 # Fuzzy search shell functions with preview
 fzf-functions() {
-  fzf_block_preview _gen_function_block
+  fzf_block_preview _gen_function_block ${1:-}
 }
 
 # Generate combined block of env, alias, and function definitions
@@ -339,7 +341,7 @@ _gen_all_defs_block() {
 
 # Fuzzy search all definitions (env, alias, function) with preview
 fzf-defs() {
-  fzf_block_preview _gen_all_defs_block
+  fzf_block_preview _gen_all_defs_block ${1:-}
 }
 
 # ────────────────────────────────────────────────────────

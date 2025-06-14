@@ -48,7 +48,7 @@ bindkey '^F' fzf-tools-launcher-widget
 # ────────────────────────────────────────────────────────
 
 fzf-tools-defs-widget() {
-  BUFFER="fzf-tools defs"
+  BUFFER="fzf-tools defs $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
 }
@@ -61,7 +61,7 @@ bindkey '^T' fzf-tools-defs-widget
 # ────────────────────────────────────────────────────────
 
 fzf-tools-git-commit-widget() {
-  BUFFER="fzf-tools git-commit"
+  BUFFER="fzf-tools git-commit $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
 }
