@@ -90,17 +90,22 @@ fzf-history-select() {
       printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
     }
   ' | fzf --ansi --reverse --height=50% \
-         --preview 'echo {}'
+         --preview 'echo {}' \
+         --expect=enter
 }
 
-
 fzf-history-widget() {
-  local selected cmd
-  selected="$(fzf-history-select | head -n1)"
+  local selected output cmd
+
+  # fzf returns two lines: 1) key pressed, 2) selected entry
+  output="$(fzf-history-select)"
+  selected="$(echo "$output" | sed -n '2p')"
+
+  # Extract command column
   cmd="$(echo "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
 
-  cmd="$(echo "$cmd" | perl -CSD -pe 's/^\p{Emoji_Presentation}\s*//')"
-
+  # Remove leading emoji (🖥️ or others)
+  cmd="$(echo "$cmd" | sed -E 's/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//')"
 
   if [[ -n "$cmd" ]]; then
     BUFFER="$cmd"
