@@ -6,9 +6,11 @@ $custom\
 $username\
 $hostname\
 $directory\
+$git_state\
+$git_status\
+$git_metrics\
 $git_branch\
 $git_commit\
-$git_status\
 $nodejs\
 $python\
 $golang\
@@ -43,12 +45,12 @@ error_symbol = ""
 vicmd_symbol = "[←](bold #82aaff) "
 
 [status]
-disabled = false
 symbol = "✗ "
+disabled = false
 
 [package]
-disabled = false
 style = "bold #7fdbca"
+disabled = false
 
 [username]
 style_user = "bold #ffffff"
@@ -58,11 +60,11 @@ disabled = false
 show_always = true
 
 [time]
-disabled = false
 style = "bold #637777"
 format = "[$time]($style) "
 time_format = "%T%.3f"
 utc_time_offset = "+8"
+disabled = false
 
 [directory]
 truncation_length = 8
@@ -72,16 +74,56 @@ style = "bold #7fdbca"
 read_only = "🔒"
 read_only_style = "bold #ffcb6b"
 
+[git_state]
+format = '[\($state( $progress_current of $progress_total)\)]($style) '
+cherry_pick = '[🌸 Cherry-picking](bold #ffcb6b)'
+merge = '[🔀 Merging](bold #82aaff)'
+rebase = '[📐 Rebasing](bold #7fdbca)'
+revert = '[↩ Reverting](bold #f78c6c)'
+bisect = '[🪓 Bisecting](bold #c792ea)'
+
+[git_status]
+up_to_date = '[✓](#a1efe4)'
+ahead      = '[⇡${count}](#82aaff)'
+behind     = '[⇣${count}](#ffcb6b)'
+diverged   = '[⇕⇡${ahead_count}⇣${behind_count}](#f78c6c)'
+conflicted = '[💥 Conflict](bold #f78c6c)'
+untracked  = '[?](#ffcb6b)'
+stashed    = '[≡](#82aaff)'
+modified   = '[!](#c792ea)'
+staged     = '[+](#c792ea)'
+renamed    = '[»](#7fdbca)'
+deleted    = '[✘](#f78c6c)'
+format     = '$all_status$ahead_behind '
+
+[git_metrics]
+added_style = 'bold #7fdbca'
+deleted_style = 'bold #f78c6c'
+format = '[+$added]($added_style)/[-$deleted]($deleted_style) '
+only_nonzero_diffs = true
+disabled = false
+
+[git_branch]
+symbol = '🌿 '
+style = 'bold #82aaff'
+format = '[$symbol$branch]($style) '
+
+[git_commit]
+commit_hash_length = 4
+tag_symbol = '🔖 '
+style = 'bold #c792ea'
+format = '[$hash]($style) '
+
 [cmd_duration]
 min_time = 0
 show_milliseconds = true
 format = "[🕓 $duration](bold #ffcb6b) "
 
 [docker_context]
-disabled = false
 format = '[$symbol$context](#7fdbca) '
 only_with_files = false
 detect_extensions = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
+disabled = false
 
 [kubernetes]
 symbol = '🐋 '
