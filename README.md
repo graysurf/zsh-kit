@@ -6,12 +6,11 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 > This Zsh environment provides a clean structure and several built-in tools.
 
-- ⚡️ Plugin system with full manual control (no third-party manager)
-- 🌟 Emoji-powered login messages with random quotes (via custom script)
+- 🌟 [Login banner](docs/login-banner.md): Emoji-powered shell intro with rotating quotes
+- 🧩 [plugin-system](docs/plugin-system.md): Git-powered declarative loader with auto-clone and update support
 - 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
 - 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
 - 🔧 Modular and lazy-friendly structure under `scripts/`
-- 🧩 [plugin-system](docs/plugin-system.md): Git-powered declarative loader with auto-clone and update support
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
 ## 🛠 Built-in CLI Tools
