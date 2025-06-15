@@ -3,7 +3,7 @@
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
-    vicd cd edit-zsh y \
+    vi cd edit-zsh y \
     fdf fdd cat batp bat-all bff \
     fsearch zdefs cheat \
     reload execz zz histflush \
