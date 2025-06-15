@@ -22,7 +22,7 @@ _git_summary() {
   if [[ -z "$since_param" && -z "$until_param" ]]; then
     log_args=(--no-merges)
   else
-    typeset tz_offset_hours=8
+    typeset tz_offset_hours=0
     typeset since_utc until_utc
 
     if [[ "$(uname)" == "Darwin" ]]; then
