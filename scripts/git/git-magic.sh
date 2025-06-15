@@ -3,10 +3,9 @@
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
-    gcp gcpo gcapo gcapfo gcapffo \
-    gpc gpcp gpcpo gpcpfo gpcpffo \
-    gpca gpcap  gpcapf gpcapff \
-    gpcapo gpcapfo gpcapffo
+    gcp gcpo gcapo gcapf gcapfo gcapff gcapffo \
+    gpc gpcp gpcpf gpcff gpcpo gpcpfo gpcpffo \
+    gpca gpcap gpcapf gpcapff gpcapo gpcapfo gpcapffo
 fi
 
 # ────────────────────────────────────────────────────────
