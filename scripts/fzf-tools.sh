@@ -2,7 +2,7 @@
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
-  safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
+  safe_unalias ft fzf-process fzf-kill-process fzf-env fp fgs fgc ff fv
 fi
 
 alias ft='fzf-tools'
@@ -25,6 +25,19 @@ fzf-process() {
   local pids=$(echo "$line" | awk '{print $2}')
 
   if [[ "$kill_mode" == "--kill" && -n "$pids" ]]; then
+    echo "$pids" | xargs kill -9
+  fi
+}
+
+# Select and kill one or more processes interactively using fzf and `kill -9`
+fzf-kill-process() {
+  local line pids
+
+  line=$(ps -ef | sed 1d | fzf -m --preview 'echo {}') || return
+
+  pids=$(echo "$line" | awk '{print $2}')
+
+  if [[ -n "$pids" ]]; then
     echo "$pids" | xargs kill -9
   fi
 }
@@ -397,7 +410,8 @@ fzf-tools() {
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
-      process "Browse and kill running processes" \
+      process "Browse and kill running processes (view-only by default)" \
+      kill-process "Select and kill processes immediately" \
       history "Search and execute command history" \
       env "Browse environment variables" \
       alias "Browse shell aliases" \
@@ -418,6 +432,7 @@ fzf-tools() {
     git-commit)       fzf-git-commit "$@" ;;
     git-checkout)     fzf-git-checkout "$@" ;;
     process)          fzf-process "$@" ;;
+    kill-process)     fzf-kill-process "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;

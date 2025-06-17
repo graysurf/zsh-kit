@@ -1,6 +1,8 @@
 # 🚀 Fzf Tools: Interactive CLI Navigator
 
-Fzf Tools is a modular, keyboard-driven launcher that lets you browse and act on files, Git status, processes, and shell history using fuzzy search. It’s designed for developers who want quick, contextual interactions directly from the terminal.
+Fzf Tools is a modular, keyboard-driven launcher that lets you browse and act on files, Git status,
+processes, and shell history using fuzzy search. It’s designed for developers who want quick,
+contextual interactions directly from the terminal.
 
 ---
 
@@ -136,30 +138,6 @@ Great for recalling complex or recently used one-liners without retyping.
 
 ---
 
-### `fzf-tools cd`
-
-📂 Browse and enter directories interactively
-
-```bash
-fzf-tools cd
-```
-
-Uses `eza` to preview directory contents and `fzf` to select one.
-
----
-
-### `fzf-tools directory`
-
-📁 Pick a file, then jump to its parent directory
-
-```bash
-fzf-tools directory
-```
-
-Quick way to navigate to where work is happening.
-
----
-
 ### `fzf-tools file`
 
 📝 Open a file using `vi` after previewing its contents with `bat`
@@ -194,18 +172,6 @@ Shows inline diffs and lets you quickly inspect file changes.
 
 ---
 
-### `fzf-tools kill`
-
-💀 Select and terminate one or more running processes
-
-```bash
-fzf-tools kill
-```
-
-Uses `ps` and `xargs kill`, with support for multiselect.
-
----
-
 ### `fzf-tools process`
 
 🧪 View and inspect running processes (non-interactive kill)
@@ -215,6 +181,18 @@ fzf-tools process
 ```
 
 Lightweight fallback using `ps aux | fzf` for diagnostic use.
+
+---
+
+### `fzf-tools kill-process`
+
+💀 Select and terminate one or more running processes
+
+```bash
+fzf-tools kill-process
+```
+
+Uses `ps` and `xargs kill`, with support for multiselect.
 
 ---
 
@@ -244,4 +222,7 @@ Previews directory contents using `eza`, or falls back to `ls`.
 
 ## 🧠 Summary
 
-Fzf Tools enhances your terminal flow by bridging common developer tasks into a single, discoverable command. With `fzf`, `bat`, `eza`, and Git integration, you get a lightweight but powerful toolbox for navigating projects, managing sessions, and inspecting your codebase—without leaving the shell.
+Fzf Tools enhances your terminal flow by bridging common developer tasks into a single,
+discoverable command. With `fzf`, `bat`, `eza`, and Git integration, you get a lightweight but
+powerful toolbox for navigating projects, managing sessions, and inspecting your codebase—without
+leaving the shell.
