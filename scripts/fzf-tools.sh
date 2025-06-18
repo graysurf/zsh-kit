@@ -14,7 +14,6 @@ alias fv='fzf-vscode'
 # ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
-
 # Fuzzy select and kill a process (simple fallback)
 fzf-process() {
   local kill_mode="$1"
@@ -109,88 +108,75 @@ fzf-git-checkout() {
     return 0
   fi
 
-  echo "⚠️  Checkout to '$ref' failed. Likely due to local changes."
-
-  echo -n "📦 Stash your current changes and retry checkout? [y/N] "
+  printf "⚠️  Checkout to '%s' failed. Likely due to local changes.\n" "$ref"
+  printf "📦 Stash your current changes and retry checkout? [y/N] "
   read -r confirm
-  [[ "$confirm" != [yY] ]] && echo "🚫 Aborted." && return 1
+  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
 
-  # combine stash message： current time + HEAD subject
   typeset timestamp subject
   timestamp=$(date +%F_%H%M)
   subject=$(git log -1 --pretty=%s HEAD)
   typeset stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
 
   git stash push -u -m "$stash_msg"
-  echo "📦 Changes stashed: $stash_msg"
+  printf "📦 Changes stashed: %s\n" "$stash_msg"
 
-  # checkout again
-  git checkout "$ref" && echo "✅ Checked out to $ref"
+  git checkout "$ref" && printf "✅ Checked out to %s\n" "$ref"
 }
 
-# Fuzzy pick a git commit and preview/open its file contents
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
     return 1
   fi
 
-  typeset input_ref="$1" # $2 = BUFFER (optional)
-  typeset commit file tmp
-  typeset commit_query=""
-  typeset commit_query_restore=""
+  typeset input_ref="$1"
+  typeset full_hash commit file tmp commit_query commit_query_restore
+  commit_query=""
 
   if [[ -n "$input_ref" ]]; then
-    typeset full_hash
     full_hash=$(get_commit_hash "$input_ref")
-    [[ -z "$full_hash" ]] && echo "❌ Invalid ref: $input_ref" >&2 && return 1
+    [[ -z "$full_hash" ]] && printf "❌ Invalid ref: %s\n" "$input_ref" >&2 && return 1
     commit_query="${full_hash:0:7}"
   fi
 
   while true; do
-    typeset result=''
     result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M' \
       --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --reverse \
           --preview-window='right:50%:wrap' \
           --query="$commit_query" \
           --print-query \
-          --preview 'git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\\n/"')
+          --preview='git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\\n/"')
+
     [[ -z "$result" ]] && return
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
-    typeset COLOR_RESET='\033[0m'
-    typeset stats_list=""
     stats_list=$(git show --numstat --format= "$commit")
+    file_list=()
 
-    typeset -a file_list=()
     while IFS=$'\t' read -r kind filepath; do
       [[ -z "$filepath" ]] && continue
-
-      typeset color="$(_git_scope_kind_color "$kind")"
-      typeset stat_line=''
+      color="$(_git_scope_kind_color "$kind")"
       stat_line=$(echo "$stats_list" | awk -v f="$filepath" '$3 == f {
         a = ($1 == "-" ? 0 : $1)
         d = ($2 == "-" ? 0 : $2)
         printf "  [+" a " / -" d "]"
       }')
-
-      file_list+=("$(printf "%b[%s] %s%s%b" "$color" "$kind" "$filepath" "$stat_line" "$COLOR_RESET")")
+      file_list+=("$(printf "%b[%s] %s%s%b" "$color" "$kind" "$filepath" "$stat_line" "\033[0m")")
     done < <(git diff-tree --no-commit-id --name-status -r "$commit")
 
     file=$(printf "%s\n" "${file_list[@]}" |
-      fzf --ansi \
-          --prompt="📄 Files in $commit > " \
+      fzf --ansi --prompt="📄 Files in $commit > " \
           --preview-window='right:50%:wrap' \
           --preview='bash -c "
             filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
             git diff --color=always '"${commit}"'^! -- \$filepath |
             delta --width=100 --line-numbers |
             awk '\''NR==1 && NF==0 {next} {print}'\''"' |
-      sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//'
-    )
+      sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//')
 
     if [[ -z "$file" ]]; then
       commit_query="$commit_query_restore"
@@ -204,70 +190,49 @@ fzf-git-commit() {
   done
 }
 
-# Show delimited preview blocks in FZF and copy selected block to clipboard
 fzf_block_preview() {
   typeset generator="$1"
-  typeset default_query="${2:-}"  # $2 = BUFFER (optional)
-  typeset tmpfile delim enddelim
+  typeset default_query="${2:-}"
   tmpfile="$(mktemp)"
 
   delim="${FZF_DEF_DELIM}"
   enddelim="${FZF_DEF_DELIM_END}"
 
   if [[ -z "$delim" || -z "$enddelim" ]]; then
-    echo "❌ Error: FZF_DEF_DELIM or FZF_DEF_DELIM_END is not set."
-    echo "💡 Please export FZF_DEF_DELIM and FZF_DEF_DELIM_END before running."
+    printf "❌ Error: FZF_DEF_DELIM or FZF_DEF_DELIM_END is not set.\n"
+    printf "💡 Please export FZF_DEF_DELIM and FZF_DEF_DELIM_END before running.\n"
     rm -f "$tmpfile"
     return 1
   fi
 
   $generator > "$tmpfile"
 
-  typeset previewscript
   previewscript="$(mktemp)"
   cat > "$previewscript" <<'EOF'
 #!/usr/bin/env awk -f
-
-# This AWK script is used by fzf preview to extract a specific block
-# from a temp file containing multiple sections delimited by markers.
-#
-# Required ENV variables:
-# - FZF_PREVIEW_TARGET: The block header to match
-# - FZF_DEF_DELIM:       The line that marks the start of each block
-# - FZF_DEF_DELIM_END:   The line that marks the end of each block
-
 BEGIN {
   target      = ENVIRON["FZF_PREVIEW_TARGET"]
   start_delim = ENVIRON["FZF_DEF_DELIM"]
   end_delim   = ENVIRON["FZF_DEF_DELIM_END"]
   printing    = 0
 }
-
 {
-  # Detect start of block
   if ($0 == start_delim) {
     getline header
     if (header == target) {
       print header
-      print ""           # Add spacing before content
+      print ""
       printing = 1
       next
     }
   }
-
-  # Stop when reaching end of block
-  if (printing && $0 == end_delim)
-    exit
-
-  # Print block content
-  if (printing)
-    print
+  if (printing && $0 == end_delim) exit
+  if (printing) print
 }
 EOF
 
   chmod +x "$previewscript"
 
-  typeset selected
   selected=$(awk -v delim="$delim" '$0 == delim { getline; print }' "$tmpfile" |
     FZF_DEF_DELIM="$delim" \
     FZF_DEF_DELIM_END="$enddelim" \
@@ -277,9 +242,8 @@ EOF
         --preview-window='right:70%:wrap' \
         --preview="FZF_PREVIEW_TARGET={} $previewscript $tmpfile")
 
-  [[ -z "$selected" ]] && { rm -f "$tmpfile" "$previewscript"; return }
+  [[ -z "$selected" ]] && { rm -f "$tmpfile" "$previewscript"; return; }
 
-  typeset result
   result=$(awk -v target="$selected" -v delim="$delim" -v enddelim="$enddelim" '
 BEGIN { inside=0 }
 {
@@ -297,19 +261,18 @@ BEGIN { inside=0 }
 }
 ' "$tmpfile")
 
-  echo "$result"
-  echo "$result" | set_clipboard  
+  printf "%s\n" "$result"
+  printf "%s\n" "$result" | set_clipboard
   rm -f "$tmpfile" "$previewscript"
 }
 
 # Generate environment variable blocks for preview
 _gen_env_block() {
   env | sort | while IFS='=' read -r name value; do
-    echo "$FZF_DEF_DELIM"
-    echo "🌱 $name"
+    printf "%s\n" "$FZF_DEF_DELIM"
+    printf "🌱 %s\n" "$name"
     printenv "$name" | sed 's/^/  /'
-    echo "$FZF_DEF_DELIM_END"
-    echo ""
+    printf "%s\n\n" "$FZF_DEF_DELIM_END"
   done
 }
 
@@ -321,11 +284,10 @@ fzf-env() {
 # Generate alias definition blocks for preview
 _gen_alias_block() {
   alias | sort | while IFS='=' read -r name raw; do
-    echo "$FZF_DEF_DELIM"
-    echo "🔗 $name"
+    printf "%s\n" "$FZF_DEF_DELIM"
+    printf "🔗 %s\n" "$name"
     alias "$name" | sed -E "s/^$name=//; s/^['\"](.*)['\"]$/\1/"
-    echo "$FZF_DEF_DELIM_END"
-    echo ""
+    printf "%s\n\n" "$FZF_DEF_DELIM_END"
   done
 }
 
@@ -337,11 +299,10 @@ fzf-alias() {
 # Generate function blocks for preview from defined shell functions
 _gen_function_block() {
   for fn in ${(k)functions}; do
-    echo "$FZF_DEF_DELIM"
-    echo "🔧 $fn"
+    printf "%s\n" "$FZF_DEF_DELIM"
+    printf "🔧 %s\n" "$fn"
     functions "$fn" 2>/dev/null
-    echo "$FZF_DEF_DELIM_END"
-    echo ""
+    printf "%s\n\n" "$FZF_DEF_DELIM_END"
   done
 }
 
@@ -391,17 +352,15 @@ fzf-fdd() {
 }
 
 # ────────────────────────────────────────────────────
-# Main fzf-tools command
+# Main fzf-tools command dispatcher and help menu
 # ────────────────────────────────────────────────────
-
-# Dispatcher and help menu for various fzf-based utilities
 fzf-tools() {
   typeset cmd="$1"
 
   if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
-    echo "Usage: fzf-tools <command> [args...]"
-    echo ""
-    echo "Commands:"
+    printf "%s\n" "Usage: fzf-tools <command> [args...]"
+    printf "\n"
+    printf "%s\n" "Commands:"
     printf "  %-18s %s\n" \
       file "Search and preview text files" \
       vscode "Search and preview text files in VSCode" \
@@ -417,7 +376,7 @@ fzf-tools() {
       alias "Browse shell aliases" \
       functions "Browse defined shell functions" \
       defs "Browse all definitions (env, alias, functions)"
-    echo ""
+    printf "\n"
     return 0
   fi
 
@@ -439,8 +398,8 @@ fzf-tools() {
     functions)        fzf-functions "$@" ;;
     defs)             fzf-defs "$@" ;;
     *)
-      echo "❗ Unknown command: $cmd"
-      echo "Run 'fzf-tools help' for usage."
+      printf "❗ Unknown command: %s\n" "$cmd"
+      printf "Run 'fzf-tools help' for usage.\n"
       return 1 ;;
   esac
 }
