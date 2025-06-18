@@ -16,8 +16,3 @@ path=(
 if [ -x /opt/homebrew/bin/brew ]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
-
-# Load optional login shell config
-[[ -f "$ZDOTDIR/scripts/login.sh" ]] && source "$ZDOTDIR/scripts/login.sh"
-
-# export ZSH_DEBUG=1
