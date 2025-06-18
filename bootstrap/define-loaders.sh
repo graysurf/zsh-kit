@@ -8,11 +8,17 @@ load_with_timing() {
   [[ ! -f "$file" ]] && return
 
   typeset start_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
-  [[ -n "$ZSH_DEBUG" ]] && printf "🔍 Loading: %s\n" "$file"
+
+  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
+    printf "🔍 Loading: %s\n" "$file"
+  fi
+
   source "$file"
+
   typeset end_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
   typeset duration=$((end_time - start_time))
 
+  # ✅ Always show timing
   printf "✅ Loaded %s in %dms\n" "$label" "$duration"
 }
 
@@ -39,30 +45,30 @@ load_script_group() {
   typeset group_name="$1"
   typeset base_dir="$2"
   shift 2
-  typeset -a exclude=("$@")  # Exclusion list
+  typeset -a exclude=("$@")
 
   typeset -a all_scripts filtered_scripts
-
   all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
 
-  if (( ${+ZSH_DEBUG} )); then
+  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
     printf "🗂 Loading group: %s\n" "$group_name"
     printf "🔽 Base: %s\n" "$base_dir"
     printf "🚫 Exclude:\n"
     for ex in "${exclude[@]}"; do
       printf "   - %s\n" "$ex"
     done
-    if [[ "$ZSH_DEBUG" -ge 2 ]]; then
-      printf "📦 All collected scripts:\n"
-      printf '   • %s\n' "${all_scripts[@]}"
-    fi
+  fi
+
+  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
+    printf "📦 All collected scripts:\n"
+    printf '   • %s\n' "${all_scripts[@]}"
   fi
 
   filtered_scripts=(${(f)"$(
     printf "%s\n" "${all_scripts[@]}" | grep -vFxf <(printf "%s\n" "${exclude[@]}")
   )"})
 
-  if [[ "$ZSH_DEBUG" -ge 2 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
     printf "✅ Scripts after filtering:\n"
     printf '   → %s\n' "${filtered_scripts[@]}"
   fi
