@@ -14,29 +14,44 @@ alias fv='fzf-vscode'
 # ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
+
 # Fuzzy select and kill a process (simple fallback)
 fzf-process() {
-  local kill_mode="$1"
+  local kill_mode=false
+  [[ "$1" == "--kill" || "$1" == "-k" ]] && kill_mode=true
+
   local line
+  line=$(ps -eo user,pid,ppid,pcpu,pmem,stat,lstart,time,args | sed 1d | \
+    fzf -m \
+      --preview-window='right:30%:wrap' \
+      --preview='echo {} | awk '\''{
+        uid  = $1;
+        pid  = $2;
+        ppid = $3;
+        cpu  = $4;
+        mem  = $5;
+        stat = $6;
+        start = sprintf("%s %s %s %s %s", $7, $8, $9, $10, $11);
+        time = $12;
+        cmd  = "";
+        for (i=13; i<=NF; i++) cmd = cmd $i " ";
 
-  line=$(ps -ef | sed 1d | fzf -m --preview 'echo {}') || return
+        printf "👤 UID\n%s\n\n", uid;
+        printf "🔢 PID\n%s\n\n", pid;
+        printf "👪 PPID\n%s\n\n", ppid;
+        printf "🔥 CPU%%\n%s\n\n", cpu;
+        printf "💾 MEM%%\n%s\n\n", mem;
+        printf "📊 STAT\n%s\n\n", stat;
+        printf "🕒 STARTED\n%s\n\n", start;
+        printf "⌚ TIME\n%s\n\n", time;
+        printf "💬 CMD\n%s\n", cmd;
+      }'\''') || return
 
-  local pids=$(echo "$line" | awk '{print $2}')
-
-  if [[ "$kill_mode" == "--kill" && -n "$pids" ]]; then
-    echo "$pids" | xargs kill -9
-  fi
-}
-
-# Select and kill one or more processes interactively using fzf and `kill -9`
-fzf-kill-process() {
-  local line pids
-
-  line=$(ps -ef | sed 1d | fzf -m --preview 'echo {}') || return
-
+  local pids
   pids=$(echo "$line" | awk '{print $2}')
 
-  if [[ -n "$pids" ]]; then
+  if $kill_mode && [[ -n "$pids" ]]; then
+    printf "☠️  Killing PID(s): %s\n" "$pids"
     echo "$pids" | xargs kill -9
   fi
 }
@@ -370,7 +385,6 @@ fzf-tools() {
       git-commit "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
       process "Browse and kill running processes (view-only by default)" \
-      kill-process "Select and kill processes immediately" \
       history "Search and execute command history" \
       env "Browse environment variables" \
       alias "Browse shell aliases" \
@@ -391,7 +405,6 @@ fzf-tools() {
     git-commit)       fzf-git-commit "$@" ;;
     git-checkout)     fzf-git-checkout "$@" ;;
     process)          fzf-process "$@" ;;
-    kill-process)     fzf-kill-process "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;

@@ -11,7 +11,6 @@ commands=(
   'git-commit:Browse commits and open changed files in VSCode'
   'git-checkout:Pick and checkout a previous commit'
   'process:Browse and kill running processes'
-  'kill-process:Select and kill processes immediately'
   'history:Search and execute command history'
   'env:Browse environment variables'
   'alias:Browse shell aliases'
