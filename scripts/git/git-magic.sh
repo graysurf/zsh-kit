@@ -4,7 +4,7 @@
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
     gcp gcpo gcapo gcapf gcapfo gcapff gcapffo \
-    gpc gpcp gpcpf gpcff gpcpo gpcpfo gpcpffo \
+    gpc gpcp gpcpf gpcpff gpcpo gpcpfo gpcpffo \
     gpca gpcap gpcapf gpcapff gpcapo gpcapfo gpcapffo
 fi
 
@@ -40,7 +40,7 @@ alias gpcp='git commit -F <(get_clipboard) && git push'
 # Commit using clipboard, safely force-push (safer)
 alias gpcpf='git commit -F <(get_clipboard) && git push --force-with-lease'
 # Commit using clipboard, force-push (DANGEROUS)
-alias gpcff='git commit -F <(get_clipboard) && git push -f'
+alias gpcpff='git commit -F <(get_clipboard) && git push -f'
 # Commit using clipboard, push, and open on GitHub
 alias gpcpo='git commit -F <(get_clipboard) && git push && gh-open-commit HEAD'
 # Commit using clipboard, safely force-push, and open on GitHub (safer)
