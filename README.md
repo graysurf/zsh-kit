@@ -40,6 +40,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── bootstrap.sh                      # Centralized Zsh entrypoint (called from .zshrc)
 │   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
 │   ├── plugins.sh                        # Plugin declaration + loading logic
+│   ├── quote-init.sh                     # Show emoji + quote banner on login
 │   └── install-tools.sh                  # Tool installer with dry-run and quiet support
 │
 ├── config/                               # Configuration files for third-party tools
@@ -62,7 +63,6 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── fzf-tools.sh                      # FZF-based UI helpers for git, files, processes, etc.
 │   ├── interactive.sh                    # Runtime UX (prompt, zoxide, keybindings)
 │   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration triggers
-│   ├── login.sh                          # Show emoji + quote banner on login
 │   ├── macos.sh                          # macOS-specific system tweaks
 │   └── shell-utils.sh                    # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
