@@ -107,9 +107,18 @@ _git_scope_collect() {
       typeset files all_filtered
       files=$(git ls-files)
       if [[ ${#prefixes[@]} -gt 0 ]]; then
-        for prefix in "${prefixes[@]}"; do
-          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${prefix}/")
-        done
+      for prefix in "${prefixes[@]}"; do
+        clean_prefix="${prefix%/}"
+
+        if [[ -d "$clean_prefix" ]]; then
+          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}/")
+        elif [[ -f "$clean_prefix" ]]; then
+          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep -x "$clean_prefix")
+        else
+          # fallback: partial match if neither file nor dir exists locally
+          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}")
+        fi
+      done
         files="$(printf '%s\n' "$all_filtered" | grep -v '^$' | sort -u)"
       fi
       printf '%s\n' "$files" | while IFS= read -r f; do
