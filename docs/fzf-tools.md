@@ -174,25 +174,23 @@ Shows inline diffs and lets you quickly inspect file changes.
 
 ### `fzf-tools process`
 
-🧪 View and inspect running processes (non-interactive kill)
+🥪 View and inspect running processes (non-interactive kill)
 
 ```bash
 fzf-tools process
 ```
 
-Lightweight fallback using `ps aux | fzf` for diagnostic use.
+Lightweight fallback using `ps` with fuzzy search for diagnostic use.
 
----
+#### 🔪 Kill mode
 
-### `fzf-tools kill-process`
-
-💀 Select and terminate one or more running processes
+Add `-k` or `--kill` to enter kill mode. Selected processes will be forcefully terminated.
 
 ```bash
-fzf-tools kill-process
+fzf-tools process -k
 ```
 
-Uses `ps` and `xargs kill`, with support for multiselect.
+This runs `kill -9` on selected PID(s). Useful for terminating frozen or rogue processes.
 
 ---
 
