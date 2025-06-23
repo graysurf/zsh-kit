@@ -114,7 +114,7 @@ fzf-git-checkout() {
         --delimiter=' ' \
         --with-nth=2.. \
         --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
-        --preview='git-scope commit {1} | sed "s/^📅.*/&\\n/"' |
+        --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' |
     awk '{print $1}')
 
   [[ -z "$ref" ]] && return
@@ -162,7 +162,7 @@ fzf-git-commit() {
           --preview-window='right:50%:wrap' \
           --query="$commit_query" \
           --print-query \
-          --preview='git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\\n/"')
+          --preview='git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\n/"')
 
     [[ -z "$result" ]] && return
 

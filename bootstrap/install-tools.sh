@@ -36,24 +36,24 @@ for arg in "$@"; do
       QUIET=true
       ;;
     *)
-      printf "❌ Unknown option: %s\\n" "$arg"
-      printf "Usage: %s [--dry-run] [--quiet]\\n" "$0"
+      printf "❌ Unknown option: %s\n" "$arg"
+      printf "Usage: %s [--dry-run] [--quiet]\n" "$0"
       exit 1
       ;;
   esac
 done
 
 if [ ! -f "$TOOLS_LIST" ]; then
-  printf "❌ tools.list not found at %s\\n" "$TOOLS_LIST"
+  printf "❌ tools.list not found at %s\n" "$TOOLS_LIST"
   exit 1
 fi
 
 if [ "$DRY_RUN" = true ]; then
-  printf "🧪 DRY RUN mode enabled — no installations will be performed\\n"
+  printf "🧪 DRY RUN mode enabled — no installations will be performed\n"
 fi
 
 if [ "$QUIET" = true ]; then
-  printf "🔇 QUIET mode enabled — suppressing brew output\\n"
+  printf "🔇 QUIET mode enabled — suppressing brew output\n"
 fi
 
 # Scan for missing tools (only if not dry-run)
@@ -69,25 +69,25 @@ if [ "$DRY_RUN" != true ]; then
   done < "$TOOLS_LIST"
 
   if (( ${#missing[@]} > 0 )); then
-    printf "📦 The following tools are missing and will be installed via Homebrew:\\n"
+    printf "📦 The following tools are missing and will be installed via Homebrew:\n"
     for tool in "${missing[@]}"; do
-      printf "  - %s\\n" "$tool"
+      printf "  - %s\n" "$tool"
     done
-    printf "\\n"
-    printf "🛠  You can run this script with --dry-run to preview without installing.\\n"
+    printf "\n"
+    printf "🛠  You can run this script with --dry-run to preview without installing.\n"
     printf "❓ Proceed with installation? [y/N]: "
     read -r confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-      printf "❌ Aborted by user.\\n"
+      printf "❌ Aborted by user.\n"
       exit 1
     fi
   else
-    printf "✅ All tools are already installed. Nothing to do.\\n"
+    printf "✅ All tools are already installed. Nothing to do.\n"
     exit 0
   fi
 fi
 
-printf "🔍 Checking and installing CLI tools via Homebrew...\\n"
+printf "🔍 Checking and installing CLI tools via Homebrew...\n"
 
 # Counters
 installed=0
@@ -103,39 +103,39 @@ while IFS= read -r line; do
   printf "🔧 %-12s " "$tool"
 
   if command -v "$tool" >/dev/null 2>&1; then
-    printf "✓ Already installed\\n"
+    printf "✓ Already installed\n"
     ((skipped++))
     continue
   fi
 
   if [ "$DRY_RUN" = true ]; then
-    printf "💤 Skipped due to dry-run (%s)\\n" "$brew_name"
+    printf "💤 Skipped due to dry-run (%s)\n" "$brew_name"
     continue
   else
-    printf "➕ Will install (%s)...\\n" "$brew_name"
+    printf "➕ Will install (%s)...\n" "$brew_name"
   fi
 
   if [ "$QUIET" = true ]; then
     if brew install "$brew_name" >/dev/null 2>&1; then
-      printf "✅ %s installed\\n" "$tool"
+      printf "✅ %s installed\n" "$tool"
       ((installed++))
     else
-      printf "❌ Failed to install %s\\n" "$tool"
+      printf "❌ Failed to install %s\n" "$tool"
       ((failed++))
     fi
   else
     if brew install "$brew_name"; then
-      printf "✅ %s installed\\n" "$tool"
+      printf "✅ %s installed\n" "$tool"
       ((installed++))
     else
-      printf "❌ Failed to install %s\\n" "$tool"
+      printf "❌ Failed to install %s\n" "$tool"
       ((failed++))
     fi
   fi
 done < "$TOOLS_LIST"
 
-printf "\\n"
-printf "🧾 Install Summary:\\n"
-printf "   ✅ Installed: %d\\n" "$installed"
-printf "   ⏭ Skipped:   %d\\n" "$skipped"
-printf "   ❌ Failed:    %d\\n" "$failed"
+printf "\n"
+printf "🧾 Install Summary:\n"
+printf "   ✅ Installed: %d\n" "$installed"
+printf "   ⏭ Skipped:   %d\n" "$skipped"
+printf "   ❌ Failed:    %d\n" "$failed"
