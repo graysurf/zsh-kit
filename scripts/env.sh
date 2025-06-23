@@ -23,24 +23,26 @@ export FZF_DEF_DELIM
 : "${FZF_DEF_DELIM_END:="[FZF-DEF-END]"}"
 export FZF_DEF_DELIM_END
 
-# Apply Night Owl lowlight theme for fzf (color config only)
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
+# Night Owl Theme
+FZF_THEME_OPTS="\
   --color=fg:#d6deeb,bg:#011627,hl:#82aaff \
   --color=fg+:#ffffff,bg+:#1d3b53,hl+:#c792ea \
   --color=info:#7fdbca,prompt:#ffcb6b,pointer:#f78c6c \
   --color=marker:#addb67,spinner:#ecc48d,header:#637777 \
   --color=border:#1d3b53"
 
-# Ensure FZF_DEFAULT_OPTS is initialized
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-  --preview-window=$FZF_PREVIEW_WINDOW \
+# Key binds & Preview Controls
+FZF_PREVIEW_OPTS="\
+  --no-mouse \
+  --preview-window=${FZF_PREVIEW_WINDOW:-right:50%:wrap} \
   --bind=ctrl-j:preview-down \
   --bind=ctrl-k:preview-up \
   --bind=ctrl-b:preview-page-up \
   --bind=ctrl-f:preview-page-down \
   --bind=ctrl-h:preview-top \
   --bind=ctrl-l:preview-bottom"
-export FZF_DEFAULT_OPTS
+
+export FZF_DEFAULT_OPTS="$FZF_THEME_OPTS $FZF_PREVIEW_OPTS"
 
 export FZF_CTRL_T_COMMAND='fd --type f -t d --hidden --follow --exclude .git -E .cache'
 export FZF_CTRL_T_OPTS="--preview 'bat --color \"always\" {}'"
