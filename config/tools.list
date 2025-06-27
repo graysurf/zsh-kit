@@ -8,6 +8,7 @@ fd::fd::Fast find (fzf helper)
 fzf::fzf::Fuzzy finder
 gh::gh::GitHub CLI
 git::git::Core version control
+mactop::mactop::Apple Silicon Monitor Top
 rg::ripgrep::Fast grep engine
 tree::tree::Directory structure view
 zoxide::zoxide::Smart cd

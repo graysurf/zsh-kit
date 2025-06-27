@@ -1,3 +1,11 @@
+# ───────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias \
+    mactop
+fi
+
 # ────────────────────────────────────────────────────────
 # PATH setup for macOS tools (Homebrew + VSCode CLI)
 # ────────────────────────────────────────────────────────
@@ -23,3 +31,7 @@ export SHELL_SESSIONS_DISABLE=1
 alias f='open'  # Quick open file or dir with default macOS app
 
 alias hidpi='bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"'
+
+export mactop() {
+  sudo /opt/homebrew/bin/mactop --color cyan
+}
