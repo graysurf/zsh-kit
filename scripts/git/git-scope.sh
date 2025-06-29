@@ -85,52 +85,49 @@ _git_scope_collect() {
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -p|--print)
-        _git_scope_should_print=true ;;
-      *)
-        args+=("$1") ;;
+      -p|--print) _git_scope_should_print=true ;;
+      *) args+=("$1") ;;
     esac
     shift
   done
 
   case "$mode" in
     staged)
-      git diff --cached --name-status --diff-filter=ACMRTUXB ;;
+      git -c core.quotepath=false diff --cached --name-status --diff-filter=ACMRTUXB ;;
     modified)
-      git diff --name-status --diff-filter=ACMRTUXB ;;
+      git -c core.quotepath=false diff --name-status --diff-filter=ACMRTUXB ;;
     all)
       printf "%s\n%s" \
-        "$(git diff --cached --name-status --diff-filter=ACMRTUXB)" \
-        "$(git diff --name-status --diff-filter=ACMRTUXB)" | grep -v '^$' | sort -u ;;
+        "$(git -c core.quotepath=false diff --cached --name-status --diff-filter=ACMRTUXB)" \
+        "$(git -c core.quotepath=false diff --name-status --diff-filter=ACMRTUXB)" \
+        | grep -v '^$' | sort -u ;;
     tracked)
       typeset -a prefixes=("${args[@]}")
       typeset files all_filtered
-      files=$(git ls-files)
+      files=$(git -c core.quotepath=false ls-files)
       if [[ ${#prefixes[@]} -gt 0 ]]; then
-      for prefix in "${prefixes[@]}"; do
-        clean_prefix="${prefix%/}"
-
-        if [[ -d "$clean_prefix" ]]; then
-          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}/")
-        elif [[ -f "$clean_prefix" ]]; then
-          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep -x "$clean_prefix")
-        else
-          # fallback: partial match if neither file nor dir exists locally
-          all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}")
-        fi
-      done
+        for prefix in "${prefixes[@]}"; do
+          clean_prefix="${prefix%/}"
+          if [[ -d "$clean_prefix" ]]; then
+            all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}/")
+          elif [[ -f "$clean_prefix" ]]; then
+            all_filtered+=$'\n'$(printf '%s\n' "$files" | grep -x "$clean_prefix")
+          else
+            all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}")
+          fi
+        done
         files="$(printf '%s\n' "$all_filtered" | grep -v '^$' | sort -u)"
       fi
       printf '%s\n' "$files" | while IFS= read -r f; do
         [[ -n "$f" ]] && printf "-\t%s\n" "$f"
       done ;;
     untracked)
-      git ls-files --others --exclude-standard | while IFS= read -r f; do
+      git -c core.quotepath=false ls-files --others --exclude-standard | while IFS= read -r f; do
         [[ -n "$f" ]] && printf "U\t%s\n" "$f"
       done ;;
     commit)
       typeset commit="${args[1]}"
-      git show --pretty=format: --name-status "$commit" ;;
+      git -c core.quotepath=false show --pretty=format: --name-status "$commit" ;;
     *)
       printf "⚠️ Unknown collect mode: %s\n" "$mode" >&2
       return 1 ;;
