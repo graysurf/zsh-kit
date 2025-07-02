@@ -40,7 +40,9 @@ FZF_PREVIEW_OPTS="\
   --bind=ctrl-b:preview-page-up \
   --bind=ctrl-f:preview-page-down \
   --bind=ctrl-h:preview-top \
-  --bind=ctrl-l:preview-bottom"
+  --bind=ctrl-l:preview-bottom \
+  --bind=home:first \
+  --bind=end:last"
 
 export FZF_DEFAULT_OPTS="$FZF_THEME_OPTS $FZF_PREVIEW_OPTS"
 
