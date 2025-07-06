@@ -62,7 +62,6 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── eza.sh                            # Aliases for eza (modern ls)
 │   ├── fzf-tools.sh                      # FZF-based UI helpers for git, files, processes, etc.
 │   ├── interactive.sh                    # Runtime UX (prompt, zoxide, keybindings)
-│   ├── iterm2_shell_integration.zsh      # iTerm2 shell integration triggers
 │   ├── macos.sh                          # macOS-specific system tweaks
 │   └── shell-utils.sh                    # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
