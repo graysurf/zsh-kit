@@ -126,6 +126,30 @@ Select a past commit and checkout to it. If local changes block it, you’ll be 
 
 ---
 
+### `fzf-tools git-branch`
+
+🌿 Browse and checkout Git branches interactively with preview and confirmation
+
+```bash
+fzf-tools git-branch
+```
+
+Presents a list of local branches, sorted by most recent activity. The current branch is marked with `*`. Use fuzzy search to pick a branch.
+
+---
+
+### `fzf-tools git-tag`
+
+🏷️  Browse and checkout Git tags interactively with preview and confirmation
+
+```bash
+fzf-tools git-tag
+```
+
+Lists all tags in your repository, sorted by creation date (most recent first). Use fuzzy search to select a tag.
+
+---
+
 ### `fzf-tools history`
 
 📜 Search and run from recent shell commands
