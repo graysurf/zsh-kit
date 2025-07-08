@@ -220,24 +220,12 @@ This runs `kill -9` on selected PID(s). Useful for terminating frozen or rogue p
 
 ---
 
-### `fzf-tools fdf`
-
-📄 Fuzzy-find and open a file with `$EDITOR`
-
-```bash
-fzf-tools fdf
-```
-
-Search hidden files and follow symlinks, previewing each with `bat`.
-
----
-
-### `fzf-tools fdd`
+### `fzf-tools directory`
 
 📁 Fuzzy-find a directory and cd into it
 
 ```bash
-fzf-tools fdd
+fzf-tools directory
 ```
 
 Previews directory contents using `eza`, or falls back to `ls`.

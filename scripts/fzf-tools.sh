@@ -16,9 +16,7 @@ fzf-git-branch() {
         branch=$(echo {} | sed "s/^[* ]*//")
         [[ -z "$branch" ]] && exit 0
         git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
-         --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"
-      ' \
-      --header="Select a branch (current marked with *). Preview shows latest 5 commits." \
+         --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"' \
   )
   [[ -z "$selected" ]] && return 1
 
@@ -443,26 +441,12 @@ fzf-defs() {
 }
 
 # ────────────────────────────────────────────────────────
-# Select a file using `fd` and `fzf`, then open it with $EDITOR
-# - Shows hidden files and follows symlinks
-# - Uses `bat` for preview (requires bat installed)
-# - Falls back cleanly if no file is selected
-# ────────────────────────────────────────────────────────
-fzf-fdf() {
-  typeset file
-  file=$(fd --type f --hidden --follow --exclude .git \
-    | fzf --ansi --preview 'bat --style=numbers --color=always --line-range :100 {}')
-
-  [[ -n "$file" ]] && "${EDITOR:-nvim}" "$file"
-}
-
-# ────────────────────────────────────────────────────────
 # Select a directory using `fd` and `fzf`, then cd into it
 # - Shows hidden directories and follows symlinks
 # - Uses `eza` to preview contents (fallback to `ls` if not available)
 # - Falls back cleanly if no directory is selected
 # ────────────────────────────────────────────────────────
-fzf-fdd() {
+fzf-directory() {
   typeset dir
   dir=$(fd --type d --hidden --follow --exclude .git \
     | fzf --ansi --preview 'command -v eza >/dev/null && eza -alhT --level=2 --color=always {} || ls -la {}')
@@ -483,8 +467,7 @@ fzf-tools() {
     printf "  %-18s %s\n" \
       file "Search and preview text files" \
       vscode "Search and preview text files in VSCode" \
-      fdf "Search files and open with \$EDITOR" \
-      fdd "Search directories and cd into selection" \
+      directory "Search directories and cd into selection" \
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
@@ -505,8 +488,7 @@ fzf-tools() {
   case "$cmd" in
     file)             fzf-file "$@" ;;
     vscode)           fzf-vscode "$@" ;;
-    fdf)              fzf-fdf "$@" ;;
-    fdd)              fzf-fdd "$@" ;;
+    directory)        fzf-directory "$@" ;;
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;
     git-checkout)     fzf-git-checkout "$@" ;;

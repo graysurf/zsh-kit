@@ -5,8 +5,7 @@ typeset -a commands
 commands=(
   'file:Search and preview text files'
   'vscode:Search and preview text files in VSCode'
-  'fdf:Search files and open with $EDITOR'
-  'fdd:Search directories and cd into selection'
+  'directory:Search directories and cd into selection'
   'git-status:Interactive git status viewer'
   'git-commit:Browse commits and open changed files in VSCode'
   'git-checkout:Pick and checkout a previous commit'

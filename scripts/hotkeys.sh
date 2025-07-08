@@ -24,10 +24,9 @@ fzf-tools-launcher-widget() {
 📦 defs:          Browse all definitions (env, alias, functions)
 🧪 process:       Browse and kill running processes
 📜 history:       Search and execute command history
+📁 directory:     Search directories and cd into selection
 📝 file:          Search and preview text files
 🧠 vscode:        Search and preview text files in VSCode
-📄 fdf:           Search files and open with \$EDITOR
-📁 fdd:           Search directories and cd into selection
 EOF
   ) || return
 
