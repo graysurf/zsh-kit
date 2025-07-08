@@ -16,6 +16,7 @@ fzf-tools-launcher-widget() {
 🔍 git-commit:    Browse commits and open changed files in VSCode
 📂 git-status:    Interactive git status viewer
 🌀 git-checkout:  Pick and checkout a previous commit
+🌿 git-branch:    Browse and checkout branches interactively
 🌱 env:           Browse environment variables
 🔗 alias:         Browse shell aliases
 🔧 functions:     Browse defined shell functions
@@ -126,4 +127,3 @@ fzf-history-widget() {
 # Register ZLE widget and bind to Ctrl+R
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
-

@@ -1,3 +1,44 @@
+# Fuzzy select a git branch and checkout with preview and confirmation
+fzf-git-branch() {
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    printf "❌ Not inside a Git repository. Aborting.\n" >&2
+    return 1
+  fi
+
+  # List local branches, strip '* ' from current, but show it
+  local selected
+  selected=$(git branch --color=always --sort=-committerdate | \
+    sed 's/^..//' | \
+    fzf --ansi --reverse \
+      --prompt="🌿 Branch > " \
+      --preview-window="right:60%:wrap" \
+      --preview='
+        branch=$(echo {} | sed "s/^[* ]*//")
+        [[ -z "$branch" ]] && exit 0
+        git log -n 100 --graph --color=always --decorate --abbrev-commit --date=format:"%Y-%m-%d %H:%M" \
+         --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"
+      ' \
+      --header="Select a branch (current marked with *). Preview shows latest 5 commits." \
+  )
+  [[ -z "$selected" ]] && return 1
+
+  # Remove any leading '*' and spaces
+  local branch
+  branch=$(echo "$selected" | sed 's/^[* ]*//')
+
+  printf "🚚 Checkout to branch '%s'? [y/N] " "$branch"
+  local confirm
+  read -r confirm
+  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+
+  if git checkout "$branch"; then
+    printf "✅ Checked out to %s\n" "$branch"
+    return 0
+  else
+    printf "⚠️  Checkout to '%s' failed. Likely due to local changes or conflicts.\n" "$branch"
+    return 1
+  fi
+}
 # ────────────────────────────────────────────────────────
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
@@ -396,6 +437,7 @@ fzf-tools() {
       git-status "Interactive git status viewer" \
       git-commit "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
+      git-branch "Browse and checkout branches interactively" \
       process "Browse and kill running processes (view-only by default)" \
       history "Search and execute command history" \
       env "Browse environment variables" \
@@ -416,6 +458,7 @@ fzf-tools() {
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;
     git-checkout)     fzf-git-checkout "$@" ;;
+    git-branch)       fzf-git-branch "$@" ;;
     process)          fzf-process "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;

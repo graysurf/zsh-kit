@@ -10,6 +10,7 @@ commands=(
   'git-status:Interactive git status viewer'
   'git-commit:Browse commits and open changed files in VSCode'
   'git-checkout:Pick and checkout a previous commit'
+  'git-branch:Browse and checkout branches interactively'
   'process:Browse and kill running processes'
   'history:Search and execute command history'
   'env:Browse environment variables'
