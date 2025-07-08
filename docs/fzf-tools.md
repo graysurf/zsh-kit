@@ -170,6 +170,8 @@ Great for recalling complex or recently used one-liners without retyping.
 fzf-tools file
 ```
 
+Search for any file in your project, preview its contents with syntax highlighting, and open it in `vi` with one keystroke.
+
 ---
 
 ### `fzf-tools vscode`
