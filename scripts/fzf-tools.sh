@@ -105,17 +105,31 @@ fzf-git-status() {
     --bind=ctrl-k:preview-up 
 }
 
-# FZF pick a commit and checkout to it
-fzf-git-checkout() {
-  typeset ref
+# Common helper to select a commit with fzf and preview
+__fzf_select_commit() {
+  local query="${1:-}"
+  local result
   result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
     --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
     fzf --ansi --reverse \
         --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
         --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
-        --print-query)
+        --print-query \
+        --query="$query")
 
   [[ -z "$result" ]] && return 1
+
+  # Return the full result with query line and selected commit line
+  printf "%s\n" "$result"
+  return 0
+}
+
+# FZF pick a commit and checkout to it
+fzf-git-checkout() {
+  local ref
+  local confirm
+  local result
+  result=$(__fzf_select_commit) || return 1
 
   ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
@@ -132,10 +146,10 @@ fzf-git-checkout() {
   read -r confirm
   [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
 
-  typeset timestamp subject
+  local timestamp subject
   timestamp=$(date +%F_%H%M)
   subject=$(git log -1 --pretty=%s HEAD)
-  typeset stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
+  local stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
 
   git stash push -u -m "$stash_msg"
   printf "📦 Changes stashed: %s\n" "$stash_msg"
@@ -149,8 +163,8 @@ fzf-git-commit() {
     return 1
   fi
 
-  typeset input_ref="$1"
-  typeset full_hash commit file tmp commit_query commit_query_restore
+  local input_ref="$1"
+  local full_hash commit file tmp commit_query commit_query_restore
   commit_query=""
 
   if [[ -n "$input_ref" ]]; then
@@ -160,19 +174,13 @@ fzf-git-commit() {
   fi
 
   while true; do
-    result=$(git log --oneline --color=always --decorate --date='format:%m-%d %H:%M' \
-      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
-      fzf --ansi --reverse \
-          --preview-window='right:50%:wrap' \
-          --query="$commit_query" \
-          --print-query \
-          --preview='git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\n/"')
-
-    [[ -z "$result" ]] && return 1
+    local result
+    result=$(__fzf_select_commit "$commit_query") || return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
+    local stats_list file_list color stat_line
     stats_list=$(git show --numstat --format= "$commit")
     file_list=()
 
