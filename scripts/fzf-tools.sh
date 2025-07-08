@@ -115,7 +115,7 @@ fzf-git-checkout() {
         --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
         --print-query)
 
-  [[ -z "$result" ]] && return
+  [[ -z "$result" ]] && return 1
 
   ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
@@ -168,7 +168,7 @@ fzf-git-commit() {
           --print-query \
           --preview='git-scope commit $(echo {} | awk "{print \$1}") | tail -n +2 | sed "s/^📅.*/&\n/"')
 
-    [[ -z "$result" ]] && return
+    [[ -z "$result" ]] && return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
