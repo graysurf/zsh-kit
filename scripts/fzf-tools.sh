@@ -108,16 +108,20 @@ fzf-git-status() {
 # FZF pick a commit and checkout to it
 fzf-git-checkout() {
   typeset ref
-  ref=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
+  result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
     --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
     fzf --ansi --reverse \
-        --delimiter=' ' \
-        --with-nth=2.. \
         --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
-        --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' |
-    awk '{print $1}')
+        --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
+        --print-query)
 
-  [[ -z "$ref" ]] && return
+  [[ -z "$result" ]] && return
+
+  ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
+
+  printf "🚚 Checkout to commit %s? [y/N] " "$ref"
+  read -r confirm
+  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
 
   if git checkout "$ref"; then
     return 0
