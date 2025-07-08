@@ -15,7 +15,7 @@ fzf-git-branch() {
       --preview='
         branch=$(echo {} | sed "s/^[* ]*//")
         [[ -z "$branch" ]] && exit 0
-        git log -n 100 --graph --color=always --decorate --abbrev-commit --date=format:"%Y-%m-%d %H:%M" \
+        git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
          --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"
       ' \
       --header="Select a branch (current marked with *). Preview shows latest 5 commits." \
@@ -36,6 +36,56 @@ fzf-git-branch() {
     return 0
   else
     printf "⚠️  Checkout to '%s' failed. Likely due to local changes or conflicts.\n" "$branch"
+    return 1
+  fi
+}
+
+# Fuzzy select a git tag and checkout with preview and confirmation (rewritten to match fzf-git-branch)
+fzf-git-tag() {
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    printf "❌ Not inside a Git repository. Aborting.\n" >&2
+    return 1
+  fi
+
+  # List tags, sorted by most recent
+  local selected
+  selected=$(git tag --sort=-creatordate | \
+    fzf --ansi --reverse \
+      --prompt="🏷️  Tag > " \
+      --preview-window="right:60%:wrap" \
+      --preview='
+        tag=$(echo {} | sed "s/^[* ]*//")
+        [[ -z "$tag" ]] && exit 0
+        hash=$(git rev-parse --verify --quiet "${tag}^{commit}")
+        [[ -z "$hash" ]] && echo "❌ Could not resolve tag to commit." && exit 0
+        git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
+          --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$hash"
+      ' \
+  )
+  [[ -z "$selected" ]] && return 1
+
+  # Remove any leading '*' and spaces (shouldn't be present for tags, but for symmetry)
+  local tag
+  tag=$(echo "$selected" | sed 's/^[* ]*//')
+
+  # Pre-resolve tag to commit hash for preview and checkout
+  local hash
+  hash=$(get_commit_hash "$tag" 2>/dev/null)
+  if [[ -z "$hash" ]]; then
+    printf "❌ Could not resolve tag '%s' to a commit hash.\n" "$tag"
+    return 1
+  fi
+
+  printf "🚚 Checkout to tag '%s'? [y/N] " "$tag"
+  local confirm
+  read -r confirm
+  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+
+  if git checkout "$hash"; then
+    printf "✅ Checked out to tag %s (commit %s)\n" "$tag" "$hash"
+    return 0
+  else
+    printf "⚠️  Checkout to tag '%s' failed. Likely due to local changes or conflicts.\n" "$tag"
     return 1
   fi
 }
@@ -153,6 +203,7 @@ __fzf_select_commit() {
   result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
     --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
     fzf --ansi --reverse \
+        --prompt="🌀 Commit > " \
         --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
         --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
         --print-query \
@@ -438,6 +489,7 @@ fzf-tools() {
       git-commit "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
       git-branch "Browse and checkout branches interactively" \
+      git-tag "Browse and checkout tags interactively" \
       process "Browse and kill running processes (view-only by default)" \
       history "Search and execute command history" \
       env "Browse environment variables" \
@@ -459,6 +511,7 @@ fzf-tools() {
     git-commit)       fzf-git-commit "$@" ;;
     git-checkout)     fzf-git-checkout "$@" ;;
     git-branch)       fzf-git-branch "$@" ;;
+    git-tag)          fzf-git-tag "$@" ;;
     process)          fzf-process "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;

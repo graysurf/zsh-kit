@@ -17,6 +17,7 @@ fzf-tools-launcher-widget() {
 📂 git-status:    Interactive git status viewer
 🌀 git-checkout:  Pick and checkout a previous commit
 🌿 git-branch:    Browse and checkout branches interactively
+🏷️ git-tag:       Browse and checkout git tags interactively
 🌱 env:           Browse environment variables
 🔗 alias:         Browse shell aliases
 🔧 functions:     Browse defined shell functions
