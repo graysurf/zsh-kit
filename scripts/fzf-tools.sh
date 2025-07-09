@@ -172,11 +172,11 @@ _fzf_file_select() {
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
 }
 
-# Fuzzy search a file and open it with vi
+# Fuzzy search a file and open it with $EDITOR
 fzf-file() {
   typeset file
   file=$(_fzf_file_select)
-  [[ -n "$file" ]] && vi "$file"
+  [[ -n "$file" ]] && $EDITOR "$file"
 }
 
 # Fuzzy search a file and open it with VSCode
@@ -264,7 +264,7 @@ fzf-git-commit() {
   fi
 
   while true; do
-    local result
+    local result=''
     result=$(_fzf_select_commit "$commit_query") || return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")

@@ -14,7 +14,8 @@ fi
 # Basic editors & overrides
 # ────────────────────────────────────────────────────────
 
-alias vi='nvim'
+export EDITOR="nvim"
+alias vi=$EDITOR
 
 # Override 'cd' to auto-list
 cd() {

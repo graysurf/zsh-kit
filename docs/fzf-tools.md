@@ -170,13 +170,13 @@ Great for recalling complex or recently used one-liners without retyping.
 fzf-tools file
 ```
 
-Search for any file in your project, preview its contents with syntax highlighting, and open it in `vi` with one keystroke.
+Search for any file in your project, preview its contents with syntax highlighting, and open it in `$EDITOR` with one keystroke.
 
 ---
 
 ### `fzf-tools vscode`
 
-🧠 Open a file in VSCode (instead of vi), with fuzzy selection
+🧠 Open a file in VSCode (instead of $EDITOR), with fuzzy selection
 
 ```bash
 fzf-tools vscode
