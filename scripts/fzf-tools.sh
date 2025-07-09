@@ -166,7 +166,7 @@ fzf-history() {
 # ────────────────────────────────────────────────────────
 # fzf file preview helper
 # ────────────────────────────────────────────────────────
-__fzf_file_select() {
+_fzf_file_select() {
   fd --type f --max-depth=${FZF_FILE_MAX_DEPTH:-5} --hidden 2>/dev/null |
     fzf --ansi \
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
@@ -175,14 +175,14 @@ __fzf_file_select() {
 # Fuzzy search a file and open it with vi
 fzf-file() {
   typeset file
-  file=$(__fzf_file_select)
+  file=$(_fzf_file_select)
   [[ -n "$file" ]] && vi "$file"
 }
 
 # Fuzzy search a file and open it with VSCode
 fzf-vscode() {
   typeset file
-  file=$(__fzf_file_select)
+  file=$(_fzf_file_select)
   [[ -n "$file" ]] && code "$file"
 }
 
@@ -195,7 +195,7 @@ fzf-git-status() {
 }
 
 # Common helper to select a commit with fzf and preview
-__fzf_select_commit() {
+_fzf_select_commit() {
   local query="${1:-}"
   local result
   result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
@@ -219,7 +219,7 @@ fzf-git-checkout() {
   local ref
   local confirm
   local result
-  result=$(__fzf_select_commit) || return 1
+  result=$(_fzf_select_commit) || return 1
 
   ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
@@ -265,7 +265,7 @@ fzf-git-commit() {
 
   while true; do
     local result
-    result=$(__fzf_select_commit "$commit_query") || return 1
+    result=$(_fzf_select_commit "$commit_query") || return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
