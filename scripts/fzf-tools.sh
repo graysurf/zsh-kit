@@ -278,8 +278,8 @@ fzf-git-commit() {
   fi
 
   local input_ref="$1"
-  local full_hash commit file tmp commit_query commit_query_restore
-  commit_query=""
+  local full_hash="" commit="" file=""
+  local tmp="" commit_query="" commit_query_restore=""
 
   if [[ -n "$input_ref" ]]; then
     full_hash=$(get_commit_hash "$input_ref")
@@ -288,15 +288,14 @@ fzf-git-commit() {
   fi
 
   while true; do
-    local result=''
+    local result=""
     result=$(_fzf_select_commit "$commit_query") || return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
-    local stats_list file_list color stat_line
+    local stats_list="" file_list=() color="" stat_line=""
     stats_list=$(git show --numstat --format= "$commit")
-    file_list=()
 
     while IFS=$'\t' read -r kind filepath; do
       [[ -z "$filepath" ]] && continue
