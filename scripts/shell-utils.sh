@@ -136,11 +136,21 @@ edit-zsh() {
 
 # ────────────────────────────────────────────────────────
 # Fuzzy cd using Yazi, then jump to selected directory
+# Wrapper: `y <dir>` jumps to <dir> via zoxide first, then launches yazi.
+# If the first argument begins with a dash (`-`) it is treated as a yazi flag.
 # ────────────────────────────────────────────────────────
-y() {
-  typeset tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+y () {
+  # Detect directory alias/keyword as the first argument (non‑flag)
+  if [[ -n "$1" && "$1" != -* ]]; then
+    local target="$1"
+    shift
+    __zoxide_z "$target"
+  fi
+
+  # Launch yazi and persist the last visited directory on exit
+  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
   yazi "$@" --cwd-file="$tmp"
-  if cwd="$(< "$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
+  if cwd="$(<"$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
     builtin cd -- "$cwd"
   fi
   rm -f -- "$tmp"
