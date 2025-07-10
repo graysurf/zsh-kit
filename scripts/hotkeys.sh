@@ -76,35 +76,6 @@ bindkey '^G' fzf-tools-git-commit-widget
 # - Bound to Ctrl+R via ZLE
 # ────────────────────────────────────────────────────────
 
-# Extract command history and strip line numbers
-fzf-history-select() {
-  local default_query="${BUFFER:-}"
-
-  iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
-  awk -F';' '
-    /^:/ {
-      if (NF < 2) next
-      split($1, meta, ":")
-      cmd = $2
-
-      if (cmd ~ /^[[:space:]]*$/) next
-      if (cmd ~ /^[[:cntrl:][:punct:][:space:]]*$/) next
-      if (cmd ~ /[^[:print:]]/) next
-
-      ts_cmd = "date -r " meta[2] " +\"%Y-%m-%d %H:%M:%S\""
-      ts_cmd | getline ts
-      close(ts_cmd)
-
-      gsub(/\\/, "\\\\", cmd)
-      printf "🕐 %s | %4d | 🖥️ %s\n", ts, NR, cmd
-    }
-  ' | fzf --ansi --reverse --height=50% \
-         --query="$default_query" \
-         --preview-window='right:40%:wrap' \
-         --preview='ts=$(cut -d"|" -f1 <<< {} | sed "s/[[:space:]]*$//"); cmd=$(cut -d"|" -f3- <<< {} | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); printf "%s\n\n%s" "$ts" "$cmd"' \
-         --expect=enter
-}
-
 fzf-history-widget() {
   local selected output cmd
 

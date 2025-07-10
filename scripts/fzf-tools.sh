@@ -145,22 +145,46 @@ fzf-process() {
   fi
 }
 
+# Extract command history and strip line numbers
+fzf-history-select() {
+  local default_query="${BUFFER:-}"
+
+  iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
+  awk -F';' '
+    /^:/ {
+      if (NF < 2) next
+      split($1, meta, ":")
+      cmd = $2
+      ts = meta[2]
+
+      if (cmd ~ /^[[:space:]]*$/) next
+      if (cmd ~ /^[[:cntrl:][:punct:][:space:]]*$/) next
+      if (cmd ~ /[^[:print:]]/) next
+
+      gsub(/\\/, "\\\\", cmd)
+      printf "%s | %4d | %s\n", ts, NR, cmd
+    }
+  ' | tac | fzf --ansi --reverse --height=50% \
+         --query="$default_query" \
+         --preview-window='right:40%:wrap' \
+         --preview='ts=$(cut -d"|" -f1 <<< {} | sed "s/[[:space:]]*$//"); \
+fts=$(date -r "$ts" "+%Y-%m-%d %H:%M:%S"); \
+cmd=$(cut -d"|" -f3- <<< {} | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); \
+printf "%s\n\n%s" "$fts" "$cmd"' \
+         --expect=enter
+}
+
 # Fuzzy search command history and execute selected entry
 fzf-history() {
-  typeset history_output
-  if [[ -n "$ZSH_NAME" ]]; then
-    history_output=$(fc -l 1)
-  else
-    history_output=$(history)
-  fi
+  local selected output cmd
 
-  typeset selected
-  selected=$(echo "$history_output" |
-    fzf +s --tac |
-    sed -E 's/ *[0-9]*\*? *//' |
-    sed -E 's/\\/\\\\/g')
+  output="$(fzf-history-select)"
+  selected="$(printf "%s\n" "$output" | sed -n '2p')"
 
-  [[ -n "$selected" ]] && eval "$selected"
+  cmd="$(printf "%s\n" "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+  cmd="$(printf "%s\n" "$cmd" | sed -E 's/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//')"
+
+  [[ -n "$cmd" ]] && eval "$cmd"
 }
 
 # ────────────────────────────────────────────────────────
