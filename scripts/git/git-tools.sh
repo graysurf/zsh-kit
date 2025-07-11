@@ -427,11 +427,31 @@ Please help generate a clear and accurate commit message using the information b
 
 ⚠️ Commit message must follow this format (used with commitlint):
 
-- Use Semantic Commit format: \`type(scope): subject\`, all lowercase, in English.
-- Enclose the message in a Markdown code block for easy copying.
-- The subject (first line) must be under 100 characters.
-- The body must detail the major changes, with each line under 100 characters.
-- Each bullet point or sentence must start with a capital letter.
+\`\`\`text
+type(scope): subject
+\`\`\`
+
+Where:
+
+- \`type\` is the kind of change (e.g., \`feat\`, \`fix\`, \`refactor\`, \`chore\`, etc.)
+- \`scope\` indicates the specific area of the codebase affected
+- \`subject\` is a short, descriptive summary of the change (lowercase, under 100 characters)
+
+Body Rules
+
+- The body must follow the header after one blank line
+- Each line must be under 100 characters
+- Each item in the body must begin with a `-` (dash)
+- Each bullet point must start with a capital letter
+- Keep each point concise and avoid redundant entries
+- Group related changes together logically
+
+---
+
+## 📐 Special Rule for File Processing
+
+- When processing shell scripts, code files, or configuration files, the entire file must be read before commenting on or modifying it.
+- It is not allowed to generate results or suggestions based on partial content alone.
 
 ---
 
