@@ -19,6 +19,7 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*'
 
 # Enable fzf-tab with styled preview menu
+zstyle ':fzf-tab:*' prefix ''
 zstyle ':fzf-tab:*' fzf-command fzf
 zstyle ':fzf-tab:*' fzf-flags  --height=60% --layout=reverse --prompt='⮕ '
 zstyle ':fzf-tab:*' ignore-case smart
