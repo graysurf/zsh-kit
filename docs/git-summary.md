@@ -58,17 +58,21 @@ Both dates must be in `YYYY-MM-DD` format.
 
 📅 Show contributions from yesterday
 
-#### `git-summary this-month`
+#### `git-summary this-week`
 
-📅 From the 1st day of the month to today
+📅 This current week (Monday to Sunday)
 
 #### `git-summary last-week`
 
 📅 Last full week (Monday to Sunday)
 
-#### `git-summary weekly`
+#### `git-summary this-month`
 
-📅 This current week (Monday to Sunday)
+📅 From the 1st day of the month to today
+
+#### `git-summary last-month`
+
+📅 Last full month
 
 ---
 
