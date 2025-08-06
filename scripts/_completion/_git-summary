@@ -6,8 +6,9 @@ _git-summary() {
     "today:Show today's git summary"
     "yesterday:Show yesterday's git summary"
     "this-month:Show this month's summary"
+    "last-month:Show summary for last month"
+    "this-week:Show summary for this week (Mon–Sun)"
     "last-week:Show summary for last week (Mon–Sun)"
-    "weekly:Show summary for this week (Mon–Sun)"
     "all:Show summary for entire git history"
     "help:Show help message"
   )

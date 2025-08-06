@@ -95,6 +95,24 @@ _git_this_month() {
   _git_summary "$start_date" "$today"
 }
 
+# Show a summary for the last full month.
+_git_last_month() {
+  typeset start_date end_date
+
+  if [[ "$(uname)" == "Darwin" ]]; then
+    start_date=$(date -j -v-1m -v1d +"%Y-%m-%d")
+    end_date=$(date -j -v1d -v-1d +"%Y-%m-%d")
+  else
+    start_date=$(date -d "$(date +%Y-%m-01) -1 month" +"%Y-%m-%d")
+    end_date=$(date -d "$(date +%Y-%m-01) -1 day" +"%Y-%m-%d")
+  fi
+
+  echo -e "\n📅 Git summary for last month: $start_date to $end_date"
+  echo
+  _git_summary "$start_date" "$end_date"
+}
+
+
 # Show a summary for the last full week (Monday to Sunday).
 _git_last_week() {
   typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
@@ -115,8 +133,8 @@ _git_last_week() {
   _git_summary "$START_DATE" "$END_DATE"
 }
 
-# Show a summary for the current week (Monday to Sunday).
-_git_weekly() {
+# Show a summary for this week (Monday to Sunday).
+_git_this_week() {
   typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
   CURRENT_DATE=$(date +"%Y-%m-%d")
 
@@ -156,11 +174,14 @@ git-summary() {
     this-month)
       _git_this_month
       ;;
+    last-month)
+      _git_last_month
+      ;;
+    this-week)
+      _git_this_week
+      ;;
     last-week)
       _git_last_week
-      ;;
-    weekly)
-      _git_weekly
       ;;
     ""|help|--help|-h)
       echo "Usage:"
@@ -169,8 +190,9 @@ git-summary() {
       echo "  git-summary today          Today only"
       echo "  git-summary yesterday      Yesterday only"
       echo "  git-summary this-month     1st to today"
+      echo "  git-summary last-month     1st to end of last month"
+      echo "  git-summary this-week      This Mon–Sun"
       echo "  git-summary last-week      Last Mon–Sun"
-      echo "  git-summary weekly         This Mon–Sun"
       return 1
       ;;
     *)
@@ -183,3 +205,4 @@ git-summary() {
       ;;
   esac
 }
+
