@@ -15,4 +15,5 @@ path=(
 # Homebrew environment setup (login shell only)
 if [ -x /opt/homebrew/bin/brew ]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
+  export HOMEBREW_AUTO_UPDATE_SECS=604800 # 7 days
 fi
