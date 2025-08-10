@@ -2,9 +2,10 @@
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
-  safe_unalias gsc gst
+  safe_unalias gs gsc gst
 fi
 
+alias gs='git-scope'
 alias gsc='git-scope commit'
 alias gst='git-scope tracked'
 
