@@ -41,7 +41,7 @@ _git_summary() {
       name=$(echo "$author" | sed -E "s/ <.*>//")
       short_email=$(printf "%.40s" "$email")
 
-      log=$(git log "${log_args[@]}" --author="$email" --pretty=format:'%ad' --date=short --numstat)
+      log=$(git log "${log_args[@]}" --author="$email" --pretty=format:'%cd' --date=short --numstat)
       filtered=$(echo "$log" | grep -vE '(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$')
 
       added=$(echo "$filtered" | awk 'NF==3 { add += $1 } END { print add+0 }')
