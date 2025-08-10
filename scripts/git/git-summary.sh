@@ -38,21 +38,18 @@ _git_summary() {
 
   git log "${log_args[@]}" --pretty=format:"%an <%ae>" |
     sort | uniq | while read -r author; do
-      email=$(echo "$author" | grep -oE '<[^>]+>' | tr -d '<>')
+      email=$(echo "$author" | grep -oE "<.*>" | tr -d "<>")
       name=$(echo "$author" | sed -E "s/ <.*>//")
       short_email=$(printf "%.40s" "$email")
 
-      added=$(git log "${log_args[@]}" --author="$email" --pretty=tformat: --numstat |
-        grep -vE '(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$' |
-        awk '{ add += $1 } END { print add }')
+      log=$(git log "${log_args[@]}" --author="$email" --pretty=format:'%ad' --date=short --numstat)
+      filtered=$(echo "$log" | grep -vE '(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$')
 
-      deleted=$(git log "${log_args[@]}" --author="$email" --pretty=tformat: --numstat |
-        grep -vE '(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$' |
-        awk '{ del += $2 } END { print del }')
-
-      commits=$(git log "${log_args[@]}" --author="$email" --pretty=oneline | wc -l)
-      first_commit=$(git log "${log_args[@]}" --author="$email" --reverse --pretty=format:"%ad" --date=short | head -n1)
-      last_commit=$(git log "${log_args[@]}" --author="$email" --pretty=format:"%ad" --date=short | head -n1)
+      added=$(echo "$filtered" | awk 'NF==3 { add += $1 } END { print add+0 }')
+      deleted=$(echo "$filtered" | awk 'NF==3 { del += $2 } END { print del+0 }')
+      commits=$(echo "$log" | awk 'NF==1 { c++ } END { print c+0 }')
+      first_commit=$(echo "$log" | awk 'NF==1 { date=$1 } END { print date }')
+      last_commit=$(echo "$log" | awk 'NF==1 { print $1; exit }')
 
       printf "%-25s %-40s %8s %8s %8s %8s %12s %12s\n" \
         "$name" "$short_email" "$added" "$deleted" "$((added - deleted))" "$commits" "$first_commit" "$last_commit"
@@ -205,4 +202,5 @@ git-summary() {
       ;;
   esac
 }
+
 
