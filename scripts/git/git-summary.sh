@@ -38,7 +38,7 @@ _git_summary() {
 
   git log "${log_args[@]}" --pretty=format:"%an <%ae>" |
     sort | uniq | while read -r author; do
-      email=$(echo "$author" | grep -oE "<.*>" | tr -d "<>")
+      email=$(echo "$author" | grep -oE '<[^>]+>' | tr -d '<>')
       name=$(echo "$author" | sed -E "s/ <.*>//")
       short_email=$(printf "%.40s" "$email")
 
