@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────
 # git-summary: author-based contribution report
 # Usage: git-summary "2024-01-01" "2024-12-31"
-# Supports macOS and Linux with timezone correction (UTC+8)
+# Supports macOS and Linux with timezone correction based on system settings
 # ───────────────────────────────────────────────────────
 
 
@@ -22,7 +22,13 @@ _git_summary() {
   if [[ -z "$since_param" && -z "$until_param" ]]; then
     log_args=(--no-merges)
   else
-    typeset tz_offset_hours=0
+    typeset tz_raw="$(date +%z)"
+    typeset tz_sign="${tz_raw:0:1}"
+    typeset tz_hour="${tz_raw:1:2}"
+    typeset tz_offset_hours=$((10#$tz_hour))
+    if [[ "$tz_sign" == "-" ]]; then
+      tz_offset_hours=$((-tz_offset_hours))
+    fi
     typeset since_utc until_utc
 
     if [[ "$(uname)" == "Darwin" ]]; then
