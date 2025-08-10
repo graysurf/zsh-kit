@@ -7,7 +7,7 @@
 ## 📦 Use Cases
 
 - Review project structure before making a commit
-- Visualize modified vs. staged vs. untracked files
+- Visualize unstaged vs. staged vs. untracked files
 - Inspect changes introduced by a specific commit
 - Debug repo state during complex merges or rebases
 - Audit commit scope and verify change impact
@@ -17,7 +17,7 @@
 ### 💡 Output Preview
 
 The following is a sample output from `git-scope`, illustrating how changed files are listed by status  
-(e.g., `[-]` for tracked, `[M]` for modified), followed by a visual directory tree. This format is shared  
+(e.g., `[-]` for tracked, `[M]` for unstaged), followed by a visual directory tree. This format is shared  
 across most subcommands, providing a consistent, readable view of file status and structure.
 
 ```text
@@ -79,12 +79,12 @@ Only includes files in the staging area. Supports `-p` to print their contents.
 
 ---
 
-### `git-scope modified`
+### `git-scope unstaged`
 
-📂 Show tree of modified files (not yet staged)
+📂 Show tree of unstaged files (not yet staged)
 
 ```bash
-git-scope modified
+git-scope unstaged
 ```
 
 Lists files changed but not added to staging. Use `-p` to print file contents.
@@ -93,13 +93,13 @@ Lists files changed but not added to staging. Use `-p` to print file contents.
 
 ### `git-scope all`
 
-📂 Show tree of all changed files (staged + modified)
+📂 Show tree of all changed files (staged and unstaged)
 
 ```bash
 git-scope all
 ```
 
-Combined view of `staged` and `modified`. Can print all files with `-p`.
+Combined view of `staged` and `unstaged`. Can print all files with `-p`.
 
 ---
 

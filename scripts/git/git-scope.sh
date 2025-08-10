@@ -79,7 +79,7 @@ _git_scope_render_with_type() {
 # Common file status collector
 _git_scope_collect() {
   typeset mode="$1"
-  shift
+  (( $# > 0 )) && shift
 
   typeset -a args=()
   _git_scope_should_print=false
@@ -95,7 +95,7 @@ _git_scope_collect() {
   case "$mode" in
     staged)
       git -c core.quotepath=false diff --cached --name-status --diff-filter=ACMRTUXB ;;
-    modified)
+    unstaged)
       git -c core.quotepath=false diff --name-status --diff-filter=ACMRTUXB ;;
     all)
       printf "%s\n%s" \
@@ -179,7 +179,7 @@ print_file_content() {
 # Command handlers
 _git_scope_tracked()   { _git_scope_render_with_type "$(_git_scope_collect tracked "$@")"; }
 _git_scope_staged()    { _git_scope_render_with_type "$(_git_scope_collect staged "$@")"; }
-_git_scope_modified()  { _git_scope_render_with_type "$(_git_scope_collect modified "$@")"; }
+_git_scope_unstaged()  { _git_scope_render_with_type "$(_git_scope_collect unstaged "$@")"; }
 _git_scope_all()       { _git_scope_render_with_type "$(_git_scope_collect all "$@")"; }
 _git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untracked "$@")"; }
 
@@ -329,8 +329,8 @@ git-scope() {
       _git_scope_tracked "${args[@]}" ;;
     staged)
       _git_scope_staged "${args[@]}" ;;
-    modified)
-      _git_scope_modified "${args[@]}" ;;
+    unstaged)
+      _git_scope_unstaged "${args[@]}" ;;
     all)
       _git_scope_all "${args[@]}" ;;
     untracked)
@@ -342,8 +342,8 @@ git-scope() {
       printf "Commands:\n"
       printf "  tracked     Show files tracked by Git (optionally filtered by prefix)\n"
       printf "  staged      Show files staged for commit\n"
-      printf "  modified    Show unstaged modified files\n"
-      printf "  all         Show all changes (staged + unstaged)\n"
+      printf "  unstaged    Show modified files not yet staged\n"
+      printf "  all         Show all changes (staged and unstaged)\n"
       printf "  untracked   Show untracked files\n"
       printf "  commit <id> Show detailed info for a given commit (use -p to print content)\n"
       ;;
