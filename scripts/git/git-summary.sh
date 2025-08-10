@@ -43,11 +43,11 @@ _git_summary() {
       short_email=$(printf "%.40s" "$email")
 
       added=$(git log "${log_args[@]}" --author="$email" --pretty=tformat: --numstat |
-        grep -vE '\s+(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$' |
+        grep -vE '(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$' |
         awk '{ add += $1 } END { print add }')
 
       deleted=$(git log "${log_args[@]}" --author="$email" --pretty=tformat: --numstat |
-        grep -vE '\s+(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$' |
+        grep -vE '(yarn\.lock|package-lock\.json|pnpm-lock\.yaml|\.lock)$' |
         awk '{ del += $2 } END { print del }')
 
       commits=$(git log "${log_args[@]}" --author="$email" --pretty=oneline | wc -l)
