@@ -89,7 +89,7 @@ _git_scope_collect() {
       -p|--print) _git_scope_should_print=true ;;
       *) args+=("$1") ;;
     esac
-    shift
+    (( $# > 0 )) && shift
   done
 
   case "$mode" in
@@ -310,8 +310,8 @@ git-scope() {
     return 1
   fi
 
-  typeset sub="$1"
-  shift
+  typeset sub="${1:-help}"
+  (( $# > 0 )) && shift
 
   # Detect -p flag (print file content)
   _git_scope_should_print=false
