@@ -252,8 +252,9 @@ _git_scope_print_commit_message() {
 
   printf "\n\n📝 Commit Message:\n"
   git log -1 --pretty=format:%B "$commit" | awk '
-    NR==1 { print "   " $0; print ""; next }
-    NF > 0 { print "   " $0 }'
+    NR == 1 { print "   "$0; next }
+    length($0) == 0 { print "" ; next } 
+    { print "   "$0 }'
 }
 
 # Render file change list with color and stats
