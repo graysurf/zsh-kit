@@ -19,27 +19,20 @@ _git_summary() {
   typeset until_param="$2"
   typeset log_args=()
 
+  # Validate date parameters: either both empty (full history) or both provided
+  if { [[ -n "$since_param" && -z "$until_param" ]] || [[ -z "$since_param" && -n "$until_param" ]] ; }; then
+    echo "❌ Please provide both start and end dates (YYYY-MM-DD)."
+    return 1
+  fi
+
   if [[ -z "$since_param" && -z "$until_param" ]]; then
     log_args=(--no-merges)
   else
-    typeset tz_raw="$(date +%z)"
-    typeset tz_sign="${tz_raw:0:1}"
-    typeset tz_hour="${tz_raw:1:2}"
-    typeset tz_offset_hours=$((10#$tz_hour))
-    if [[ "$tz_sign" == "-" ]]; then
-      tz_offset_hours=$((-tz_offset_hours))
-    fi
-    typeset since_utc until_utc
-
-    if [[ "$(uname)" == "Darwin" ]]; then
-      since_utc=$(date -j -f "%Y-%m-%d" -v0H -v0M -v0S -v -"${tz_offset_hours}"H "$since_param" +"%Y-%m-%dT%H:%M:%S")
-      until_utc=$(date -j -f "%Y-%m-%d" -v23H -v59M -v59S -v -"${tz_offset_hours}"H "$until_param" +"%Y-%m-%dT%H:%M:%S")
-    else
-      since_utc=$(date -d "$since_param 00:00:00 -${tz_offset_hours} hours" +"%Y-%m-%dT%H:%M:%S")
-      until_utc=$(date -d "$until_param 23:59:59 -${tz_offset_hours} hours" +"%Y-%m-%dT%H:%M:%S")
-    fi
-
-    log_args+=(--since="$since_utc" --until="$until_utc" --no-merges)
+    # Use local calendar boundaries with explicit timezone, so Git parses them in local time.
+    typeset tz_raw="$(date +%z)" # e.g., +0800
+    typeset since_bound="$since_param 00:00:00 $tz_raw"
+    typeset until_bound="$until_param 23:59:59 $tz_raw"
+    log_args+=(--since="$since_bound" --until="$until_bound" --no-merges)
   fi
 
   git log "${log_args[@]}" --pretty=format:"%an <%ae>" |
