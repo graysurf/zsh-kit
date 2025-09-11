@@ -13,7 +13,7 @@ fzf-git-branch() {
       --prompt="🌿 Branch > " \
       --preview-window="right:60%:wrap" \
       --preview='
-        branch=$(echo {} | sed "s/^[* ]*//")
+        branch=$(print -r -- {} | sed "s/^[* ]*//")
         [[ -z "$branch" ]] && exit 0
         git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
          --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"' \
@@ -22,7 +22,7 @@ fzf-git-branch() {
 
   # Remove any leading '*' and spaces
   local branch
-  branch=$(echo "$selected" | sed 's/^[* ]*//')
+  branch=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
   printf "🚚 Checkout to branch '%s'? [y/N] " "$branch"
   local confirm
@@ -52,10 +52,10 @@ fzf-git-tag() {
       --prompt="🏷️  Tag > " \
       --preview-window="right:60%:wrap" \
       --preview='
-        tag=$(echo {} | sed "s/^[* ]*//")
+        tag=$(print -r -- {} | sed "s/^[* ]*//")
         [[ -z "$tag" ]] && exit 0
         hash=$(git rev-parse --verify --quiet "${tag}^{commit}")
-        [[ -z "$hash" ]] && echo "❌ Could not resolve tag to commit." && exit 0
+        [[ -z "$hash" ]] && print "❌ Could not resolve tag to commit." && exit 0
         git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
           --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$hash"
       ' \
@@ -64,7 +64,7 @@ fzf-git-tag() {
 
   # Remove any leading '*' and spaces (shouldn't be present for tags, but for symmetry)
   local tag
-  tag=$(echo "$selected" | sed 's/^[* ]*//')
+  tag=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
   # Pre-resolve tag to commit hash for preview and checkout
   local hash
@@ -113,7 +113,7 @@ fzf-process() {
   line=$(ps -eo user,pid,ppid,pcpu,pmem,stat,lstart,time,args | sed 1d | \
     fzf -m \
       --preview-window='right:30%:wrap' \
-      --preview='echo {} | awk '\''{
+      --preview='print -r -- {} | awk '\''{
         uid  = $1;
         pid  = $2;
         ppid = $3;
@@ -137,11 +137,11 @@ fzf-process() {
       }'\''') || return
 
   local pids
-  pids=$(echo "$line" | awk '{print $2}')
+  pids=$(print -r -- "$line" | awk '{print $2}')
 
   if $kill_mode && [[ -n "$pids" ]]; then
     printf "☠️  Killing PID(s): %s\n" "$pids"
-    echo "$pids" | xargs kill -9
+    print -r -- "$pids" | xargs kill -9
   fi
 }
 
@@ -300,7 +300,7 @@ fzf-git-commit() {
     while IFS=$'\t' read -r kind filepath; do
       [[ -z "$filepath" ]] && continue
       color="$(_git_scope_kind_color "$kind")"
-      stat_line=$(echo "$stats_list" | awk -v f="$filepath" '$3 == f {
+      stat_line=$(print -r -- "$stats_list" | awk -v f="$filepath" '$3 == f {
         a = ($1 == "-" ? 0 : $1)
         d = ($2 == "-" ? 0 : $2)
         printf "  [+" a " / -" d "]"
@@ -312,7 +312,7 @@ fzf-git-commit() {
       fzf --ansi --prompt="📄 Files in $commit > " \
           --preview-window='right:50%:wrap' \
           --preview='bash -c "
-            filepath=\$(echo {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
+            filepath=\$(print -r -- {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
             git diff --color=always '"${commit}"'^! -- \$filepath |
             delta --width=100 --line-numbers |
             awk '\''NR==1 && NF==0 {next} {print}'\''"' |
