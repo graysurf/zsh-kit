@@ -12,7 +12,7 @@ fi
 ll() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ "$1" =~ '^[0-9]+$' ]]; then
+  if [[ "$1" =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$1")
     shift
   fi
@@ -23,7 +23,7 @@ ll() {
 lx() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ "$1" =~ '^[0-9]+$' ]]; then
+  if [[ "$1" =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$1")
     shift
   fi
@@ -34,7 +34,7 @@ lx() {
 lt() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ "$1" =~ '^[0-9]+$' ]]; then
+  if [[ "$1" =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$1")
     shift
   fi
