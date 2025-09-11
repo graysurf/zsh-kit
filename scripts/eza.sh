@@ -12,33 +12,33 @@ fi
 ll() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ "$1" =~ ^[0-9]+$ ]]; then
+  if [[ $1 =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$1")
     shift
   fi
   eza -alh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
 }
 
-# List all files including dotfiles (with color=always)
+# List files excluding dotfiles
 lx() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ "$1" =~ ^[0-9]+$ ]]; then
+  if [[ $1 =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$1")
     shift
   fi
-  eza -lh --icons --group-directories-first --color=always --time-style=iso "${level_flag[@]}" "$@"
+  eza -lh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
 }
 
 # Tree view with all files
 lt() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ "$1" =~ ^[0-9]+$ ]]; then
+  if [[ $1 =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$1")
     shift
   fi
-  eza -aT --group-directories-first --color=always --icons "${level_flag[@]}" "$@"
+  eza -aT --group-directories-first --icons "${level_flag[@]}" "$@"
 }
 
 # Long-format tree view with all files
@@ -63,6 +63,5 @@ alias lxt='lx -T'
 alias lxt2='lx -T -L 2'
 alias lxt3='lx -T -L 3'
 alias lxt5='lx -T -L 5'
-
 
 
