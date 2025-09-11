@@ -39,29 +39,29 @@ gdc() {
   diff=$(git diff --cached --no-color)
 
   if [[ -z "$diff" ]]; then
-    echo "⚠️  No staged changes to copy"
+    print "⚠️  No staged changes to copy"
     return 1
   fi
 
   printf "%s" "$diff" | set_clipboard
-  echo "✅ Staged diff copied to clipboard"
+  print "✅ Staged diff copied to clipboard"
 }
 
 # Jump to the root directory of the current Git repository
 groot() {
   typeset root
   root=$(git rev-parse --show-toplevel 2>/dev/null) || {
-    echo "❌ Not in a git repository"
+    print "❌ Not in a git repository"
     return 1
   }
-  cd "$root" && echo -e "\n 📁 Jumped to Git root: $root"
+  cd "$root" && print "\n 📁 Jumped to Git root: $root"
 }
 
 # get_commit_hash <ref>
 get_commit_hash() {
   typeset ref="$1"
   if [[ -z "$ref" ]]; then
-    echo "❌ Missing git ref" >&2
+    print "❌ Missing git ref" >&2
     return 1
   fi
 
@@ -82,17 +82,17 @@ get_commit_hash() {
 #
 # It is a safer alternative to hard resets and preserves your working state.
 git-reset-soft() {
-  echo "⚠️  This will rewind your last commit (soft reset)"
-  echo "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
-  echo -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
+  print "⚠️  This will rewind your last commit (soft reset)"
+  print "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
+  print -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
-    echo "🚫 Aborted"
+    print "🚫 Aborted"
     return 1
   fi
 
   git reset --soft HEAD~1
-  echo "✅ Last commit undone. Your changes are still staged."
+  print "✅ Last commit undone. Your changes are still staged."
 }
 
 # Hard reset to the previous commit with confirmation (DANGEROUS)
@@ -103,18 +103,18 @@ git-reset-soft() {
 # ⚠️ WARNING: This operation is destructive and cannot be undone.
 # Only use it when you are absolutely sure you want to discard local changes.
 git-reset-hard() {
-  echo "⚠️  This will HARD RESET your repository to the previous commit."
-  echo "🔥 All staged and unstaged changes will be PERMANENTLY LOST."
-  echo "🧨 This is equivalent to: git reset --hard HEAD~1"
-  echo -n "❓ Are you absolutely sure? [y/N] "
+  print "⚠️  This will HARD RESET your repository to the previous commit."
+  print "🔥 All staged and unstaged changes will be PERMANENTLY LOST."
+  print "🧨 This is equivalent to: git reset --hard HEAD~1"
+  print -n "❓ Are you absolutely sure? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
-    echo "🚫 Aborted"
+    print "🚫 Aborted"
     return 1
   fi
 
   git reset --hard HEAD~1
-  echo "✅ Hard reset completed. Your working directory is now clean."
+  print "✅ Hard reset completed. Your working directory is now clean."
 }
 
 # Undo the last commit and unstage all changes (mixed reset)
@@ -126,17 +126,17 @@ git-reset-hard() {
 #
 # This is Git's default reset mode if no flag is given.
 git-reset-mixed() {
-  echo "⚠️  This will rewind your last commit (mixed reset)"
-  echo "🧠 Your changes will become UNSTAGED and editable in working directory."
-  echo "❓ Proceed with 'git reset --mixed HEAD~1'? [y/N] "
+  print "⚠️  This will rewind your last commit (mixed reset)"
+  print "🧠 Your changes will become UNSTAGED and editable in working directory."
+  print "❓ Proceed with 'git reset --mixed HEAD~1'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
-    echo "🚫 Aborted"
+    print "🚫 Aborted"
     return 1
   fi
 
   git reset --mixed HEAD~1
-  echo "✅ Last commit undone. Your changes are now unstaged."
+  print "✅ Last commit undone. Your changes are now unstaged."
 }
 
 # Undo the last `git reset --hard` by restoring previous HEAD state
@@ -154,22 +154,22 @@ git-reset-undo() {
   prev_commit=$(git rev-parse HEAD@{1} 2>/dev/null)
 
   if [[ -z "$prev_commit" ]]; then
-    echo "❌ Cannot resolve HEAD@{1}."
+    print "❌ Cannot resolve HEAD@{1}."
     return 1
   fi
 
-  echo "🕰  Attempting to undo the last hard reset..."
-  echo "📜 This will reset your repository back to:"
+  print "🕰  Attempting to undo the last hard reset..."
+  print "📜 This will reset your repository back to:"
   git log --oneline -1 "$prev_commit"
-  echo -n "❓ Proceed with 'git reset --hard HEAD@{1}'? [y/N] "
+  print -n "❓ Proceed with 'git reset --hard HEAD@{1}'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
-    echo "🚫 Aborted"
+    print "🚫 Aborted"
     return 1
   fi
 
   git reset --hard HEAD@{1}
-  echo "✅ Repository reset back to previous HEAD: $prev_commit"
+  print "✅ Repository reset back to previous HEAD: $prev_commit"
 }
 
 # Rewind HEAD to its previous position with confirmation
@@ -187,21 +187,21 @@ git-back-head() {
   prev_head=$(git rev-parse HEAD@{1} 2>/dev/null)
 
   if [[ -z "$prev_head" ]]; then
-    echo "❌ Cannot find previous HEAD in reflog."
+    print "❌ Cannot find previous HEAD in reflog."
     return 1
   fi
 
-  echo "⏪ This will move HEAD back to the previous position:"
-  echo "🔁 $(git log --oneline -1 "$prev_head")"
-  echo -n "❓ Proceed with 'git checkout HEAD@{1}'? [y/N] "
+  print "⏪ This will move HEAD back to the previous position:"
+  print "🔁 $(git log --oneline -1 "$prev_head")"
+  print -n "❓ Proceed with 'git checkout HEAD@{1}'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
-    echo "🚫 Aborted"
+    print "🚫 Aborted"
     return 1
   fi
 
   git checkout "$prev_head"
-  echo "✅ Restored to previous HEAD: $prev_head"
+  print "✅ Restored to previous HEAD: $prev_head"
 }
 
 # Restore HEAD to previous checkout branch (avoids detached HEAD)
@@ -221,20 +221,20 @@ git-back-checkout() {
   )
 
   if [[ -z "$from_branch" ]]; then
-    echo "❌ Could not find a previous branch that switched to $current_branch."
+    print "❌ Could not find a previous branch that switched to $current_branch."
     return 1
   fi
 
-  echo "⏪ This will move HEAD back to previous branch: $from_branch"
-  echo -n "❓ Proceed with 'git checkout $from_branch'? [y/N] "
+  print "⏪ This will move HEAD back to previous branch: $from_branch"
+  print -n "❓ Proceed with 'git checkout $from_branch'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
-    echo "🚫 Aborted"
+    print "🚫 Aborted"
     return 1
   fi
 
   git checkout "$from_branch"
-  echo "✅ Restored to previous branch: $from_branch"
+  print "✅ Restored to previous branch: $from_branch"
 }
 
 # ────────────────────────────────────────────────────────
@@ -253,9 +253,9 @@ gh-open() {
 
   if [[ -n "$url" ]]; then
     open "$url"
-    echo "🌐 Opened: $url"
+    print "🌐 Opened: $url"
   else
-    echo "❌ Unable to detect remote URL"
+    print "❌ Unable to detect remote URL"
     return 1
   fi
 }
@@ -280,9 +280,9 @@ gh-open-branch() {
 
   if [[ -n "$url" && -n "$branch" ]]; then
     open "$url/tree/$branch"
-    echo "🌿 Opened: $url/tree/$branch"
+    print "🌿 Opened: $url/tree/$branch"
   else
-    echo "❌ Failed to resolve URL or branch"
+    print "❌ Failed to resolve URL or branch"
     return 1
   fi
 }
@@ -298,30 +298,30 @@ gh-open-commit() {
     -e 's/\.git$//' \
     -e 's/^ssh:\/\///' \
     -e 's/^https:\/\/git@/https:\/\//') || {
-    echo "❌ No remote 'origin' found"
+    print "❌ No remote 'origin' found"
     return 1
   }
 
   if [[ "$url" != https://github.com/* ]]; then
-    echo "❗ Only GitHub URLs are supported."
+    print "❗ Only GitHub URLs are supported."
     return 1
   fi
 
   # Ensure annotated tag resolves to commit, not tag object
   commit=$(git rev-parse "${hash}^{commit}" 2>/dev/null) || {
-    echo "❌ Invalid commit/tag/branch: $hash"
+    print "❌ Invalid commit/tag/branch: $hash"
     return 1
   }
 
   typeset commit_url="$url/commit/$commit"
-  echo "🔗 Opening: $commit_url"
+  print "🔗 Opening: $commit_url"
 
   if command -v open &>/dev/null; then
     open "$commit_url"
   elif command -v xdg-open &>/dev/null; then
     xdg-open "$commit_url"
   else
-    echo "❌ Cannot open URL (no open/xdg-open)"
+    print "❌ Cannot open URL (no open/xdg-open)"
     return 1
   fi
 }
@@ -340,9 +340,9 @@ gh-open-default-branch() {
 
   if [[ -n "$url" && -n "$default_branch" ]]; then
     open "$url/tree/$default_branch"
-    echo "🌿 Opened: $url/tree/$default_branch"
+    print "🌿 Opened: $url/tree/$default_branch"
   else
-    echo "❌ Failed to resolve remote or default branch"
+    print "❌ Failed to resolve remote or default branch"
     return 1
   fi
 }

@@ -94,8 +94,8 @@ _git_lock_unlock() {
 
   typeset hash note msg
   read -r line < "$lock_file"
-  hash=$(echo "$line" | cut -d '#' -f 1 | xargs)
-  note=$(echo "$line" | cut -d '#' -f 2- | xargs)
+  hash=$(print -r -- "$line" | cut -d '#' -f 1 | xargs)
+  note=$(print -r -- "$line" | cut -d '#' -f 2- | xargs)
   msg=$(git log -1 --pretty=format:"%s" "$hash" 2>/dev/null)
 
   printf "🔐 Found [%s:%s] → %s\n" "$repo_id" "$label" "$hash"
@@ -151,13 +151,13 @@ _git_lock_list() {
     name=$(basename "$file" .lock)
     label=${name#${repo_id}-}
     read -r line < "$file"
-    hash=$(echo "$line" | cut -d '#' -f1 | xargs)
-    note=$(echo "$line" | cut -d '#' -f2- | xargs)
+    hash=$(print -r -- "$line" | cut -d '#' -f1 | xargs)
+    note=$(print -r -- "$line" | cut -d '#' -f2- | xargs)
     timestamp=$(grep '^timestamp=' "$file" | cut -d '=' -f2-)
     subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
     printf "\n - 🏷️  tag:     %s%s\n" "$label" \
-      "$( [[ "$label" == "$latest" ]] && echo '  ⭐ (latest)' )"
+      "$( [[ "$label" == "$latest" ]] && print '  ⭐ (latest)' )"
     printf "   🧬 commit:  %s\n" "$hash"
     [[ -n "$subject" ]] && printf "   📄 message: %s\n" "$subject"
     [[ -n "$note" ]] && printf "   📝 note:    %s\n" "$note"
@@ -214,9 +214,9 @@ _git_lock_copy() {
 
   typeset content hash note timestamp subject
   content=$(<"$src_file")
-  hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
-  note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
-  timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  hash=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
+  note=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
+  timestamp=$(print -r -- "$content" | grep '^timestamp=' | cut -d '=' -f2-)
   subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
   printf "📋 Copied git-lock [%s:%s] → [%s:%s]\n" "$repo_id" "$src_label" "$repo_id" "$dst_label"
@@ -258,9 +258,9 @@ _git_lock_delete() {
 
   typeset content hash note timestamp subject
   content=$(<"$lock_file")
-  hash=$(echo "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
-  note=$(echo "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
-  timestamp=$(echo "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  hash=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
+  note=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
+  timestamp=$(print -r -- "$content" | grep '^timestamp=' | cut -d '=' -f2-)
   subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
   printf "🗑️  Candidate for deletion:\n"
