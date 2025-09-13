@@ -13,7 +13,7 @@ fzf-git-branch() {
       --prompt="🌿 Branch > " \
       --preview-window="right:60%:wrap" \
       --preview='
-        branch=$(printf "%s\n" -- {} | sed "s/^[* ]*//")
+        branch=$(printf "%s\n" {} | sed "s/^[* ]*//")
         [[ -z "$branch" ]] && exit 0
         git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
          --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"' \
@@ -52,7 +52,7 @@ fzf-git-tag() {
       --prompt="🏷️  Tag > " \
       --preview-window="right:60%:wrap" \
       --preview='
-        tag=$(printf "%s\n" -- {} | sed "s/^[* ]*//")
+        tag=$(printf "%s\n" {} | sed "s/^[* ]*//")
         [[ -z "$tag" ]] && exit 0
         hash=$(git rev-parse --verify --quiet "${tag}^{commit}")
         [[ -z "$hash" ]] && printf "❌ Could not resolve tag to commit.\n" && exit 0
@@ -113,7 +113,7 @@ fzf-process() {
   line=$(ps -eo user,pid,ppid,pcpu,pmem,stat,lstart,time,args | sed 1d | \
     fzf -m \
       --preview-window='right:30%:wrap' \
-      --preview='printf "%s\n" -- {} | awk '\''{
+      --preview='printf "%s\n" {} | awk '\''{
         uid  = $1;
         pid  = $2;
         ppid = $3;
@@ -312,7 +312,7 @@ fzf-git-commit() {
       fzf --ansi --prompt="📄 Files in $commit > " \
           --preview-window='right:50%:wrap' \
           --preview='bash -c "
-            filepath=\$(printf \"%s\\n\" -- {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
+            filepath=\$(printf \"%s\\n\" {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
             git diff --color=always '"${commit}"'^! -- \$filepath |
             delta --width=100 --line-numbers |
             awk '\''NR==1 && NF==0 {next} {print}'\''"' |
