@@ -5,7 +5,7 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     vi cd edit-zsh y \
     fdf fdd cat batp bat-all bff \
-    fsearch zdefs cheat kp \
+    fsearch zdefs cheat kp kpid \
     reload execz zz histflush \
     history his fzf-history-wrapper
 fi
@@ -76,6 +76,38 @@ fsearch() {
 }
 
 # ────────────────────────────────────────────────────────
+# Shared helpers (shell-utils)
+# ────────────────────────────────────────────────────────
+
+# Execute kill with dedupe and basic validation.
+# Usage: _su_kill_do <signal> <pid...>
+_su_kill_do() {
+  emulate -L zsh
+  setopt localoptions
+
+  typeset -i signal
+  signal=${1:-15}
+  shift
+
+  typeset -a pids
+  pids=($@)
+  # Deduplicate numeric PIDs only
+  typeset -a filtered=()
+  local pid
+  for pid in ${pids[@]}; do
+    [[ "$pid" == <-> ]] && filtered+=("$pid")
+  done
+  filtered=(${(u)filtered})
+
+  if (( ${#filtered} == 0 )); then
+    print -r -- "ℹ️  No valid PIDs provided"
+    return 2
+  fi
+
+  kill -${signal} -- ${^filtered}
+}
+
+# ────────────────────────────────────────────────────────
 # kill-port: Kill process(es) listening on a TCP/UDP port
 # Usage: kill-port [-9] <port>
 # - Default sends SIGTERM (15). Use -9 to send SIGKILL.
@@ -111,10 +143,49 @@ kill-port() {
   fi
 
   print -r -- "☠️  Killing (SIG${signal}) PIDs on port $port: ${pids[*]}"
-  kill -${signal} -- ${^pids}
+  _su_kill_do ${signal} ${^pids}
 }
 
 alias kp='kill-port'
+
+# ────────────────────────────────────────────────────────
+# kill-process: Kill one or more PIDs
+# Usage: kill-process [-9] <pid> [pid...]
+# - Default sends SIGTERM (15). Use -9 to send SIGKILL.
+# - Validates that all provided PIDs are numeric.
+# ────────────────────────────────────────────────────────
+kill-process() {
+  emulate -L zsh
+  setopt localoptions pipe_fail
+
+  typeset -i signal=15
+  if [[ "$1" == "-9" ]]; then
+    signal=9
+    shift
+  fi
+
+  if (( $# < 1 )); then
+    print -u2 -r -- "Usage: kill-process [-9] <pid> [pid...]"
+    return 2
+  fi
+
+  typeset -a pids=()
+  typeset pid
+  for pid in "$@"; do
+    if [[ "$pid" == <-> ]]; then
+      pids+=("$pid")
+    else
+      print -u2 -r -- "❌ Invalid PID: $pid"
+      return 2
+    fi
+  done
+
+  # Execute kill with shared helper
+  print -r -- "☠️  Killing (SIG${signal}) PID(s): ${pids[*]}"
+  _su_kill_do ${signal} ${^pids}
+}
+
+alias kpid='kill-process'
 
 # ────────────────────────────────────────────────────────
 # Reload the Zsh environment via bootstrap init
