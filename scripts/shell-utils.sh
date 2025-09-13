@@ -5,7 +5,7 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     vi cd edit-zsh y \
     fdf fdd cat batp bat-all bff \
-    fsearch zdefs cheat \
+    fsearch zdefs cheat kp \
     reload execz zz histflush \
     history his fzf-history-wrapper
 fi
@@ -74,6 +74,47 @@ fsearch() {
         --bind=ctrl-j:preview-down \
         --bind=ctrl-k:preview-up 
 }
+
+# ────────────────────────────────────────────────────────
+# kill-port: Kill process(es) listening on a TCP/UDP port
+# Usage: kill-port [-9] <port>
+# - Default sends SIGTERM (15). Use -9 to send SIGKILL.
+# - macOS friendly (uses lsof); works wherever lsof provides -t.
+# ────────────────────────────────────────────────────────
+kill-port() {
+  emulate -L zsh
+  setopt localoptions pipe_fail
+
+  typeset -i signal=15
+  if [[ "$1" == "-9" ]]; then
+    signal=9
+    shift
+  fi
+
+  typeset port="$1"
+  if [[ -z "$port" || ! $port == <-> ]]; then
+    print -u2 -r -- "Usage: kill-port [-9] <port>"
+    return 2
+  fi
+
+  typeset -a pids=()
+  # TCP listeners
+  pids+=(${(f)$(lsof -nP -iTCP:$port -sTCP:LISTEN -t 2>/dev/null)})
+  # UDP consumers (no LISTEN state for UDP)
+  pids+=(${(f)$(lsof -nP -iUDP:$port -t 2>/dev/null)})
+  # unique
+  pids=(${(u)pids})
+
+  if (( ${#pids} == 0 )); then
+    print -r -- "ℹ️  No process found on port $port"
+    return 0
+  fi
+
+  print -r -- "☠️  Killing (SIG${signal}) PIDs on port $port: ${pids[*]}"
+  kill -${signal} -- ${^pids}
+}
+
+alias kp='kill-port'
 
 # ────────────────────────────────────────────────────────
 # Reload the Zsh environment via bootstrap init
