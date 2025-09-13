@@ -149,11 +149,13 @@ _git_this_week() {
   _git_summary "$START_DATE" "$END_DATE"
 }
 
-# CLI entry for git-summary.
-# Supports:
-# - Preset ranges (today, yesterday, this-month, etc.)
-# - Custom date ranges: git-summary <start> <end>
+# ────────────────────────────────────────────────────────
+# git-summary: Author-based contribution report (CLI entry)
+# Usage: git-summary <command> [args]
+# - Presets: today, yesterday, this-month, last-month, this-week, last-week
+# - Custom range: git-summary <start> <end> (YYYY-MM-DD)
 # - Full history: git-summary all
+# ────────────────────────────────────────────────────────
 git-summary() {
   case "$1" in
     all)
@@ -180,15 +182,19 @@ git-summary() {
       _git_last_week
       ;;
     ""|help|--help|-h)
-      print "Usage:"
-      print "  git-summary all            Entire history"
-      print "  git-summary <from> <to>    Custom date range"
-      print "  git-summary today          Today only"
-      print "  git-summary yesterday      Yesterday only"
-      print "  git-summary this-month     1st to today"
-      print "  git-summary last-month     1st to end of last month"
-      print "  git-summary this-week      This Mon–Sun"
-      print "  git-summary last-week      Last Mon–Sun"
+      printf "%s\n" "Usage: git-summary <command> [args]"
+      printf "\n"
+      printf "%s\n" "Commands:"
+      printf "  %-16s  %s\n" \
+        all            "Entire history" \
+        today          "Today only" \
+        yesterday      "Yesterday only" \
+        this-month     "1st to today" \
+        last-month     "1st to end of last month" \
+        this-week      "This Mon–Sun" \
+        last-week      "Last Mon–Sun"
+      printf "  %-16s  %s\n" "<from> <to>" "Custom date range (YYYY-MM-DD)"
+      printf "\n"
       return 1
       ;;
     *)
@@ -201,5 +207,4 @@ git-summary() {
       ;;
   esac
 }
-
 

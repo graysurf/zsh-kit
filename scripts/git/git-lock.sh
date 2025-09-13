@@ -418,6 +418,13 @@ _git_lock_tag() {
   fi
 }
 
+# ────────────────────────────────────────────────────────
+# git-lock: Save/restore repo snapshots and utilities
+# Usage: git-lock <command> [args]
+# - Subcommands: lock, unlock, list, copy, delete, diff, tag
+# - Stores lock files under $ZSH_CACHE_DIR/git-locks per-repo
+# - Confirms before destructive operations (e.g., reset, overwrite tag)
+# ────────────────────────────────────────────────────────
 git-lock() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
     printf "❗ Not a Git repository. Run this command inside a Git project.\n"
@@ -426,16 +433,16 @@ git-lock() {
 
   typeset cmd="$1"
   if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
-    printf "Usage: git-lock <command> [args...]\n"
+    printf "%s\n" "Usage: git-lock <command> [args]"
     printf "\n"
-    printf "Commands:\n"
-    printf "  %-30s %s\n" \
-      "lock [label] [note] [commit]"   "Save commit hash to lock" \
-      "unlock [label]"                 "Reset to a saved commit" \
-      "list"                           "Show all locks for repo" \
+    printf "%s\n" "Commands:"
+    printf "  %-16s  %s\n" \
+      "lock [label] [note] [commit]"  "Save commit hash to lock" \
+      "unlock [label]"                "Reset to a saved commit" \
+      "list"                          "Show all locks for repo" \
       "copy <from> <to>"              "Duplicate a lock label" \
       "delete [label]"                "Remove a lock" \
-      "diff <label1> <label2>"        "Compare commits between two locks" \
+      "diff <l1> <l2>"                "Compare commits between two locks" \
       "tag <label> <tag> [-m msg]"    "Create git tag from a lock"
     printf "\n"
     return 0

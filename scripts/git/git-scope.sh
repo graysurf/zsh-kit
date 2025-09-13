@@ -303,7 +303,13 @@ _git_scope_render_commit_files() {
   printf "%s\n" "${file_list[@]}" > /tmp/.git-scope-filelist
 }
 
-# Main entry point
+# ────────────────────────────────────────────────────────
+# git-scope: Working tree/commit introspection (dispatcher)
+# Usage: git-scope <command> [args]
+# - Subcommands: tracked, staged, unstaged, all, untracked, commit <id>
+# - Flags: -p|--print prints file contents where applicable (e.g., commit)
+# - Runs inside a Git repo; renders trees, diffs, and summaries
+# ────────────────────────────────────────────────────────
 git-scope() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
     printf "⚠️ Not a Git repository. Run this command inside a Git project.\n"
@@ -338,14 +344,16 @@ git-scope() {
     commit)
       _git_scope_commit "${args[@]}" ;;
     help|-h|--help|"")
-      printf "Usage: git-scope <command> [args...]\n"
-      printf "Commands:\n"
-      printf "  tracked     Show files tracked by Git (optionally filtered by prefix)\n"
-      printf "  staged      Show files staged for commit\n"
-      printf "  unstaged    Show modified files not yet staged\n"
-      printf "  all         Show all changes (staged and unstaged)\n"
-      printf "  untracked   Show untracked files\n"
-      printf "  commit <id> Show detailed info for a given commit (use -p to print content)\n"
+      printf "%s\n" "Usage: git-scope <command> [args]"
+      printf "\n"
+      printf "%s\n" "Commands:"
+      printf "  %-16s  %s\n" \
+        tracked        "Show files tracked by Git (prefix filter optional)" \
+        staged         "Show files staged for commit" \
+        unstaged       "Show modified files not yet staged" \
+        all            "Show all changes (staged and unstaged)" \
+        untracked      "Show untracked files"
+      printf "  %-16s  %s\n" "commit <id>" "Show commit details (use -p to print content)"
       ;;
     *)
       printf "⚠️ Unknown subcommand: '%s'\n" "$sub"

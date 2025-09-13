@@ -667,25 +667,25 @@ fzf-tools() {
   typeset cmd="$1"
 
   if [[ -z "$cmd" || "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
-    printf "%s\n" "Usage: fzf-tools <command> [args...]"
+    printf "%s\n" "Usage: fzf-tools <command> [args]"
     printf "\n"
     printf "%s\n" "Commands:"
-    printf "  %-18s %s\n" \
-      file "Search and preview text files" \
-      vscode "Search and preview text files in VSCode" \
-      directory "Search directories and cd into selection" \
-      git-status "Interactive git status viewer" \
-      git-commit "Browse commits and open changed files in VSCode" \
+    printf "  %-16s  %s\n" \
+      file         "Search and preview text files" \
+      vscode       "Search and preview text files in VSCode" \
+      directory    "Search directories and cd into selection" \
+      git-status   "Interactive git status viewer" \
+      git-commit   "Browse commits and open changed files in VSCode" \
       git-checkout "Pick and checkout a previous commit" \
-      git-branch "Browse and checkout branches interactively" \
-      git-tag "Browse and checkout tags interactively" \
-      process "Browse and kill running processes (confirm before kill)" \
-      ports "Browse listening ports and owners (confirm before kill)" \
-      history "Search and execute command history" \
-      env "Browse environment variables" \
-      alias "Browse shell aliases" \
-      functions "Browse defined shell functions" \
-      defs "Browse all definitions (env, alias, functions)"
+      git-branch   "Browse and checkout branches interactively" \
+      git-tag      "Browse and checkout tags interactively" \
+      process      "Browse and kill running processes (confirm before kill)" \
+      ports        "Browse listening ports and owners (confirm before kill)" \
+      history      "Search and execute command history" \
+      env          "Browse environment variables" \
+      alias        "Browse shell aliases" \
+      functions    "Browse defined shell functions" \
+      defs         "Browse all definitions (env, alias, functions)"
     printf "\n"
     return 0
   fi
