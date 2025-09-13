@@ -91,7 +91,7 @@ fzf-git-tag() {
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
-  safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
+  safe_unalias ft fzf-process fzf-env fzf-ports fp fgs fgc ff fv
 fi
 
 alias ft='fzf-tools'
@@ -99,15 +99,67 @@ alias fgs='fzf-git-status'
 alias fgc='fzf-git-commit'
 alias ff='fzf-file'
 alias fv='fzf-vscode'
+alias fp='fzf-ports'
 
 # ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
 
-# Fuzzy select and kill a process (simple fallback)
+# Shared helpers for kill flow across process/ports
+_fzf_parse_kill_flags() {
+  # Parses -k/--kill and -9/--force from args into globals
+  _fzf_kill_now=false
+  _fzf_force_kill=false
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -k|--kill)  _fzf_kill_now=true ;;
+      -9|--force) _fzf_force_kill=true ;;
+      *) break ;;
+    esac
+    shift
+  done
+}
+
+_fzf_kill_flow() {
+  # $1: whitespace-separated PIDs
+  # $2: kill_now (true/false)
+  # $3: force_kill (true/false)
+  local pids="$1" kill_now="$2" force_kill="$3"
+  [[ -z "$pids" ]] && return 0
+
+  if $kill_now; then
+    if $force_kill; then
+      printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
+      print -r -- "$pids" | xargs kill -9
+    else
+      printf "☠️  Killing PID(s) with SIGTERM: %s\n" "$pids"
+      print -r -- "$pids" | xargs kill
+    fi
+    return 0
+  fi
+
+  printf "Kill PID(s): %s? [y/N] " "$pids"
+  local confirm
+  read -r confirm
+  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+
+  printf "Force SIGKILL (-9)? [y/N] "
+  local force
+  read -r force
+  if [[ "$force" == [yY] ]]; then
+    printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
+    print -r -- "$pids" | xargs kill -9
+  else
+    printf "☠️  Killing PID(s) with SIGTERM: %s\n" "$pids"
+    print -r -- "$pids" | xargs kill
+  fi
+}
+
+# Fuzzy select processes; confirm kill by default; flags for non-interactive
 fzf-process() {
-  local kill_mode=false
-  [[ "$1" == "--kill" || "$1" == "-k" ]] && kill_mode=true
+  # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
+  _fzf_parse_kill_flags "$@"
+  local kill_now="$_fzf_kill_now" force_kill="$_fzf_force_kill"
 
   local line
   line=$(ps -eo user,pid,ppid,pcpu,pmem,stat,lstart,time,args | sed 1d | \
@@ -138,11 +190,54 @@ fzf-process() {
 
   local pids
   pids=$(print -r -- "$line" | awk '{print $2}')
+  _fzf_kill_flow "$pids" "$kill_now" "$force_kill"
+}
 
-  if $kill_mode && [[ -n "$pids" ]]; then
-    printf "☠️  Killing PID(s): %s\n" "$pids"
-    print -r -- "$pids" | xargs kill -9
+# Fuzzy select listening ports; confirm kill owning PIDs by default; flags for non-interactive
+fzf-ports() {
+  # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
+  _fzf_parse_kill_flags "$@"
+  local kill_now="$_fzf_kill_now" force_kill="$_fzf_force_kill"
+
+  # Prefer lsof for cross-platform listing (macOS/Linux). Show TCP LISTEN and UDP sockets.
+  local line
+  if command -v lsof >/dev/null 2>&1; then
+    # Limit to TCP listeners explicitly (-iTCP) so state filter is reliable across platforms
+    line=$(lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | sed 1d | \
+      fzf -m \
+        --prompt="🔌 Port > " \
+        --preview-window='right:50%:wrap' \
+        --preview='printf "%s\n" {} | awk '\''{
+          cmd = $1; pid = $2; user = $3;
+          proto = "?"; name = "";
+          for (i=1; i<=NF; i++) if ($i == "TCP" || $i == "UDP") { proto = $i; break }
+          for (i=NF; i>=1; i--) if (index($i, ":") > 0) { name = $i; break }
+
+          printf "🔭 PORT\n%s\n\n", name;
+          printf "🌐 PROTO\n%s\n\n", proto;
+          printf "📦 CMD\n%s\n\n", cmd;
+          printf "👤 USER\n%s\n\n", user;
+          printf "🔢 PID\n%s\n\n", pid;
+            
+          if (pid ~ /^[0-9]+$/) {
+            printf "lsof -p %s\n\n", pid;
+            system("lsof -nP -p " pid " 2>/dev/null | sed 1d | head -n 80");
+          }
+        }'\''') || return
+  else
+    # Fallback to netstat (BSD/macOS). Mark as view-only if no lsof.
+    line=$(netstat -anv | \
+      awk '/^(tcp|udp)/ {print}' | \
+      fzf -m \
+        --prompt="🔌 Port > " \
+        --preview-window='right:50%:wrap' \
+        --preview='printf "%s\n\n(netstat view; no lsof PID info)\n" {}') || return
   fi
+
+  # Extract PIDs (lsof output second column). Deduplicate.
+  local pids
+  pids=$(print -r -- "$line" | awk '{print $2}' | sort -u)
+  _fzf_kill_flow "$pids" "$kill_now" "$force_kill"
 }
 
 # Extract command history and strip line numbers
@@ -496,7 +591,8 @@ fzf-tools() {
       git-checkout "Pick and checkout a previous commit" \
       git-branch "Browse and checkout branches interactively" \
       git-tag "Browse and checkout tags interactively" \
-      process "Browse and kill running processes (view-only by default)" \
+      process "Browse and kill running processes (confirm before kill)" \
+      ports "Browse listening ports and owners (confirm before kill)" \
       history "Search and execute command history" \
       env "Browse environment variables" \
       alias "Browse shell aliases" \
@@ -518,6 +614,7 @@ fzf-tools() {
     git-branch)       fzf-git-branch "$@" ;;
     git-tag)          fzf-git-tag "$@" ;;
     process)          fzf-process "$@" ;;
+    ports)            fzf-ports "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;

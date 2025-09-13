@@ -23,6 +23,7 @@ fzf-tools-launcher-widget() {
 🔧 functions:     Browse defined shell functions
 📦 defs:          Browse all definitions (env, alias, functions)
 🧪 process:       Browse and kill running processes
+🔌 ports:         Browse listening ports and owners
 📜 history:       Search and execute command history
 📁 directory:     Search directories and cd into selection
 📝 file:          Search and preview text files
