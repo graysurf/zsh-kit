@@ -91,7 +91,7 @@ fzf-git-tag() {
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
-  safe_unalias ft fzf-process fzf-kill-process fzf-env fp fgs fgc ff fv
+  safe_unalias ft fzf-process fzf-env fp fgs fgc ff fv
 fi
 
 alias ft='fzf-tools'
