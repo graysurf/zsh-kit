@@ -246,7 +246,7 @@ fzf-ports() {
           printf "📦 CMD\n%s\n\n", cmd;
           printf "👤 USER\n%s\n\n", user;
           printf "🔢 PID\n%s\n\n", pid;
-            
+
           if (pid ~ /^[0-9]+$/) {
             printf "lsof -p %s\n\n", pid;
             system("lsof -nP -p " pid " 2>/dev/null | sed 1d | head -n 80");
@@ -359,7 +359,7 @@ fzf-git-status() {
   git status -s | fzf \
     --preview 'git diff --color=always {2}' \
     --bind=ctrl-j:preview-down \
-    --bind=ctrl-k:preview-up 
+    --bind=ctrl-k:preview-up
 }
 
 # ────────────────────────────────────────────────────────
@@ -702,11 +702,11 @@ fzf-tools() {
     git-branch)       fzf-git-branch "$@" ;;
     git-tag)          fzf-git-tag "$@" ;;
     process)          fzf-process "$@" ;;
-    ports)            fzf-ports "$@" ;;
+    port)             fzf-ports "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;
-    functions)        fzf-functions "$@" ;;
+    function)         fzf-functions "$@" ;;
     defs)             fzf-defs "$@" ;;
     *)
       printf "❗ Unknown command: %s\n" "$cmd"
@@ -714,3 +714,4 @@ fzf-tools() {
       return 1 ;;
   esac
 }
+

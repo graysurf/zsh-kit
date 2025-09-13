@@ -46,12 +46,12 @@ See your configured shortcuts in one place, with real evaluated output.
 
 ---
 
-### `fzf-tools functions`
+### `fzf-tools function`
 
 🔧 View loaded shell functions with source content
 
 ```bash
-fzf-tools functions
+fzf-tools function
 ```
 
 Lists all functions in your shell session and shows their implementation.

@@ -11,11 +11,12 @@ commands=(
   'git-checkout:Pick and checkout a previous commit'
   'git-branch:Browse and checkout branches interactively'
   'git-tag:Browse and checkout git tags interactively'
-  'process:Browse and kill running processes'
+  'process:Browse and kill running processes' 
+  'port:Browse listening ports and owners'
   'history:Search and execute command history'
   'env:Browse environment variables'
   'alias:Browse shell aliases'
-  'functions:Browse defined shell functions'
+  'function:Browse defined shell functions'
   'defs:Browse all definitions (env, alias, functions)'
 )
 

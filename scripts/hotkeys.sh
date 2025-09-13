@@ -20,10 +20,10 @@ fzf-tools-launcher-widget() {
 🏷️ git-tag:       Browse and checkout git tags interactively
 🌱 env:           Browse environment variables
 🔗 alias:         Browse shell aliases
-🔧 functions:     Browse defined shell functions
+🔧 function:      Browse defined shell functions
 📦 defs:          Browse all definitions (env, alias, functions)
 🧪 process:       Browse and kill running processes
-🔌 ports:         Browse listening ports and owners
+🔌 port:          Browse listening ports and owners
 📜 history:       Search and execute command history
 📁 directory:     Search directories and cd into selection
 📝 file:          Search and preview text files
