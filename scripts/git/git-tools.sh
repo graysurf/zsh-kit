@@ -423,7 +423,7 @@ git-commit-context () {
 
   printf "%s\n" "# Commit Context
 
-Please help generate a clear and accurate commit message using the information below.
+Please help generate a clear and accurate commit message using the information below and ensure the output stays within a Markdown block.
 
 ⚠️ Commit message must follow this format (used with commitlint):
 
