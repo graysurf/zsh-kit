@@ -241,23 +241,98 @@ git-back-checkout() {
 # GitHub / GitLab remote open helpers
 # ────────────────────────────────────────────────────────
 
-# Open the repository page on GitHub or GitLab
-gh-open() {
-  typeset url
-  url=$(git remote get-url origin 2>/dev/null | sed \
+# git-resolve-upstream
+# Resolve the remote/branch pair backing the current HEAD (prints remote then branch).
+git-resolve-upstream() {
+  emulate -L zsh
+  setopt localoptions
+
+  typeset fallback_remote='origin' branch='' upstream='' remote='' remote_branch=''
+
+  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || {
+    print -r -- "❌ Unable to resolve current branch" >&2
+    return 1
+  }
+
+  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)
+  if [[ -n "$upstream" && "$upstream" != "$branch" ]]; then
+    remote="${upstream%%/*}"
+    remote_branch="${upstream#*/}"
+  fi
+
+  if [[ -z "$remote" ]]; then
+    remote="$fallback_remote"
+  fi
+
+  if [[ -z "$remote_branch" || "$remote_branch" == "$upstream" || "$remote_branch" == 'HEAD' ]]; then
+    remote_branch="$branch"
+  fi
+
+  print -r -- "$remote"
+  print -r -- "$remote_branch"
+}
+
+# git-normalize-remote-url <remote>
+# Convert a Git remote URL to an https form suitable for browsers and print it.
+git-normalize-remote-url() {
+  emulate -L zsh
+  setopt localoptions
+
+  typeset remote="$1"
+  typeset raw_url='' normalized=''
+
+  if [[ -z "$remote" ]]; then
+    print -r -- "❌ git-normalize-remote-url requires remote name" >&2
+    return 1
+  fi
+
+  raw_url=$(git remote get-url "$remote" 2>/dev/null) || {
+    print -r -- "❌ Failed to resolve remote URL for $remote" >&2
+    return 1
+  }
+
+  normalized=$(printf '%s\n' "$raw_url" | sed \
     -e 's/^git@/https:\/\//' \
     -e 's/com:/com\//' \
     -e 's/\.git$//' \
     -e 's/^ssh:\/\///' \
     -e 's/^https:\/\/git@/https:\/\//')
 
-  if [[ -n "$url" ]]; then
-    open "$url"
-    print "🌐 Opened: $url"
-  else
-    print "❌ Unable to detect remote URL"
+  if [[ -z "$normalized" ]]; then
+    print -r -- "❌ Unable to normalize remote URL for $remote" >&2
     return 1
   fi
+
+  print -r -- "$normalized"
+}
+
+# Open the repository page on GitHub or GitLab
+gh-open() {
+  emulate -L zsh
+  setopt localoptions
+  typeset -a upstream=()
+  typeset remote='' remote_branch='' url=''
+
+  upstream=(${(@f)$(git-resolve-upstream)}) || return 1
+  if (( ${#upstream[@]} < 2 )); then
+    print -r -- "❌ Failed to resolve upstream information" >&2
+    return 1
+  fi
+  remote="${upstream[1]}"
+  remote_branch="${upstream[2]}"
+
+  url=$(git-normalize-remote-url "$remote") || return 1
+
+  if command -v open &>/dev/null; then
+    open "$url"
+  elif command -v xdg-open &>/dev/null; then
+    xdg-open "$url"
+  else
+    print -r -- "❌ Cannot open URL (no open/xdg-open)"
+    return 1
+  fi
+
+  print -r -- "🌐 Opened: $url"
 }
 
 # Short aliases for common undo/reset operations
@@ -269,82 +344,113 @@ alias gbc='git-back-checkout'
 
 # Open the current branch page on GitHub or GitLab
 gh-open-branch() {
-  typeset url branch
-  url=$(git remote get-url origin 2>/dev/null | sed \
-    -e 's/^git@/https:\/\//' \
-    -e 's/com:/com\//' \
-    -e 's/\.git$//' \
-    -e 's/^ssh:\/\///' \
-    -e 's/^https:\/\/git@/https:\/\//')
-  branch=$(git rev-parse --abbrev-ref HEAD)
+  emulate -L zsh
+  setopt localoptions
+  typeset -a upstream=()
+  typeset remote='' remote_branch='' url='' target_url=''
 
-  if [[ -n "$url" && -n "$branch" ]]; then
-    open "$url/tree/$branch"
-    print "🌿 Opened: $url/tree/$branch"
-  else
-    print "❌ Failed to resolve URL or branch"
+  upstream=(${(@f)$(git-resolve-upstream)}) || return 1
+  if (( ${#upstream[@]} < 2 )); then
+    print -r -- "❌ Failed to resolve upstream information" >&2
     return 1
   fi
+  remote="${upstream[1]}"
+  remote_branch="${upstream[2]}"
+
+  url=$(git-normalize-remote-url "$remote") || return 1
+
+  target_url="$url/tree/$remote_branch"
+
+  if command -v open &>/dev/null; then
+    open "$target_url"
+  elif command -v xdg-open &>/dev/null; then
+    xdg-open "$target_url"
+  else
+    print -r -- "❌ Cannot open URL (no open/xdg-open)"
+    return 1
+  fi
+
+  print -r -- "🌿 Opened: $target_url"
 }
 
 # Open a specific commit on GitHub (supports tag, branch, or commit hash)
 gh-open-commit() {
+  emulate -L zsh
+  setopt localoptions
   typeset hash="${1:-HEAD}"
-  typeset url commit
+  typeset -a upstream=()
+  typeset remote='' remote_branch='' url='' commit=''
 
-  url=$(git remote get-url origin 2>/dev/null | sed \
-    -e 's/^git@/https:\/\//' \
-    -e 's/com:/com\//' \
-    -e 's/\.git$//' \
-    -e 's/^ssh:\/\///' \
-    -e 's/^https:\/\/git@/https:\/\//') || {
-    print "❌ No remote 'origin' found"
+  upstream=(${(@f)$(git-resolve-upstream)}) || return 1
+  if (( ${#upstream[@]} < 2 )); then
+    print -r -- "❌ Failed to resolve upstream information" >&2
     return 1
-  }
+  fi
+  remote="${upstream[1]}"
+  remote_branch="${upstream[2]}"
+
+  url=$(git-normalize-remote-url "$remote") || return 1
 
   if [[ "$url" != https://github.com/* ]]; then
-    print "❗ Only GitHub URLs are supported."
+    print -r -- "❗ Only GitHub URLs are supported."
     return 1
   fi
 
   # Ensure annotated tag resolves to commit, not tag object
   commit=$(git rev-parse "${hash}^{commit}" 2>/dev/null) || {
-    print "❌ Invalid commit/tag/branch: $hash"
+    print -r -- "❌ Invalid commit/tag/branch: $hash"
     return 1
   }
 
   typeset commit_url="$url/commit/$commit"
-  print "🔗 Opening: $commit_url"
+  print -r -- "🔗 Opening: $commit_url"
 
   if command -v open &>/dev/null; then
     open "$commit_url"
   elif command -v xdg-open &>/dev/null; then
     xdg-open "$commit_url"
   else
-    print "❌ Cannot open URL (no open/xdg-open)"
+    print -r -- "❌ Cannot open URL (no open/xdg-open)"
     return 1
   fi
 }
 
 # Open default branch (main or master)
 gh-open-default-branch() {
-  typeset url default_branch
-  url=$(git remote get-url origin 2>/dev/null | sed \
-    -e 's/^git@/https:\/\//' \
-    -e 's/com:/com\//' \
-    -e 's/\.git$//' \
-    -e 's/^ssh:\/\///' \
-    -e 's/^https:\/\/git@/https:\/\//')
+  emulate -L zsh
+  setopt localoptions
+  typeset -a upstream=()
+  typeset remote='' remote_branch='' url='' default_branch=''
 
-  default_branch=$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')
-
-  if [[ -n "$url" && -n "$default_branch" ]]; then
-    open "$url/tree/$default_branch"
-    print "🌿 Opened: $url/tree/$default_branch"
-  else
-    print "❌ Failed to resolve remote or default branch"
+  upstream=(${(@f)$(git-resolve-upstream)}) || return 1
+  if (( ${#upstream[@]} < 2 )); then
+    print -r -- "❌ Failed to resolve upstream information" >&2
     return 1
   fi
+  remote="${upstream[1]}"
+  remote_branch="${upstream[2]}"
+
+  url=$(git-normalize-remote-url "$remote") || return 1
+
+  default_branch=$(git remote show "$remote" 2>/dev/null | awk '/HEAD branch/ {print $NF}')
+
+  if [[ -z "$default_branch" ]]; then
+    print -r -- "❌ Failed to resolve default branch for $remote"
+    return 1
+  fi
+
+  typeset target_url="$url/tree/$default_branch"
+
+  if command -v open &>/dev/null; then
+    open "$target_url"
+  elif command -v xdg-open &>/dev/null; then
+    xdg-open "$target_url"
+  else
+    print -r -- "❌ Cannot open URL (no open/xdg-open)"
+    return 1
+  fi
+
+  print -r -- "🌿 Opened: $target_url"
 }
 
 # Open the repository page on GitHub or GitLab
