@@ -236,8 +236,6 @@ _git_scope_commit() {
   fi
 }
 
-
-
 # Print commit header info (hash, author, date)
 _git_scope_print_commit_metadata() {
   typeset commit="$1"
@@ -263,7 +261,7 @@ _git_scope_render_commit_files() {
   typeset commit="$1"
   typeset -a file_list=()
 
-  typeset ns_lines numstat_lines
+  typeset ns_lines=0 numstat_lines=0
   ns_lines=$(git show --pretty=format: --name-status "$commit")
   numstat_lines=$(git show --pretty=format: --numstat "$commit")
 
