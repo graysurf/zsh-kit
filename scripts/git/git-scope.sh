@@ -214,15 +214,45 @@ _git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untra
 # inspecting past changes in high detail.
 # ─────────────────────────────────────────────────────────────
 _git_scope_commit() {
-  typeset commit="$1"
+  emulate -L zsh
+  setopt localoptions pipe_fail
+
+  typeset parent_selector=''
+  typeset -a positional=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --parent|-P)
+        if [[ $# -lt 2 ]]; then
+          printf "❗ --parent requires an argument\n"
+          return 1
+        fi
+        parent_selector="$2"
+        shift 2
+        continue
+        ;;
+      --parent=*)
+        parent_selector="${1#*=}"
+        ;;
+      -P*)
+        parent_selector="${1#-P}"
+        ;;
+      *)
+        positional+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  typeset commit="${positional[1]}"
   if [[ -z "$commit" ]]; then
-    printf "❗ Usage: git-scope commit <commit-hash | HEAD>\n"
+    printf "❗ Usage: git-scope commit <commit-hash | HEAD> [--parent <n>]\n"
     return 1
   fi
 
   _git_scope_print_commit_metadata "$commit"
   _git_scope_print_commit_message "$commit"
-  _git_scope_render_commit_files "$commit"
+  _git_scope_render_commit_files "$commit" "$parent_selector"
 
   typeset -a file_list
   file_list=("${(@f)$(< /tmp/.git-scope-filelist)}")
@@ -257,23 +287,98 @@ _git_scope_print_commit_message() {
 }
 
 # Render file change list with color and stats
-_git_scope_render_commit_files() {
+_git_scope_commit_parents() {
+  emulate -L zsh
+  setopt localoptions pipe_fail
+
   typeset commit="$1"
+  typeset parents_raw=''
+
+  typeset -ga reply=()
+
+  parents_raw=$(git show -s --pretty=%P "$commit") || return 1
+  if [[ -z "$parents_raw" ]]; then
+    reply=()
+    return 0
+  fi
+
+  reply=("${(@s: :)parents_raw}")
+  return 0
+}
+
+_git_scope_render_commit_files() {
+  emulate -L zsh
+  setopt localoptions pipe_fail
+
+  typeset commit="$1"
+  typeset parent_selector="$2"
   typeset -a file_list=()
+  typeset -a preface_lines=()
 
-  typeset ns_lines=0 numstat_lines=0
-  ns_lines=$(git show --pretty=format: --name-status "$commit")
-  numstat_lines=$(git show --pretty=format: --numstat "$commit")
+  typeset ns_lines='' numstat_lines=''
+  typeset -a parents=()
+  typeset parent_count=0
+  typeset is_merge=false
 
-  if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
-    printf "\n📄 Changed files:\n"
-    printf "  ⚠️  Merge commit detected — no file-level diff shown by default\n"
-    return
+  _git_scope_commit_parents "$commit"
+  parents=("${reply[@]}")
+  parent_count=${#parents[@]}
+  (( parent_count > 1 )) && is_merge=true
+
+  typeset selected_parent_hash=''
+  typeset selected_parent_short=''
+  typeset selected_index=1
+
+  if [[ "$is_merge" == true ]]; then
+    if [[ -n "$parent_selector" ]]; then
+      if [[ "$parent_selector" == <-> ]]; then
+        selected_index=$parent_selector
+      else
+        preface_lines+=("  ⚠️  Invalid --parent value '${parent_selector}' — falling back to parent #1")
+        selected_index=1
+      fi
+    fi
+
+    if (( selected_index < 1 || selected_index > parent_count )); then
+      preface_lines+=("  ⚠️  Parent index ${selected_index} out of range (1-${parent_count}) — falling back to parent #1")
+      selected_index=1
+    fi
+
+    selected_parent_hash="$parents[$selected_index]"
+    selected_parent_short=$(git rev-parse --short "$selected_parent_hash" 2>/dev/null)
+
+    ns_lines=$(git -c core.quotepath=false diff --name-status "$selected_parent_hash" "$commit")
+    numstat_lines=$(git -c core.quotepath=false diff --numstat "$selected_parent_hash" "$commit")
+
+    if [[ -z "$ns_lines" ]]; then
+      printf "\n📄 Changed files:\n"
+      printf "  ℹ️  Merge commit vs parent #%d (%s) has no file-level changes\n" "$selected_index" "${selected_parent_short:-$selected_parent_hash}"
+      : > /tmp/.git-scope-filelist
+      return
+    fi
+  else
+    ns_lines=$(git show --pretty=format: --name-status "$commit")
+    numstat_lines=$(git show --pretty=format: --numstat "$commit")
+
+    if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
+      printf "\n📄 Changed files:\n"
+      printf "  ℹ️  No file-level changes recorded for this commit\n"
+      : > /tmp/.git-scope-filelist
+      return
+    fi
   fi
 
   typeset total_add=0 total_del=0
 
   printf "\n📄 Changed files:\n"
+
+  for line in "${preface_lines[@]}"; do
+    [[ -n "$line" ]] && printf "%s\n" "$line"
+  done
+
+  if [[ "$is_merge" == true ]]; then
+    printf "  ℹ️  Merge commit with %d parents — showing diff against parent #%d (%s)\n" "$parent_count" "$selected_index" "${selected_parent_short:-$selected_parent_hash}"
+  fi
 
   while IFS=$'\t' read -r kind file; do
     [[ -z "$file" ]] && continue
