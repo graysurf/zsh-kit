@@ -22,14 +22,14 @@ export HISTTIMEFORMAT='%F %T '
 # Ensure cache dir exists
 [[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
 
-
-
-
-
 export ZSH_BOOTSTRAP_SCRIPT_DIR="$ZDOTDIR/bootstrap"
 
 export ZSH_DEBUG=0
+export ZSH_BOOT_WEATHER=true
 export ZSH_BOOT_QUOTE=true
+
+# Display current weather if enabled
+[[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.sh"
 
 # Display quote UI if enabled
 [[ "$ZSH_BOOT_QUOTE" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.sh"

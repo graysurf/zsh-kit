@@ -1,6 +1,6 @@
 # Prevent double execution
-[[ -n "$_LOGIN_SH_EXECUTED" ]] && return
-export _LOGIN_SH_EXECUTED=1
+[[ -n "$_LOGIN_QUOTE_EXECUTED" ]] && return
+export _LOGIN_QUOTE_EXECUTED=1
 
 # Quote storage path
 QUOTES_FILE="$ZDOTDIR/assets/quotes.txt"

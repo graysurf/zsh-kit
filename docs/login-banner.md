@@ -9,6 +9,7 @@ and a bit of mechanical sarcasm into each terminal startup — built entirely fr
 
 - 📜 Displays a **random inspirational quote** at login
 - 🧠 Shows a **dynamic emoji preamble** with a boot message (because shells deserve ceremony)
+- 🌦 (Optional) Prints a cached wttr.in weather snapshot (`bootstrap/weather.sh`, 1-hour TTL) when `ZSH_BOOT_WEATHER=true`
 - 🌐 Fetches fresh quotes from a public API (`zenquotes.io`) in the background
 - 🗂 Stores up to 100 recent quotes locally in a text file for offline fallback
 - 🔒 Prevents duplicate execution when sourced multiple times
@@ -39,9 +40,12 @@ On every interactive login, the script:
 ## 🧰 Configuration Paths
 
 ```zsh
-$ZDOTDIR/assets/quotes.txt           # Stored quotes file (text, one per line)
-$ZSH_CACHE_DIR/quotes.timestamp      # Last time quote was fetched (unix timestamp)
-$ZDOTDIR/tools/random_emoji_cmd.sh   # Emoji selector script (returns one emoji per call)
+$ZDOTDIR/assets/quotes.txt             # Stored quotes file (text, one per line)
+$ZSH_CACHE_DIR/quotes.timestamp        # Last time quote was fetched (unix timestamp)
+$ZDOTDIR/tools/random_emoji_cmd.sh     # Emoji selector script (returns one emoji per call)
+$ZDOTDIR/bootstrap/weather.sh          # Weather helper (sources wttr.in cache logic)
+$ZSH_CACHE_DIR/weather.txt             # Cached wttr.in output
+$ZSH_CACHE_DIR/weather.timestamp       # Last time weather was fetched
 ```
 
 ---
@@ -56,6 +60,8 @@ Want to adjust the mood?
 
 Need a silent login? Wrap `login.sh` in a toggle and only load when `$SHOW_LOGIN_BANNER=true`.
 
+Need weather tweaks? Set `ZSH_WEATHER_URL='https://wttr.in/Taipei?0'` or `ZSH_WEATHER_INTERVAL=900` ahead of sourcing `.zshrc` to change location/refresh cadence.
+
 ---
 
 ## 🔁 Output Sample
@@ -68,6 +74,18 @@ Need a silent login? Wrap `login.sh` in a toggle and only load when `$SHOW_LOGIN
 ✅ Loaded env.sh in 13ms
 ✅ Loaded plugins.sh in 41ms
 ...
+```
+
+If `ZSH_BOOT_WEATHER=true`, the login banner is preceded by the cached wttr.in snapshot managed by `bootstrap/weather.sh` (refreshes once per hour; override via `ZSH_WEATHER_INTERVAL=<seconds>`), e.g.:
+
+```text
+Weather report: Taipei City, Taiwan
+
+     \  /       Partly cloudy
+   _ /"".-.     +25(27) °C
+     \_(   ).   ↓ 14 km/h
+     /(___(__)  10 km
+                0.0 mm
 ```
 
 ---

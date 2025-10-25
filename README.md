@@ -41,6 +41,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
 │   ├── plugins.sh                        # Plugin declaration + loading logic
 │   ├── quote-init.sh                     # Show emoji + quote banner on login
+│   ├── weather.sh                        # Cached wttr.in snapshot for login weather
 │   └── install-tools.sh                  # Tool installer with dry-run and quiet support
 │
 ├── config/                               # Configuration files for third-party tools
@@ -71,11 +72,19 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ## 🪄 Startup Snapshot
 
-> Login messages include randomly selected inspirational quotes, stored in a local file that grows over time.
+> Login messages include randomly selected inspirational quotes and an optional cached wttr.in weather snapshot, stored in local files that grow over time.
 
 An example Zsh startup log with this config:
 
 ```text
+Weather report: Taipei City, Taiwan
+
+     \  /       Partly cloudy
+   _ /"".-.     +25(27) °C
+     \_(   ).   ↓ 14 km/h
+     /(___(__)  10 km
+                0.0 mm
+                
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 
 🌿  Thinking shell initialized. Expect consequences...

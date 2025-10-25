@@ -29,6 +29,7 @@ export SHELL_SESSIONS_DISABLE=1
 # ────────────────────────────────────────────────────────
 
 alias f='open'  # Quick open file or dir with default macOS app
+alias weather='curl wttr.in'
 
 alias hidpi='bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"'
 
