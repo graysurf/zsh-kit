@@ -4,6 +4,8 @@
 fpath=("$ZDOTDIR/scripts/_completion" $fpath)
 autoload -Uz compinit
 compinit -d "$ZSH_COMPDUMP"
+typeset -g ZSH_COMPLETION_CACHE_DIR="${ZSH_COMPLETION_CACHE_DIR:-$ZSH_CACHE_DIR/completion-cache}"
+[[ -d "$ZSH_COMPLETION_CACHE_DIR" ]] || mkdir -p -- "$ZSH_COMPLETION_CACHE_DIR"
 
 # ──────────────────────────────
 # fzf-tab configuration (after compinit)
@@ -32,7 +34,7 @@ zstyle ':fzf-tab:*' skip-unambiguous yes
 zmodload zsh/complist
 
 zstyle ':completion:*' use-cache on
-zstyle ':completion:*' cache-path "$ZSH_COMPDUMP"
+zstyle ':completion:*' cache-path "$ZSH_COMPLETION_CACHE_DIR"
 
 # Ensure common file‑reading commands complete both files and directories
 autoload -Uz compdef
