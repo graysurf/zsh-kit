@@ -8,6 +8,7 @@ path=(
   /usr/local/bin
   /usr/bin
   $HOME/bin
+  $HOME/.local/bin
   $ZDOTDIR/tools/git
   $path
 )
