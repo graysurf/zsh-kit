@@ -31,7 +31,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 ├── .zprofile                             # Minimal login initializer for login shells
 │
 ├── assets/                               # Static data files
-├── cache/                                # Runtime cache dir (zcompdump, plugin update timestamps, etc.)
+├── cache/                                # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
 ├── docs/                                 # Markdown documentation for key modules
 │
 ├── bootstrap/                            # Script orchestrator and plugin logic
