@@ -48,20 +48,20 @@ llt() {
 }
 
 # Tree views with depth limits
-alias lt2='ll -T -L 2'
-alias lt3='ll -T -L 3'
-alias lt5='ll -T -L 5'
+alias lt2='lt -L 2'
+alias lt3='lt -L 3'
+alias lt5='lt -L 5'
 
-alias llt2='ll -T -L 2'
-alias llt3='ll -T -L 3'
-alias llt5='ll -T -L 5'
+alias llt2='llt -L 2'
+alias llt3='llt -L 3'
+alias llt5='llt -L 5'
 
 # Tree view excluding dotfiles
 alias lxt='lx -T'
 
 # Tree views excluding dotfiles with depth limits
-alias lxt2='lx -T -L 2'
-alias lxt3='lx -T -L 3'
-alias lxt5='lx -T -L 5'
+alias lxt2='lxt -L 2'
+alias lxt3='lxt -L 3'
+alias lxt5='lxt -L 5'
 
 
