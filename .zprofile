@@ -4,7 +4,6 @@ typeset -U path PATH
 # Prepend critical paths to PATH
 path=(
   /opt/homebrew/bin
-  /usr/local/go/bin
   /usr/local/bin
   /usr/bin
   $HOME/bin
