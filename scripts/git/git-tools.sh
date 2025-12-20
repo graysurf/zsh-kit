@@ -33,9 +33,26 @@ alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short 
 # Reset staged files (equivalent to "git reset")
 alias gr='git reset'
 
-# Copy staged diff to clipboard (no output)
+# Copy staged diff to clipboard (default) or print to stdout for LLM usage.
 gdc() {
-  typeset diff
+  typeset diff mode
+  mode="clipboard"
+
+  case "$1" in
+    --stdout|-p|--print)
+      mode="stdout"
+      ;;
+    --both)
+      mode="both"
+      ;;
+    --help|-h)
+      print "Usage: gdc [--stdout|--both]"
+      print "  --stdout   Print staged diff to stdout (no status message)"
+      print "  --both     Print to stdout and copy to clipboard"
+      return 0
+      ;;
+  esac
+
   diff=$(git diff --cached --no-color)
 
   if [[ -z "$diff" ]]; then
@@ -43,7 +60,17 @@ gdc() {
     return 1
   fi
 
+  if [[ "$mode" == "stdout" ]]; then
+    printf "%s\n" "$diff"
+    return 0
+  fi
+
   printf "%s" "$diff" | set_clipboard
+
+  if [[ "$mode" == "both" ]]; then
+    printf "%s\n" "$diff"
+  fi
+
   print "✅ Staged diff copied to clipboard"
 }
 
@@ -479,13 +506,13 @@ gh-push-open() {
 # It performs the following steps:
 #  1. Collects the full diff of staged files (`git diff --cached`).
 #  2. Generates a file scope summary and directory tree using `git-scope staged`.
-#  3. Iterates through each staged file to include its HEAD version (before changes).
-#     - For added files: marks them as new.
-#     - For modified/deleted files: includes the original content from HEAD.
+#  3. Iterates through each staged file to include its staged (index) version (after changes).
+#     - For deleted files: notes that index content is unavailable.
+#     - For added/modified/renamed files: includes the staged content.
 #  4. Formats all this into a Markdown document, including:
 #     - 📄 Git staged diff (as `diff` block)
 #     - 📂 Scope and directory tree (as `bash` block)
-#     - 📚 Original file contents (as `ts` blocks per file)
+#     - 📚 Staged file contents (as `ts` blocks per file)
 #
 # The result is piped to both:
 #  - `set_clipboard` for immediate pasting into ChatGPT or documentation tools.
@@ -500,26 +527,50 @@ gh-push-open() {
 #
 # Output: Markdown commit context is copied to clipboard and logged to a temp file.
 git-commit-context () {
-  typeset tmpfile diff scope contents
+  typeset tmpfile diff scope contents mode
+  mode="clipboard"
+
+  case "$1" in
+    --stdout|-p|--print)
+      mode="stdout"
+      ;;
+    --both)
+      mode="both"
+      ;;
+    --help|-h)
+      print "Usage: git-commit-context [--stdout|--both]"
+      print "  --stdout   Print commit context to stdout only"
+      print "  --both     Print to stdout and copy to clipboard"
+      return 0
+      ;;
+  esac
 
   tmpfile="$(mktemp -t commit-context.md.XXXXXX)"
   diff="$(git diff --cached --no-color)"
   scope="$(git-scope staged | sed 's/\x1b\[[0-9;]*m//g')"
 
   if [[ -z "$diff" ]]; then
-    printf "⚠️  No staged changes to record\n"
+    printf "⚠️  No staged changes to record\n" >&2
     return 1
   fi
 
   contents="$(
-    git diff --cached --name-status | while IFS=$'\t' read -r fstatus file; do
-      printf "### %s (%s)\n\n" "$file" "$fstatus"
+    git diff --cached --name-status | while IFS=$'\t' read -r fstatus file newfile; do
+      display_path="$file"
+      content_path="$file"
 
-      if [[ "$fstatus" == "A" ]]; then
-        printf "[New file, no HEAD version]\n\n"
-      elif [[ "$fstatus" == "M" || "$fstatus" == "D" ]]; then
+      if [[ -n "$newfile" ]]; then
+        display_path="${file} -> ${newfile}"
+        content_path="$newfile"
+      fi
+
+      printf "### %s (%s)\n\n" "$display_path" "$fstatus"
+
+      if [[ "$fstatus" == "D" ]]; then
+        printf "[Deleted file, no index version]\n\n"
+      elif [[ "$fstatus" == "A" || "$fstatus" == "M" || "$fstatus" == R* || "$fstatus" == C* ]]; then
         printf '```ts\n'
-        git show HEAD:"$file" 2>/dev/null || printf '[HEAD version not found]\n'
+        git show :"$content_path" 2>/dev/null || printf '[Index version not found]\n'
         printf '```\n\n'
       else
         printf "[Unhandled status: %s]\n\n" "$fstatus"
@@ -529,35 +580,10 @@ git-commit-context () {
 
   printf "%s\n" "# Commit Context
 
-Please help generate a clear and accurate commit message using the information below and ensure the output stays within a Markdown block.
+## Input expectations
 
-⚠️ Commit message must follow this format (used with commitlint):
-
-\`\`\`text
-type(scope): subject
-\`\`\`
-
-Where:
-
-- \`type\` is the kind of change (e.g., \`feat\`, \`fix\`, \`refactor\`, \`chore\`, etc.)
-- \`scope\` indicates the specific area of the codebase affected
-- \`subject\` is a short, descriptive summary of the change (lowercase, under 100 characters)
-
-Body Rules
-
-- The body must follow the header after one blank line
-- Each line must be under 100 characters
-- Each item in the body must begin with a \`-\` (dash)
-- Each bullet point must start with a capital letter
-- Keep each point concise and avoid redundant entries
-- Group related changes together logically
-
----
-
-## 📐 Special Rule for File Processing
-
-- When processing shell scripts, code files, or configuration files, the entire file must be read before commenting on or modifying it.
-- It is not allowed to generate results or suggestions based on partial content alone.
+- Full-file reads are not required for commit message generation.
+- Base the message on staged diff, scope tree, and staged (index) version content.
 
 ---
 
@@ -573,14 +599,27 @@ $scope
 $diff
 \`\`\`
 
-## 📚 Original file contents (HEAD version):
+## 📚 Staged file contents (index version):
 
-$contents" | tee "$tmpfile" | set_clipboard
+$contents" > "$tmpfile"
 
-  printf "✅ Commit context copied to clipboard with:\n"
-  printf "  • Diff\n"
-  printf "  • Scope summary (via git-scope staged)\n"
-  printf "  • Original file contents (HEAD version)\n"
+  if [[ "$mode" == "stdout" ]]; then
+    cat "$tmpfile"
+    return 0
+  fi
+
+  if [[ "$mode" == "both" ]]; then
+    cat "$tmpfile"
+  fi
+
+  cat "$tmpfile" | set_clipboard
+
+  if [[ "$mode" == "clipboard" ]]; then
+    printf "✅ Commit context copied to clipboard with:\n"
+    printf "  • Diff\n"
+    printf "  • Scope summary (via git-scope staged)\n"
+    printf "  • Staged file contents (index version)\n"
+  fi
 }
 
 alias gcc='git-commit-context'
