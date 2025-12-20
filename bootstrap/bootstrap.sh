@@ -26,11 +26,11 @@ ZSH_SCRIPT_EXCLUDE_LIST=(
   "$ZSH_SCRIPT_DIR/env.sh"
   "$ZSH_SCRIPT_DIR/plugins.sh"
   "$ZSH_SCRIPT_DIR/completion.zsh"
-  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
 )
 
 ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
   "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+  "$ZSH_PRIVATE_SCRIPT_DIR/tools/codex-tools.sh"
 )
 
 # ──────────────────────────────
