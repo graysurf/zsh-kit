@@ -527,27 +527,52 @@ gh-push-open() {
 #
 # Output: Markdown commit context is copied to clipboard and logged to a temp file.
 git-commit-context () {
-  typeset tmpfile diff scope contents mode
-  mode="clipboard"
+  emulate -L zsh
+  setopt localoptions pipe_fail
 
-  case "$1" in
-    --stdout|-p|--print)
-      mode="stdout"
-      ;;
-    --both)
-      mode="both"
-      ;;
-    --help|-h)
-      print "Usage: git-commit-context [--stdout|--both]"
-      print "  --stdout   Print commit context to stdout only"
-      print "  --both     Print to stdout and copy to clipboard"
-      return 0
-      ;;
-  esac
+  typeset tmpfile='' diff='' scope='' contents='' mode='clipboard'
+  typeset no_color=false
+  typeset -a extra_args=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --stdout|-p|--print)
+        mode="stdout"
+        ;;
+      --both)
+        mode="both"
+        ;;
+      --no-color|no-color)
+        no_color=true
+        ;;
+      --help|-h)
+        print -r -- "Usage: git-commit-context [--stdout|--both] [--no-color]"
+        print -r -- "  --stdout   Print commit context to stdout only"
+        print -r -- "  --both     Print to stdout and copy to clipboard"
+        print -r -- "  --no-color Disable ANSI colors (also via NO_COLOR)"
+        return 0
+        ;;
+      *)
+        extra_args+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  if (( ${#extra_args[@]} > 0 )); then
+    print -u2 -r -- "❗ Unknown argument: ${extra_args[1]}"
+    print -u2 -r -- "Usage: git-commit-context [--stdout|--both] [--no-color]"
+    return 1
+  fi
 
   tmpfile="$(mktemp -t commit-context.md.XXXXXX)"
   diff="$(git diff --cached --no-color)"
-  scope="$(git-scope staged | sed 's/\x1b\[[0-9;]*m//g')"
+
+  typeset -a scope_args=(staged)
+  if [[ "$no_color" == true || -n "${NO_COLOR-}" ]]; then
+    scope_args+=(--no-color)
+  fi
+  scope="$(git-scope "${scope_args[@]}" | sed 's/\x1b\[[0-9;]*m//g')"
 
   if [[ -z "$diff" ]]; then
     printf "⚠️  No staged changes to record\n" >&2

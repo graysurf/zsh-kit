@@ -296,13 +296,34 @@ _git_lock_delete() {
 #
 # This will show the commits between the two git-lock points using: git log <hash1>..<hash2>
 _git_lock_diff() {
-  typeset repo_id lock_dir label1 label2 file1 file2 hash1 hash2
+  emulate -L zsh
+  setopt localoptions pipe_fail
 
-  label1=$(_git_lock_resolve_label "$1") || {
-    printf "❗ Usage: git-lock diff <label1> <label2>\n"
+  typeset repo_id='' lock_dir='' label1='' label2='' file1='' file2='' hash1='' hash2=''
+  typeset no_color=false
+  typeset -a positional=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --no-color|no-color)
+        no_color=true
+        ;;
+      --help|-h)
+        printf "❗ Usage: git-lock diff <label1> <label2> [--no-color]\n"
+        return 1
+        ;;
+      *)
+        positional+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  label1=$(_git_lock_resolve_label "${positional[1]}") || {
+    printf "❗ Usage: git-lock diff <label1> <label2> [--no-color]\n"
     return 1
   }
-  label2=$(_git_lock_resolve_label "$2") || {
+  label2=$(_git_lock_resolve_label "${positional[2]}") || {
     printf "❗ Second label not provided or found\n"
     return 1
   }
@@ -329,7 +350,12 @@ _git_lock_diff() {
   printf "   🔖 %s: %s\n" "$label2" "$hash2"
   printf "\n"
 
-  git log --oneline --graph --decorate "$hash1..$hash2"
+  typeset -a log_args=(--oneline --graph --decorate)
+  if [[ "$no_color" == true || -n "${NO_COLOR-}" ]]; then
+    log_args+=(--color=never)
+  fi
+
+  git log "${log_args[@]}" "$hash1..$hash2"
 }
 
 
@@ -442,7 +468,7 @@ git-lock() {
       "list"                          "Show all locks for repo" \
       "copy <from> <to>"              "Duplicate a lock label" \
       "delete [label]"                "Remove a lock" \
-      "diff <l1> <l2>"                "Compare commits between two locks" \
+      "diff <l1> <l2> [--no-color]"   "Compare commits between two locks" \
       "tag <label> <tag> [-m msg]"    "Create git tag from a lock"
     printf "\n"
     return 0
