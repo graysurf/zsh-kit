@@ -9,8 +9,14 @@ alias gs='git-scope'
 alias gsc='git-scope commit'
 alias gst='git-scope tracked'
 
+_git_scope_no_color=false
+
 # Return ANSI color code based on file change kind
 _git_scope_kind_color() {
+  if [[ "$_git_scope_no_color" == true ]]; then
+    return 0
+  fi
+
   case "$1" in
     A) printf '\033[38;5;66m'  ;;  # Added    → #3d6f6f (Delta plus-style)
     M) printf '\033[38;5;110m' ;;  # Modified → #add6ff (Delta file-style)
@@ -19,6 +25,14 @@ _git_scope_kind_color() {
     -) printf '\033[0m'        ;;  # Reset
     *) printf '\033[38;5;110m' ;;  # Fallback
   esac
+}
+
+_git_scope_color_reset() {
+  if [[ "$_git_scope_no_color" == true ]]; then
+    return 0
+  fi
+
+  printf '\033[0m'
 }
 
 # Render directory tree from a list of file paths
@@ -32,6 +46,13 @@ _git_scope_render_tree() {
 
   printf "\n📂 Directory tree:\n"
 
+  typeset -a tree_args=(--fromfile)
+  if [[ "$_git_scope_no_color" == true ]]; then
+    tree_args+=(-n)
+  else
+    tree_args+=(-C)
+  fi
+
   printf "%s\n" "${file_list[@]}" | awk -F/ '{
     path=""
     for(i=1;i<NF;i++) {
@@ -39,7 +60,7 @@ _git_scope_render_tree() {
       print path
     }
     print $0
-  }' | sort -u | tree --fromfile -C
+  }' | sort -u | tree "${tree_args[@]}"
 }
 
 
@@ -52,7 +73,7 @@ _git_scope_render_with_type() {
     return 1
   fi
 
-  typeset COLOR_RESET='\033[0m'
+  typeset color_reset="$(_git_scope_color_reset)"
   typeset -a files=()
 
   printf "\n📄 Changed files:\n"
@@ -61,7 +82,7 @@ _git_scope_render_with_type() {
     [[ -z "$file" ]] && continue
     files+=("$file")
     typeset color="$(_git_scope_kind_color "$kind")"
-    printf "  %b➔ [%s] %s%b\n" "$color" "$kind" "$file" "$COLOR_RESET"
+    printf "  %b➔ [%s] %s%b\n" "$color" "$kind" "$file" "$color_reset"
   done <<< "$input"
 
   _git_scope_render_tree "${(F)files}"
@@ -271,8 +292,13 @@ _git_scope_print_commit_metadata() {
   typeset commit="$1"
 
   printf "\n"
-  git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
-    --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
+  if [[ "$_git_scope_no_color" == true ]]; then
+    git log -1 --color=never --date=format:'%Y-%m-%d %H:%M:%S %z' \
+      --pretty=format:"🔖 %h %s%n👤 %an <%ae>%n📅 %ad" "$commit"
+  else
+    git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
+      --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
+  fi
 }
 
 # Pretty print commit message body
@@ -369,6 +395,7 @@ _git_scope_render_commit_files() {
   fi
 
   typeset total_add=0 total_del=0
+  typeset color_reset="$(_git_scope_color_reset)"
 
   printf "\n📄 Changed files:\n"
 
@@ -397,7 +424,7 @@ _git_scope_render_commit_files() {
     fi
 
     typeset color="$(_git_scope_kind_color "$kind")"
-    printf "  %b➤ [%s] %s  [+%s / -%s]%b\n" "$color" "$kind" "$file" "$add" "$del" '\033[0m'
+    printf "  %b➤ [%s] %s  [+%s / -%s]%b\n" "$color" "$kind" "$file" "$add" "$del" "$color_reset"
   done <<< "$ns_lines"
 
   printf "\n  📊 Total: +%d / -%d\n" "$total_add" "$total_del"
@@ -419,13 +446,27 @@ git-scope() {
     return 1
   fi
 
-  typeset sub="${1:-help}"
-  (( $# > 0 )) && shift
+  _git_scope_no_color=false
+  if [[ -n "${NO_COLOR-}" ]]; then
+    _git_scope_no_color=true
+  fi
+
+  typeset -a filtered_args=()
+  for arg in "$@"; do
+    if [[ "$arg" == "--no-color" ]]; then
+      _git_scope_no_color=true
+    else
+      filtered_args+=("$arg")
+    fi
+  done
+
+  typeset sub="${filtered_args[1]:-help}"
+  (( ${#filtered_args[@]} > 0 )) && filtered_args=("${filtered_args[@]:1}")
 
   # Detect -p flag (print file content)
   _git_scope_should_print=false
   typeset -a args=()
-  for arg in "$@"; do
+  for arg in "${filtered_args[@]}"; do
     if [[ "$arg" == "-p" || "$arg" == "--print" ]]; then
       _git_scope_should_print=true
     else
@@ -457,6 +498,10 @@ git-scope() {
         all            "Show all changes (staged and unstaged)" \
         untracked      "Show untracked files"
       printf "  %-16s  %s\n" "commit <id>" "Show commit details (use -p to print content)"
+      printf "\n"
+      printf "%s\n" "Options:"
+      printf "  %-16s  %s\n" "-p, --print" "Print file contents where applicable (e.g., commit)"
+      printf "  %-16s  %s\n" "--no-color" "Disable ANSI colors (also via NO_COLOR)"
       ;;
     *)
       printf "⚠️ Unknown subcommand: '%s'\n" "$sub"
