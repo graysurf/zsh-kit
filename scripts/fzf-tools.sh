@@ -510,7 +510,7 @@ fzf_block_preview() {
   $generator > "$tmpfile"
 
   previewscript="$(mktemp)"
-  cat > "$previewscript" <<'EOF'
+  command cat > "$previewscript" <<'EOF'
 #!/usr/bin/env awk -f
 BEGIN {
   target      = ENVIRON["FZF_PREVIEW_TARGET"]
@@ -714,4 +714,3 @@ fzf-tools() {
       return 1 ;;
   esac
 }
-
