@@ -47,20 +47,32 @@ _git_scope_render_tree() {
   printf "\n📂 Directory tree:\n"
 
   typeset -a tree_args=(--fromfile)
+  typeset strip_color=false
   if [[ "$_git_scope_no_color" == true ]]; then
-    tree_args+=(-n)
+    strip_color=true
   else
     tree_args+=(-C)
   fi
 
-  printf "%s\n" "${file_list[@]}" | awk -F/ '{
-    path=""
-    for(i=1;i<NF;i++) {
-      path = (path ? path "/" $i : $i)
-      print path
-    }
-    print $0
-  }' | sort -u | tree "${tree_args[@]}"
+  if [[ "$strip_color" == true ]]; then
+    printf "%s\n" "${file_list[@]}" | awk -F/ '{
+      path=""
+      for(i=1;i<NF;i++) {
+        path = (path ? path "/" $i : $i)
+        print path
+      }
+      print $0
+    }' | sort -u | command tree "${tree_args[@]}" | sed 's/\x1b\[[0-9;]*m//g'
+  else
+    printf "%s\n" "${file_list[@]}" | awk -F/ '{
+      path=""
+      for(i=1;i<NF;i++) {
+        path = (path ? path "/" $i : $i)
+        print path
+      }
+      print $0
+    }' | sort -u | command tree "${tree_args[@]}"
+  fi
 }
 
 
@@ -453,7 +465,7 @@ git-scope() {
 
   typeset -a filtered_args=()
   for arg in "$@"; do
-    if [[ "$arg" == "--no-color" ]]; then
+    if [[ "$arg" == "--no-color" || "$arg" == "no-color" ]]; then
       _git_scope_no_color=true
     else
       filtered_args+=("$arg")

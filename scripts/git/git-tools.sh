@@ -36,22 +36,43 @@ alias gr='git reset'
 # Copy staged diff to clipboard (default) or print to stdout for LLM usage.
 gdc() {
   typeset diff mode
+  typeset -i mode_flags=0
+  typeset -a extra_args=()
   mode="clipboard"
 
-  case "$1" in
-    --stdout|-p|--print)
-      mode="stdout"
-      ;;
-    --both)
-      mode="both"
-      ;;
-    --help|-h)
-      print "Usage: gdc [--stdout|--both]"
-      print "  --stdout   Print staged diff to stdout (no status message)"
-      print "  --both     Print to stdout and copy to clipboard"
-      return 0
-      ;;
-  esac
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --stdout|-p|--print)
+        mode="stdout"
+        (( mode_flags++ ))
+        ;;
+      --both)
+        mode="both"
+        (( mode_flags++ ))
+        ;;
+      --help|-h)
+        print "Usage: gdc [--stdout|--both]"
+        print "  --stdout   Print staged diff to stdout (no status message)"
+        print "  --both     Print to stdout and copy to clipboard"
+        return 0
+        ;;
+      *)
+        extra_args+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  if (( mode_flags > 1 )); then
+    print -u2 -r -- "❗ Only one output mode is allowed: --stdout or --both"
+    return 1
+  fi
+
+  if (( ${#extra_args[@]} > 0 )); then
+    print -u2 -r -- "❗ Unknown argument: ${extra_args[1]}"
+    print -u2 -r -- "Usage: gdc [--stdout|--both]"
+    return 1
+  fi
 
   diff=$(git diff --cached --no-color)
 
@@ -559,14 +580,16 @@ git-commit-context () {
     shift
   done
 
+  diff="$(git diff --cached --no-color)"
+
   if (( ${#extra_args[@]} > 0 )); then
-    print -u2 -r -- "❗ Unknown argument: ${extra_args[1]}"
-    print -u2 -r -- "Usage: git-commit-context [--stdout|--both] [--no-color]"
-    return 1
+    print -u2 -r -- "⚠️  Ignoring unknown arguments: ${extra_args[*]}"
   fi
 
-  tmpfile="$(mktemp -t commit-context.md.XXXXXX)"
-  diff="$(git diff --cached --no-color)"
+  if [[ -z "$diff" ]]; then
+    printf "⚠️  No staged changes to record\n" >&2
+    return 1
+  fi
 
   typeset -a scope_args=(staged)
   if [[ "$no_color" == true || -n "${NO_COLOR-}" ]]; then
@@ -574,13 +597,26 @@ git-commit-context () {
   fi
   scope="$(git-scope "${scope_args[@]}" | sed 's/\x1b\[[0-9;]*m//g')"
 
-  if [[ -z "$diff" ]]; then
-    printf "⚠️  No staged changes to record\n" >&2
-    return 1
-  fi
+  tmpfile="$(mktemp -t commit-context.md.XXXXXX)"
 
   contents="$(
-    git diff --cached --name-status | while IFS=$'\t' read -r fstatus file newfile; do
+    git -c core.quotepath=false diff --cached --name-status -z | while IFS= read -r -d '' fstatus; do
+      typeset file='' newfile=''
+
+      if [[ -z "$fstatus" ]]; then
+        continue
+      fi
+
+      case "$fstatus" in
+        R*|C*)
+          IFS= read -r -d '' file || break
+          IFS= read -r -d '' newfile || break
+          ;;
+        *)
+          IFS= read -r -d '' file || break
+          ;;
+      esac
+
       display_path="$file"
       content_path="$file"
 
@@ -592,7 +628,14 @@ git-commit-context () {
       printf "### %s (%s)\n\n" "$display_path" "$fstatus"
 
       if [[ "$fstatus" == "D" ]]; then
-        printf "[Deleted file, no index version]\n\n"
+        if git cat-file -e "HEAD:$file" 2>/dev/null; then
+          printf "[Deleted file, showing HEAD version]\n\n"
+          printf '```ts\n'
+          git show "HEAD:$file" 2>/dev/null || printf '[HEAD version not found]\n'
+          printf '```\n\n'
+        else
+          printf "[Deleted file, no HEAD version found]\n\n"
+        fi
       elif [[ "$fstatus" == "A" || "$fstatus" == "M" || "$fstatus" == R* || "$fstatus" == C* ]]; then
         printf '```ts\n'
         git show :"$content_path" 2>/dev/null || printf '[Index version not found]\n'
@@ -629,15 +672,15 @@ $diff
 $contents" > "$tmpfile"
 
   if [[ "$mode" == "stdout" ]]; then
-    cat "$tmpfile"
+    command cat "$tmpfile"
     return 0
   fi
 
   if [[ "$mode" == "both" ]]; then
-    cat "$tmpfile"
+    command cat "$tmpfile"
   fi
 
-  cat "$tmpfile" | set_clipboard
+  command cat "$tmpfile" | set_clipboard
 
   if [[ "$mode" == "clipboard" ]]; then
     printf "✅ Commit context copied to clipboard with:\n"

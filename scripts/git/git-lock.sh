@@ -310,7 +310,7 @@ _git_lock_diff() {
         ;;
       --help|-h)
         printf "❗ Usage: git-lock diff <label1> <label2> [--no-color]\n"
-        return 1
+        return 0
         ;;
       *)
         positional+=("$1")
@@ -318,6 +318,12 @@ _git_lock_diff() {
     esac
     shift
   done
+
+  if (( ${#positional[@]} > 2 )); then
+    printf "❗ Too many labels provided (expected 2)\n"
+    printf "❗ Usage: git-lock diff <label1> <label2> [--no-color]\n"
+    return 1
+  fi
 
   label1=$(_git_lock_resolve_label "${positional[1]}") || {
     printf "❗ Usage: git-lock diff <label1> <label2> [--no-color]\n"
