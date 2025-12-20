@@ -21,7 +21,7 @@ done < "$ZSH_PLUGIN_LIST_FILE"
 load_plugin_entry() {
   typeset entry="$1"
   typeset -a parts
-  IFS='::' read -A parts <<< "$entry"
+  IFS='::' read -r -A parts <<< "$entry"
 
   typeset plugin_name="${parts[1]}"
   typeset main_file="${parts[2]:-${plugin_name}.plugin.zsh}"

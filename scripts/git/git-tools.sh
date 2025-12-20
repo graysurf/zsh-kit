@@ -547,7 +547,7 @@ Body Rules
 
 - The body must follow the header after one blank line
 - Each line must be under 100 characters
-- Each item in the body must begin with a `-` (dash)
+- Each item in the body must begin with a \`-\` (dash)
 - Each bullet point must start with a capital letter
 - Keep each point concise and avoid redundant entries
 - Group related changes together logically
