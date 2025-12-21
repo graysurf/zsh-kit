@@ -22,7 +22,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 - 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
-- 🤖 [codex.zsh](scripts/codex.zsh): CLI wrappers that invoke Codex skills for semantic commits, feature-PR drafts, bug triage, and release workflows while prompting for optional context and keeping dangerous prompts opt-in
+- 🤖 [codex.zsh](scripts/codex.zsh): CLI wrappers that invoke Codex skills
 
 ## Structure
 
