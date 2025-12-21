@@ -24,7 +24,7 @@ export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
 # ──────────────────────────────
 ZSH_SCRIPT_EXCLUDE_LIST=(
   "$ZSH_SCRIPT_DIR/env.sh"
-  "$ZSH_SCRIPT_DIR/plugins.sh"
+  "$ZSH_SCRIPT_DIR/plugin-hooks.sh"
   "$ZSH_SCRIPT_DIR/completion.zsh"
 )
 
@@ -42,7 +42,7 @@ load_script_group "Public Scripts" "$ZSH_SCRIPT_DIR" "${ZSH_SCRIPT_EXCLUDE_LIST[
 # Source environment and plugins
 # ──────────────────────────────
 load_with_timing "$ZDOTDIR/scripts/env.sh"
-load_with_timing "$ZDOTDIR/scripts/plugins.sh"
+load_with_timing "$ZDOTDIR/scripts/plugin-hooks.sh"
 load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 
 # ──────────────────────────────

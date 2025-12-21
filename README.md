@@ -64,6 +64,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── fzf-tools.sh                      # FZF-based UI helpers for git, files, processes, etc.
 │   ├── interactive.sh                    # Runtime UX (prompt, zoxide, keybindings)
 │   ├── macos.sh                          # macOS-specific system tweaks
+│   ├── plugin-hooks.sh                   # Plugin post-load hooks and overrides
 │   └── shell-utils.sh                    # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
 ├── tools/                                # Standalone executable scripts or compiled helpers
@@ -102,6 +103,7 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded macos.sh in 6ms
 ✅ Loaded shell-utils.sh in 3ms
 ✅ Loaded env.sh in 7ms
+✅ Loaded plugin-hooks.sh in 4ms
 ✅ Loaded completion.zsh in 19ms
 ✅ Loaded infra.sh in 4ms
 ✅ Loaded language.sh in 3ms
