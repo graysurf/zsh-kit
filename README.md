@@ -22,6 +22,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 - 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
+- 🤖 [codex.zsh](scripts/codex.zsh): CLI wrappers that invoke Codex skills for semantic commits, feature-PR drafts, bug triage, and release workflows while prompting for optional context and keeping dangerous prompts opt-in
 
 ## Structure
 
@@ -59,6 +60,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── git-tools.zsh                 # Git utilities for reset, rebase, remotes
 │   │   └── git.zsh                       # General Git aliases and settings
 │   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
+│   ├── codex.zsh                         # Codex CLI helpers
 │   ├── env.zsh                           # Environment variable exports and init logic
 │   ├── eza.zsh                           # Aliases for eza (modern ls)
 │   ├── fzf-tools.zsh                     # FZF-based UI helpers for git, files, processes, etc.
@@ -92,6 +94,7 @@ Weather report: Taipei City, Taiwan
 
 ✅ Loaded 00-preload.zsh in 3ms
 ✅ Loaded plugins.zsh in 89ms
+✅ Loaded codex.zsh in 3ms
 ✅ Loaded eza.zsh in 2ms
 ✅ Loaded fzf-tools.zsh in 2ms
 ✅ Loaded git-lock.zsh in 3ms
@@ -146,6 +149,10 @@ If it does not exist, the system will fall back to a default quote.
 > 🧰 This setup expects you to have your favorite CLI tools installed.  
 > It won't hand-hold you, and assumes tools like `eza`, `tree`, `bat`, or `fzf` are already available.  
 > If something errors out, you're probably just missing a binary — install and carry on.  
+
+## 🤖 Codex CLI helpers
+
+The [`scripts/codex.zsh`](scripts/codex.zsh) helpers surface four `codex-*` commands that wrap the `codex` CLI skills (`commit-with-scope`, `create-feature-pr`, `find-and-fix-bugs`, `release-workflow`) and optionally prompt for extra guidance when invoked interactively. Because each helper runs `codex exec --dangerously-bypass-approvals-and-sandbox`, the script only enables them when `CODEX_ALLOW_DANGEROUS=true`, so the environment ships with that variable unset to keep the helpers opt-in. Export the flag in your session or prefix a helper invocation with `CODEX_ALLOW_DANGEROUS=true` whenever you trust the workflow and its sandbox bypass.
 
 ## Philosophy
 
