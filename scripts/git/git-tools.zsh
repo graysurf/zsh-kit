@@ -4,7 +4,7 @@
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
     gr grs grm grh \
-    gbh gbc \
+    gbh gbc gdb \
     gdc groot \
     gop god goc gob \
     gh-open \
@@ -19,6 +19,7 @@ if command -v safe_unalias >/dev/null; then
     git-reset-undo \
     git-back-head \
     git-back-checkout \
+    git-delete-merged-branches \
     git-zip \
     get_commit_hash
 fi
@@ -284,6 +285,133 @@ git-back-checkout() {
   git checkout "$from_branch"
   print "✅ Restored to previous branch: $from_branch"
 }
+
+# Delete local branches that are already merged, with confirmation.
+#
+# This function lists local branches merged into a base ref (default: HEAD),
+# then asks for confirmation before deleting them using `git branch -d`.
+# It protects the current branch, the base ref (and its local name if applicable),
+# and common mainline branches (main/master/develop/trunk).
+#
+# Usage:
+#   git-delete-merged-branches
+#   git-delete-merged-branches -b main
+git-delete-merged-branches() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset base_ref='HEAD'
+  typeset base_local=''
+  typeset confirm=''
+  typeset current_branch=''
+  typeset branch=''
+  typeset name=''
+  typeset base_commit=''
+  typeset head_commit=''
+  typeset delete_flag='-d'
+  typeset -a protected_branches=(main master develop trunk)
+  typeset -a merged_branches=()
+  typeset -a candidates=()
+  typeset -A protected_set=()
+  typeset -A opts=()
+
+  if ! zmodload zsh/zutil 2>/dev/null; then
+    print -u2 -r -- "❌ zsh/zutil module is required for option parsing"
+    return 1
+  fi
+  zparseopts -D -E -A opts -- h -help b: -base:
+
+  if (( ${+opts[-h]} || ${+opts[--help]} )); then
+    print -r -- "Usage: git-delete-merged-branches [-b|--base <ref>]"
+    print -r -- "  -b, --base <ref>  Base ref used to determine merged branches (default: HEAD)"
+    return 0
+  fi
+
+  if (( ${+opts[-b]} )); then
+    base_ref="${opts[-b]}"
+  elif (( ${+opts[--base]} )); then
+    base_ref="${opts[--base]}"
+  fi
+
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+    print -u2 -r -- "❌ Not in a git repository"
+    return 1
+  }
+
+  git rev-parse --verify --quiet "$base_ref" >/dev/null || {
+    print -u2 -r -- "❌ Invalid base ref: $base_ref"
+    return 1
+  }
+
+  base_commit=$(git rev-parse "${base_ref}^{commit}" 2>/dev/null) || {
+    print -u2 -r -- "❌ Unable to resolve base commit: $base_ref"
+    return 1
+  }
+  head_commit=$(git rev-parse HEAD 2>/dev/null) || {
+    print -u2 -r -- "❌ Unable to resolve HEAD commit"
+    return 1
+  }
+  if [[ "$base_commit" != "$head_commit" ]]; then
+    delete_flag='-D'
+  fi
+
+  current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || {
+    print -u2 -r -- "❌ Unable to resolve current branch"
+    return 1
+  }
+
+  for name in "${protected_branches[@]}"; do
+    protected_set[$name]=1
+  done
+  if [[ -n "$current_branch" && "$current_branch" != 'HEAD' ]]; then
+    protected_set[$current_branch]=1
+  fi
+  protected_set[$base_ref]=1
+  if git show-ref --verify --quiet "refs/remotes/$base_ref"; then
+    base_local="${base_ref#*/}"
+  elif git show-ref --verify --quiet "refs/heads/$base_ref"; then
+    base_local="$base_ref"
+  fi
+  if [[ -n "$base_local" ]]; then
+    protected_set[$base_local]=1
+  fi
+
+  merged_branches=(${(f)$(git for-each-ref --merged "$base_ref" --format='%(refname:short)' refs/heads)})
+
+  if (( ${#merged_branches[@]} == 0 )); then
+    print -r -- "✅ No merged local branches found."
+    return 0
+  fi
+
+  for branch in "${merged_branches[@]}"; do
+    if (( ${+protected_set[$branch]} )); then
+      continue
+    fi
+    candidates+=("$branch")
+  done
+
+  if (( ${#candidates[@]} == 0 )); then
+    print -r -- "✅ No deletable merged branches."
+    return 0
+  fi
+
+  print -r -- "🧹 Merged branches to delete (base: $base_ref):"
+  printf '  - %s\n' "${candidates[@]}"
+  print -n -r -- "❓ Proceed with deleting these branches? [y/N] "
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    print -r -- "🚫 Aborted"
+    return 1
+  fi
+
+  for branch in "${candidates[@]}"; do
+    git branch "$delete_flag" -- "$branch"
+  done
+
+  print -r -- "✅ Deleted merged branches."
+}
+
+alias gdb='git-delete-merged-branches'
 
 # ────────────────────────────────────────────────────────
 # GitHub / GitLab remote open helpers
