@@ -91,3 +91,55 @@ codex-create-feature-pr() {
 
   _codex_exec_dangerous "$prompt"
 }
+
+# codex-find-and-fix-bugs [bug report...]
+# Run the find-and-fix-bugs skill; accepts an optional bug report for prioritization.
+codex-find-and-fix-bugs() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  _codex_require_allow_dangerous 'codex-find-and-fix-bugs' || return 1
+
+  local user_prompt=''
+  if (( $# )); then
+    user_prompt="$*"
+  else
+    print -n -r -- "Bug report (optional): "
+    IFS= read -r user_prompt || return 1
+  fi
+
+  local prompt=''
+  prompt='Use the find-and-fix-bugs skill.'
+  if [[ -n "$user_prompt" ]]; then
+    prompt+=$'\n\nBug report:\n'
+    prompt+="$user_prompt"
+  fi
+
+  _codex_exec_dangerous "$prompt"
+}
+
+# codex-release-workflow [release request...]
+# Run the release-workflow skill; accepts optional release context or constraints.
+codex-release-workflow() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  _codex_require_allow_dangerous 'codex-release-workflow' || return 1
+
+  local user_prompt=''
+  if (( $# )); then
+    user_prompt="$*"
+  else
+    print -n -r -- "Release request (optional): "
+    IFS= read -r user_prompt || return 1
+  fi
+
+  local prompt=''
+  prompt='Use the release-workflow skill.'
+  if [[ -n "$user_prompt" ]]; then
+    prompt+=$'\n\nRelease request:\n'
+    prompt+="$user_prompt"
+  fi
+
+  _codex_exec_dangerous "$prompt"
+}

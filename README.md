@@ -59,7 +59,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── git-tools.zsh                 # Git utilities for reset, rebase, remotes
 │   │   └── git.zsh                       # General Git aliases and settings
 │   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
-│   ├── codex.zsh                         # Codex CLI helpers for commit and feature PR workflows
+│   ├── codex.zsh                         # Codex CLI helpers
 │   ├── env.zsh                           # Environment variable exports and init logic
 │   ├── eza.zsh                           # Aliases for eza (modern ls)
 │   ├── fzf-tools.zsh                     # FZF-based UI helpers for git, files, processes, etc.
