@@ -1,8 +1,8 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env -S zsh -f
 
 setopt no_nomatch
 
-source "$ZDOTDIR/scripts/git/git-lock.sh"
+source "$ZDOTDIR/scripts/git/git-lock.zsh"
 
 if ! typeset -f git-lock >/dev/null; then
   printf "❗ 'git-lock' is not defined as a function.\n"

@@ -29,9 +29,9 @@ export ZSH_BOOT_WEATHER=true
 export ZSH_BOOT_QUOTE=true
 
 # Display current weather if enabled
-[[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.sh"
+[[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.zsh"
 
 # Display quote UI if enabled
-[[ "$ZSH_BOOT_QUOTE" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.sh"
+[[ "$ZSH_BOOT_QUOTE" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.zsh"
 
-source "$ZSH_BOOTSTRAP_SCRIPT_DIR/bootstrap.sh"
+source "$ZSH_BOOTSTRAP_SCRIPT_DIR/bootstrap.zsh"

@@ -27,7 +27,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ```text
 .
-├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.sh
+├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.zsh
 ├── .zprofile                             # Minimal login initializer for login shells
 │
 ├── assets/                               # Static data files
@@ -35,14 +35,14 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 ├── docs/                                 # Markdown documentation for key modules
 │
 ├── bootstrap/                            # Script orchestrator and plugin logic
-│   ├── 00-preload.sh                     # Early global helpers (safe_unalias, clipboard I/O, etc.)
-│   ├── define-loaders.sh                 # Base loader helpers (load_script, load_group, etc.)
-│   ├── bootstrap.sh                      # Centralized Zsh entrypoint (called from .zshrc)
-│   ├── plugin_fetcher.sh                 # Git-based plugin fetcher with auto-update, dry-run, and force
-│   ├── plugins.sh                        # Plugin declaration + loading logic
-│   ├── quote-init.sh                     # Show emoji + quote banner on login
-│   ├── weather.sh                        # Cached wttr.in snapshot for login weather
-│   └── install-tools.sh                  # Tool installer with dry-run and quiet support
+│   ├── 00-preload.zsh                    # Early global helpers (safe_unalias, clipboard I/O, etc.)
+│   ├── define-loaders.zsh                # Base loader helpers (load_script, load_group, etc.)
+│   ├── bootstrap.zsh                     # Centralized Zsh entrypoint (called from .zshrc)
+│   ├── plugin_fetcher.zsh                # Git-based plugin fetcher with auto-update, dry-run, and force
+│   ├── plugins.zsh                       # Plugin declaration + loading logic
+│   ├── quote-init.zsh                    # Show emoji + quote banner on login
+│   ├── weather.zsh                       # Cached wttr.in snapshot for login weather
+│   └── install-tools.zsh                 # Tool installer with dry-run and quiet support
 │
 ├── config/                               # Configuration files for third-party tools
 │   ├── plugins.list                      # Active plugin list used by loader (declarative)
@@ -52,23 +52,23 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases
 │   ├── git/                              # Git workflow tools and custom logic
-│   │   ├── git-lock.sh                   # Lock and restore git commits with labels
-│   │   ├── git-magic.sh                  # Composite git workflows (push, fixup, review)
-│   │   ├── git-scope.sh                  # Show git changes by scope, diff, or tree
-│   │   ├── git-summary.sh                # Git contributions by author/date
-│   │   ├── git-tools.sh                  # Git utilities for reset, rebase, remotes
-│   │   └── git.sh                        # General Git aliases and settings
+│   │   ├── git-lock.zsh                  # Lock and restore git commits with labels
+│   │   ├── git-magic.zsh                 # Composite git workflows (push, fixup, review)
+│   │   ├── git-scope.zsh                 # Show git changes by scope, diff, or tree
+│   │   ├── git-summary.zsh               # Git contributions by author/date
+│   │   ├── git-tools.zsh                 # Git utilities for reset, rebase, remotes
+│   │   └── git.zsh                       # General Git aliases and settings
 │   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
-│   ├── env.sh                            # Environment variable exports and init logic
-│   ├── eza.sh                            # Aliases for eza (modern ls)
-│   ├── fzf-tools.sh                      # FZF-based UI helpers for git, files, processes, etc.
-│   ├── interactive.sh                    # Runtime UX (prompt, zoxide, keybindings)
-│   ├── macos.sh                          # macOS-specific system tweaks
-│   ├── plugin-hooks.sh                   # Plugin post-load hooks and overrides
-│   └── shell-utils.sh                    # Core shell helpers: reload tools, cd wrappers, cheat.sh
+│   ├── env.zsh                           # Environment variable exports and init logic
+│   ├── eza.zsh                           # Aliases for eza (modern ls)
+│   ├── fzf-tools.zsh                     # FZF-based UI helpers for git, files, processes, etc.
+│   ├── interactive.zsh                   # Runtime UX (prompt, zoxide, keybindings)
+│   ├── macos.zsh                         # macOS-specific system tweaks
+│   ├── plugin-hooks.zsh                  # Plugin post-load hooks and overrides
+│   └── shell-utils.zsh                   # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
 ├── tools/                                # Standalone executable scripts or compiled helpers
-└── install-tools.sh                      # Root-level wrapper for bootstrap/install-tools.sh
+└── install-tools.zsh                     # Root-level wrapper for bootstrap/install-tools.zsh
 ```
 
 ## 🪄 Startup Snapshot
@@ -90,20 +90,20 @@ Weather report: Taipei City, Taiwan
 
 🌿  Thinking shell initialized. Expect consequences...
 
-✅ Loaded 00-preload.sh in 3ms
-✅ Loaded plugins.sh in 89ms
-✅ Loaded eza.sh in 2ms
-✅ Loaded fzf-tools.sh in 2ms
-✅ Loaded git-lock.sh in 3ms
-✅ Loaded git-magic.sh in 3ms
-✅ Loaded git-scope.sh in 2ms
-✅ Loaded git-summary.sh in 3ms
-✅ Loaded git-tools.sh in 3ms
-✅ Loaded git.sh in 3ms
-✅ Loaded macos.sh in 6ms
-✅ Loaded shell-utils.sh in 3ms
-✅ Loaded env.sh in 7ms
-✅ Loaded plugin-hooks.sh in 4ms
+✅ Loaded 00-preload.zsh in 3ms
+✅ Loaded plugins.zsh in 89ms
+✅ Loaded eza.zsh in 2ms
+✅ Loaded fzf-tools.zsh in 2ms
+✅ Loaded git-lock.zsh in 3ms
+✅ Loaded git-magic.zsh in 3ms
+✅ Loaded git-scope.zsh in 2ms
+✅ Loaded git-summary.zsh in 3ms
+✅ Loaded git-tools.zsh in 3ms
+✅ Loaded git.zsh in 3ms
+✅ Loaded macos.zsh in 6ms
+✅ Loaded shell-utils.zsh in 3ms
+✅ Loaded env.zsh in 7ms
+✅ Loaded plugin-hooks.zsh in 4ms
 ✅ Loaded completion.zsh in 19ms
 ✅ Loaded infra.sh in 4ms
 ✅ Loaded language.sh in 3ms
@@ -126,7 +126,7 @@ Zsh will now source your config from `$ZDOTDIR/.zshrc`.
 Make sure that `.zshrc` begins by sourcing the env and plugin setup:
 
 ```bash
-source "$ZDOTDIR/bootstrap/bootstrap.sh"
+source "$ZDOTDIR/bootstrap/bootstrap.zsh"
 ```
 
 This will initialize all scripts in proper order via the `load_script_group()` system.
@@ -156,7 +156,7 @@ Modular by design, manual by default.
 
 This setup is the result of many hours spent refining my shell environment.  
 It includes several tools I built myself—some small, some extensive.  
-Among them, [git-magic](scripts/git/git-magic.sh) remains my favorite and most-used.  
+Among them, [git-magic](scripts/git/git-magic.zsh) remains my favorite and most-used.  
 
 If there’s something you use every day, it’s worth taking the time to make it yours.
 

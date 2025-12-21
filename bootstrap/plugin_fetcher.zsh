@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S zsh -f
 
 # Only define once
 typeset -f plugin_fetch_if_missing_from_entry >/dev/null && return
 
-# plugin_fetcher.sh – fetch/update Zsh plugins
+# plugin_fetcher.zsh – fetch/update Zsh plugins
 
 ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-$ZDOTDIR/plugins}"
 PLUGIN_FETCH_DRY_RUN="${PLUGIN_FETCH_DRY_RUN:-false}"

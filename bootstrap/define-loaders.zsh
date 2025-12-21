@@ -22,10 +22,10 @@ load_with_timing() {
   printf "✅ Loaded %s in %dms\n" "$label" "$duration"
 }
 
-# Recursively collect all .sh files under given directories
+# Recursively collect all .sh and .zsh files under given directories
 collect_scripts() {
   for dir in "$@"; do
-    print -l "$dir"/**/*.sh(N)
+    print -l "$dir"/**/*.sh(N) "$dir"/**/*.zsh(N)
   done
 }
 

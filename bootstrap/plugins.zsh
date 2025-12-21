@@ -2,10 +2,10 @@
 # Manual Plugin Loader for Zsh-kit
 # ──────────────────────────────
 
-source "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugin_fetcher.sh"
+source "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugin_fetcher.zsh"
 
 typeset -f plugin_fetch_if_missing_from_entry &>/dev/null || {
-  printf "❌ plugin_fetch_if_missing_from_entry not defined. Check bootstrap/plugin_fetcher.sh\n"
+  printf "❌ plugin_fetch_if_missing_from_entry not defined. Check bootstrap/plugin_fetcher.zsh\n"
   return 1
 }
 

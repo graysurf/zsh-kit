@@ -1,8 +1,8 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env -S zsh -f
 
 setopt no_nomatch
 
-source "$ZDOTDIR/scripts/git/git-summary.sh"
+source "$ZDOTDIR/scripts/git/git-summary.zsh"
 
 if ! typeset -f git-summary >/dev/null; then
   printf "❗ 'git-summary' is not defined as a function.\n"

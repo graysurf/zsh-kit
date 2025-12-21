@@ -30,7 +30,7 @@ $shell\
 $character"""
 
 [custom.emoji]
-command = "~/.config/zsh/tools/random_emoji_cmd.sh"
+command = "~/.config/zsh/tools/random_emoji_cmd.zsh"
 when = "true"
 format = "[$output](bold #ffcb6b) "
 

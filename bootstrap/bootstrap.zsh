@@ -1,16 +1,16 @@
-source "$ZSH_BOOTSTRAP_SCRIPT_DIR/define-loaders.sh"
+source "$ZSH_BOOTSTRAP_SCRIPT_DIR/define-loaders.zsh"
 
 # Ensure load_script function is defined before proceeding
 typeset -f load_script &>/dev/null || {
-  printf "❌ load_script not defined. Check bootstrap/define-loaders.sh\n"
+  printf "❌ load_script not defined. Check bootstrap/define-loaders.zsh\n"
   return 1
 }
 
 
-load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.sh"
+load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"
 
 # Attempt to load the plugin system, but allow fallback if it fails
-if ! load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.sh"; then
+if ! load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.zsh"; then
   printf "⚠️  Plugin system failed to load, continuing without plugins.\n"
 fi
 
@@ -23,14 +23,14 @@ export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
 # Exclude list (array version)
 # ──────────────────────────────
 ZSH_SCRIPT_EXCLUDE_LIST=(
-  "$ZSH_SCRIPT_DIR/env.sh"
-  "$ZSH_SCRIPT_DIR/plugin-hooks.sh"
+  "$ZSH_SCRIPT_DIR/env.zsh"
+  "$ZSH_SCRIPT_DIR/plugin-hooks.zsh"
   "$ZSH_SCRIPT_DIR/completion.zsh"
 )
 
 ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
   "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
-  "$ZSH_PRIVATE_SCRIPT_DIR/tools/codex-tools.sh"
+  "$ZSH_PRIVATE_SCRIPT_DIR/tools/codex-tools.zsh"
 )
 
 # ──────────────────────────────
@@ -41,8 +41,8 @@ load_script_group "Public Scripts" "$ZSH_SCRIPT_DIR" "${ZSH_SCRIPT_EXCLUDE_LIST[
 # ──────────────────────────────
 # Source environment and plugins
 # ──────────────────────────────
-load_with_timing "$ZDOTDIR/scripts/env.sh"
-load_with_timing "$ZDOTDIR/scripts/plugin-hooks.sh"
+load_with_timing "$ZDOTDIR/scripts/env.zsh"
+load_with_timing "$ZDOTDIR/scripts/plugin-hooks.zsh"
 load_with_timing "$ZDOTDIR/scripts/completion.zsh"
 
 # ──────────────────────────────

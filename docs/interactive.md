@@ -1,7 +1,7 @@
-# 🗣️ Shell Runtime Features: `interactive.sh` Overview
+# 🗣️ Shell Runtime Features: `interactive.zsh` Overview
 
 This file sets up the runtime behaviors of your Zsh session, including directory navigation, prompt configuration, and key bindings.  
-It complements `plugins.sh` by configuring system-level features **after** all plugins are loaded.
+It complements `plugins.zsh` by configuring system-level features **after** all plugins are loaded.
 
 ---
 
@@ -69,4 +69,4 @@ bindkey -M vicmd 'j' history-substring-search-down
 These runtime features provide **ergonomic defaults** and **intelligent enhancements** for daily shell workflows.  
 They are modular, fast-loading, and work seamlessly with the plugin system — offering a clean, expressive, and productive Zsh experience.
 
-If you wish to extend this runtime layer, consider creating `scripts/runtime.d/*.zsh` and sourcing them in `runtime.sh`.
+If you wish to extend this runtime layer, consider creating `scripts/runtime.d/*.zsh` and sourcing them in `runtime.zsh`.

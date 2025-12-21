@@ -193,10 +193,10 @@ alias kpid='kill-process'
 # ────────────────────────────────────────────────────────
 reload() {
   printf "\n"
-  printf "🔁 Reloading bootstrap/bootstrap.sh...\n"
+  printf "🔁 Reloading bootstrap/bootstrap.zsh...\n"
   printf "💡 For major changes, consider running: execz\n\n"
 
-  if ! source "$ZDOTDIR/bootstrap/bootstrap.sh"; then
+  if ! source "$ZDOTDIR/bootstrap/bootstrap.zsh"; then
     printf "❌ Failed to reload Zsh environment\n\n"
   fi
 }

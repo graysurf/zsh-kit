@@ -31,10 +31,10 @@ across most subcommands, providing a consistent, readable view of file status an
   ➤ [-] .zprofile
   ➤ [-] .zshrc
   ➤ [-] README.md
-  ➤ [-] scripts/login.sh
-  ➤ [-] scripts/macos.sh
+  ➤ [-] scripts/login.zsh
+  ➤ [-] scripts/macos.zsh
   ➤ [-] tools/git/git-summary
-  ➤ [-] tools/random_emoji_cmd.sh
+  ➤ [-] tools/random_emoji_cmd.zsh
 
 📂 Directory tree:
 .
@@ -43,12 +43,12 @@ across most subcommands, providing a consistent, readable view of file status an
 ├── .zshrc
 ├── README.md
 ├── scripts
-│   ├── login.sh
-│   ├── macos.sh
+│   ├── login.zsh
+│   ├── macos.zsh
 └── tools
     ├── git
     │   └── git-summary
-    └── random_emoji_cmd.sh
+    └── random_emoji_cmd.zsh
 ```
 
 ---
@@ -223,4 +223,3 @@ git-scope commit HEAD~6
 ## 🧠 Summary
 
 `git-scope` helps you reason about your Git repository visually. Whether you're preparing to commit or reviewing a historical change, it gives you a structured way to see what’s going on — file by file, tree by tree.
-

@@ -1,8 +1,8 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env -S zsh -f
 
 setopt no_nomatch
 
-source "$ZDOTDIR/scripts/git/git-scope.sh"
+source "$ZDOTDIR/scripts/git/git-scope.zsh"
 
 if ! typeset -f git-scope >/dev/null; then
   printf "❗ 'git-scope' is not defined as a function.\n"

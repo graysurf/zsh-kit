@@ -1,4 +1,4 @@
-# 🧩 Plugin System: `plugins.sh` + `plugin_fetcher.sh`
+# 🧩 Plugin System: `plugins.zsh` + `plugin_fetcher.zsh`
 
 This Zsh environment implements a **manual plugin loader system** 
 with structured declarations and Git-based fetching — offering full control without external plugin managers.
@@ -91,8 +91,8 @@ Special-case logic (e.g., `abbr`) is hardcoded for known plugins needing extra s
 ```text
 .zsh/
 ├── bootstrap/
-│   ├── plugins.sh              # Main loader
-│   └── plugin_fetcher.sh       # Git-aware fetch logic
+│   ├── plugins.zsh             # Main loader
+│   └── plugin_fetcher.zsh      # Git-aware fetch logic
 ├── config/
 │   ├── plugins.list            # Active plugin declarations
 │   └── .plugins.list.example   # Documented example template

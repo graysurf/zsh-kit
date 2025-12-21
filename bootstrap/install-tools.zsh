@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env -S zsh -f
 
-# install-tools.sh — Install required CLI tools via Homebrew (macOS only)
+# install-tools.zsh — Install required CLI tools via Homebrew (macOS only)
 #
 # Usage:
-#   ./install-tools.sh [--dry-run] [--quiet]
+#   ./install-tools.zsh [--dry-run] [--quiet]
 #
 # Options:
 #   --dry-run   Simulate the installation process without installing anything.
@@ -19,8 +19,8 @@
 #   If all tools are already installed, it exits cleanly with a success message.
 #
 # Example:
-#   DRY_RUN=true ./install-tools.sh      # Alternate dry-run using env var
-#   ./install-tools.sh --quiet           # Quiet mode install
+#   DRY_RUN=true ./install-tools.zsh      # Alternate dry-run using env var
+#   ./install-tools.zsh --quiet           # Quiet mode install
 
 TOOLS_LIST="./config/tools.list"
 DRY_RUN=false
