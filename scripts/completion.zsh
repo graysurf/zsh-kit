@@ -1,9 +1,13 @@
 # ──────────────────────────────
 # Setup completion functions first
 # ──────────────────────────────
+if [[ ! -o interactive || ! -t 0 ]]; then
+  return 0
+fi
+
 fpath=("$ZDOTDIR/scripts/_completion" $fpath)
 autoload -Uz compinit
-compinit -d "$ZSH_COMPDUMP"
+compinit -i -d "$ZSH_COMPDUMP"
 typeset -g ZSH_COMPLETION_CACHE_DIR="${ZSH_COMPLETION_CACHE_DIR:-$ZSH_CACHE_DIR/completion-cache}"
 [[ -d "$ZSH_COMPLETION_CACHE_DIR" ]] || mkdir -p -- "$ZSH_COMPLETION_CACHE_DIR"
 
@@ -37,5 +41,4 @@ zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$ZSH_COMPLETION_CACHE_DIR"
 
 # Ensure common file‑reading commands complete both files and directories
-autoload -Uz compdef
-compdef _files cat less bat
+(( ${+functions[compdef]} )) && compdef _files cat less bat

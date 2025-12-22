@@ -22,4 +22,8 @@ jobs:
       - name: Run smoke check
         run: |
           set -euo pipefail
-          zsh -f ./tools/check.zsh --smoke
+          if command -v script >/dev/null 2>&1; then
+            script -q -e -c 'zsh -f ./tools/check.zsh --smoke' /dev/null
+          else
+            zsh -f ./tools/check.zsh --smoke
+          fi
