@@ -43,21 +43,21 @@ for arg in "$@"; do
   esac
 done
 
-if [ ! -f "$TOOLS_LIST" ]; then
+if [[ ! -f "$TOOLS_LIST" ]]; then
   printf "❌ tools.list not found at %s\n" "$TOOLS_LIST"
   exit 1
 fi
 
-if [ "$DRY_RUN" = true ]; then
+if [[ "$DRY_RUN" == true ]]; then
   printf "🧪 DRY RUN mode enabled — no installations will be performed\n"
 fi
 
-if [ "$QUIET" = true ]; then
+if [[ "$QUIET" == true ]]; then
   printf "🔇 QUIET mode enabled — suppressing brew output\n"
 fi
 
 # Scan for missing tools (only if not dry-run)
-if [ "$DRY_RUN" != true ]; then
+if [[ "$DRY_RUN" != true ]]; then
   missing=()
   while IFS= read -r line; do
     [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
@@ -108,14 +108,14 @@ while IFS= read -r line; do
     continue
   fi
 
-  if [ "$DRY_RUN" = true ]; then
+  if [[ "$DRY_RUN" == true ]]; then
     printf "💤 Skipped due to dry-run (%s)\n" "$brew_name"
     continue
   else
     printf "➕ Will install (%s)...\n" "$brew_name"
   fi
 
-  if [ "$QUIET" = true ]; then
+  if [[ "$QUIET" == true ]]; then
     if brew install "$brew_name" >/dev/null 2>&1; then
       printf "✅ %s installed\n" "$tool"
       ((installed++))
