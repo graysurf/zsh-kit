@@ -58,8 +58,15 @@ plugin_fetch_if_missing_from_entry() {
 }
 
 plugin_update_all() {
-  printf "🔄 Updating plugins in: %s\n\n" "$ZSH_PLUGINS_DIR"
-  for dir in "$ZSH_PLUGINS_DIR"/*; do
+  emulate -L zsh
+  setopt pipe_fail err_return nounset null_glob
+
+  typeset plugins_dir=''
+  plugins_dir="$ZSH_PLUGINS_DIR"
+  [[ -d "$plugins_dir" ]] || return 0
+
+  printf "🔄 Updating plugins in: %s\n\n" "$plugins_dir"
+  for dir in "$plugins_dir"/*(/N); do
     [[ -d "$dir/.git" ]] || continue
     plugin_name="${dir##*/}"
     printf "🔧 Updating %s ...\n" "$plugin_name"

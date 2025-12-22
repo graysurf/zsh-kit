@@ -2,8 +2,10 @@
 # Zoxide smart directory jumping
 # ──────────────────────────────
 
-# Initialize zoxide (faster alternative to z/zsh-z)
-eval "$(zoxide init zsh)"
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+  alias z=__zoxide_z
+fi
 
 # Wrapper to execute `eza -alh` after directory jump
 __zoxide_cd() {
@@ -12,7 +14,6 @@ __zoxide_cd() {
   eza -alh --icons --group-directories-first --time-style=iso
 }
 
-alias z=__zoxide_z
 
 # ──────────────────────────────
 # Starship prompt
@@ -21,7 +22,10 @@ alias z=__zoxide_z
 if [[ -f "$ZDOTDIR/config/starship.toml" ]]; then
   export STARSHIP_CONFIG="$ZDOTDIR/config/starship.toml"
 fi
-eval "$(starship init zsh)"
+
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
 
 # ──────────────────────────────
 # Shell behavior options

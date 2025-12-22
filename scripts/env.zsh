@@ -3,7 +3,7 @@
 # ──────────────────────────────
 # Shell integration + session
 # ──────────────────────────────
-export GPG_TTY="$(tty)"
+export GPG_TTY="$(tty 2>/dev/null || true)"
 
 # ────────────────────────────────────────────────────────
 # FZF Environment config
@@ -53,13 +53,11 @@ export FZF_ALT_C_COMMAND="fd --type d --hidden --follow"
 # ────────────────────────────────────────────────────────
 # BAT theme config with fallback
 # ────────────────────────────────────────────────────────
-if bat --list-themes 2>/dev/null | grep -q "Night-Owl"; then
+if command -v bat >/dev/null 2>&1 && bat --list-themes 2>/dev/null | grep -q "Night-Owl"; then
   export BAT_THEME="Night-Owl"
 else
   export BAT_THEME="Monokai Extended"
 fi
-
-
 
 
 

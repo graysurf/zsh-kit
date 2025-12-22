@@ -54,4 +54,6 @@ load_script_group "Private Scripts" "$ZSH_PRIVATE_SCRIPT_DIR" "${ZSH_PRIVATE_SCR
 # Load development.sh last with timing
 # ──────────────────────────────
 dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
-[[ -f "$dev_script" ]] && load_with_timing "$dev_script" "$(basename "$dev_script") (delayed)"
+if [[ -f "$dev_script" ]]; then
+  load_with_timing "$dev_script" "${dev_script:t} (delayed)"
+fi

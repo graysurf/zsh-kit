@@ -21,7 +21,7 @@ export SSH_AUTH_SOCK="$HOME/Library/Group Containers/3BUA8C4S2C.com.1password/t/
 # ──────────────────────────────
 # Shell integration + session
 # ──────────────────────────────
-export GPG_TTY="$(tty)"
+export GPG_TTY="$(tty 2>/dev/null || true)"
 export SHELL_SESSIONS_DISABLE=1
 
 # ────────────────────────────────────────────────────────

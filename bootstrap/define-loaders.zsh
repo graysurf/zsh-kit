@@ -3,23 +3,45 @@ typeset -f load_script >/dev/null && return
 
 # Load a script and measure how long it takes
 load_with_timing() {
-  typeset file="$1"
-  typeset label="${2:-$(basename "$file")}"
-  [[ ! -f "$file" ]] && return
+  typeset file="${1-}" label="${2-}"
+  [[ -n "$file" ]] || return 0
+  [[ -n "$label" ]] || label="${file:t}"
+  [[ -f "$file" ]] || return 0
 
-  typeset start_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
+  typeset -i use_epochrealtime=0
+  if (( ${+EPOCHREALTIME} )); then
+    use_epochrealtime=1
+  else
+    zmodload zsh/datetime 2>/dev/null && use_epochrealtime=1
+  fi
+
+  typeset -F start_time=0 end_time=0
+  if (( use_epochrealtime )); then
+    start_time="$EPOCHREALTIME"
+  else
+    start_time="$SECONDS"
+  fi
 
   if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
     printf "🔍 Loading: %s\n" "$file"
   fi
 
   source "$file"
+  typeset -i source_status=$?
 
-  typeset end_time=$(gdate +%s%3N 2>/dev/null || date +%s%3N)
-  typeset duration=$((end_time - start_time))
+  if (( use_epochrealtime )); then
+    end_time="$EPOCHREALTIME"
+  else
+    end_time="$SECONDS"
+  fi
+
+  typeset -i duration_ms=0
+  duration_ms=$(( (end_time - start_time) * 1000 ))
+  (( duration_ms < 0 )) && duration_ms=0
 
   # ✅ Always show timing
-  printf "✅ Loaded %s in %dms\n" "$label" "$duration"
+  printf "✅ Loaded %s in %dms\n" "$label" "$duration_ms"
+  return "$source_status"
 }
 
 # Recursively collect all .sh and .zsh files under given directories

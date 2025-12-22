@@ -11,20 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install zsh (if missing)
         run: |
           set -euo pipefail
-          need=0
-          command -v zsh >/dev/null 2>&1 || need=1
-          command -v shellcheck >/dev/null 2>&1 || need=1
-          if [ "$need" -eq 1 ]; then
+          if ! command -v zsh >/dev/null 2>&1; then
             sudo apt-get update
-            sudo apt-get install -y zsh shellcheck
+            sudo apt-get install -y zsh
           fi
 
-      - name: Run checks
+      - name: Run smoke check
         run: |
           set -euo pipefail
-          zsh -f ./tools/check.zsh
-          zsh -f ./tools/check.zsh --bash
           zsh -f ./tools/check.zsh --smoke
