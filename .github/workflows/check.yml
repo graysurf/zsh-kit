@@ -1,0 +1,29 @@
+name: Zsh Checks
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          need=0
+          command -v zsh >/dev/null 2>&1 || need=1
+          command -v shellcheck >/dev/null 2>&1 || need=1
+          if [ "$need" -eq 1 ]; then
+            sudo apt-get update
+            sudo apt-get install -y zsh shellcheck
+          fi
+
+      - name: Run checks
+        run: |
+          set -euo pipefail
+          zsh -f ./tools/check.zsh
+          zsh -f ./tools/check.zsh --bash
