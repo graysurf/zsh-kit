@@ -35,7 +35,13 @@ setopt extended_glob
 # History substring search key bindings
 # ──────────────────────────────
 
-bindkey "${terminfo[kcuu1]}" history-substring-search-up
-bindkey "${terminfo[kcud1]}" history-substring-search-down
-bindkey -M vicmd 'k' history-substring-search-up
-bindkey -M vicmd 'j' history-substring-search-down
+if (( ${+widgets[history-substring-search-up]} && ${+widgets[history-substring-search-down]} )); then
+  if [[ -n "${terminfo[kcuu1]-}" ]]; then
+    bindkey "${terminfo[kcuu1]}" history-substring-search-up
+  fi
+  if [[ -n "${terminfo[kcud1]-}" ]]; then
+    bindkey "${terminfo[kcud1]}" history-substring-search-down
+  fi
+  bindkey -M vicmd 'k' history-substring-search-up
+  bindkey -M vicmd 'j' history-substring-search-down
+fi
