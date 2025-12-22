@@ -27,3 +27,4 @@ jobs:
           set -euo pipefail
           zsh -f ./tools/check.zsh
           zsh -f ./tools/check.zsh --bash
+          zsh -f ./tools/check.zsh --smoke

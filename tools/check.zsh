@@ -14,7 +14,7 @@ print_usage() {
   print -r -- ""
   print -r -- "Checks:"
   print -r -- "  (default) zsh syntax: zsh -n on repo zsh + zsh-style *.sh (excluding plugins/)"
-  print -r -- "  --smoke: load .zshrc in isolated ZDOTDIR/cache (disables weather/quote + plugin updates)"
+  print -r -- "  --smoke: load .zshrc in isolated ZDOTDIR/cache; fails if any stderr is emitted"
   print -r -- "  --bash : bash -n on bash scripts; runs ShellCheck if installed"
   print -r -- ""
   print -r -- "Examples:"
@@ -96,8 +96,12 @@ check_smoke_load() {
 
   typeset root_dir="$1"
   typeset tmp_dir=''
+  typeset stderr_file=''
+  typeset -i smoke_exit_code=0
 
   tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t zsh-kit-check.XXXXXX)"
+  stderr_file="$tmp_dir/smoke.stderr"
+  : >| "$stderr_file"
 
   {
     ZDOTDIR="$root_dir" \
@@ -105,7 +109,16 @@ check_smoke_load() {
       PLUGIN_FETCH_DRY_RUN=true \
       _LOGIN_WEATHER_EXECUTED=1 \
       _LOGIN_QUOTE_EXECUTED=1 \
-      zsh -f -ic 'source "$ZDOTDIR/.zshrc"; exit'
+      zsh -f -ic 'source "$ZDOTDIR/.zshrc"; exit' 2> "$stderr_file"
+    smoke_exit_code=$?
+
+    if [[ -s "$stderr_file" ]]; then
+      print -u2 -r -- "smoke: stderr emitted (treated as failure)"
+      command cat -- "$stderr_file" >&2
+      smoke_exit_code=1
+    fi
+
+    return "$smoke_exit_code"
   } always {
     rm -rf -- "$tmp_dir"
   }
