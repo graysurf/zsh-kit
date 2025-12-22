@@ -39,6 +39,7 @@ EOF
   BUFFER="fzf-tools $subcommand"
   CURSOR=${#BUFFER}
   zle accept-line
+  return 0
 }
 
 # Register ZLE widget and bind to Ctrl+F
@@ -53,6 +54,7 @@ fzf-tools-defs-widget() {
   BUFFER="fzf-tools defs $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
+  return 0
 }
 
 zle -N fzf-tools-defs-widget
@@ -66,6 +68,7 @@ fzf-tools-git-commit-widget() {
   BUFFER="fzf-tools git-commit $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
+  return 0
 }
 
 zle -N fzf-tools-git-commit-widget
@@ -94,6 +97,7 @@ fzf-history-widget() {
     BUFFER="$cmd"
     CURSOR=${#BUFFER}
   fi
+  return 0
 }
 
 # Register ZLE widget and bind to Ctrl+R

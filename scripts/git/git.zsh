@@ -60,11 +60,13 @@ alias lgr='eza -alh --icons --group-directories-first --color=always --git --git
 gt() {
   # If first argument is a number, treat it as depth (--level)
   local level_flag=()
-  if [[ "$1" =~ '^[0-9]+$' ]]; then
-    level_flag=(--level "$1")
+  local first_arg="${1-}"
+  if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
+    level_flag=(--level "$first_arg")
     shift
   fi
   eza -aT --git-ignore --group-directories-first --color=always --icons "${level_flag[@]}" "$@"
+  return $?
 }
 
 # Tree view limited to depth 2 (e.g. folders + their subfolders)

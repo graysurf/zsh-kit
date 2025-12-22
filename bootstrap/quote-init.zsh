@@ -42,6 +42,7 @@ printf "\n"
 # Load emoji function
 emoji() {
   "$ZDOTDIR/tools/random_emoji_cmd.zsh"
+  return 0
 }
 
 printf "$(emoji)  Thinking shell initialized. Expect consequences...\n\n"

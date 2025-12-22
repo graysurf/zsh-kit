@@ -12,39 +12,46 @@ fi
 ll() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ $1 =~ ^[0-9]+$ ]]; then
-    level_flag=(-L "$1")
+  local first_arg="${1-}"
+  if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
+    level_flag=(-L "$first_arg")
     shift
   fi
   eza -alh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
+  return $?
 }
 
 # List files excluding dotfiles
 lx() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ $1 =~ ^[0-9]+$ ]]; then
-    level_flag=(-L "$1")
+  local first_arg="${1-}"
+  if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
+    level_flag=(-L "$first_arg")
     shift
   fi
   eza -lh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
+  return $?
 }
 
 # Tree view with all files
 lt() {
   # If first argument is a number, treat it as depth (-L)
   local level_flag=()
-  if [[ $1 =~ ^[0-9]+$ ]]; then
-    level_flag=(-L "$1")
+  local first_arg="${1-}"
+  if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
+    level_flag=(-L "$first_arg")
     shift
   fi
   eza -aT --group-directories-first --icons "${level_flag[@]}" "$@"
+  return $?
 }
 
 # Long-format tree view with all files
 llt() {
   # Inherit ll logic and add tree flag (-T)
   ll "$@" -T
+  return $?
 }
 
 # Tree views with depth limits
@@ -63,5 +70,4 @@ alias lxt='lx -T'
 alias lxt2='lxt -L 2'
 alias lxt3='lxt -L 3'
 alias lxt5='lxt -L 5'
-
 

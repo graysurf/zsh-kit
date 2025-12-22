@@ -59,6 +59,7 @@ _git_summary() {
       }
       { print }
     '
+  return $?
 }
 
 # Show a summary of today's commits (local timezone).
@@ -67,6 +68,7 @@ _git_today() {
   print "\n📅 Git summary for today: $today"
   print
   _git_summary "$today" "$today"
+  return $?
 }
 
 # Show a summary of yesterday's commits (cross-platform).
@@ -80,6 +82,7 @@ _git_yesterday() {
   print "\n📅 Git summary for yesterday: $yesterday"
   print
   _git_summary "$yesterday" "$yesterday"
+  return $?
 }
 
 # Show a summary from the first day of the month to today.
@@ -89,6 +92,7 @@ _git_this_month() {
   print "\n📅 Git summary for this month: $start_date to $today"
   print
   _git_summary "$start_date" "$today"
+  return $?
 }
 
 # Show a summary for the last full month.
@@ -106,6 +110,7 @@ _git_last_month() {
   print "\n📅 Git summary for last month: $start_date to $end_date"
   print
   _git_summary "$start_date" "$end_date"
+  return $?
 }
 
 
@@ -127,6 +132,7 @@ _git_last_week() {
   print "\n📅 Git summary for last week: $START_DATE to $END_DATE"
   print
   _git_summary "$START_DATE" "$END_DATE"
+  return $?
 }
 
 # Show a summary for this week (Monday to Sunday).
@@ -147,6 +153,7 @@ _git_this_week() {
   print "\n📅 Git summary for this week: $START_DATE to $END_DATE"
   print
   _git_summary "$START_DATE" "$END_DATE"
+  return $?
 }
 
 # ────────────────────────────────────────────────────────
@@ -157,29 +164,40 @@ _git_this_week() {
 # - Full history: git-summary all
 # ────────────────────────────────────────────────────────
 git-summary() {
-  case "$1" in
+  typeset cmd="${1-}"
+  typeset arg1="${1-}"
+  typeset arg2="${2-}"
+
+  case "$cmd" in
     all)
       print "\n📅 Git summary for all commits"
       print
       _git_summary
+      return $?
       ;;
     today)
       _git_today
+      return $?
       ;;
     yesterday)
       _git_yesterday
+      return $?
       ;;
     this-month)
       _git_this_month
+      return $?
       ;;
     last-month)
       _git_last_month
+      return $?
       ;;
     this-week)
       _git_this_week
+      return $?
       ;;
     last-week)
       _git_last_week
+      return $?
       ;;
     ""|help|--help|-h)
       printf "%s\n" "Usage: git-summary <command> [args]"
@@ -198,13 +216,15 @@ git-summary() {
       return 1
       ;;
     *)
-      if [[ -n "$1" && -n "$2" ]]; then
-        _git_summary "$1" "$2"
+      if [[ -n "$arg1" && -n "$arg2" ]]; then
+        _git_summary "$arg1" "$arg2"
+        return $?
       else
         print "❌ Invalid usage. Try: git-summary help"
         return 1
       fi
       ;;
   esac
-}
 
+  return 0
+}

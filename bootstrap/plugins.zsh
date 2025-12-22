@@ -56,6 +56,8 @@ load_plugin_entry() {
 
     source "$full_path"
   fi
+
+  return 0
 }
 
 # load them all

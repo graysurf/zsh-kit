@@ -16,7 +16,9 @@
 # - It only affects aliases (not functions or commands).
 safe_unalias() {
   typeset verbose=false
-  if [[ "$1" == "-v" ]]; then
+  typeset first_arg="${1-}"
+
+  if [[ "$first_arg" == "-v" ]]; then
     verbose=true
     shift
   fi
@@ -27,6 +29,8 @@ safe_unalias() {
       unalias "$name"
     fi
   done
+
+  return 0
 }
 
 # Clipboard abstraction (macOS pbpaste, Linux xclip/xsel)

@@ -10,6 +10,9 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias _git_lock
 fi
 
+typeset -r GIT_LOCK_TIMESTAMP_PATTERN='^timestamp='
+typeset -r GIT_LOCK_ABORTED_MSG='🚫 Aborted'
+
 # Resolve label from argument or latest fallback
 _git_lock_resolve_label() {
   typeset input_label="$1"
@@ -39,9 +42,13 @@ _git_lock_resolve_label() {
 _git_lock() {
   typeset label note commit repo_id lock_dir lock_file latest_file timestamp hash
 
-  label="${1:-default}"
-  note="$2"
-  commit="${3:-HEAD}"
+  typeset label_arg="${1-}"
+  typeset note_arg="${2-}"
+  typeset commit_arg="${3-}"
+
+  label="${label_arg:-default}"
+  note="$note_arg"
+  commit="${commit_arg:-HEAD}"
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
@@ -71,14 +78,15 @@ _git_lock() {
 
 _git_lock_unlock() {
   typeset label repo_id lock_dir lock_file latest_file
+  typeset label_arg="${1-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
   latest_file="$lock_dir/${repo_id}-latest"
 
   [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
 
-  if [[ -n "$1" ]]; then
-    label="$1"
+  if [[ -n "$label_arg" ]]; then
+    label="$label_arg"
   elif [[ -f "$latest_file" ]]; then
     label=$(cat "$latest_file")
   else
@@ -106,7 +114,7 @@ _git_lock_unlock() {
   printf "⚠️  Hard reset to [%s]? [y/N] " "$label"
   read -r confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    printf "🚫 Aborted\n"
+    printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
     return 1
   fi
 
@@ -131,7 +139,7 @@ _git_lock_list() {
   for file in "$lock_dir/${repo_id}-"*.lock; do
     [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
     typeset ts_line='' epoch=''
-    ts_line=$(grep '^timestamp=' "$file")
+    ts_line=$(grep "$GIT_LOCK_TIMESTAMP_PATTERN" "$file")
     timestamp=${ts_line#timestamp=}
     epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
     tmp_list+=("$epoch|$file")
@@ -153,7 +161,7 @@ _git_lock_list() {
     read -r line < "$file"
     hash=$(print -r -- "$line" | cut -d '#' -f1 | xargs)
     note=$(print -r -- "$line" | cut -d '#' -f2- | xargs)
-    timestamp=$(grep '^timestamp=' "$file" | cut -d '=' -f2-)
+    timestamp=$(grep "$GIT_LOCK_TIMESTAMP_PATTERN" "$file" | cut -d '=' -f2-)
     subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
     printf "\n - 🏷️  tag:     %s%s\n" "$label" \
@@ -174,6 +182,8 @@ _git_lock_list() {
 #   git-lock-copy dev staging
 _git_lock_copy() {
   typeset repo_id lock_dir src_label dst_label src_file dst_file
+  typeset src_label_arg="${1-}"
+  typeset dst_label_arg="${2-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
@@ -182,11 +192,11 @@ _git_lock_copy() {
     return 1
   }
 
-  src_label=$(_git_lock_resolve_label "$1") || {
+  src_label=$(_git_lock_resolve_label "$src_label_arg") || {
     printf "❗ Usage: git-lock-copy <source-label> <target-label>\n"
     return 1
   }
-  dst_label="$2"
+  dst_label="$dst_label_arg"
   [[ -z "$dst_label" ]] && {
     printf "❗ Target label is missing\n"
     return 1
@@ -204,7 +214,7 @@ _git_lock_copy() {
     printf "⚠️  Target git-lock [%s:%s] already exists. Overwrite? [y/N] " "$repo_id" "$dst_label"
     read -r confirm
     [[ "$confirm" != [yY] ]] && {
-      printf "🚫 Aborted\n"
+      printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
       return 1
     }
   fi
@@ -216,7 +226,7 @@ _git_lock_copy() {
   content=$(<"$src_file")
   hash=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
-  timestamp=$(print -r -- "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  timestamp=$(print -r -- "$content" | grep "$GIT_LOCK_TIMESTAMP_PATTERN" | cut -d '=' -f2-)
   subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
   printf "📋 Copied git-lock [%s:%s] → [%s:%s]\n" "$repo_id" "$src_label" "$repo_id" "$dst_label"
@@ -236,6 +246,7 @@ _git_lock_copy() {
 #   git-lock-delete dev
 _git_lock_delete() {
   typeset repo_id lock_dir label lock_file latest_file latest_label
+  typeset label_arg="${1-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
   latest_file="$lock_dir/${repo_id}-latest"
@@ -245,7 +256,7 @@ _git_lock_delete() {
     return 1
   }
 
-  label=$(_git_lock_resolve_label "$1") || {
+  label=$(_git_lock_resolve_label "$label_arg") || {
     printf "❌ No label provided and no latest git-lock exists\n"
     return 1
   }
@@ -260,7 +271,7 @@ _git_lock_delete() {
   content=$(<"$lock_file")
   hash=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
-  timestamp=$(print -r -- "$content" | grep '^timestamp=' | cut -d '=' -f2-)
+  timestamp=$(print -r -- "$content" | grep "$GIT_LOCK_TIMESTAMP_PATTERN" | cut -d '=' -f2-)
   subject=$(git log -1 --pretty=%s "$hash" 2>/dev/null)
 
   printf "🗑️  Candidate for deletion:\n"
@@ -273,7 +284,7 @@ _git_lock_delete() {
 
   read -r -p "⚠️  Delete this git-lock? [y/N] " confirm
   if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    printf "🚫 Aborted\n"
+    printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
     return 1
   fi
 
@@ -304,7 +315,8 @@ _git_lock_diff() {
   typeset -a positional=()
 
   while [[ $# -gt 0 ]]; do
-    case "$1" in
+    typeset arg="${1-}"
+    case "$arg" in
       --no-color|no-color)
         no_color=true
         ;;
@@ -313,7 +325,7 @@ _git_lock_diff() {
         return 0
         ;;
       *)
-        positional+=("$1")
+        positional+=("$arg")
         ;;
     esac
     shift
@@ -385,16 +397,18 @@ _git_lock_tag() {
   typeset -a positional=()
 
   while [[ $# -gt 0 ]]; do
-    case "$1" in
+    typeset arg="${1-}"
+    case "$arg" in
       --push)
         do_push=true
         shift ;;
       -m)
         shift
-        tag_msg="$1"
+        typeset msg_arg="${1-}"
+        tag_msg="$msg_arg"
         shift ;;
       *)
-        positional+=("$1")
+        positional+=("$arg")
         shift ;;
     esac
   done
@@ -421,7 +435,7 @@ _git_lock_tag() {
 
   line1=$(sed -n '1p' "$lock_file")
   hash=$(cut -d '#' -f1 <<< "$line1" | xargs)
-  timestamp=$(grep '^timestamp=' "$lock_file" | cut -d '=' -f2-)
+  timestamp=$(grep "$GIT_LOCK_TIMESTAMP_PATTERN" "$lock_file" | cut -d '=' -f2-)
 
   [[ -z "$tag_msg" ]] && tag_msg=$(git show -s --format=%s "$hash")
 
@@ -430,7 +444,7 @@ _git_lock_tag() {
     printf "❓ Overwrite it? [y/N] "
     read -r confirm
     [[ "$confirm" != [yY] ]] && {
-      printf "🚫 Aborted\n"
+      printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
       return 1
     }
     git tag -d "$tag_name" || {
