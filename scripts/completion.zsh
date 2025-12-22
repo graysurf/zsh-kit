@@ -16,7 +16,7 @@ unsetopt AUTO_MENU MENU_COMPLETE
 # Use modern menu selection
 zstyle ':completion:*' menu yes select
 zstyle ':completion:*:descriptions' format '[%d]'
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' list-colors ${(s.:.)${LS_COLORS-}}
 # Keep input as typed; don't auto-insert longest common prefix before showing menu
 zstyle ':completion:*' insert-unambiguous false
 # Enable fuzzy matching: case-insensitive; keep '-' significant so camelCase vs kebab-case don't collapse
