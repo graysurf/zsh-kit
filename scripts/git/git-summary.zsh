@@ -4,6 +4,30 @@
 # Supports macOS and Linux with timezone correction based on system settings
 # ───────────────────────────────────────────────────────
 
+typeset -r GIT_SUMMARY_OS_DARWIN='Darwin'
+typeset -r GIT_SUMMARY_DATE_FMT='%Y-%m-%d'
+typeset -g GIT_SUMMARY_DATE_HAS_V=false
+
+if date -v +0d +"%Y-%m-%d" >/dev/null 2>&1; then
+  GIT_SUMMARY_DATE_HAS_V=true
+fi
+
+# Resolve date using the configured format; fallback to ISO if empty/invalid.
+_git_summary_date() {
+  typeset fmt="${1-}"
+  typeset out=''
+
+  if [[ -n "$fmt" ]]; then
+    out=$(date +"$fmt" 2>/dev/null)
+  fi
+
+  if [[ -z "$out" ]]; then
+    out=$(date +"%Y-%m-%d")
+  fi
+
+  print -r -- "$out"
+  return 0
+}
 
 # ───────────────────────────────────────────────────────
 # Aliases and Unalias
@@ -64,7 +88,7 @@ _git_summary() {
 
 # Show a summary of today's commits (local timezone).
 _git_today() {
-  typeset today=$(date +"%Y-%m-%d")
+  typeset today=$(_git_summary_date "$GIT_SUMMARY_DATE_FMT")
   print "\n📅 Git summary for today: $today"
   print
   _git_summary "$today" "$today"
@@ -73,11 +97,12 @@ _git_today() {
 
 # Show a summary of yesterday's commits (cross-platform).
 _git_yesterday() {
-  typeset yesterday
-  if [[ "$(uname)" == "Darwin" ]]; then
-    yesterday=$(date -v -1d +"%Y-%m-%d")
+  typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
+  typeset yesterday=''
+  if $GIT_SUMMARY_DATE_HAS_V; then
+    yesterday=$(date -v -1d +"$fmt")
   else
-    yesterday=$(date -d "yesterday" +"%Y-%m-%d")
+    yesterday=$(date -d "yesterday" +"$fmt")
   fi
   print "\n📅 Git summary for yesterday: $yesterday"
   print
@@ -87,7 +112,7 @@ _git_yesterday() {
 
 # Show a summary from the first day of the month to today.
 _git_this_month() {
-  typeset today=$(date +"%Y-%m-%d")
+  typeset today=$(_git_summary_date "$GIT_SUMMARY_DATE_FMT")
   typeset start_date=$(date +"%Y-%m-01")
   print "\n📅 Git summary for this month: $start_date to $today"
   print
@@ -97,14 +122,15 @@ _git_this_month() {
 
 # Show a summary for the last full month.
 _git_last_month() {
-  typeset start_date end_date
+  typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
+  typeset start_date='' end_date=''
 
-  if [[ "$(uname)" == "Darwin" ]]; then
-    start_date=$(date -j -v-1m -v1d +"%Y-%m-%d")
-    end_date=$(date -j -v1d -v-1d +"%Y-%m-%d")
+  if $GIT_SUMMARY_DATE_HAS_V; then
+    start_date=$(date -j -v-1m -v1d +"$fmt")
+    end_date=$(date -j -v1d -v-1d +"$fmt")
   else
-    start_date=$(date -d "$(date +%Y-%m-01) -1 month" +"%Y-%m-%d")
-    end_date=$(date -d "$(date +%Y-%m-01) -1 day" +"%Y-%m-%d")
+    start_date=$(date -d "$(date +%Y-%m-01) -1 month" +"$fmt")
+    end_date=$(date -d "$(date +%Y-%m-01) -1 day" +"$fmt")
   fi
 
   print "\n📅 Git summary for last month: $start_date to $end_date"
@@ -116,17 +142,18 @@ _git_last_month() {
 
 # Show a summary for the last full week (Monday to Sunday).
 _git_last_week() {
+  typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
   typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
-  CURRENT_DATE=$(date +"%Y-%m-%d")
+  CURRENT_DATE=$(date +"$fmt")
 
-  if [[ "$(uname)" == "Darwin" ]]; then
-    WEEKDAY=$(date -j -f "%Y-%m-%d" "$CURRENT_DATE" +%u)
-    END_DATE=$(date -j -f "%Y-%m-%d" -v -"$WEEKDAY"d "$CURRENT_DATE" +%Y-%m-%d)
-    START_DATE=$(date -j -f "%Y-%m-%d" -v -6d "$END_DATE" +%Y-%m-%d)
+  if $GIT_SUMMARY_DATE_HAS_V; then
+    WEEKDAY=$(date -j -f "$fmt" "$CURRENT_DATE" +%u)
+    END_DATE=$(date -j -f "$fmt" -v -"$WEEKDAY"d "$CURRENT_DATE" +"$fmt")
+    START_DATE=$(date -j -f "$fmt" -v -6d "$END_DATE" +"$fmt")
   else
     WEEKDAY=$(date -d "$CURRENT_DATE" +%u)
-    END_DATE=$(date -d "$CURRENT_DATE -$WEEKDAY days" +%Y-%m-%d)
-    START_DATE=$(date -d "$END_DATE -6 days" +%Y-%m-%d)
+    END_DATE=$(date -d "$CURRENT_DATE -$WEEKDAY days" +"$fmt")
+    START_DATE=$(date -d "$END_DATE -6 days" +"$fmt")
   fi
 
   print "\n📅 Git summary for last week: $START_DATE to $END_DATE"
@@ -137,17 +164,18 @@ _git_last_week() {
 
 # Show a summary for this week (Monday to Sunday).
 _git_this_week() {
+  typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
   typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
-  CURRENT_DATE=$(date +"%Y-%m-%d")
+  CURRENT_DATE=$(date +"$fmt")
 
-  if [[ "$(uname)" == "Darwin" ]]; then
-    WEEKDAY=$(date -j -f "%Y-%m-%d" "$CURRENT_DATE" +%u)
-    START_DATE=$(date -j -f "%Y-%m-%d" -v -"$((WEEKDAY - 1))"d "$CURRENT_DATE" +%Y-%m-%d)
-    END_DATE=$(date -j -f "%Y-%m-%d" -v +"$((7 - WEEKDAY))"d "$CURRENT_DATE" +%Y-%m-%d)
+  if $GIT_SUMMARY_DATE_HAS_V; then
+    WEEKDAY=$(date -j -f "$fmt" "$CURRENT_DATE" +%u)
+    START_DATE=$(date -j -f "$fmt" -v -"$((WEEKDAY - 1))"d "$CURRENT_DATE" +"$fmt")
+    END_DATE=$(date -j -f "$fmt" -v +"$((7 - WEEKDAY))"d "$CURRENT_DATE" +"$fmt")
   else
     WEEKDAY=$(date -d "$CURRENT_DATE" +%u)
-    START_DATE=$(date -d "$CURRENT_DATE -$((WEEKDAY - 1)) days" +%Y-%m-%d)
-    END_DATE=$(date -d "$START_DATE +6 days" +%Y-%m-%d)
+    START_DATE=$(date -d "$CURRENT_DATE -$((WEEKDAY - 1)) days" +"$fmt")
+    END_DATE=$(date -d "$START_DATE +6 days" +"$fmt")
   fi
 
   print "\n📅 Git summary for this week: $START_DATE to $END_DATE"
