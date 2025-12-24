@@ -141,19 +141,27 @@ git-reset-soft() {
   fi
 
   git reset --soft HEAD~1
+  if [[ $? -ne 0 ]]; then
+    print "❌ Soft reset failed (no parent commit, or invalid HEAD state)."
+    return 1
+  fi
+
   print "✅ Last commit undone. Your changes are still staged."
 }
 
 # Hard reset to the previous commit with confirmation (DANGEROUS)
 #
 # This function performs a `git reset --hard HEAD~1`, which removes the last
-# commit and discards all staged and unstaged changes in the working tree.
-# 
-# ⚠️ WARNING: This operation is destructive and cannot be undone.
-# Only use it when you are absolutely sure you want to discard local changes.
+# commit and discards all staged and unstaged changes for tracked files by
+# synchronizing HEAD, index, and working tree to the previous commit.
+#
+# ⚠️ WARNING: This operation is destructive for uncommitted tracked changes.
+# - The removed commit can often be recovered via `git reflog`, but uncommitted
+#   tracked edits overwritten by `--hard` may be difficult or impossible to restore.
+# - Untracked files are NOT removed by `git reset --hard` (use `git clean` if needed).
 git-reset-hard() {
   print "⚠️  This will HARD RESET your repository to the previous commit."
-  print "🔥 All staged and unstaged changes will be PERMANENTLY LOST."
+  print "🔥 Tracked staged/unstaged changes will be OVERWRITTEN."
   print "🧨 This is equivalent to: git reset --hard HEAD~1"
   print -n "❓ Are you absolutely sure? [y/N] "
   read -r confirm
@@ -163,7 +171,13 @@ git-reset-hard() {
   fi
 
   git reset --hard HEAD~1
-  print "✅ Hard reset completed. Your working directory is now clean."
+  if [[ $? -ne 0 ]]; then
+    print "❌ Hard reset failed (no parent commit, or invalid HEAD state)."
+    return 1
+  fi
+
+  # Note: Untracked files may still exist; `git status` may not be clean.
+  print "✅ Hard reset completed. HEAD moved back one commit."
 }
 
 # Undo the last commit and unstage all changes (mixed reset)
@@ -177,7 +191,7 @@ git-reset-hard() {
 git-reset-mixed() {
   print "⚠️  This will rewind your last commit (mixed reset)"
   print "🧠 Your changes will become UNSTAGED and editable in working directory."
-  print "❓ Proceed with 'git reset --mixed HEAD~1'? [y/N] "
+  print -n "❓ Proceed with 'git reset --mixed HEAD~1'? [y/N] "
   read -r confirm
   if [[ "$confirm" != [yY] ]]; then
     print "🚫 Aborted"
@@ -185,62 +199,264 @@ git-reset-mixed() {
   fi
 
   git reset --mixed HEAD~1
+  if [[ $? -ne 0 ]]; then
+    print "❌ Mixed reset failed (no parent commit, or invalid HEAD state)."
+    return 1
+  fi
+
   print "✅ Last commit undone. Your changes are now unstaged."
 }
 
-# Undo the last `git reset --hard` by restoring previous HEAD state
+# Undo the last HEAD move using reflog (safer "back one step" with staged/unstaged choices)
 #
-# This function resets the repository to the previous HEAD using
-# `git reset --hard HEAD@{1}`. It is useful when you've recently run
-# a destructive `git reset --hard` command and want to recover the
-# state before that reset — including working directory and staging area.
+# This function restores the repository to the previous HEAD position using reflog:
+#   - Target: HEAD@{1}  (the previous HEAD position)
 #
-# Unlike `git-back-head()` or `git-back-checkout()`, which are non-destructive
-# and only move HEAD, this operation fully restores the previous commit state,
-# overwriting all uncommitted changes.
+# It adds safety layers by distinguishing:
+#   - HEAD@{0}: the CURRENT HEAD reflog entry (describes the LAST action that moved HEAD to *current* state)
+#   - HEAD@{1}: the TARGET previous HEAD position (where we want to go back to)
+#
+# Why check HEAD@{0} (current action) instead of HEAD@{1}?
+# - If you just ran `git reset`, the reflog subject for HEAD@{0} typically starts with `reset: ...`.
+# - HEAD@{1}'s subject describes an earlier movement (often commit/checkout), which can be misleading for
+#   determining what you "just did". Since this is an "undo last move" helper, HEAD@{0} is the right signal.
+#
+# Why reset to a resolved SHA ($target_commit) instead of using HEAD@{1} directly?
+# - This function is interactive: it prints the target commit and waits for user input.
+# - Using the resolved SHA guarantees "preview == action" even if reflog changes during the prompt
+#   (e.g., external tools writing reflog entries). It makes behavior deterministic and consistent.
+#
+# Reflog display portability:
+# - Many environments accept `HEAD@{0}` / `HEAD@{1}` directly in `git reflog`.
+# - For maximum robustness, this function includes a fallback using `git reflog show` if the direct
+#   form fails (e.g., unusual wrappers or edge environments). Fallback is informational only.
+#
+# Optional safety: detect in-progress operations
+# - If you are in the middle of merge/rebase/cherry-pick/revert/bisect, users often actually want an
+#   abort command instead of moving HEAD with reset. This function warns and asks for confirmation.
+#
+# Local-change awareness (tracked + untracked):
+# - If working tree is clean (no staged/unstaged/untracked changes), it runs:
+#     git reset --hard <target_commit>
+# - If changes exist, it offers explicit choices:
+#     1) Keep changes + PRESERVE INDEX (staged reinterpreted vs new base) -> git reset --soft  <target_commit>
+#     2) Keep changes + UNSTAGE ALL                                -> git reset --mixed <target_commit>
+#     3) Discard tracked changes                                   -> git reset --hard  <target_commit>
+#     4) Abort
+#
+# Notes:
+# - `git reset --hard` does NOT remove untracked files; use `git clean` if needed.
+# - HEAD@{1} is "previous HEAD position", not necessarily "previous reset".
+# - If you already pushed rewritten history, resetting locally may require force push and can impact others.
 git-reset-undo() {
-  typeset prev_commit
-  prev_commit=$(git rev-parse HEAD@{1} 2>/dev/null)
+  typeset target_commit
+  typeset status_lines
+  typeset reflog_line_current reflog_subject_current
+  typeset reflog_line_target  reflog_subject_target
+  typeset choice confirm_non_reset confirm
+  typeset -a op_warnings
 
-  if [[ -z "$prev_commit" ]]; then
-    print "❌ Cannot resolve HEAD@{1}."
+  # ── Safety: ensure we are inside a Git repository ───────────────────────────
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print "❌ Not a git repository."
     return 1
   fi
 
-  print "🕰  Attempting to undo the last hard reset..."
-  print "📜 This will reset your repository back to:"
-  git log --oneline -1 "$prev_commit"
-  print -n "❓ Proceed with 'git reset --hard HEAD@{1}'? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
+  # Resolve the TARGET commit (previous HEAD position) to a stable SHA.
+  # We intentionally capture the SHA early so the action later is deterministic.
+  target_commit=$(git rev-parse HEAD@{1} 2>/dev/null)
+  if [[ -z "$target_commit" ]]; then
+    print "❌ Cannot resolve HEAD@{1} (no previous HEAD position in reflog)."
     return 1
   fi
 
-  git reset --hard HEAD@{1}
-  print "✅ Repository reset back to previous HEAD: $prev_commit"
+  # ── Optional safety: detect in-progress operations (merge/rebase/etc.) ──────
+  op_warnings=()
+
+  # merge in progress
+  [[ -f "$(git rev-parse --git-path MERGE_HEAD 2>/dev/null)" ]] \
+    && op_warnings+=("merge in progress (suggest: git merge --abort)")
+
+  # rebase in progress (either layout)
+  [[ -d "$(git rev-parse --git-path rebase-apply 2>/dev/null)" || -d "$(git rev-parse --git-path rebase-merge 2>/dev/null)" ]] \
+    && op_warnings+=("rebase in progress (suggest: git rebase --abort)")
+
+  # cherry-pick in progress
+  [[ -f "$(git rev-parse --git-path CHERRY_PICK_HEAD 2>/dev/null)" ]] \
+    && op_warnings+=("cherry-pick in progress (suggest: git cherry-pick --abort)")
+
+  # revert in progress
+  [[ -f "$(git rev-parse --git-path REVERT_HEAD 2>/dev/null)" ]] \
+    && op_warnings+=("revert in progress (suggest: git revert --abort)")
+
+  # bisect in progress (heuristic)
+  [[ -f "$(git rev-parse --git-path BISECT_LOG 2>/dev/null)" ]] \
+    && op_warnings+=("bisect in progress (suggest: git bisect reset)")
+
+  if (( ${#op_warnings[@]} > 0 )); then
+    print "🛡️  Detected an in-progress Git operation:"
+    for w in "${op_warnings[@]}"; do
+      print "   - $w"
+    done
+    print "⚠️  Resetting during these operations can be confusing."
+    print -n "❓ Still run git-reset-undo (move HEAD back)? [y/N] "
+    read -r confirm
+    if [[ "$confirm" != [yY] ]]; then
+      print "🚫 Aborted"
+      return 1
+    fi
+  fi
+
+  # ── Reflog display (with fallback for portability) ──────────────────────────
+  # Preferred: direct HEAD@{n} form (most Git environments support this).
+  reflog_line_current=$(git reflog -1 --pretty='%h %gs' HEAD@{0} 2>/dev/null)
+  reflog_subject_current=$(git reflog -1 --pretty='%gs' HEAD@{0} 2>/dev/null)
+
+  if [[ -z "$reflog_line_current" || -z "$reflog_subject_current" ]]; then
+    # Fallback: reflog show latest entry for HEAD (informational only)
+    reflog_line_current=$(git reflog show -1 --pretty='%h %gs' HEAD 2>/dev/null)
+    reflog_subject_current=$(git reflog show -1 --pretty='%gs' HEAD 2>/dev/null)
+  fi
+
+  reflog_line_target=$(git reflog -1 --pretty='%h %gs' HEAD@{1} 2>/dev/null)
+  reflog_subject_target=$(git reflog -1 --pretty='%gs' HEAD@{1} 2>/dev/null)
+
+  if [[ -z "$reflog_line_target" || -z "$reflog_subject_target" ]]; then
+    # Fallback: take the 2nd entry from reflog show -2 (informational only)
+    reflog_line_target=$(git reflog show -2 --pretty='%h %gs' HEAD 2>/dev/null | sed -n '2p')
+    reflog_subject_target=$(git reflog show -2 --pretty='%gs' HEAD 2>/dev/null | sed -n '2p')
+  fi
+
+  # If reflog lines are still unavailable, keep going (reflog display is informational).
+  [[ -z "$reflog_line_current" ]] && reflog_line_current="(unavailable)"
+  [[ -z "$reflog_line_target"  ]] && reflog_line_target="(unavailable)"
+  [[ -z "$reflog_subject_current" ]] && reflog_subject_current="(unavailable)"
+  [[ -z "$reflog_subject_target"  ]] && reflog_subject_target="(unavailable)"
+
+  print "🧾 Current HEAD@{0} (last action):"
+  print "   $reflog_line_current"
+  print "🧾 Target  HEAD@{1} (previous HEAD position):"
+  print "   $reflog_line_target"
+
+  # If reflog display failed, clarify that the action is still deterministic via target_commit
+  if [[ "$reflog_line_current" == "(unavailable)" || "$reflog_line_target" == "(unavailable)" ]]; then
+    print "ℹ️  Reflog display unavailable here; reset target is still the resolved SHA: $target_commit"
+  fi
+
+  # Extra confirmation if the LAST action (HEAD@{0}) wasn't a reset.
+  # (We still allow it—this tool can undo any HEAD move—but we make it explicit.)
+  if [[ "$reflog_subject_current" != reset:* && "$reflog_subject_current" != "(unavailable)" ]]; then
+    print "⚠️  The last action does NOT look like a reset operation."
+    print "🧠 It may be from checkout/rebase/merge/pull, etc."
+    print -n "❓ Still proceed to move HEAD back to the previous HEAD position? [y/N] "
+    read -r confirm_non_reset
+    if [[ "$confirm_non_reset" != [yY] ]]; then
+      print "🚫 Aborted"
+      return 1
+    fi
+  fi
+
+  # Show the exact commit we are about to restore to (the stable SHA we resolved)
+  print "🕰  Target commit (resolved from HEAD@{1}):"
+  git log --oneline -1 "$target_commit" || return 1
+
+  # Detect ANY local changes including untracked (default porcelain includes untracked)
+  status_lines=$(git status --porcelain 2>/dev/null) || return 1
+
+  # If there are no changes, safely hard reset without extra prompts
+  if [[ -z "$status_lines" ]]; then
+    print "✅ Working tree clean. Proceeding with: git reset --hard $target_commit"
+    if ! git reset --hard "$target_commit"; then
+      print "❌ Hard reset failed."
+      return 1
+    fi
+    print "✅ Repository reset back to previous HEAD: $target_commit"
+    return 0
+  fi
+
+  # If there are changes, warn and offer choices
+  print "⚠️  Working tree has changes:"
+  print -r -- "$status_lines"
+  print ""
+  print "Choose how to proceed:"
+  print "  1) Keep changes + PRESERVE INDEX (staged vs new base)  (git reset --soft  $target_commit)"
+  print "  2) Keep changes + UNSTAGE ALL                          (git reset --mixed $target_commit)"
+  print "  3) Discard tracked changes                             (git reset --hard  $target_commit)"
+  print "  4) Abort"
+  print -n "❓ Select [1/2/3/4] (default: 4): "
+  read -r choice
+
+  case "$choice" in
+    1)
+      print "🧷 Preserving INDEX (staged) and working tree. Running: git reset --soft $target_commit"
+      print "⚠️  Note: The index is preserved, but what appears staged is relative to the new HEAD."
+      if ! git reset --soft "$target_commit"; then
+        print "❌ Soft reset failed."
+        return 1
+      fi
+      print "✅ HEAD moved back while preserving index + working tree: $target_commit"
+      ;;
+
+    2)
+      print "🧷 Preserving working tree but clearing INDEX (unstage all). Running: git reset --mixed $target_commit"
+      if ! git reset --mixed "$target_commit"; then
+        print "❌ Mixed reset failed."
+        return 1
+      fi
+      print "✅ HEAD moved back; working tree preserved; index reset: $target_commit"
+      ;;
+
+    3)
+      print "🔥 Discarding tracked changes. Running: git reset --hard $target_commit"
+      print "⚠️  This overwrites tracked files in working tree + index."
+      print "ℹ️  Untracked files are NOT removed by reset --hard."
+      print -n "❓ Are you absolutely sure? [y/N] "
+      read -r confirm
+      if [[ "$confirm" != [yY] ]]; then
+        print "🚫 Aborted"
+        return 1
+      fi
+      if ! git reset --hard "$target_commit"; then
+        print "❌ Hard reset failed."
+        return 1
+      fi
+      print "✅ Repository reset back to previous HEAD: $target_commit"
+      ;;
+
+    *)
+      print "🚫 Aborted"
+      return 1
+      ;;
+  esac
+
+  return 0
 }
 
-# Rewind HEAD to its previous position with confirmation
+# Rewind HEAD to its previous position with confirmation (using HEAD@{1})
 #
-# This function uses `git rev-parse HEAD@{1}` to retrieve the previous
-# position of HEAD from the reflog. It is useful when you have recently
-# moved HEAD by mistake (e.g., via a reset, commit, or other action),
-# and want to undo that movement without affecting your working tree.
+# This function uses the reflog entry `HEAD@{1}` to move HEAD back to its
+# previous position. It is useful when you have recently moved HEAD by mistake
+# (e.g., via checkout, reset, commit, merge, rebase), and want to undo that movement.
 #
-# Unlike `git-back-checkout()`, which targets the previous checkout action specifically,
-# this function restores HEAD to whatever state it was in before the last
-# movement — not limited to checkouts.
+# It shows the target commit before proceeding, so you can verify what you'll
+# jump back to.
+#
+# ⚠️ Note:
+# - This function uses `git checkout HEAD@{1}` and may update tracked files in
+#   your working tree to match that previous state (or refuse if it would
+#   overwrite local changes). It does NOT guarantee a no-touch working tree.
+# - Depending on what `HEAD@{1}` points to, you may end up in a detached HEAD state.
 git-back-head() {
   typeset prev_head
-  prev_head=$(git rev-parse HEAD@{1} 2>/dev/null)
 
+  # Resolve HEAD@{1} to a commit SHA for display/validation
+  prev_head=$(git rev-parse HEAD@{1} 2>/dev/null)
   if [[ -z "$prev_head" ]]; then
     print "❌ Cannot find previous HEAD in reflog."
     return 1
   fi
 
-  print "⏪ This will move HEAD back to the previous position:"
+  print "⏪ This will move HEAD back to the previous position (HEAD@{1}):"
   print "🔁 $(git log --oneline -1 "$prev_head")"
   print -n "❓ Proceed with 'git checkout HEAD@{1}'? [y/N] "
   read -r confirm
@@ -249,28 +465,75 @@ git-back-head() {
     return 1
   fi
 
-  git checkout "$prev_head"
-  print "✅ Restored to previous HEAD: $prev_head"
+  # Move HEAD back using reflog syntax (requested)
+  git checkout HEAD@{1}
+  if [[ $? -ne 0 ]]; then
+    print "❌ Checkout failed (likely due to local changes or invalid reflog state)."
+    return 1
+  fi
+
+  print "✅ Restored to previous HEAD (HEAD@{1}): $prev_head"
 }
 
 # Restore HEAD to previous checkout branch (avoids detached HEAD)
-# This finds the last checkout operation that moved from a branch to another branch,
-# skipping over cases where you checked out a commit SHA.
+#
+# This function attempts to return to the branch you were on *before* you last
+# checked out the current branch. It searches reflog for the most recent checkout
+# entry that moved *to* the current branch, then extracts the "from" side.
+#
+# Safety improvements over the original version:
+# - Handles detached HEAD (current branch == "HEAD") by aborting with a clear message.
+# - Skips entries where the "from" token looks like a commit SHA (to avoid detached HEAD).
+# - Verifies that the extracted "from" value is an existing local branch before checkout.
+#
+# Note: Checkout may fail if local changes would be overwritten.
 git-back-checkout() {
   typeset current_branch from_branch
 
-  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  # Determine the current branch; in detached HEAD this becomes literal "HEAD"
+  current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || return 1
+  if [[ -z "$current_branch" ]]; then
+    print "❌ Cannot determine current branch."
+    return 1
+  fi
 
+  # If we're detached, we can't reliably infer "previous branch" relative to a branch name
+  if [[ "$current_branch" == "HEAD" ]]; then
+    print "❌ You are in a detached HEAD state. This function targets branch-to-branch checkouts."
+    print "🧠 Tip: Use `git reflog` to find the branch/commit you want, then `git checkout <branch>`."
+    return 1
+  fi
+
+  # Find the most recent reflog checkout entry that moved *to* current_branch,
+  # then extract the "from" token.
   from_branch=$(
     git reflog |
       grep "checkout: moving from " |
-      grep "to $current_branch" |
-      sed -n 's/.*moving from \([^ ]*\) to '"$current_branch"'/\1/p' |
+      grep " to $current_branch" |
+      sed -n 's/.*checkout: moving from \([^ ]*\) to '"$current_branch"'.*/\1/p' |
       head -n 1
   )
 
   if [[ -z "$from_branch" ]]; then
-    print "❌ Could not find a previous branch that switched to $current_branch."
+    print "❌ Could not find a previous checkout that switched to $current_branch."
+    return 1
+  fi
+
+  # Skip if the extracted token looks like a commit SHA (7-40 hex chars).
+  # This avoids accidentally checking out a commit and entering detached HEAD.
+  if [[ "$from_branch" == <-> ]]; then
+    # purely numeric branch names are rare but possible; don't treat as SHA
+    :
+  elif [[ "$from_branch" == (#i)[0-9a-f]## && ${#from_branch} -ge 7 && ${#from_branch} -le 40 ]]; then
+    print "❌ Previous 'from' looks like a commit SHA ($from_branch). Refusing to checkout to avoid detached HEAD."
+    print "🧠 Use `git reflog` to choose the correct branch explicitly."
+    return 1
+  fi
+
+  # Verify the branch exists locally before checking out
+  if ! git show-ref --verify --quiet "refs/heads/$from_branch"; then
+    print "❌ '$from_branch' is not an existing local branch."
+    print "🧠 If it's a remote branch, try: git checkout -t origin/$from_branch"
     return 1
   fi
 
@@ -283,6 +546,11 @@ git-back-checkout() {
   fi
 
   git checkout "$from_branch"
+  if [[ $? -ne 0 ]]; then
+    print "❌ Checkout failed (likely due to local changes or conflicts)."
+    return 1
+  fi
+
   print "✅ Restored to previous branch: $from_branch"
 }
 
