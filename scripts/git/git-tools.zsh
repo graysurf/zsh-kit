@@ -733,7 +733,7 @@ gh-push-open() {
 #
 # Example usage:
 #   $ git add .
-#   $ git-commit-context-md
+#   $ git-commit-context
 #
 # Output: Markdown commit context is copied to clipboard and logged to a temp file.
 git-commit-context () {
