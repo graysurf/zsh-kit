@@ -59,6 +59,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── git-summary.zsh               # Git contributions by author/date
 │   │   ├── git-tools.zsh                 # Git utilities for reset, rebase, remotes
 │   │   └── git.zsh                       # General Git aliases and settings
+│   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
 │   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
 │   ├── codex.zsh                         # Codex CLI helpers
 │   ├── env.zsh                           # Environment variable exports and init logic
@@ -94,6 +95,7 @@ Weather report: Taipei City, Taiwan
 
 ✅ Loaded 00-preload.zsh in 3ms
 ✅ Loaded plugins.zsh in 89ms
+✅ Loaded chrome-devtools-rdp.zsh in 0ms
 ✅ Loaded codex.zsh in 3ms
 ✅ Loaded eza.zsh in 2ms
 ✅ Loaded fzf-tools.zsh in 2ms
