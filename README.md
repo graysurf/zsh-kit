@@ -57,6 +57,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── git-magic.zsh                 # Composite git workflows (push, fixup, review)
 │   │   ├── git-scope.zsh                 # Show git changes by scope, diff, or tree
 │   │   ├── git-summary.zsh               # Git contributions by author/date
+│   │   ├── git-reset-remote.zsh          # Overwrite local branch with remote-tracking branch
 │   │   ├── git-tools.zsh                 # Git utilities for reset, rebase, remotes
 │   │   └── git.zsh                       # General Git aliases and settings
 │   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
@@ -101,6 +102,7 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded fzf-tools.zsh in 2ms
 ✅ Loaded git-lock.zsh in 3ms
 ✅ Loaded git-magic.zsh in 3ms
+✅ Loaded git-reset-remote.zsh in 0ms
 ✅ Loaded git-scope.zsh in 2ms
 ✅ Loaded git-summary.zsh in 3ms
 ✅ Loaded git-tools.zsh in 3ms
