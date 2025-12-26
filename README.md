@@ -84,11 +84,11 @@ An example Zsh startup log with this config:
 ```text
 Weather report: Taipei City, Taiwan
 
-     \  /       Partly cloudy
-   _ /"".-.     +25(27) °C
-     \_(   ).   ↓ 14 km/h
-     /(___(__)  10 km
-                0.0 mm
+       .-.      Light drizzle
+      (   ).    +13(12) °C
+     (___(__)   ↙ 13 km/h
+      ‘ ‘ ‘ ‘   10 km
+     ‘ ‘ ‘ ‘    0.7 mm
                 
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 
@@ -117,7 +117,7 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded development.sh (delayed) in 2ms
 
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
-12:00:42.133 ✔︎
+08:00:00.000 ✔︎
 ```
 
 ## Setup
