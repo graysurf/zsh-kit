@@ -8,42 +8,46 @@ if command -v safe_unalias >/dev/null; then
     lxt lxt2 lxt3 lxt5
 fi
 
-# List all files including dotfiles
-ll() {
-  # If first argument is a number, treat it as depth (-L)
-  local level_flag=()
-  local first_arg="${1-}"
+__eza_with_optional_depth() {
+  local -a base_args level_flag
+  local first_arg
+
+  base_args=()
+  while (( $# > 0 )); do
+    if [[ "${1-}" == -- ]]; then
+      shift
+      break
+    fi
+    base_args+=("$1")
+    shift
+  done
+
+  level_flag=()
+  first_arg="${1-}"
   if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
     level_flag=(-L "$first_arg")
     shift
   fi
-  eza -alh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
+
+  eza "${base_args[@]}" "${level_flag[@]}" "$@"
+  return $?
+}
+
+# List all files including dotfiles
+ll() {
+  __eza_with_optional_depth -alh --icons --group-directories-first --time-style=iso -- "$@"
   return $?
 }
 
 # List files excluding dotfiles
 lx() {
-  # If first argument is a number, treat it as depth (-L)
-  local level_flag=()
-  local first_arg="${1-}"
-  if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
-    level_flag=(-L "$first_arg")
-    shift
-  fi
-  eza -lh --icons --group-directories-first --time-style=iso "${level_flag[@]}" "$@"
+  __eza_with_optional_depth -lh --icons --group-directories-first --time-style=iso -- "$@"
   return $?
 }
 
 # Tree view with all files
 lt() {
-  # If first argument is a number, treat it as depth (-L)
-  local level_flag=()
-  local first_arg="${1-}"
-  if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
-    level_flag=(-L "$first_arg")
-    shift
-  fi
-  eza -aT --group-directories-first --icons "${level_flag[@]}" "$@"
+  __eza_with_optional_depth -aT --group-directories-first --icons -- "$@"
   return $?
 }
 
@@ -70,4 +74,3 @@ alias lxt='lx -T'
 alias lxt2='lxt -L 2'
 alias lxt3='lxt -L 3'
 alias lxt5='lxt -L 5'
-
