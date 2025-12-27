@@ -58,6 +58,3 @@ if command -v bat >/dev/null 2>&1 && bat --list-themes 2>/dev/null | grep -q "Ni
 else
   export BAT_THEME="Monokai Extended"
 fi
-
-
-
