@@ -1,6 +1,8 @@
 #compdef git-summary
 
 _git-summary() {
+  emulate -L zsh
+
   typeset -a subcmds
   subcmds=(
     "today:Show today's git summary"

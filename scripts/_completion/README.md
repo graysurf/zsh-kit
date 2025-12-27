@@ -6,7 +6,7 @@ This document explains how to write and maintain completion scripts in
 ## Scope and Load Order
 
 - Completion files live under `scripts/_completion`.
-- `scripts/completion.zsh` adds this directory to `fpath` and runs `compinit`.
+- `scripts/ux/completion.zsh` adds this directory to `fpath` and runs `compinit`.
 - If a new completion does not show up, rebuild the compdump:
   - `rm -f "$ZSH_COMPDUMP"`
   - `autoload -Uz compinit && compinit -i -d "$ZSH_COMPDUMP"`
@@ -25,6 +25,10 @@ This document explains how to write and maintain completion scripts in
 _tool-name() {
   emulate -L zsh
 
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
   typeset -a subcmds
   subcmds=(
     'foo:Description'
@@ -32,6 +36,9 @@ _tool-name() {
   )
 
   _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '--verbose[Enable verbose output]' \
+    '--config=[Path to config file]:config file:_files' \
     '1:command:->subcmds' \
     '*::arg:->args'
 
@@ -40,7 +47,7 @@ _tool-name() {
       _describe -t commands 'tool subcommand' subcmds && return 0
       ;;
     args)
-      case "${words[2]-}" in
+      case "${line[1]-}" in
         foo)
           _arguments '--flag[Description]' && return 0
           ;;
@@ -55,13 +62,17 @@ compdef _tool-name 'tool-name.git'
 
 ## Completion Flow and State
 
-- Use `_arguments -C` to enable state-based routing.
-- `state` and `words` are provided by the completion system:
-  - `words[2]` is the first argument after the command.
-  - `CURRENT` is the current word index.
-- Use `_describe` to show labeled choices.
-- Use `_values` for raw value lists.
-- Use `_message` for human hints when no list is available.
+- Use `_arguments -C` to enable state-based routing and option parsing.
+- When using `->state` actions, declare locals `_arguments` will set:
+  - `local context state state_descr; local -a line; typeset -A opt_args`
+- `words` is the raw command line words (includes options); `CURRENT` is the current word index.
+- Subcommand routing:
+  - No global options: `words[2]` is usually the subcommand.
+  - With global options: use `line[1]` (first non-option arg from `_arguments`) instead of `words[2]`.
+- Rule of thumb for list helpers:
+  - Has descriptions (`name:desc`) → `_describe`
+  - Pure values → `_values`
+  - No list, only a hint → `_message`
 
 ## Dynamic Candidates (Git Examples)
 
@@ -69,6 +80,8 @@ compdef _tool-name 'tool-name.git'
   - `command git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0`
 - Use `command git ...` to avoid alias pollution.
 - Keep candidates small (e.g., last 20 commits) to avoid slow completion.
+- Avoid expensive IO in completion: no network, no large directory scans, no slow commands.
+- If dynamic candidates are unavoidable, cache (compsys cache: `_retrieve_cache`/`_store_cache`/`_cache_invalid`, plus a `cache-policy` TTL via `zstyle`).
 - Prefer stable outputs:
   - commits: `git log --pretty=format:'%h:%s' -n 20`
   - branches: `git for-each-ref --format='%(refname:short)' refs/heads`
@@ -96,4 +109,3 @@ compdef _tool-name 'tool-name.git'
   - `print -r -- "${_comps[tool-name]-<none>}"`
 - Verify `fpath` includes `scripts/_completion`:
   - `print -l -- $fpath | rg -n -- "/scripts/_completion"`
-

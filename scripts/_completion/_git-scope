@@ -1,6 +1,12 @@
 #compdef git-scope
 
 _git-scope() {
+  emulate -L zsh
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
   typeset -a subcommands
   subcommands=(
     'tracked:Show all tracked files (filtered by prefix, supports -p)'
@@ -16,29 +22,43 @@ _git-scope() {
     '1:command:->subcmds' \
     '*::arg:->args'
 
-  case $state in
+  case "${state-}" in
     subcmds)
       _describe -t commands 'git-scope subcommand' subcommands && return 0
       ;;
     args)
-      case "${words[1]}" in
+      local subcmd="${line[1]-${words[2]-}}"
+
+      case "$subcmd" in
         commit)
-          typeset -a commit_hashes
-          if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-            commit_hashes=( ${(f)"$(git log --pretty=format:'%h:%s' -n 20 2>/dev/null)"} )
-          else
-            commit_hashes=( )
-          fi
-          _arguments \
-            '--print[Print contents of each file in the commit (from HEAD or working tree)]' \
-            '-p[Print contents of each file in the commit (from HEAD or working tree)]' \
-            '1:commit hash:_describe "commit hash" commit_hashes' && return 0
+          _arguments -C \
+            '(-p --print)'{-p,--print}'[Print contents of each file in the commit (from HEAD or working tree)]' \
+            '2:commit hash:->commit_hashes' \
+            && return 0
+
+          case "${state-}" in
+            commit_hashes)
+              local -a commit_hashes=()
+
+              if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+                commit_hashes=(${(f)"$(command git log --pretty=format:'%h:%s' -n 20 2>/dev/null || true)"})
+              fi
+
+              if (( ${#commit_hashes[@]} > 0 )); then
+                _describe -t commits 'commit hash' commit_hashes && return 0
+              fi
+
+              _message 'commit hash'
+              return 0
+              ;;
+          esac
           ;;
         tracked|staged|unstaged|all|untracked)
-          _arguments \
-            '--print[Print the contents of each file]' \
-            '-p[Print the contents of each file]' \
-            '*:prefix:_files -/' && return 0
+          _arguments -C \
+            '(-p --print)'{-p,--print}'[Print the contents of each file]' \
+            '2:prefix:_files -/' \
+            '*:prefix:_files -/' \
+            && return 0
           ;;
       esac
       ;;

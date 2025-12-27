@@ -72,6 +72,10 @@ _git_tools_remote_refs() {
 _git_tools_complete_branch_cleanup() {
   emulate -L zsh
 
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
   typeset -a branches=()
   branches=(${(f)"$(_git_tools_branch_names)"})
 
@@ -90,6 +94,10 @@ _git_tools_complete_branch_cleanup() {
 
 _git_tools_complete_reset_remote() {
   emulate -L zsh
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
 
   typeset -a remotes=()
   typeset -a branches=()
@@ -131,6 +139,10 @@ _git_tools_complete_reset_remote() {
 _git-tools() {
   emulate -L zsh
 
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
   typeset -a groups subcmds
   groups=(
     'utils:Utility helpers'
@@ -152,7 +164,7 @@ _git-tools() {
       _describe -t groups 'git-tools group' groups && return 0
       ;;
     commands)
-      case "${words[2]-}" in
+      case "${line[1]-${words[2]-}}" in
         utils)
           subcmds=(
             'zip:Archive HEAD as zip'
@@ -205,8 +217,8 @@ _git-tools() {
       _describe -t commands 'git-tools command' subcmds && return 0
       ;;
     args)
-      typeset group="${words[2]-}"
-      typeset cmd="${words[3]-}"
+      typeset group="${line[1]-${words[2]-}}"
+      typeset cmd="${line[2]-${words[3]-}}"
 
       case "$group" in
         utils)

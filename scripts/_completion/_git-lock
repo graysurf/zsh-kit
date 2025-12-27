@@ -1,20 +1,35 @@
 #compdef git-lock
 
 __git_lock_labels() {
-  typeset repo_id lock_dir
-  repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null)
+  emulate -L zsh
+
+  local toplevel repo_id lock_dir file
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
-  [[ -d "$lock_dir" ]] || return
+  toplevel="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  repo_id="${toplevel:t}"
+
+  [[ -d "$lock_dir" ]] || return 0
 
   for file in "$lock_dir/${repo_id}-"*.lock(N); do
     [[ -f "$file" ]] || continue
-    basename "$file" | sed "s/^${repo_id}-//;s/\.lock$//"
+    local label="${file:t}"
+    label="${label#${repo_id}-}"
+    label="${label%.lock}"
+    print -r -- "$label"
   done
+
+  return 0
 }
 
 
 _git-lock() {
+  emulate -L zsh
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
   _arguments -s -C \
     '1:command:((lock\:Save\ commit\ hash\ to\ lock \
                  unlock\:Reset\ to\ a\ saved\ commit \
@@ -25,7 +40,9 @@ _git-lock() {
                  tag\:Create\ a\ tag\ from\ a\ lock))' \
     '*::args:->args'
 
-  case $words[2] in
+  local subcmd="${line[1]-${words[2]-}}"
+
+  case "$subcmd" in
     unlock|delete)
       _values 'label' $(__git_lock_labels)
       ;;
