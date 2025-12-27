@@ -5,7 +5,7 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     vi cd edit-zsh y \
     fdf fdd cat batp bat-all bff \
-    fsearch zdefs cheat kp kpid \
+    fsearch zdef cheat kp kpid \
     reload execz zz histflush \
     history his fzf-history-wrapper
 fi
@@ -51,7 +51,7 @@ bat-all() {
 alias bff='bat-all'
 
 # Show current shell aliases, functions, and environment variables for debugging
-zdefs() {
+zdef() {
   {
   printf "🔗 Aliases:\n"
       alias | sed 's/^/  /'

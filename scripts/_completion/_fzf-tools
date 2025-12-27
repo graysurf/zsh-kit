@@ -16,8 +16,8 @@ commands=(
   'history:Search and execute command history'
   'env:Browse environment variables'
   'alias:Browse shell aliases'
-  'function:Browse defined shell functions'
-  'defs:Browse all definitions (env, alias, functions)'
+  'function:Browse defined shell function'
+  'def:Browse all definitions (env, alias, function)'
 )
 
 # Only complete the first argument with description

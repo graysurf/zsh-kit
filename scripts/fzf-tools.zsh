@@ -1,4 +1,134 @@
 # ────────────────────────────────────────────────────────
+# Aliases and Unalias
+# ────────────────────────────────────────────────────────
+if command -v safe_unalias >/dev/null; then
+  safe_unalias ft fzf-process fzf-env fzf-port fp fgs fgc ff fv
+fi
+
+alias ft='fzf-tools'
+alias fgs='fzf-git-status'
+alias fgc='fzf-git-commit'
+alias ff='fzf-file'
+alias fv='fzf-vscode'
+alias fp='fzf-port'
+
+# ────────────────────────────────────────────────────────
+# fzf utilities
+# ────────────────────────────────────────────────────────
+
+_fzf_confirm() {
+  local prompt="${1-}"
+  [[ -z "$prompt" ]] && return 1
+  shift
+
+  printf "$prompt" "$@"
+
+  local confirm
+  read -r confirm
+  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+  return 0
+}
+
+_fzf_script_root() {
+  local script_root=""
+  if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
+    script_root="$ZSH_SCRIPT_DIR"
+  elif [[ -n "${ZDOTDIR-}" ]]; then
+    script_root="$ZDOTDIR/scripts"
+  else
+    script_root="$HOME/.config/zsh/scripts"
+  fi
+
+  print -r -- "$script_root"
+}
+
+_fzf_ensure_git_utils() {
+  if typeset -f get_commit_hash >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local script_root
+  script_root="$(_fzf_script_root)"
+
+  [[ -f "$script_root/git/tools/git-utils.zsh" ]] && source "$script_root/git/tools/git-utils.zsh"
+  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
+    printf "❌ get_commit_hash is unavailable. Ensure git utils are loaded.\n" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+_fzf_ensure_git_scope() {
+  if typeset -f _git_scope_kind_color >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local script_root
+  script_root="$(_fzf_script_root)"
+
+  [[ -f "$script_root/git/git-scope.zsh" ]] && source "$script_root/git/git-scope.zsh"
+  if ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
+    printf "❌ _git_scope_kind_color is unavailable. Ensure git-scope is loaded.\n" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+# ────────────────────────────────────────────────────────
+# Shared helpers for kill flow across process/ports
+# - _fzf_parse_kill_flags: parse -k/--kill and -9/--force into globals
+# - _fzf_kill_flow: common confirmation + signal dispatch
+# ────────────────────────────────────────────────────────
+_fzf_parse_kill_flags() {
+  # Parses -k/--kill and -9/--force from args into globals
+  _fzf_kill_now=false
+  _fzf_force_kill=false
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -k|--kill)  _fzf_kill_now=true ;;
+      -9|--force) _fzf_force_kill=true ;;
+      *) break ;;
+    esac
+    shift
+  done
+}
+
+# Handle interactive/non-interactive kill confirmation and dispatch
+_fzf_kill_flow() {
+  # $1: whitespace-separated PIDs
+  # $2: kill_now (true/false)
+  # $3: force_kill (true/false)
+  local pids="$1" kill_now="$2" force_kill="$3"
+  [[ -z "$pids" ]] && return 0
+
+  if $kill_now; then
+    if $force_kill; then
+      printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
+      print -r -- "$pids" | xargs kill -9
+    else
+      printf "☠️  Killing PID(s) with SIGTERM: %s\n" "$pids"
+      print -r -- "$pids" | xargs kill
+    fi
+    return 0
+  fi
+
+  _fzf_confirm "Kill PID(s): %s? [y/N] " "$pids" || return 1
+
+  printf "Force SIGKILL (-9)? [y/N] "
+  local force
+  read -r force
+  if [[ "$force" == [yY] ]]; then
+    printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
+    print -r -- "$pids" | xargs kill -9
+  else
+    printf "☠️  Killing PID(s) with SIGTERM: %s\n" "$pids"
+    print -r -- "$pids" | xargs kill
+  fi
+}
+
+# ────────────────────────────────────────────────────────
 # fzf-git-branch: Browse and checkout branches
 # Usage: fzf-git-branch
 # - Shows recent branches; preview displays recent commit graph.
@@ -29,10 +159,7 @@ fzf-git-branch() {
   local branch
   branch=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
-  printf "🚚 Checkout to branch '%s'? [y/N] " "$branch"
-  local confirm
-  read -r confirm
-  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+  _fzf_confirm "🚚 Checkout to branch '%s'? [y/N] " "$branch" || return 1
 
   if git checkout "$branch"; then
     printf "✅ Checked out to %s\n" "$branch"
@@ -77,22 +204,7 @@ fzf-git-tag() {
   tag=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
   # Pre-resolve tag to commit hash for preview and checkout
-  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
-    local script_root=""
-    if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
-      script_root="$ZSH_SCRIPT_DIR"
-    elif [[ -n "${ZDOTDIR-}" ]]; then
-      script_root="$ZDOTDIR/scripts"
-    else
-      script_root="$HOME/.config/zsh/scripts"
-    fi
-
-    [[ -f "$script_root/git/tools/git-utils.zsh" ]] && source "$script_root/git/tools/git-utils.zsh"
-  fi
-  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
-    printf "❌ get_commit_hash is unavailable. Ensure git utils are loaded.\n" >&2
-    return 1
-  fi
+  _fzf_ensure_git_utils || return 1
 
   local hash
   hash=$(get_commit_hash "$tag" 2>/dev/null)
@@ -101,10 +213,7 @@ fzf-git-tag() {
     return 1
   fi
 
-  printf "🚚 Checkout to tag '%s'? [y/N] " "$tag"
-  local confirm
-  read -r confirm
-  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+  _fzf_confirm "🚚 Checkout to tag '%s'? [y/N] " "$tag" || return 1
 
   if git checkout "$hash"; then
     printf "✅ Checked out to tag %s (commit %s)\n" "$tag" "$hash"
@@ -112,78 +221,6 @@ fzf-git-tag() {
   else
     printf "⚠️  Checkout to tag '%s' failed. Likely due to local changes or conflicts.\n" "$tag"
     return 1
-  fi
-}
-# ────────────────────────────────────────────────────────
-# Aliases and Unalias
-# ────────────────────────────────────────────────────────
-if command -v safe_unalias >/dev/null; then
-  safe_unalias ft fzf-process fzf-env fzf-ports fp fgs fgc ff fv
-fi
-
-alias ft='fzf-tools'
-alias fgs='fzf-git-status'
-alias fgc='fzf-git-commit'
-alias ff='fzf-file'
-alias fv='fzf-vscode'
-alias fp='fzf-ports'
-
-# ────────────────────────────────────────────────────────
-# fzf utilities
-# ────────────────────────────────────────────────────────
-
-# ────────────────────────────────────────────────────────
-# Shared helpers for kill flow across process/ports
-# - _fzf_parse_kill_flags: parse -k/--kill and -9/--force into globals
-# - _fzf_kill_flow: common confirmation + signal dispatch
-# ────────────────────────────────────────────────────────
-_fzf_parse_kill_flags() {
-  # Parses -k/--kill and -9/--force from args into globals
-  _fzf_kill_now=false
-  _fzf_force_kill=false
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      -k|--kill)  _fzf_kill_now=true ;;
-      -9|--force) _fzf_force_kill=true ;;
-      *) break ;;
-    esac
-    shift
-  done
-}
-
-# Handle interactive/non-interactive kill confirmation and dispatch
-_fzf_kill_flow() {
-  # $1: whitespace-separated PIDs
-  # $2: kill_now (true/false)
-  # $3: force_kill (true/false)
-  local pids="$1" kill_now="$2" force_kill="$3"
-  [[ -z "$pids" ]] && return 0
-
-  if $kill_now; then
-    if $force_kill; then
-      printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
-      print -r -- "$pids" | xargs kill -9
-    else
-      printf "☠️  Killing PID(s) with SIGTERM: %s\n" "$pids"
-      print -r -- "$pids" | xargs kill
-    fi
-    return 0
-  fi
-
-  printf "Kill PID(s): %s? [y/N] " "$pids"
-  local confirm
-  read -r confirm
-  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
-
-  printf "Force SIGKILL (-9)? [y/N] "
-  local force
-  read -r force
-  if [[ "$force" == [yY] ]]; then
-    printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
-    print -r -- "$pids" | xargs kill -9
-  else
-    printf "☠️  Killing PID(s) with SIGTERM: %s\n" "$pids"
-    print -r -- "$pids" | xargs kill
   fi
 }
 
@@ -232,14 +269,14 @@ fzf-process() {
 }
 
 # ────────────────────────────────────────────────────────
-# fzf-ports: Browse listening TCP ports and owning PIDs
-# Usage: fzf-ports [-k|--kill] [-9|--force]
+# fzf-port: Browse listening TCP ports and owning PIDs
+# Usage: fzf-port [-k|--kill] [-9|--force]
 # - Default: select rows → confirm kill owning PIDs → optional confirm SIGKILL.
 # - Flags: -k immediate kill (SIGTERM); add -9/--force for SIGKILL.
 # - Uses: lsof -nP -iTCP -sTCP:LISTEN; falls back to netstat (view-only).
 # - Preview: protocol, addr:port, cmd, user, pid; plus lsof -p details.
 # ────────────────────────────────────────────────────────
-fzf-ports() {
+fzf-port() {
   # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
   _fzf_parse_kill_flags "$@"
   local kill_now="$_fzf_kill_now" force_kill="$_fzf_force_kill"
@@ -409,25 +446,19 @@ _fzf_select_commit() {
 # - Confirms checkout; offers auto-stash retry on failure.
 # ────────────────────────────────────────────────────────
 fzf-git-checkout() {
-  local ref
-  local confirm
-  local result
+  local ref result
   result=$(_fzf_select_commit) || return 1
 
   ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
-  printf "🚚 Checkout to commit %s? [y/N] " "$ref"
-  read -r confirm
-  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+  _fzf_confirm "🚚 Checkout to commit %s? [y/N] " "$ref" || return 1
 
   if git checkout "$ref"; then
     return 0
   fi
 
   printf "⚠️  Checkout to '%s' failed. Likely due to local changes.\n" "$ref"
-  printf "📦 Stash your current changes and retry checkout? [y/N] "
-  read -r confirm
-  [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
+  _fzf_confirm "📦 Stash your current changes and retry checkout? [y/N] " || return 1
 
   local timestamp subject
   timestamp=$(date +%F_%H%M)
@@ -451,32 +482,8 @@ fzf-git-commit() {
     return 1
   fi
 
-  if ! typeset -f get_commit_hash >/dev/null 2>&1 || ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
-    local script_root=""
-    if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
-      script_root="$ZSH_SCRIPT_DIR"
-    elif [[ -n "${ZDOTDIR-}" ]]; then
-      script_root="$ZDOTDIR/scripts"
-    else
-      script_root="$HOME/.config/zsh/scripts"
-    fi
-
-    if ! typeset -f get_commit_hash >/dev/null 2>&1; then
-      [[ -f "$script_root/git/tools/git-utils.zsh" ]] && source "$script_root/git/tools/git-utils.zsh"
-    fi
-    if ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
-      [[ -f "$script_root/git/git-scope.zsh" ]] && source "$script_root/git/git-scope.zsh"
-    fi
-  fi
-
-  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
-    printf "❌ get_commit_hash is unavailable. Ensure git utils are loaded.\n" >&2
-    return 1
-  fi
-  if ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
-    printf "❌ _git_scope_kind_color is unavailable. Ensure git-scope is loaded.\n" >&2
-    return 1
-  fi
+  _fzf_ensure_git_utils || return 1
+  _fzf_ensure_git_scope || return 1
 
   local input_ref="$1"
   local full_hash="" commit="" file=""
@@ -665,28 +672,28 @@ _gen_function_block() {
 }
 
 # ────────────────────────────────────────────────────────
-# fzf-functions: Browse functions with preview
-# Usage: fzf-functions [query]
+# fzf-function: Browse functions with preview
+# Usage: fzf-function [query]
 # ────────────────────────────────────────────────────────
-fzf-functions() {
+fzf-function() {
   fzf_block_preview _gen_function_block ${1:-}
 }
 
 # ────────────────────────────────────────────────────────
-# _gen_all_defs_block: Emit combined env/alias/function blocks
+# _gen_all_def_block: Emit combined env/alias/function blocks
 # ────────────────────────────────────────────────────────
-_gen_all_defs_block() {
+_gen_all_def_block() {
   _gen_env_block
   _gen_alias_block
   _gen_function_block
 }
 
 # ────────────────────────────────────────────────────────
-# fzf-defs: Browse env, aliases, and functions with preview
-# Usage: fzf-defs [query]
+# fzf-def: Browse env, aliases, and functions with preview
+# Usage: fzf-def [query]
 # ────────────────────────────────────────────────────────
-fzf-defs() {
-  fzf_block_preview _gen_all_defs_block ${1:-}
+fzf-def() {
+  fzf_block_preview _gen_all_def_block ${1:-}
 }
 
 # ────────────────────────────────────────────────────────
@@ -729,7 +736,7 @@ fzf-tools() {
       env          "Browse environment variables" \
       alias        "Browse shell aliases" \
       functions    "Browse defined shell functions" \
-      defs         "Browse all definitions (env, alias, functions)"
+      def          "Browse all definitions (env, alias, functions)"
     printf "\n"
     return 0
   fi
@@ -746,12 +753,12 @@ fzf-tools() {
     git-branch)       fzf-git-branch "$@" ;;
     git-tag)          fzf-git-tag "$@" ;;
     process)          fzf-process "$@" ;;
-    port)             fzf-ports "$@" ;;
+    port)             fzf-port "$@" ;;
     history)          fzf-history "$@" ;;
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;
-    function)         fzf-functions "$@" ;;
-    defs)             fzf-defs "$@" ;;
+    function)         fzf-function "$@" ;;
+    def)             fzf-def "$@" ;;
     *)
       printf "❗ Unknown command: %s\n" "$cmd"
       printf "Run 'fzf-tools help' for usage.\n"

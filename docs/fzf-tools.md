@@ -56,21 +56,21 @@ fzf-tools function
 
 Lists all functions in your shell session and shows their implementation.
 
-![fzf-functions](../assets/fzf-functions.png)
+![fzf-function](../assets/fzf-function.png)
 
 ---
 
-### `fzf-tools defs`
+### `fzf-tools def`
 
 📦 Explore all shell definitions (env, alias, functions)
 
 ```bash
-fzf-tools defs
+fzf-tools def
 ```
 
 Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
 
-![fzf-defs](../assets/fzf-defs.png)
+![fzf-def](../assets/fzf-def.png)
 
 ---
 

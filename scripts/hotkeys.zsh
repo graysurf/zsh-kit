@@ -24,7 +24,7 @@ fzf-tools-launcher-widget() {
 🌱 env:           Browse environment variables
 🔗 alias:         Browse shell aliases
 🔧 function:      Browse defined shell functions
-📦 defs:          Browse all definitions (env, alias, functions)
+📦 def:           Browse all definitions (env, alias, functions)
 📁 directory:     Search directories and cd into selection
 📝 file:          Search and preview text files
 🧠 vscode:        Search and preview text files in VSCode
@@ -47,18 +47,18 @@ zle -N fzf-tools-launcher-widget
 bindkey '^F' fzf-tools-launcher-widget
 
 # ────────────────────────────────────────────────────────
-# Bind `fzf-tools defs` to Ctrl+T
+# Bind `fzf-tools def` to Ctrl+T
 # ────────────────────────────────────────────────────────
 
-fzf-tools-defs-widget() {
-  BUFFER="fzf-tools defs $BUFFER"
+fzf-tools-def-widget() {
+  BUFFER="fzf-tools def $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
   return 0
 }
 
-zle -N fzf-tools-defs-widget
-bindkey '^T' fzf-tools-defs-widget
+zle -N fzf-tools-def-widget
+bindkey '^T' fzf-tools-def-widget
 
 # ────────────────────────────────────────────────────────
 # Bind `fzf-tools git-commit` to Ctrl+G
