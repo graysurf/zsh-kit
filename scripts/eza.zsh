@@ -10,15 +10,16 @@ fi
 
 __eza_with_optional_depth() {
   local -a base_args level_flag
-  local first_arg
+  local arg first_arg
 
   base_args=()
   while (( $# > 0 )); do
-    if [[ "${1-}" == -- ]]; then
+    arg="${1-}"
+    if [[ "$arg" == -- ]]; then
       shift
       break
     fi
-    base_args+=("$1")
+    base_args+=("$arg")
     shift
   done
 
