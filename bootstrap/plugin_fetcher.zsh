@@ -8,7 +8,7 @@ typeset -f plugin_fetch_if_missing_from_entry >/dev/null && return
 ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-$ZDOTDIR/plugins}"
 PLUGIN_FETCH_DRY_RUN="${PLUGIN_FETCH_DRY_RUN:-false}"
 PLUGIN_FETCH_FORCE="${PLUGIN_FETCH_FORCE:-false}"
-PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.last_update"
+PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.timestamp"
 
 # Fetch plugin if not present, or force-refetch if requested
 plugin_fetch_if_missing_from_entry() {

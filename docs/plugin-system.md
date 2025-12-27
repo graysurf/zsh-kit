@@ -58,7 +58,7 @@ Plugins are automatically cloned if not present. The fetch logic supports:
 
 - 🔍 Dry-run mode (`PLUGIN_FETCH_DRY_RUN=true`)
 - 💥 Forced re-clone (`PLUGIN_FETCH_FORCE=true`)
-- 📆 Automatic update every 30 days (tracked in `$ZSH_CACHE_DIR/plugin.last_update`)
+- 📆 Automatic update every 30 days (tracked in `$ZSH_CACHE_DIR/plugin.timestamp`)
 
 To manually update:
 
