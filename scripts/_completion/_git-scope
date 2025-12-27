@@ -46,4 +46,3 @@ _git-scope() {
 }
 
 compdef _git-scope git-scope
-compdef _git-scope 'git-scope.git'

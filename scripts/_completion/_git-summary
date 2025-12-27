@@ -26,4 +26,3 @@ _git-summary() {
 
 
 compdef _git-summary git-summary
-compdef _git-summary 'git-summary.git'

@@ -1,0 +1,329 @@
+#compdef git-tools
+
+_git_tools_commit_hashes() {
+  emulate -L zsh
+
+  typeset -a commits=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    commits=(${(f)"$(command git log --pretty=format:'%h:%s' -n 20 2>/dev/null || true)"})
+  fi
+
+  if (( ${#commits[@]} > 0 )); then
+    print -r -- "${commits[@]}"
+  fi
+
+  return 0
+}
+
+_git_tools_remote_names() {
+  emulate -L zsh
+
+  typeset -a remotes=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    remotes=(${(f)"$(command git remote 2>/dev/null || true)"})
+  fi
+
+  if (( ${#remotes[@]} > 0 )); then
+    print -r -- "${remotes[@]}"
+  fi
+
+  return 0
+}
+
+_git_tools_branch_names() {
+  emulate -L zsh
+
+  typeset -a branches=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branches=(HEAD)
+    branches+=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null || true)"})
+  fi
+
+  if (( ${#branches[@]} > 0 )); then
+    print -r -- "${branches[@]}"
+  fi
+
+  return 0
+}
+
+_git_tools_remote_refs() {
+  emulate -L zsh
+
+  typeset -a refs=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    refs=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/remotes 2>/dev/null || true)"})
+  fi
+
+  if (( ${#refs[@]} > 0 )); then
+    typeset ref=''
+    for ref in "${refs[@]}"; do
+      [[ "$ref" == */HEAD ]] && continue
+      print -r -- "$ref"
+    done
+  fi
+
+  return 0
+}
+
+_git_tools_complete_branch_cleanup() {
+  emulate -L zsh
+
+  typeset -a branches=()
+  branches=(${(f)"$(_git_tools_branch_names)"})
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '(-b --base)'{-b,--base}'[Base ref]:base:->branches' \
+    '(-s --squash)'{-s,--squash}'[Include squash-applied branches]'
+
+  case "${state-}" in
+    branches)
+      _values 'base ref' $branches
+      return 0
+      ;;
+  esac
+}
+
+_git_tools_complete_reset_remote() {
+  emulate -L zsh
+
+  typeset -a remotes=()
+  typeset -a branches=()
+  typeset -a remote_refs=()
+
+  remotes=(${(f)"$(_git_tools_remote_names)"})
+  branches=(${(f)"$(_git_tools_branch_names)"})
+  remote_refs=(${(f)"$(_git_tools_remote_refs)"})
+
+  branches=(${branches:#HEAD})
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '(-y --yes)'{-y,--yes}'[Skip confirmations]' \
+    '(-r --remote)'{-r,--remote}'[Remote name]:remote:->remotes' \
+    '(-b --branch)'{-b,--branch}'[Remote branch name]:branch:->branches' \
+    '--ref=[Remote/branch ref]:ref:->remote_refs' \
+    '--no-fetch[Skip git fetch]' \
+    '--prune[Fetch with --prune]' \
+    '--clean[Run git clean -fd after reset]' \
+    '--set-upstream[Set upstream after reset]'
+
+  case "${state-}" in
+    remotes)
+      _values 'remote' $remotes
+      return 0
+      ;;
+    branches)
+      _values 'branch' $branches
+      return 0
+      ;;
+    remote_refs)
+      _values 'ref' $remote_refs
+      return 0
+      ;;
+  esac
+}
+
+_git-tools() {
+  emulate -L zsh
+
+  typeset -a groups subcmds
+  groups=(
+    'utils:Utility helpers'
+    'reset:Reset helpers'
+    'commit:Commit helpers'
+    'branch:Branch cleanup helpers'
+    'open:Remote open helpers'
+    'help:Show usage'
+    'list:Show usage'
+  )
+
+  _arguments -C \
+    '1:group:->groups' \
+    '2:command:->commands' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    groups)
+      _describe -t groups 'git-tools group' groups && return 0
+      ;;
+    commands)
+      case "${words[2]-}" in
+        utils)
+          subcmds=(
+            'zip:Archive HEAD as zip'
+            'copy-staged:Copy staged diff'
+            'copy:Copy staged diff'
+            'root:Jump to repo root'
+            'commit-hash:Resolve commit hash from ref'
+            'hash:Resolve commit hash from ref'
+          )
+          ;;
+        reset)
+          subcmds=(
+            'soft:Soft reset HEAD~N'
+            'mixed:Mixed reset HEAD~N'
+            'hard:Hard reset HEAD~N'
+            'undo:Undo last HEAD move'
+            'back-head:Checkout previous HEAD'
+            'back-checkout:Checkout previous branch'
+            'remote:Reset branch to remote ref'
+          )
+          ;;
+        commit)
+          subcmds=(
+            'context:Generate commit context'
+            'to-stash:Convert commit to stash'
+            'stash:Convert commit to stash'
+          )
+          ;;
+        branch)
+          subcmds=(
+            'cleanup:Delete merged branches'
+            'delete-merged:Delete merged branches'
+          )
+          ;;
+        open)
+          subcmds=(
+            'repo:Open repo in browser'
+            'branch:Open branch page'
+            'default-branch:Open default branch page'
+            'default:Open default branch page'
+            'commit:Open commit page'
+            'upstream:Print upstream info'
+            'resolve-upstream:Print upstream info'
+            'normalize-url:Normalize remote URL'
+            'normalize-remote-url:Normalize remote URL'
+            'push-open:Push and open commit'
+          )
+          ;;
+      esac
+      _describe -t commands 'git-tools command' subcmds && return 0
+      ;;
+    args)
+      typeset group="${words[2]-}"
+      typeset cmd="${words[3]-}"
+
+      case "$group" in
+        utils)
+          case "$cmd" in
+            copy-staged|copy)
+              _arguments -s \
+                '--stdout[Print staged diff to stdout]' \
+                '--print[Print staged diff to stdout]' \
+                '-p[Print staged diff to stdout]' \
+                '--both[Print to stdout and copy to clipboard]' \
+                '--help[Show help]' \
+                && return 0
+              ;;
+            commit-hash|hash)
+              if (( CURRENT == 4 )); then
+                typeset -a commit_hashes=()
+                commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
+                if (( ${#commit_hashes[@]} > 0 )); then
+                  _describe -t commits 'commit ref' commit_hashes && return 0
+                fi
+                _message 'git ref'
+                return 0
+              fi
+              ;;
+            zip|root)
+              _message 'no more arguments'
+              return 0
+              ;;
+          esac
+          ;;
+        reset)
+          case "$cmd" in
+            soft|mixed|hard)
+              _message 'count (default 1)'
+              return 0
+              ;;
+            undo|back-head|back-checkout)
+              _message 'no more arguments'
+              return 0
+              ;;
+            remote)
+              _git_tools_complete_reset_remote
+              return 0
+              ;;
+          esac
+          ;;
+        commit)
+          case "$cmd" in
+            context)
+              _arguments -s \
+                '--stdout[Print to stdout only]' \
+                '--print[Print to stdout only]' \
+                '-p[Print to stdout only]' \
+                '--both[Print to stdout and copy to clipboard]' \
+                '--no-color[Disable ANSI colors]' \
+                '--help[Show help]' \
+                && return 0
+              ;;
+            to-stash|stash)
+              if (( CURRENT == 4 )); then
+                typeset -a commit_hashes=()
+                commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
+                if (( ${#commit_hashes[@]} > 0 )); then
+                  _describe -t commits 'commit ref' commit_hashes && return 0
+                fi
+                _message 'commit ref (default HEAD)'
+                return 0
+              fi
+              ;;
+          esac
+          ;;
+        branch)
+          case "$cmd" in
+            cleanup|delete-merged)
+              _git_tools_complete_branch_cleanup
+              return 0
+              ;;
+          esac
+          ;;
+        open)
+          case "$cmd" in
+            repo|branch|default|default-branch|upstream|resolve-upstream)
+              _message 'no more arguments'
+              return 0
+              ;;
+            commit)
+              if (( CURRENT == 4 )); then
+                typeset -a commit_hashes=()
+                commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
+                if (( ${#commit_hashes[@]} > 0 )); then
+                  _describe -t commits 'commit ref' commit_hashes && return 0
+                fi
+                _message 'commit ref (default HEAD)'
+                return 0
+              fi
+              ;;
+            normalize-url|normalize-remote-url)
+              if (( CURRENT == 4 )); then
+                typeset -a remotes=()
+                remotes=(${(f)"$(_git_tools_remote_names)"})
+                if (( ${#remotes[@]} > 0 )); then
+                  _values 'remote' $remotes
+                  return 0
+                fi
+                _message 'remote name'
+                return 0
+              fi
+              ;;
+            push-open)
+              _message 'git push args'
+              return 0
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _git-tools git-tools

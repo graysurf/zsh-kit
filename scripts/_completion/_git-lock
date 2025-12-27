@@ -54,5 +54,3 @@ _git-lock() {
 }
 
 compdef _git-lock git-lock
-compdef _git-lock 'git-lock.git'
-
