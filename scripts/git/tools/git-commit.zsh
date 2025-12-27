@@ -7,6 +7,27 @@ if command -v safe_unalias >/dev/null; then
     git-commit-context
 fi
 
+_git_commit_confirm() {
+  emulate -L zsh
+  setopt localoptions
+
+  typeset prompt="${1-}"
+  [[ -n "$prompt" ]] || return 1
+  shift || true
+
+  print -n -r -- "$prompt"
+
+  typeset confirm=''
+  IFS= read -r confirm
+  [[ "$confirm" == [yY] ]]
+}
+
+_git_commit_confirm_or_abort() {
+  _git_commit_confirm "$@" && return 0
+  print "🚫 Aborted"
+  return 1
+}
+
 # Convert a commit into a stash entry (commit → stash), with safety checks.
 #
 # Motivation / typical use:
@@ -49,7 +70,6 @@ fi
 git-commit-to-stash() {
   typeset commit_ref commit_sha parent_sha branch_name subject
   typeset stash_msg stash_sha
-  typeset drop confirm confirm_drop confirm_pushed
   typeset upstream ref_upstream merge_parents_count
 
   # ── Safety: ensure we are inside a Git repository ───────────────────────────
@@ -82,12 +102,7 @@ git-commit-to-stash() {
   if (( merge_parents_count > 2 )); then
     print "⚠️  Target commit is a merge commit (multiple parents)."
     print "🧠 This tool will use the FIRST parent to compute the patch: ${commit_sha}^1..${commit_sha}"
-    print -n "❓ Proceed? [y/N] "
-    read -r confirm
-    if [[ "$confirm" != [yY] ]]; then
-      print "🚫 Aborted"
-      return 1
-    fi
+    _git_commit_confirm_or_abort "❓ Proceed? [y/N] " || return 1
     parent_sha=$(git rev-parse --verify "${commit_sha}^1" 2>/dev/null) || return 1
   fi
 
@@ -109,12 +124,7 @@ git-commit-to-stash() {
   print "This will:"
   print "  1) Create a stash entry containing the patch: ${parent_sha[1,7]}..${commit_sha[1,7]}"
   print "  2) Optionally drop the commit from branch history by resetting to parent."
-  print -n "❓ Proceed to create stash? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
-    return 1
-  fi
+  _git_commit_confirm_or_abort "❓ Proceed to create stash? [y/N] " || return 1
 
   # ── Create stash entry for the commit's patch ───────────────────────────────
   #
@@ -155,12 +165,7 @@ git-commit-to-stash() {
   if [[ -z "$stash_sha" ]]; then
     print "⚠️  Failed to create stash object via: git stash create <commit>"
     print "🧠 Your Git may not support this form. Fallback would require touching the working tree."
-    print -n "❓ Fallback by temporarily checking out parent and applying patch (will modify worktree)? [y/N] "
-    read -r confirm
-    if [[ "$confirm" != [yY] ]]; then
-      print "🚫 Aborted"
-      return 1
-    fi
+    _git_commit_confirm_or_abort "❓ Fallback by temporarily checking out parent and applying patch (will modify worktree)? [y/N] " || return 1
 
     # ── Fallback (touches worktree): store patch into stash via temp apply ─────
     # Preconditions: require clean worktree to avoid mixing changes
@@ -226,9 +231,7 @@ git-commit-to-stash() {
   print "Optional: drop the commit from current branch history?"
   print "  This would run: git reset --hard ${parent_sha[1,7]}"
   print "  (Your work remains in stash; untracked files are unaffected.)"
-  print -n "❓ Drop commit from history now? [y/N] "
-  read -r drop
-  if [[ "$drop" != [yY] ]]; then
+  if ! _git_commit_confirm "❓ Drop commit from history now? [y/N] "; then
     print "✅ Done. Commit kept; stash saved."
     return 0
   fi
@@ -239,17 +242,13 @@ git-commit-to-stash() {
   if [[ -n "$upstream" ]] && git merge-base --is-ancestor "$commit_sha" "$upstream" 2>/dev/null; then
     print "⚠️  This commit appears to be reachable from upstream ($upstream)."
     print "🧨 Dropping it rewrites history and may require force push; it can affect others."
-    print -n "❓ Still drop it? [y/N] "
-    read -r confirm_pushed
-    if [[ "$confirm_pushed" != [yY] ]]; then
+    if ! _git_commit_confirm "❓ Still drop it? [y/N] "; then
       print "✅ Done. Commit kept; stash saved."
       return 0
     fi
   fi
 
-  print -n "❓ Final confirmation: run 'git reset --hard ${parent_sha[1,7]}'? [y/N] "
-  read -r confirm_drop
-  if [[ "$confirm_drop" != [yY] ]]; then
+  if ! _git_commit_confirm "❓ Final confirmation: run 'git reset --hard ${parent_sha[1,7]}'? [y/N] "; then
     print "✅ Done. Commit kept; stash saved."
     return 0
   fi

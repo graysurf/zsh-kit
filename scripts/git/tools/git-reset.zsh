@@ -12,11 +12,32 @@ if command -v safe_unalias >/dev/null; then
     git-reset-remote
 fi
 
+_git_reset_confirm() {
+  emulate -L zsh
+  setopt localoptions
+
+  typeset prompt="${1-}"
+  [[ -n "$prompt" ]] || return 1
+  shift || true
+
+  print -n -r -- "$prompt"
+
+  typeset confirm=''
+  IFS= read -r confirm
+  [[ "$confirm" == [yY] ]]
+}
+
+_git_reset_confirm_or_abort() {
+  _git_reset_confirm "$@" && return 0
+  print -r -- "🚫 Aborted"
+  return 1
+}
+
 _git_reset_by_count() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  typeset mode='' count_arg='' extra_arg='' confirm='' prompt='' failure='' success='' line=''
+  typeset mode='' count_arg='' extra_arg='' prompt='' failure='' success='' line=''
   typeset commit_label='' target=''
   typeset -i count=1
   typeset -a preface=()
@@ -96,12 +117,7 @@ _git_reset_by_count() {
   done
   print -r -- "🧾 Commits to be rewound:"
   git log --no-color -n "$count" --date=format:'%m-%d %H:%M' --pretty='%h %ad %an  %s' || return 1
-  print -n -r -- "$prompt"
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print -r -- "🚫 Aborted"
-    return 1
-  fi
+  _git_reset_confirm_or_abort "$prompt" || return 1
 
   if ! git reset "--$mode" "$target"; then
     print -r -- "$failure"
@@ -209,7 +225,7 @@ git-reset-undo() {
   typeset status_lines
   typeset reflog_line_current reflog_subject_current
   typeset reflog_line_target  reflog_subject_target
-  typeset choice confirm_non_reset confirm
+  typeset choice
   typeset -a op_warnings
 
   # ── Safety: ensure we are inside a Git repository ───────────────────────────
@@ -255,12 +271,7 @@ git-reset-undo() {
       print "   - $w"
     done
     print "⚠️  Resetting during these operations can be confusing."
-    print -n "❓ Still run git-reset-undo (move HEAD back)? [y/N] "
-    read -r confirm
-    if [[ "$confirm" != [yY] ]]; then
-      print "🚫 Aborted"
-      return 1
-    fi
+    _git_reset_confirm_or_abort "❓ Still run git-reset-undo (move HEAD back)? [y/N] " || return 1
   fi
 
   # ── Reflog display (with fallback for portability) ──────────────────────────
@@ -304,12 +315,7 @@ git-reset-undo() {
   if [[ "$reflog_subject_current" != reset:* && "$reflog_subject_current" != "(unavailable)" ]]; then
     print "⚠️  The last action does NOT look like a reset operation."
     print "🧠 It may be from checkout/rebase/merge/pull, etc."
-    print -n "❓ Still proceed to move HEAD back to the previous HEAD position? [y/N] "
-    read -r confirm_non_reset
-    if [[ "$confirm_non_reset" != [yY] ]]; then
-      print "🚫 Aborted"
-      return 1
-    fi
+    _git_reset_confirm_or_abort "❓ Still proceed to move HEAD back to the previous HEAD position? [y/N] " || return 1
   fi
 
   # Show the exact commit we are about to restore to (the stable SHA we resolved)
@@ -366,12 +372,7 @@ git-reset-undo() {
       print "🔥 Discarding tracked changes. Running: git reset --hard $target_commit"
       print "⚠️  This overwrites tracked files in working tree + index."
       print "ℹ️  Untracked files are NOT removed by reset --hard."
-      print -n "❓ Are you absolutely sure? [y/N] "
-      read -r confirm
-      if [[ "$confirm" != [yY] ]]; then
-        print "🚫 Aborted"
-        return 1
-      fi
+      _git_reset_confirm_or_abort "❓ Are you absolutely sure? [y/N] " || return 1
       if ! git reset --hard "$target_commit"; then
         print "❌ Hard reset failed."
         return 1
@@ -414,12 +415,7 @@ git-back-head() {
 
   print "⏪ This will move HEAD back to the previous position (HEAD@{1}):"
   print "🔁 $(git log --oneline -1 "$prev_head")"
-  print -n "❓ Proceed with 'git checkout HEAD@{1}'? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
-    return 1
-  fi
+  _git_reset_confirm_or_abort "❓ Proceed with 'git checkout HEAD@{1}'? [y/N] " || return 1
 
   # Move HEAD back using reflog syntax (requested)
   git checkout HEAD@{1}
@@ -494,12 +490,7 @@ git-back-checkout() {
   fi
 
   print "⏪ This will move HEAD back to previous branch: $from_branch"
-  print -n "❓ Proceed with 'git checkout $from_branch'? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
-    return 1
-  fi
+  _git_reset_confirm_or_abort "❓ Proceed with 'git checkout $from_branch'? [y/N] " || return 1
 
   git checkout "$from_branch"
   if [[ $? -ne 0 ]]; then
@@ -627,13 +618,7 @@ git-reset-remote() {
       print -r -- "🔥 Tracked staged/unstaged changes will be DISCARDED by --hard."
       print -r -- "🧹 Untracked files will be kept (use --clean to remove)."
     fi
-    print -n -- "❓ Proceed with: git reset --hard $target_ref ? [y/N] "
-    typeset confirm=''
-    read -r confirm
-    if [[ "$confirm" != [yY] ]]; then
-      print -r -- "🚫 Aborted"
-      return 1
-    fi
+    _git_reset_confirm_or_abort "❓ Proceed with: git reset --hard $target_ref ? [y/N] " || return 1
   fi
 
   git reset --hard "$target_ref" || return $?
@@ -641,10 +626,7 @@ git-reset-remote() {
   if (( want_clean )); then
     if (( !want_yes )); then
       print -r -- "⚠️  Next: git clean -fd (removes untracked files/dirs)"
-      print -n -- "❓ Proceed with: git clean -fd ? [y/N] "
-      typeset confirm_clean=''
-      read -r confirm_clean
-      if [[ "$confirm_clean" != [yY] ]]; then
+      if ! _git_reset_confirm "❓ Proceed with: git clean -fd ? [y/N] "; then
         print -r -- "ℹ️  Skipped git clean -fd"
         want_clean=0
       fi

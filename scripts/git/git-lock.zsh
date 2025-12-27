@@ -13,6 +13,26 @@ fi
 typeset -r GIT_LOCK_TIMESTAMP_PATTERN='^timestamp='
 typeset -r GIT_LOCK_ABORTED_MSG='🚫 Aborted'
 
+_git_lock_confirm() {
+  emulate -L zsh
+  setopt localoptions
+
+  typeset prompt="${1-}"
+  [[ -n "$prompt" ]] || return 1
+  shift || true
+
+  printf "$prompt" "$@"
+
+  typeset confirm=''
+  IFS= read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
+    return 1
+  fi
+
+  return 0
+}
+
 # Resolve label from argument or latest fallback
 _git_lock_resolve_label() {
   typeset input_label="$1"
@@ -111,12 +131,7 @@ _git_lock_unlock() {
   [[ -n "$msg" ]] && printf "    commit message: %s\n" "$msg"
   printf "\n"
 
-  printf "⚠️  Hard reset to [%s]? [y/N] " "$label"
-  read -r confirm
-  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
-    return 1
-  fi
+  _git_lock_confirm "⚠️  Hard reset to [%s]? [y/N] " "$label" || return 1
 
   git reset --hard "$hash"
   printf "⏪ [%s:%s] Reset to: %s\n" "$repo_id" "$label" "$hash"
@@ -211,12 +226,7 @@ _git_lock_copy() {
   fi
 
   if [[ -f "$dst_file" ]]; then
-    printf "⚠️  Target git-lock [%s:%s] already exists. Overwrite? [y/N] " "$repo_id" "$dst_label"
-    read -r confirm
-    [[ "$confirm" != [yY] ]] && {
-      printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
-      return 1
-    }
+    _git_lock_confirm "⚠️  Target git-lock [%s:%s] already exists. Overwrite? [y/N] " "$repo_id" "$dst_label" || return 1
   fi
 
   cp "$src_file" "$dst_file"
@@ -282,11 +292,7 @@ _git_lock_delete() {
   [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
   printf "\n"
 
-  read -r -p "⚠️  Delete this git-lock? [y/N] " confirm
-  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
-    return 1
-  fi
+  _git_lock_confirm "⚠️  Delete this git-lock? [y/N] " || return 1
 
   rm -f "$lock_file"
   printf "🗑️  Deleted git-lock [%s:%s]\n" "$repo_id" "$label"
@@ -441,12 +447,7 @@ _git_lock_tag() {
 
   if git rev-parse "$tag_name" >/dev/null 2>&1; then
     printf "⚠️  Git tag [%s] already exists.\n" "$tag_name"
-    printf "❓ Overwrite it? [y/N] "
-    read -r confirm
-    [[ "$confirm" != [yY] ]] && {
-      printf "%s\n" "$GIT_LOCK_ABORTED_MSG"
-      return 1
-    }
+    _git_lock_confirm "❓ Overwrite it? [y/N] " || return 1
     git tag -d "$tag_name" || {
       printf "❌ Failed to delete existing tag [%s]\n" "$tag_name"
       return 1
