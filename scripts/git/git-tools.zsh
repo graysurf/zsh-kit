@@ -63,6 +63,7 @@ _git_tools_usage() {
   print -r -- "  git-tools utils zip"
   print -r -- "  git-tools reset hard 3"
   print -r -- "  git-tools open commit HEAD"
+  return 0
 }
 
 _git_tools_group_usage() {
@@ -111,6 +112,8 @@ git-tools() {
     ''|-h|--help|help|list)
       _git_tools_usage
       return 0
+      ;;
+    *)
       ;;
   esac
 
