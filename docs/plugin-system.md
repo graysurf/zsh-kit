@@ -1,6 +1,6 @@
 # 🧩 Plugin System: `plugins.zsh` + `plugin_fetcher.zsh`
 
-This Zsh environment implements a **manual plugin loader system** 
+This Zsh environment implements a **manual plugin loader system**
 with structured declarations and Git-based fetching — offering full control without external plugin managers.
 
 ---

@@ -85,6 +85,7 @@ fzf-tools git-commit
 You can enter a hash like `HEAD~1`, or interactively pick from log.
 
 **Preview includes:**
+
 - `bat`-highlighted file content
 - Commit-specific snapshot
 - Automatic temp file export to open in VSCode
