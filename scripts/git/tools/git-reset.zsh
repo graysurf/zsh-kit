@@ -12,37 +12,126 @@ if command -v safe_unalias >/dev/null; then
     git-reset-remote
 fi
 
+_git_reset_by_count() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset mode='' count_arg='' extra_arg='' confirm='' prompt='' failure='' success='' line=''
+  typeset commit_label='' target=''
+  typeset -i count=1
+  typeset -a preface=()
+
+  mode="${1-}"
+  count_arg="${2-}"
+  extra_arg="${3-}"
+
+  if [[ -z "$mode" ]]; then
+    print -u2 -r -- "❌ Missing reset mode."
+    return 2
+  fi
+
+  if [[ -n "$extra_arg" ]]; then
+    print -u2 -r -- "❌ Too many arguments."
+    print -u2 -r -- "Usage: git-reset-$mode [N]"
+    return 2
+  fi
+
+  if [[ -n "$count_arg" ]]; then
+    if [[ "$count_arg" != <-> || "$count_arg" -le 0 ]]; then
+      print -u2 -r -- "❌ Invalid commit count: $count_arg (must be a positive integer)."
+      print -u2 -r -- "Usage: git-reset-$mode [N]"
+      return 2
+    fi
+    count="$count_arg"
+  fi
+
+  target="HEAD~$count"
+  if ! git rev-parse --verify --quiet "$target" >/dev/null; then
+    print -u2 -r -- "❌ Cannot resolve $target (not enough commits?)."
+    return 1
+  fi
+
+  commit_label='last commit'
+  if (( count > 1 )); then
+    commit_label="last $count commits"
+  fi
+
+  case "$mode" in
+    soft)
+      preface=(
+        "⚠️  This will rewind your $commit_label (soft reset)"
+        "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
+      )
+      prompt="❓ Proceed with 'git reset --soft $target'? [y/N] "
+      failure="❌ Soft reset failed."
+      success="✅ Reset completed. Your changes are still staged."
+      ;;
+    hard)
+      preface=(
+        "⚠️  This will HARD RESET your repository to $target."
+        "🔥 Tracked staged/unstaged changes will be OVERWRITTEN."
+        "🧨 This is equivalent to: git reset --hard $target"
+      )
+      prompt="❓ Are you absolutely sure? [y/N] "
+      failure="❌ Hard reset failed."
+      success="✅ Hard reset completed. HEAD moved back to $target."
+      ;;
+    mixed)
+      preface=(
+        "⚠️  This will rewind your $commit_label (mixed reset)"
+        "🧠 Your changes will become UNSTAGED and editable in working directory."
+      )
+      prompt="❓ Proceed with 'git reset --mixed $target'? [y/N] "
+      failure="❌ Mixed reset failed."
+      success="✅ Reset completed. Your changes are now unstaged."
+      ;;
+    *)
+      print -u2 -r -- "❌ Unknown reset mode: ${mode:-}"
+      return 2
+      ;;
+  esac
+
+  for line in "${preface[@]}"; do
+    print -r -- "$line"
+  done
+  print -r -- "🧾 Commits to be rewound:"
+  git log --no-color -n "$count" --date=format:'%m-%d %H:%M' --pretty='%h %ad %an  %s' || return 1
+  print -n -r -- "$prompt"
+  read -r confirm
+  if [[ "$confirm" != [yY] ]]; then
+    print -r -- "🚫 Aborted"
+    return 1
+  fi
+
+  if ! git reset "--$mode" "$target"; then
+    print -r -- "$failure"
+    return 1
+  fi
+
+  print -r -- "$success"
+  return 0
+}
+
 # Undo the last commit while keeping all changes staged (soft reset)
 #
-# This function performs a `git reset --soft HEAD~1`, which removes the
-# last commit from history but keeps all changes staged. This is useful
+# This function performs a `git reset --soft HEAD~<n>` (default n=1), which removes the
+# last commit(s) from history but keeps all changes staged. This is useful
 # when you want to rewrite the commit message or make additional edits
 # before recommitting.
 #
 # It is a safer alternative to hard resets and preserves your working state.
 git-reset-soft() {
-  print "⚠️  This will rewind your last commit (soft reset)"
-  print "🧠 Your changes will remain STAGED. Useful for rewriting commit message."
-  print -n "❓ Proceed with 'git reset --soft HEAD~1'? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
-    return 1
-  fi
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
 
-  git reset --soft HEAD~1
-  if [[ $? -ne 0 ]]; then
-    print "❌ Soft reset failed (no parent commit, or invalid HEAD state)."
-    return 1
-  fi
-
-  print "✅ Last commit undone. Your changes are still staged."
+  _git_reset_by_count soft "$@"
+  return $?
 }
 
 # Hard reset to the previous commit with confirmation (DANGEROUS)
 #
-# This function performs a `git reset --hard HEAD~1`, which removes the last
-# commit and discards all staged and unstaged changes for tracked files by
+# This function performs a `git reset --hard HEAD~<n>` (default n=1), which removes the last
+# commit(s) and discards all staged and unstaged changes for tracked files by
 # synchronizing HEAD, index, and working tree to the previous commit.
 #
 # ⚠️ WARNING: This operation is destructive for uncommitted tracked changes.
@@ -50,51 +139,28 @@ git-reset-soft() {
 #   tracked edits overwritten by `--hard` may be difficult or impossible to restore.
 # - Untracked files are NOT removed by `git reset --hard` (use `git clean` if needed).
 git-reset-hard() {
-  print "⚠️  This will HARD RESET your repository to the previous commit."
-  print "🔥 Tracked staged/unstaged changes will be OVERWRITTEN."
-  print "🧨 This is equivalent to: git reset --hard HEAD~1"
-  print -n "❓ Are you absolutely sure? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
-    return 1
-  fi
-
-  git reset --hard HEAD~1
-  if [[ $? -ne 0 ]]; then
-    print "❌ Hard reset failed (no parent commit, or invalid HEAD state)."
-    return 1
-  fi
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
 
   # Note: Untracked files may still exist; `git status` may not be clean.
-  print "✅ Hard reset completed. HEAD moved back one commit."
+  _git_reset_by_count hard "$@"
+  return $?
 }
 
 # Undo the last commit and unstage all changes (mixed reset)
 #
-# This function performs a `git reset --mixed HEAD~1`, which removes the
-# last commit and moves all associated changes into the working directory
+# This function performs a `git reset --mixed HEAD~<n>` (default n=1), which removes the
+# last commit(s) and moves all associated changes into the working directory
 # in an unstaged state. This is useful when you want to revise changes
 # more freely before recommitting.
 #
 # This is Git's default reset mode if no flag is given.
 git-reset-mixed() {
-  print "⚠️  This will rewind your last commit (mixed reset)"
-  print "🧠 Your changes will become UNSTAGED and editable in working directory."
-  print -n "❓ Proceed with 'git reset --mixed HEAD~1'? [y/N] "
-  read -r confirm
-  if [[ "$confirm" != [yY] ]]; then
-    print "🚫 Aborted"
-    return 1
-  fi
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
 
-  git reset --mixed HEAD~1
-  if [[ $? -ne 0 ]]; then
-    print "❌ Mixed reset failed (no parent commit, or invalid HEAD state)."
-    return 1
-  fi
-
-  print "✅ Last commit undone. Your changes are now unstaged."
+  _git_reset_by_count mixed "$@"
+  return $?
 }
 
 # Undo the last HEAD move using reflog (safer "back one step" with staged/unstaged choices)
