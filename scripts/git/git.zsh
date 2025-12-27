@@ -57,7 +57,7 @@ alias lgr='eza -alh --icons --group-directories-first --color=always --git --git
 # ────────────────────────────────────────────────────────
 
 # Visual tree view of current directory (depth = unlimited)
-gt() {
+git-tree() {
   # If first argument is a number, treat it as depth (--level)
   local level_flag=()
   local first_arg="${1-}"
@@ -69,6 +69,8 @@ gt() {
   return $?
 }
 
+# Tree view 
+alias gt='git-tree'
 # Tree view limited to depth 2 (e.g. folders + their subfolders)
 alias gt2='gt -L 2'
 # Tree view limited to depth 3 (folders + 2 sub-levels)
