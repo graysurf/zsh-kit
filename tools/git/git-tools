@@ -1,0 +1,34 @@
+#!/usr/bin/env -S zsh -f
+
+setopt no_nomatch
+
+# Guard: `git-tools` subcommands may rely on `set_clipboard` (normally provided by bootstrap).
+# Keep this wrapper self-contained so it works under `zsh -f`.
+if ! typeset -f set_clipboard >/dev/null; then
+  set_clipboard() {
+    if command -v pbcopy >/dev/null 2>&1; then
+      pbcopy
+    elif command -v xclip >/dev/null 2>&1; then
+      xclip -selection clipboard -i
+    elif command -v xsel >/dev/null 2>&1; then
+      xsel --clipboard --input
+    else
+      printf "❌ No clipboard tool found (requires pbcopy, xclip, or xsel)\n" >&2
+      return 1
+    fi
+  }
+fi
+
+source "$ZDOTDIR/scripts/git/tools/git-utils.zsh"
+source "$ZDOTDIR/scripts/git/tools/git-reset.zsh"
+source "$ZDOTDIR/scripts/git/tools/git-commit.zsh"
+source "$ZDOTDIR/scripts/git/tools/git-branch-cleanup.zsh"
+source "$ZDOTDIR/scripts/git/tools/git-remote-open.zsh"
+source "$ZDOTDIR/scripts/git/git-tools.zsh"
+
+if ! typeset -f git-tools >/dev/null; then
+  printf "❗ 'git-tools' is not defined as a function.\n"
+  exit 1
+fi
+
+git-tools "$@" || exit $?
