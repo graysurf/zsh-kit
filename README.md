@@ -100,25 +100,26 @@ Weather report: Taipei City, Taiwan
 🌿  Thinking shell initialized. Expect consequences...
 
 ✅ Loaded 00-preload.zsh in 0ms
-✅ Loaded plugins.zsh in 37ms
+✅ Loaded plugins.zsh in 44ms
 ✅ Loaded chrome-devtools-rdp.zsh in 0ms
 ✅ Loaded codex.zsh in 0ms
 ✅ Loaded eza.zsh in 0ms
-✅ Loaded fzf-tools.zsh in 0ms
+✅ Loaded fzf-tools.zsh in 1ms
 ✅ Loaded git-lock.zsh in 0ms
 ✅ Loaded git-magic.zsh in 0ms
 ✅ Loaded git-scope.zsh in 0ms
 ✅ Loaded git-summary.zsh in 2ms
-✅ Loaded git-tools.zsh in 0ms
 ✅ Loaded git.zsh in 0ms
 ✅ Loaded git-branch-cleanup.zsh in 0ms
 ✅ Loaded git-commit.zsh in 0ms
 ✅ Loaded git-remote-open.zsh in 0ms
-✅ Loaded git-reset.zsh in 0ms
+✅ Loaded git-reset.zsh in 1ms
 ✅ Loaded git-utils.zsh in 0ms
-✅ Loaded git.zsh in 3ms
-✅ Loaded macos.zsh in 6ms
-✅ Loaded shell-utils.zsh in 3ms
+✅ Loaded hotkeys.zsh in 0ms
+✅ Loaded interactive.zsh in 16ms
+✅ Loaded macos.zsh in 4ms
+✅ Loaded shell-utils.zsh in 0ms
+✅ Loaded git-tools.zsh in 0ms
 ✅ Loaded env.zsh in 7ms
 ✅ Loaded plugin-hooks.zsh in 4ms
 ✅ Loaded completion.zsh in 19ms

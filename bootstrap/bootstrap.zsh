@@ -23,6 +23,7 @@ export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
 # Exclude list (array version)
 # ──────────────────────────────
 ZSH_SCRIPT_EXCLUDE_LIST=(
+  "$ZSH_SCRIPT_DIR/git/git-tools.zsh"
   "$ZSH_SCRIPT_DIR/env.zsh"
   "$ZSH_SCRIPT_DIR/plugin-hooks.zsh"
   "$ZSH_SCRIPT_DIR/completion.zsh"
@@ -41,6 +42,7 @@ load_script_group "Public Scripts" "$ZSH_SCRIPT_DIR" "${ZSH_SCRIPT_EXCLUDE_LIST[
 # ──────────────────────────────
 # Source environment and plugins
 # ──────────────────────────────
+load_with_timing "$ZDOTDIR/scripts/git/git-tools.zsh"
 load_with_timing "$ZDOTDIR/scripts/env.zsh"
 load_with_timing "$ZDOTDIR/scripts/plugin-hooks.zsh"
 load_with_timing "$ZDOTDIR/scripts/completion.zsh"
