@@ -53,6 +53,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases
 │   ├── git/                              # Git workflow tools and custom logic
+│   │   ├── git.zsh                       # General Git aliases and settings
 │   │   ├── git-lock.zsh                  # Lock and restore git commits with labels
 │   │   ├── git-magic.zsh                 # Composite git workflows (push, fixup, review)
 │   │   ├── git-scope.zsh                 # Show git changes by scope, diff, or tree
@@ -64,7 +65,6 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │       ├── git-remote-open.zsh       # Open remotes/branches/commits
 │   │       ├── git-reset.zsh             # Reset/undo/back + reset-remote
 │   │       └── git-utils.zsh             # Copy staged diff + git-root + commit hash
-│   │   └── git.zsh                       # General Git aliases and settings
 │   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
 │   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
 │   ├── codex.zsh                         # Codex CLI helpers
