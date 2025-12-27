@@ -77,6 +77,23 @@ fzf-git-tag() {
   tag=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
   # Pre-resolve tag to commit hash for preview and checkout
+  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
+    local script_root=""
+    if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
+      script_root="$ZSH_SCRIPT_DIR"
+    elif [[ -n "${ZDOTDIR-}" ]]; then
+      script_root="$ZDOTDIR/scripts"
+    else
+      script_root="$HOME/.config/zsh/scripts"
+    fi
+
+    [[ -f "$script_root/git/tools/git-utils.zsh" ]] && source "$script_root/git/tools/git-utils.zsh"
+  fi
+  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
+    printf "❌ get_commit_hash is unavailable. Ensure git utils are loaded.\n" >&2
+    return 1
+  fi
+
   local hash
   hash=$(get_commit_hash "$tag" 2>/dev/null)
   if [[ -z "$hash" ]]; then
@@ -431,6 +448,33 @@ fzf-git-checkout() {
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
+    return 1
+  fi
+
+  if ! typeset -f get_commit_hash >/dev/null 2>&1 || ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
+    local script_root=""
+    if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
+      script_root="$ZSH_SCRIPT_DIR"
+    elif [[ -n "${ZDOTDIR-}" ]]; then
+      script_root="$ZDOTDIR/scripts"
+    else
+      script_root="$HOME/.config/zsh/scripts"
+    fi
+
+    if ! typeset -f get_commit_hash >/dev/null 2>&1; then
+      [[ -f "$script_root/git/tools/git-utils.zsh" ]] && source "$script_root/git/tools/git-utils.zsh"
+    fi
+    if ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
+      [[ -f "$script_root/git/git-scope.zsh" ]] && source "$script_root/git/git-scope.zsh"
+    fi
+  fi
+
+  if ! typeset -f get_commit_hash >/dev/null 2>&1; then
+    printf "❌ get_commit_hash is unavailable. Ensure git utils are loaded.\n" >&2
+    return 1
+  fi
+  if ! typeset -f _git_scope_kind_color >/dev/null 2>&1; then
+    printf "❌ _git_scope_kind_color is unavailable. Ensure git-scope is loaded.\n" >&2
     return 1
   fi
 

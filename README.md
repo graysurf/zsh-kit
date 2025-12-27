@@ -57,8 +57,13 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── git-magic.zsh                 # Composite git workflows (push, fixup, review)
 │   │   ├── git-scope.zsh                 # Show git changes by scope, diff, or tree
 │   │   ├── git-summary.zsh               # Git contributions by author/date
-│   │   ├── git-reset-remote.zsh          # Overwrite local branch with remote-tracking branch
-│   │   ├── git-tools.zsh                 # Git utilities for reset, rebase, remotes
+│   │   ├── git-tools.zsh                 # Git aliases + CLI entrypoint (impls in tools/)
+│   │   └── tools/                        # Git tool implementations (autoloaded)
+│   │       ├── git-branch-cleanup.zsh    # Delete merged/squash-applied branches
+│   │       ├── git-commit.zsh            # Commit context + commit-to-stash
+│   │       ├── git-remote-open.zsh       # Open remotes/branches/commits
+│   │       ├── git-reset.zsh             # Reset/undo/back + reset-remote
+│   │       └── git-utils.zsh             # Copy staged diff + git-root + commit hash
 │   │   └── git.zsh                       # General Git aliases and settings
 │   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
 │   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
@@ -94,18 +99,23 @@ Weather report: Taipei City, Taiwan
 
 🌿  Thinking shell initialized. Expect consequences...
 
-✅ Loaded 00-preload.zsh in 3ms
-✅ Loaded plugins.zsh in 89ms
+✅ Loaded 00-preload.zsh in 0ms
+✅ Loaded plugins.zsh in 37ms
 ✅ Loaded chrome-devtools-rdp.zsh in 0ms
-✅ Loaded codex.zsh in 3ms
-✅ Loaded eza.zsh in 2ms
-✅ Loaded fzf-tools.zsh in 2ms
-✅ Loaded git-lock.zsh in 3ms
-✅ Loaded git-magic.zsh in 3ms
-✅ Loaded git-reset-remote.zsh in 0ms
-✅ Loaded git-scope.zsh in 2ms
-✅ Loaded git-summary.zsh in 3ms
-✅ Loaded git-tools.zsh in 3ms
+✅ Loaded codex.zsh in 0ms
+✅ Loaded eza.zsh in 0ms
+✅ Loaded fzf-tools.zsh in 0ms
+✅ Loaded git-lock.zsh in 0ms
+✅ Loaded git-magic.zsh in 0ms
+✅ Loaded git-scope.zsh in 0ms
+✅ Loaded git-summary.zsh in 2ms
+✅ Loaded git-tools.zsh in 0ms
+✅ Loaded git.zsh in 0ms
+✅ Loaded git-branch-cleanup.zsh in 0ms
+✅ Loaded git-commit.zsh in 0ms
+✅ Loaded git-remote-open.zsh in 0ms
+✅ Loaded git-reset.zsh in 0ms
+✅ Loaded git-utils.zsh in 0ms
 ✅ Loaded git.zsh in 3ms
 ✅ Loaded macos.zsh in 6ms
 ✅ Loaded shell-utils.zsh in 3ms
