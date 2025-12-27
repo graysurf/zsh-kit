@@ -34,11 +34,11 @@ alias gpf='git push --force-with-lease'
 alias gpff='git push -f'
 
 # Push and open latest commit on GitHub
-alias gpo='git push && gh-open-commit HEAD'
+alias gpo='git push && git-open-commit HEAD'
 # Force-push with lease and open latest commit on GitHub (safe force)
-alias gpfo='git push --force-with-lease && gh-open-commit HEAD'
+alias gpfo='git push --force-with-lease && git-open-commit HEAD'
 # Force-push unconditionally and open latest commit on GitHub (DANGEROUS)
-alias gpffo='git push -f && gh-open-commit HEAD'
+alias gpffo='git push -f && git-open-commit HEAD'
 
 # ────────────────────────────────────────────────────────
 # Git utility aliases

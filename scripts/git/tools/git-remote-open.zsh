@@ -5,10 +5,10 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     git-resolve-upstream \
     git-normalize-remote-url \
-    gh-open \
-    gh-open-branch \
-    gh-open-default-branch \
-    gh-open-commit \
+    git-open \
+    git-open-branch \
+    git-open-default-branch \
+    git-open-commit \
     gh-push-open
 fi
 
@@ -78,7 +78,7 @@ git-normalize-remote-url() {
 }
 
 # Open the repository page on GitHub or GitLab
-gh-open() {
+git-open() {
   emulate -L zsh
   setopt localoptions
   typeset -a upstream=()
@@ -107,7 +107,7 @@ gh-open() {
 }
 
 # Open the current branch page on GitHub or GitLab
-gh-open-branch() {
+git-open-branch() {
   emulate -L zsh
   setopt localoptions
   typeset -a upstream=()
@@ -138,7 +138,7 @@ gh-open-branch() {
 }
 
 # Open a specific commit on GitHub (supports tag, branch, or commit hash)
-gh-open-commit() {
+git-open-commit() {
   emulate -L zsh
   setopt localoptions
   typeset hash="${1:-HEAD}"
@@ -180,7 +180,7 @@ gh-open-commit() {
 }
 
 # Open default branch (main or master)
-gh-open-default-branch() {
+git-open-default-branch() {
   emulate -L zsh
   setopt localoptions
   typeset -a upstream=()
@@ -220,5 +220,5 @@ gh-open-default-branch() {
 # Push current branch and open the pushed commit on GitHub or GitLab
 gh-push-open() {
   git push "$@" || return $?
-  gh-open-commit HEAD
+  git-open-commit HEAD
 }

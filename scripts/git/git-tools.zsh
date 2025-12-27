@@ -28,10 +28,10 @@ alias gdb='git-delete-merged-branches'
 alias gdbs='gdb --squash'
 
 # GitHub / GitLab remote open aliases
-alias gop='gh-open'
-alias god='gh-open-default-branch'
-alias goc='gh-open-commit'
-alias gob='gh-open-branch'
+alias gop='git-open'
+alias god='git-open-default-branch'
+alias goc='git-open-commit'
+alias gob='git-open-branch'
 
 # Commit context alias
 alias gcc='git-commit-context'

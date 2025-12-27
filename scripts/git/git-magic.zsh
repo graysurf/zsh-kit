@@ -20,18 +20,18 @@ alias gcp='git commit && git push'
 alias gcap='git commit --amend && git push'
 
 # Commit staged changes, push, and open the commit on GitHub
-alias gcpo='git commit && git push && gh-open-commit HEAD'
+alias gcpo='git commit && git push && git-open-commit HEAD'
 # Amend the last commit, push, and open on GitHub
-alias gcapo='git commit --amend && git push && gh-open-commit HEAD'
+alias gcapo='git commit --amend && git push && git-open-commit HEAD'
 
 # Amend the last commit, safely force-push
 alias gcapf='git commit --amend && git push --force-with-lease'
 # Amend the last commit, safely force-push, and open on GitHub (safer)
-alias gcapfo='git commit --amend && git push --force-with-lease && gh-open-commit HEAD'
+alias gcapfo='git commit --amend && git push --force-with-lease && git-open-commit HEAD'
 # Amend the last commit, force-push
 alias gcapff='git commit --amend && git push -f'
 # Amend the last commit, force-push, and open on GitHub (DANGEROUS)
-alias gcapffo='git commit --amend && git push -f && gh-open-commit HEAD'
+alias gcapffo='git commit --amend && git push -f && git-open-commit HEAD'
 
 # Commit using clipboard message
 alias gpc='git commit -F <(get_clipboard)'
@@ -42,11 +42,11 @@ alias gpcpf='git commit -F <(get_clipboard) && git push --force-with-lease'
 # Commit using clipboard, force-push (DANGEROUS)
 alias gpcpff='git commit -F <(get_clipboard) && git push -f'
 # Commit using clipboard, push, and open on GitHub
-alias gpcpo='git commit -F <(get_clipboard) && git push && gh-open-commit HEAD'
+alias gpcpo='git commit -F <(get_clipboard) && git push && git-open-commit HEAD'
 # Commit using clipboard, safely force-push, and open on GitHub (safer)
-alias gpcpfo='git commit -F <(get_clipboard) && git push --force-with-lease && gh-open-commit HEAD'
+alias gpcpfo='git commit -F <(get_clipboard) && git push --force-with-lease && git-open-commit HEAD'
 # Commit using clipboard, force-push, and open on GitHub (DANGEROUS)
-alias gpcpffo='git commit -F <(get_clipboard) && git push -f && gh-open-commit HEAD'
+alias gpcpffo='git commit -F <(get_clipboard) && git push -f && git-open-commit HEAD'
 
 # Amend commit using clipboard message
 alias gpca='git commit --amend -F <(get_clipboard)'
@@ -57,8 +57,8 @@ alias gpcapf='git commit --amend -F <(get_clipboard) && git push --force-with-le
 # Amend using clipboard, force-push (DANGEROUS, no open)
 alias gpcapff='git commit --amend -F <(get_clipboard) && git push -f'
 # Amend using clipboard, push, and open on GitHub
-alias gpcapo='git commit --amend -F <(get_clipboard) && git push && gh-open-commit HEAD'
+alias gpcapo='git commit --amend -F <(get_clipboard) && git push && git-open-commit HEAD'
 # Amend using clipboard, safely force-push, and open on GitHub (safer)
-alias gpcapfo='git commit --amend -F <(get_clipboard) && git push --force-with-lease && gh-open-commit HEAD'
+alias gpcapfo='git commit --amend -F <(get_clipboard) && git push --force-with-lease && git-open-commit HEAD'
 # Amend using clipboard, force-push, and open on GitHub (DANGEROUS)
-alias gpcapffo='git commit --amend -F <(get_clipboard) && git push -f && gh-open-commit HEAD'
+alias gpcapffo='git commit --amend -F <(get_clipboard) && git push -f && git-open-commit HEAD'
