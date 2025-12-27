@@ -235,17 +235,15 @@ git-commit-to-stash() {
 
   # Extra warning if commit appears reachable from upstream (heuristic)
   upstream=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>/dev/null)
-  if [[ -n "$upstream" ]]; then
-    # If commit is an ancestor of upstream or equal/reachable, it was likely pushed
-    if git merge-base --is-ancestor "$commit_sha" "$upstream" 2>/dev/null; then
-      print "⚠️  This commit appears to be reachable from upstream ($upstream)."
-      print "🧨 Dropping it rewrites history and may require force push; it can affect others."
-      print -n "❓ Still drop it? [y/N] "
-      read -r confirm_pushed
-      if [[ "$confirm_pushed" != [yY] ]]; then
-        print "✅ Done. Commit kept; stash saved."
-        return 0
-      fi
+  # If commit is an ancestor of upstream or equal/reachable, it was likely pushed
+  if [[ -n "$upstream" ]] && git merge-base --is-ancestor "$commit_sha" "$upstream" 2>/dev/null; then
+    print "⚠️  This commit appears to be reachable from upstream ($upstream)."
+    print "🧨 Dropping it rewrites history and may require force push; it can affect others."
+    print -n "❓ Still drop it? [y/N] "
+    read -r confirm_pushed
+    if [[ "$confirm_pushed" != [yY] ]]; then
+      print "✅ Done. Commit kept; stash saved."
+      return 0
     fi
   fi
 
@@ -300,10 +298,12 @@ git-commit-context () {
 
   typeset tmpfile='' diff='' scope='' contents='' mode='clipboard'
   typeset no_color=false
+  typeset arg=''
   typeset -a extra_args=()
 
   while [[ $# -gt 0 ]]; do
-    case "$1" in
+    arg="${1-}"
+    case "$arg" in
       --stdout|-p|--print)
         mode="stdout"
         ;;
@@ -321,7 +321,7 @@ git-commit-context () {
         return 0
         ;;
       *)
-        extra_args+=("$1")
+        extra_args+=("$arg")
         ;;
     esac
     shift
