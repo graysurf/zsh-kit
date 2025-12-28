@@ -16,6 +16,10 @@ export FZF_PREVIEW_WINDOW
 : "${FZF_FILE_MAX_DEPTH:=5}"
 export FZF_FILE_MAX_DEPTH
 
+# Set scroll-off (keep N lines above/below the cursor)
+: "${FZF_SCROLL_OFF:=0}"
+export FZF_SCROLL_OFF
+
 # Set default delimiters for custom preview blocks
 : "${FZF_DEF_DELIM:="[FZF-DEF]"}"
 export FZF_DEF_DELIM
@@ -34,6 +38,7 @@ FZF_THEME_OPTS="\
 # Key binds & Preview Controls
 FZF_PREVIEW_OPTS="\
   --no-mouse \
+  --scroll-off=${FZF_SCROLL_OFF:-0} \
   --preview-window=${FZF_PREVIEW_WINDOW:-right:50%:wrap} \
   --bind=ctrl-j:preview-down \
   --bind=ctrl-k:preview-up \

@@ -418,22 +418,59 @@ fzf-git-status() {
 
 # ────────────────────────────────────────────────────────
 # _fzf_select_commit: Select a commit with preview
-# Usage: _fzf_select_commit [query]
+# Usage: _fzf_select_commit [query] [selected]
 # - Returns two lines (query, selected commit line).
 # ────────────────────────────────────────────────────────
 _fzf_select_commit() {
   local query="${1:-}"
+  local selected="${2:-}"
   local result
-  result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
-    --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
-    fzf --ansi --reverse \
-        --prompt="🌀 Commit > " \
-        --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
-        --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
-        --print-query \
-        --query="$query")
+  local debug=false debug_log=""
+  if [[ -n "${FZF_GIT_COMMIT_DEBUG-}" && "${FZF_GIT_COMMIT_DEBUG-}" != "0" ]]; then
+    debug=true
+    debug_log="${FZF_GIT_COMMIT_DEBUG_LOG_FILE:-$HOME/.codex/output/fzf-git-commit.debug.log}"
+    mkdir -p -- "${debug_log:h}"
+    export FZF_GIT_COMMIT_DEBUG_LOG_FILE="$debug_log"
+    print -r -- "----- $(date -Is) _fzf_select_commit query='${query}' selected='${selected}'" >>| "$debug_log"
+  fi
+
+  if [[ -n "$selected" ]]; then
+    local restore_bind="focus:unbind(focus)+clear-query"
+    [[ -n "$query" ]] && restore_bind="focus:unbind(focus)+change-query[[${query}]]"
+    if $debug; then
+      print -r -- "restore_bind=${restore_bind}" >>| "$debug_log"
+      restore_bind="focus:unbind(focus)+execute-silent[sh -c 'printf \"%s\\n\" \"$1\" >> \"$FZF_GIT_COMMIT_DEBUG_LOG_FILE\"' -- 'focus q=[{q}] item=[{}]']+${restore_bind#focus:}"
+    fi
+
+    result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
+      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
+      fzf --ansi --reverse --track \
+          --prompt="🌀 Commit > " \
+          --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
+          --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
+          --print-query \
+          --bind="$restore_bind" \
+          --query="$selected")
+  else
+    result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
+      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
+      fzf --ansi --reverse \
+          --prompt="🌀 Commit > " \
+          --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
+          --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
+          --print-query \
+          --query="$query")
+  fi
 
   [[ -z "$result" ]] && return 1
+
+  if $debug; then
+    local out_query out_selected
+    out_query=$(printf "%s\n" "$result" | sed -n '1p')
+    out_selected=$(printf "%s\n" "$result" | sed -n '2p')
+    print -r -- "fzf_out_query='${out_query}'" >>| "$debug_log"
+    print -r -- "fzf_out_selected='${out_selected}'" >>| "$debug_log"
+  fi
 
   # Return the full result with query line and selected commit line
   printf "%s\n" "$result"
@@ -487,7 +524,7 @@ fzf-git-commit() {
 
   local input_ref="$1"
   local full_hash="" commit="" file=""
-  local tmp="" commit_query="" commit_query_restore=""
+  local tmp="" commit_query="" commit_query_restore="" selected_commit=""
 
   if [[ -n "$input_ref" ]]; then
     full_hash=$(get_commit_hash "$input_ref")
@@ -497,10 +534,11 @@ fzf-git-commit() {
 
   while true; do
     local result=""
-    result=$(_fzf_select_commit "$commit_query") || return 1
+    result=$(_fzf_select_commit "$commit_query" "$selected_commit") || return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
+    selected_commit="$commit"
 
     local stats_list="" file_list=() color="" stat_line=""
     stats_list=$(git show --numstat --format= "$commit")
