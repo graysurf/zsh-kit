@@ -43,7 +43,7 @@ ZSH_INTERACTIVE_SCRIPT_LAST_LIST=(
 )
 
 ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
-  "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+  "$ZSH_PRIVATE_SCRIPT_DIR/development.zsh"
 )
 
 # ──────────────────────────────
@@ -67,9 +67,9 @@ load_script_group_ordered "Private Scripts" "$ZSH_PRIVATE_SCRIPT_DIR" \
   --exclude "${ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST[@]}"
 
 # ──────────────────────────────
-# Load development.sh last with timing
+# Load development.zsh last with timing
 # ──────────────────────────────
-dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
+dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.zsh"
 if [[ -f "$dev_script" ]]; then
   source_file "$dev_script" "${dev_script:t} (delayed)"
 fi

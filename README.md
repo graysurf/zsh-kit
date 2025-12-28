@@ -125,7 +125,7 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded hotkeys.zsh in 0ms
 ✅ Loaded plugin-hooks.zsh in 0ms
 ✅ Loaded completion.zsh in 165ms
-✅ Loaded development.sh (delayed) in 2ms
+✅ Loaded development.zsh (delayed) in 2ms
 
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
 08:00:00.000 ✔︎
