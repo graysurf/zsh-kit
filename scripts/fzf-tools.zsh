@@ -921,6 +921,47 @@ _fzf_def_rebuild_doc_cache() {
   fi
 }
 
+# _fzf_def_print_docblock_with_separators <docblock>
+# Print a docblock wrapped by comment separators for preview readability.
+# Usage: _fzf_def_print_docblock_with_separators <docblock>
+# Env:
+# - FZF_DEF_DOC_SEPARATOR_PAD: extra width added to the separator line (default: 2).
+_fzf_def_print_docblock_with_separators() {
+  emulate -L zsh
+  setopt err_return
+
+  local doc="${1-}"
+  [[ -z "$doc" ]] && return 0
+
+  local -a lines=()
+  lines=("${(@f)doc}")
+
+  local first_line="${lines[1]-}"
+  local prefix=''
+  if [[ -n "$first_line" && "$first_line" =~ '^([[:space:]]*)#' ]]; then
+    prefix="${match[1]}"
+  fi
+
+  local -i max_len=0
+  local line=''
+  for line in "${lines[@]}"; do
+    (( ${#line} > max_len )) && max_len=${#line}
+  done
+
+  local pad="${FZF_DEF_DOC_SEPARATOR_PAD:-2}"
+  [[ "$pad" == <-> ]] || pad=2
+  (( pad < 0 )) && pad=0
+
+  local -i prefix_len=${#prefix}
+  local -i dash_count=$(( max_len + pad - prefix_len - 2 ))
+  (( dash_count < 0 )) && dash_count=0
+
+  local dashes="${(l:$dash_count::-:)}"
+  print -r -- "${prefix}# ${dashes}"
+  print -r -- "$doc"
+  print -r -- "${prefix}# ${dashes}"
+}
+
 # _fzf_def_print_function_doc <function_name>
 # Print the cached docblock for a function (if any).
 # Usage: _fzf_def_print_function_doc <function_name>
@@ -940,7 +981,7 @@ _fzf_def_print_function_doc() {
   fi
 
   [[ -z "$doc" ]] && doc="${_FZF_DEF_FN_DOC_BY_NAME[$fn]-}"
-  [[ -n "$doc" ]] && print -r -- "$doc"
+  [[ -n "$doc" ]] && _fzf_def_print_docblock_with_separators "$doc"
 }
 
 # _fzf_def_print_alias_doc <alias_name>
@@ -954,7 +995,7 @@ _fzf_def_print_alias_doc() {
   [[ -z "$name" ]] && return 0
 
   local doc="${_FZF_DEF_ALIAS_DOC_BY_NAME[$name]-}"
-  [[ -n "$doc" ]] && print -r -- "$doc"
+  [[ -n "$doc" ]] && _fzf_def_print_docblock_with_separators "$doc"
 }
 
 # ────────────────────────────────────────────────────────
