@@ -664,6 +664,52 @@ BEGIN { inside=0 }
 typeset -gA _FZF_DEF_FN_DOC_BY_NAME=()
 typeset -gA _FZF_DEF_FN_DOC_BY_FILE=()
 typeset -gA _FZF_DEF_ALIAS_DOC_BY_NAME=()
+typeset -gi _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH=0
+
+_fzf_def_doc_cache_enabled() {
+  [[ "${FZF_DEF_DOC_CACHE_ENABLE:-false}" == true ]]
+}
+
+_fzf_def_doc_cache_ttl_seconds() {
+  emulate -L zsh
+  setopt err_return
+
+  local minutes="${FZF_DEF_DOC_CACHE_EXPIRE_MINUTES:-10}"
+  [[ "$minutes" == <-> ]] || minutes=10
+  (( minutes < 0 )) && minutes=0
+  print -r -- $(( minutes * 60 ))
+}
+
+_fzf_def_doc_cache_dir() {
+  emulate -L zsh
+  setopt err_return
+
+  if [[ -n "${ZSH_CACHE_DIR-}" ]]; then
+    print -r -- "$ZSH_CACHE_DIR"
+    return 0
+  fi
+
+  local root="${ZDOTDIR:-$HOME/.config/zsh}"
+  print -r -- "${root:A}/cache"
+}
+
+_fzf_def_doc_cache_timestamp_file() {
+  emulate -L zsh
+  setopt err_return
+
+  local cache_dir
+  cache_dir="$(_fzf_def_doc_cache_dir)"
+  print -r -- "$cache_dir/fzf-def-doc.timestamp"
+}
+
+_fzf_def_doc_cache_data_file() {
+  emulate -L zsh
+  setopt err_return
+
+  local cache_dir
+  cache_dir="$(_fzf_def_doc_cache_dir)"
+  print -r -- "$cache_dir/fzf-def-doc.cache.zsh"
+}
 
 _fzf_def_list_first_party_files() {
   emulate -L zsh
@@ -750,6 +796,43 @@ _fzf_def_rebuild_doc_cache() {
   emulate -L zsh
   setopt err_return
 
+  local enabled=false
+  if _fzf_def_doc_cache_enabled; then
+    enabled=true
+  fi
+
+  local now_epoch=0 ttl_seconds=0
+  local cache_dir='' cache_file='' cache_ts_file='' last_epoch_raw='' last_epoch=0
+
+  if $enabled; then
+    ttl_seconds="$(_fzf_def_doc_cache_ttl_seconds)"
+    now_epoch="$(date +%s)"
+
+    if (( _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH > 0 && (now_epoch - _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH) <= ttl_seconds )); then
+      return 0
+    fi
+
+    cache_dir="$(_fzf_def_doc_cache_dir)"
+    cache_file="$(_fzf_def_doc_cache_data_file)"
+    cache_ts_file="$(_fzf_def_doc_cache_timestamp_file)"
+
+    if [[ -r "$cache_file" && -r "$cache_ts_file" ]]; then
+      last_epoch_raw="$(<"$cache_ts_file")"
+      if [[ "$last_epoch_raw" == <-> ]]; then
+        last_epoch="$last_epoch_raw"
+      else
+        last_epoch=0
+      fi
+
+      if (( last_epoch > 0 && (now_epoch - last_epoch) <= ttl_seconds )); then
+        if source "$cache_file"; then
+          _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH="$now_epoch"
+          return 0
+        fi
+      fi
+    fi
+  fi
+
   _FZF_DEF_FN_DOC_BY_NAME=()
   _FZF_DEF_FN_DOC_BY_FILE=()
   _FZF_DEF_ALIAS_DOC_BY_NAME=()
@@ -758,6 +841,20 @@ _fzf_def_rebuild_doc_cache() {
   while IFS= read -r file; do
     _fzf_def_index_file_docs "$file"
   done < <(_fzf_def_list_first_party_files)
+
+  if $enabled; then
+    [[ -n "$cache_dir" ]] || cache_dir="$(_fzf_def_doc_cache_dir)"
+    [[ -n "$cache_file" ]] || cache_file="$(_fzf_def_doc_cache_data_file)"
+    [[ -n "$cache_ts_file" ]] || cache_ts_file="$(_fzf_def_doc_cache_timestamp_file)"
+    [[ -n "$now_epoch" && "$now_epoch" == <-> ]] || now_epoch="$(date +%s)"
+
+    command mkdir -p "$cache_dir" 2>/dev/null || true
+    typeset -p _FZF_DEF_FN_DOC_BY_NAME _FZF_DEF_FN_DOC_BY_FILE _FZF_DEF_ALIAS_DOC_BY_NAME 2>/dev/null \
+      | sed -E 's/^typeset -A /typeset -gA /' >| "$cache_file" || true
+
+    print -r -- "$now_epoch" >| "$cache_ts_file" || true
+    _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH="$now_epoch"
+  fi
 }
 
 _fzf_def_print_function_doc() {

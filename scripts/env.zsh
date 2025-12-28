@@ -27,6 +27,13 @@ export FZF_DEF_DELIM
 : "${FZF_DEF_DELIM_END:="[FZF-DEF-END]"}"
 export FZF_DEF_DELIM_END
 
+# fzf-def docs cache (for fzf-tools fzf-def/fzf-function/fzf-alias)
+: "${FZF_DEF_DOC_CACHE_ENABLE:=true}"
+export FZF_DEF_DOC_CACHE_ENABLE
+
+: "${FZF_DEF_DOC_CACHE_EXPIRE_MINUTES:=10}"
+export FZF_DEF_DOC_CACHE_EXPIRE_MINUTES
+
 # Night Owl Theme
 FZF_THEME_OPTS="\
   --color=fg:#d6deeb,bg:#011627,hl:#82aaff \
