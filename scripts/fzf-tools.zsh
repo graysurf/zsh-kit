@@ -944,6 +944,37 @@ _fzf_def_rebuild_doc_cache() {
   fi
 }
 
+# fzf-def-doc-cache-rebuild
+# Force rebuild of the persistent docblock cache used by `fzf-tools def/function/alias`.
+# Usage: fzf-def-doc-cache-rebuild
+# Output:
+# - Writes `$ZSH_CACHE_DIR/fzf-def-doc.cache.zsh` and `$ZSH_CACHE_DIR/fzf-def-doc.timestamp`.
+# Notes:
+# - Rebuild is forced even when `FZF_DEF_DOC_CACHE_ENABLE=false` (setting is not persisted).
+fzf-def-doc-cache-rebuild() {
+  emulate -L zsh
+  setopt err_return
+
+  local cache_file cache_ts_file
+  cache_file="$(_fzf_def_doc_cache_data_file)"
+  cache_ts_file="$(_fzf_def_doc_cache_timestamp_file)"
+
+  command rm -f -- "$cache_file" "$cache_ts_file" 2>/dev/null || true
+  _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH=0
+
+  FZF_DEF_DOC_CACHE_ENABLE=true _fzf_def_rebuild_doc_cache
+
+  if [[ -r "$cache_file" && -r "$cache_ts_file" ]]; then
+    print -r -- "Rebuilt:"
+    print -r -- "  - data:      $cache_file"
+    print -r -- "  - timestamp: $cache_ts_file"
+    return 0
+  fi
+
+  print -u2 -r -- "fzf-def-doc-cache-rebuild: cache files were not written"
+  return 1
+}
+
 # _fzf_def_print_docblock_with_separators <docblock>
 # Print a docblock wrapped by comment separators for preview readability.
 # Usage: _fzf_def_print_docblock_with_separators <docblock>
