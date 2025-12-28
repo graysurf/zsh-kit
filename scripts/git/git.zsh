@@ -3,6 +3,8 @@
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
+    ga gaa gau gap \
+    gu gup gwd \
     gd gc gca \
     gl gp gpf gpff \
     gpo gpfo gpffo \
@@ -12,7 +14,26 @@ if command -v safe_unalias >/dev/null; then
 fi
 
 # ────────────────────────────────────────────────────────
-# Git basic workflow aliases
+# Git staging/unstaging shortcuts
+# ────────────────────────────────────────────────────────
+
+# Stage all changes under the current directory
+alias ga='git add'
+# Stage all changes in the entire repository
+alias gaa='git add -A'
+# Stage only tracked file changes
+alias gau='git add -u'
+# Interactively stage selected hunks/files
+alias gap='git add -p'
+# Unstage changes for the given path (keep working tree)
+alias gu='git restore --staged'
+# Interactively unstage selected hunks
+alias gup='git restore --staged -p'
+# Discard working tree changes for the given path (IRREVERSIBLE)
+alias gwd='git restore --worktree'
+
+# ────────────────────────────────────────────────────────
+# Git workflow aliases
 # ────────────────────────────────────────────────────────
 
 # Show staged changes and write to screen (for commit preview)
