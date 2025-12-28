@@ -95,7 +95,7 @@ Links:
     - [x] `scripts/codex.zsh`
     - [x] `scripts/env.zsh`
     - [x] `scripts/eza.zsh`
-    - [ ] `scripts/fzf-tools.zsh`
+    - [x] `scripts/fzf-tools.zsh`
     - [ ] `scripts/git/git-lock.zsh`
     - [ ] `scripts/git/git-magic.zsh`
     - [ ] `scripts/git/git-scope.zsh`

@@ -5,17 +5,38 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias ft fzf-process fzf-env fzf-port fp fgs fgc ff fv
 fi
 
+# ft: Alias of `fzf-tools`.
+# Usage: ft <subcommand> [args...]
 alias ft='fzf-tools'
+
+# fgs: Alias of `fzf-git-status`.
+# Usage: fgs
 alias fgs='fzf-git-status'
+
+# fgc: Alias of `fzf-git-commit`.
+# Usage: fgc [ref]
 alias fgc='fzf-git-commit'
+
+# ff: Alias of `fzf-file`.
+# Usage: ff
 alias ff='fzf-file'
+
+# fv: Alias of `fzf-vscode`.
+# Usage: fv
 alias fv='fzf-vscode'
+
+# fp: Alias of `fzf-port`.
+# Usage: fp [-k|--kill] [-9|--force]
 alias fp='fzf-port'
 
 # ────────────────────────────────────────────────────────
 # fzf utilities
 # ────────────────────────────────────────────────────────
 
+# _fzf_confirm: Prompt for confirmation and return non-zero on decline.
+# Usage: _fzf_confirm <printf_format> [args...]
+# Notes:
+# - Reads from stdin; returns success only when the user answers "y" (case-insensitive).
 _fzf_confirm() {
   local prompt="${1-}"
   [[ -z "$prompt" ]] && return 1
@@ -29,6 +50,10 @@ _fzf_confirm() {
   return 0
 }
 
+# _fzf_script_root: Print the scripts root directory for lazy-loading.
+# Usage: _fzf_script_root
+# Notes:
+# - Prefers `$ZSH_SCRIPT_DIR`, then `$ZDOTDIR/scripts`, then `$HOME/.config/zsh/scripts`.
 _fzf_script_root() {
   local script_root=""
   if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
@@ -42,6 +67,10 @@ _fzf_script_root() {
   print -r -- "$script_root"
 }
 
+# _fzf_ensure_git_utils: Ensure git utility helpers are loaded (best-effort).
+# Usage: _fzf_ensure_git_utils
+# Notes:
+# - Lazily sources `scripts/git/tools/git-utils.zsh` when `get_commit_hash` is missing.
 _fzf_ensure_git_utils() {
   if typeset -f get_commit_hash >/dev/null 2>&1; then
     return 0
@@ -59,6 +88,10 @@ _fzf_ensure_git_utils() {
   return 0
 }
 
+# _fzf_ensure_git_scope: Ensure git-scope helpers are loaded (best-effort).
+# Usage: _fzf_ensure_git_scope
+# Notes:
+# - Lazily sources `scripts/git/git-scope.zsh` when `_git_scope_kind_color` is missing.
 _fzf_ensure_git_scope() {
   if typeset -f _git_scope_kind_color >/dev/null 2>&1; then
     return 0
@@ -666,10 +699,18 @@ typeset -gA _FZF_DEF_FN_DOC_BY_FILE=()
 typeset -gA _FZF_DEF_ALIAS_DOC_BY_NAME=()
 typeset -gi _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH=0
 
+# _fzf_def_doc_cache_enabled: Return success if persistent doc cache is enabled.
+# Usage: _fzf_def_doc_cache_enabled
+# Env:
+# - FZF_DEF_DOC_CACHE_ENABLE: when `true`, enable persistent doc cache.
 _fzf_def_doc_cache_enabled() {
   [[ "${FZF_DEF_DOC_CACHE_ENABLE:-false}" == true ]]
 }
 
+# _fzf_def_doc_cache_ttl_seconds: Print cache TTL in seconds.
+# Usage: _fzf_def_doc_cache_ttl_seconds
+# Env:
+# - FZF_DEF_DOC_CACHE_EXPIRE_MINUTES: cache TTL in minutes (default: 10).
 _fzf_def_doc_cache_ttl_seconds() {
   emulate -L zsh
   setopt err_return
@@ -680,6 +721,10 @@ _fzf_def_doc_cache_ttl_seconds() {
   print -r -- $(( minutes * 60 ))
 }
 
+# _fzf_def_doc_cache_dir: Print the cache directory used for persistent doc cache files.
+# Usage: _fzf_def_doc_cache_dir
+# Notes:
+# - Uses `$ZSH_CACHE_DIR` when set; otherwise falls back to `${ZDOTDIR:-$HOME/.config/zsh}/cache`.
 _fzf_def_doc_cache_dir() {
   emulate -L zsh
   setopt err_return
@@ -693,6 +738,8 @@ _fzf_def_doc_cache_dir() {
   print -r -- "${root:A}/cache"
 }
 
+# _fzf_def_doc_cache_timestamp_file: Print the persistent cache timestamp file path.
+# Usage: _fzf_def_doc_cache_timestamp_file
 _fzf_def_doc_cache_timestamp_file() {
   emulate -L zsh
   setopt err_return
@@ -702,6 +749,8 @@ _fzf_def_doc_cache_timestamp_file() {
   print -r -- "$cache_dir/fzf-def-doc.timestamp"
 }
 
+# _fzf_def_doc_cache_data_file: Print the persistent cache data file path.
+# Usage: _fzf_def_doc_cache_data_file
 _fzf_def_doc_cache_data_file() {
   emulate -L zsh
   setopt err_return
@@ -711,6 +760,10 @@ _fzf_def_doc_cache_data_file() {
   print -r -- "$cache_dir/fzf-def-doc.cache.zsh"
 }
 
+# _fzf_def_list_first_party_files: Print the list of first-party files to index for docblocks.
+# Usage: _fzf_def_list_first_party_files
+# Notes:
+# - Excludes `plugins/`; includes `.zshrc`, `.zprofile`, and `scripts/`, `bootstrap/`, `tools/`.
 _fzf_def_list_first_party_files() {
   emulate -L zsh
   setopt err_return
@@ -734,6 +787,9 @@ _fzf_def_list_first_party_files() {
   print -rl -- "${files[@]}"
 }
 
+# _fzf_def_index_file_docs <file>
+# Index docblocks (comment blocks directly above defs) from a file into lookup tables.
+# Usage: _fzf_def_index_file_docs <file>
 _fzf_def_index_file_docs() {
   emulate -L zsh
   setopt err_return
@@ -792,6 +848,14 @@ _fzf_def_index_file_docs() {
   done < "$file"
 }
 
+# _fzf_def_rebuild_doc_cache
+# Load/rebuild docblock indexes for `fzf-tools def/function/alias` previews.
+# Usage: _fzf_def_rebuild_doc_cache
+# Env:
+# - FZF_DEF_DOC_CACHE_ENABLE: when `true`, enable persistent cache.
+# - FZF_DEF_DOC_CACHE_EXPIRE_MINUTES: cache TTL in minutes (default: 10).
+# Notes:
+# - When enabled, reads/writes cache files under `$ZSH_CACHE_DIR` (or fallback cache dir).
 _fzf_def_rebuild_doc_cache() {
   emulate -L zsh
   setopt err_return
@@ -857,6 +921,9 @@ _fzf_def_rebuild_doc_cache() {
   fi
 }
 
+# _fzf_def_print_function_doc <function_name>
+# Print the cached docblock for a function (if any).
+# Usage: _fzf_def_print_function_doc <function_name>
 _fzf_def_print_function_doc() {
   emulate -L zsh
   setopt err_return
@@ -876,6 +943,9 @@ _fzf_def_print_function_doc() {
   [[ -n "$doc" ]] && print -r -- "$doc"
 }
 
+# _fzf_def_print_alias_doc <alias_name>
+# Print the cached docblock for an alias (if any).
+# Usage: _fzf_def_print_alias_doc <alias_name>
 _fzf_def_print_alias_doc() {
   emulate -L zsh
   setopt err_return
