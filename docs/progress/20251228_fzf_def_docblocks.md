@@ -6,7 +6,7 @@
 
 Links:
 
-- PR: TBD
+- PR: [graysurf/zsh-kit/pull/10](https://github.com/graysurf/zsh-kit/pull/10)
 - Docs: `docs/fzf-def-docs.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
