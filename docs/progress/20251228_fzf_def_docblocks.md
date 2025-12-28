@@ -107,10 +107,10 @@ Links:
     - [ ] `scripts/git/tools/git-remote-open.zsh`
     - [ ] `scripts/git/tools/git-reset.zsh`
     - [ ] `scripts/git/tools/git-utils.zsh`
-    - [ ] `scripts/interactive/completion.zsh`
-    - [ ] `scripts/interactive/hotkeys.zsh`
-    - [ ] `scripts/interactive/plugin-hooks.zsh`
-    - [ ] `scripts/interactive/runtime.zsh`
+    - [x] `scripts/interactive/completion.zsh`
+    - [x] `scripts/interactive/hotkeys.zsh`
+    - [x] `scripts/interactive/plugin-hooks.zsh`
+    - [x] `scripts/interactive/runtime.zsh`
     - [ ] `scripts/macos.zsh`
     - [ ] `scripts/shell-utils.zsh`
     - [ ] `tools/check.zsh`
