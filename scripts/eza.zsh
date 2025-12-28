@@ -74,46 +74,56 @@ llt() {
 
 # Tree views with depth limits
 
-# lt2: Tree view (including dotfiles) with depth 2.
+# lt2
+# Tree view (including dotfiles) with depth 2.
 # Usage: lt2 [path...]
 alias lt2='lt -L 2'
 
-# lt3: Tree view (including dotfiles) with depth 3.
+# lt3
+# Tree view (including dotfiles) with depth 3.
 # Usage: lt3 [path...]
 alias lt3='lt -L 3'
 
-# lt5: Tree view (including dotfiles) with depth 5.
+# lt5
+# Tree view (including dotfiles) with depth 5.
 # Usage: lt5 [path...]
 alias lt5='lt -L 5'
 
-# llt2: Long-format tree view (including dotfiles) with depth 2.
+# llt2
+# Long-format tree view (including dotfiles) with depth 2.
 # Usage: llt2 [path...]
 alias llt2='llt -L 2'
 
-# llt3: Long-format tree view (including dotfiles) with depth 3.
+# llt3
+# Long-format tree view (including dotfiles) with depth 3.
 # Usage: llt3 [path...]
 alias llt3='llt -L 3'
 
-# llt5: Long-format tree view (including dotfiles) with depth 5.
+# llt5
+# Long-format tree view (including dotfiles) with depth 5.
 # Usage: llt5 [path...]
 alias llt5='llt -L 5'
 
 # Tree view excluding dotfiles
 
-# lxt: Tree view (excluding dotfiles).
+# lxt
+# Tree view (excluding dotfiles).
 # Usage: lxt [path...]
 alias lxt='lx -T'
 
 # Tree views excluding dotfiles with depth limits
 
-# lxt2: Tree view (excluding dotfiles) with depth 2.
+# lxt2
+# Tree view (excluding dotfiles) with depth 2.
 # Usage: lxt2 [path...]
 alias lxt2='lxt -L 2'
 
-# lxt3: Tree view (excluding dotfiles) with depth 3.
+# lxt3
+# Tree view (excluding dotfiles) with depth 3.
 # Usage: lxt3 [path...]
 alias lxt3='lxt -L 3'
 
-# lxt5: Tree view (excluding dotfiles) with depth 5.
+# lxt5
+# Tree view (excluding dotfiles) with depth 5.
 # Usage: lxt5 [path...]
 alias lxt5='lxt -L 5'

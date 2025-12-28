@@ -1,4 +1,5 @@
-# safe_unalias: Safely remove one or more aliases without causing errors
+# safe_unalias [-v] <name...>
+# Safely remove one or more aliases without causing errors.
 #
 # This utility function checks whether each given name is an existing alias,
 # and only unaliases it if it exists. This avoids "no such hash table element"

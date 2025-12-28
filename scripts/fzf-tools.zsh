@@ -5,27 +5,33 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias ft fzf-process fzf-env fzf-port fp fgs fgc ff fv
 fi
 
-# ft: Alias of `fzf-tools`.
+# ft
+# Alias of `fzf-tools`.
 # Usage: ft <subcommand> [args...]
 alias ft='fzf-tools'
 
-# fgs: Alias of `fzf-git-status`.
+# fgs
+# Alias of `fzf-git-status`.
 # Usage: fgs
 alias fgs='fzf-git-status'
 
-# fgc: Alias of `fzf-git-commit`.
+# fgc
+# Alias of `fzf-git-commit`.
 # Usage: fgc [ref]
 alias fgc='fzf-git-commit'
 
-# ff: Alias of `fzf-file`.
+# ff
+# Alias of `fzf-file`.
 # Usage: ff
 alias ff='fzf-file'
 
-# fv: Alias of `fzf-vscode`.
+# fv
+# Alias of `fzf-vscode`.
 # Usage: fv
 alias fv='fzf-vscode'
 
-# fp: Alias of `fzf-port`.
+# fp
+# Alias of `fzf-port`.
 # Usage: fp [-k|--kill] [-9|--force]
 alias fp='fzf-port'
 
@@ -33,7 +39,8 @@ alias fp='fzf-port'
 # fzf utilities
 # ────────────────────────────────────────────────────────
 
-# _fzf_confirm: Prompt for confirmation and return non-zero on decline.
+# _fzf_confirm
+# Prompt for confirmation and return non-zero on decline.
 # Usage: _fzf_confirm <printf_format> [args...]
 # Notes:
 # - Reads from stdin; returns success only when the user answers "y" (case-insensitive).
@@ -50,7 +57,8 @@ _fzf_confirm() {
   return 0
 }
 
-# _fzf_script_root: Print the scripts root directory for lazy-loading.
+# _fzf_script_root
+# Print the scripts root directory for lazy-loading.
 # Usage: _fzf_script_root
 # Notes:
 # - Prefers `$ZSH_SCRIPT_DIR`, then `$ZDOTDIR/scripts`, then `$HOME/.config/zsh/scripts`.
@@ -67,7 +75,8 @@ _fzf_script_root() {
   print -r -- "$script_root"
 }
 
-# _fzf_ensure_git_utils: Ensure git utility helpers are loaded (best-effort).
+# _fzf_ensure_git_utils
+# Ensure git utility helpers are loaded (best-effort).
 # Usage: _fzf_ensure_git_utils
 # Notes:
 # - Lazily sources `scripts/git/tools/git-utils.zsh` when `get_commit_hash` is missing.
@@ -88,7 +97,8 @@ _fzf_ensure_git_utils() {
   return 0
 }
 
-# _fzf_ensure_git_scope: Ensure git-scope helpers are loaded (best-effort).
+# _fzf_ensure_git_scope
+# Ensure git-scope helpers are loaded (best-effort).
 # Usage: _fzf_ensure_git_scope
 # Notes:
 # - Lazily sources `scripts/git/git-scope.zsh` when `_git_scope_kind_color` is missing.
@@ -111,9 +121,13 @@ _fzf_ensure_git_scope() {
 
 # ────────────────────────────────────────────────────────
 # Shared helpers for kill flow across process/port
-# - _fzf_parse_kill_flags: parse -k/--kill and -9/--force into globals
-# - _fzf_kill_flow: common confirmation + signal dispatch
 # ────────────────────────────────────────────────────────
+
+# _fzf_parse_kill_flags [-k|--kill] [-9|--force] [args...]
+# Parse -k/--kill and -9/--force flags into globals.
+# Usage: _fzf_parse_kill_flags [-k|--kill] [-9|--force] [args...]
+# Output:
+# - Sets `_fzf_kill_now` and `_fzf_force_kill`.
 _fzf_parse_kill_flags() {
   # Parses -k/--kill and -9/--force from args into globals
   _fzf_kill_now=false
@@ -128,7 +142,11 @@ _fzf_parse_kill_flags() {
   done
 }
 
-# Handle interactive/non-interactive kill confirmation and dispatch
+# _fzf_kill_flow <pids> <kill_now> <force_kill>
+# Confirm and dispatch kill signals for one or more PIDs.
+# Usage: _fzf_kill_flow <pids> <kill_now> <force_kill>
+# Safety:
+# - Uses `kill` / `kill -9` on selected PIDs.
 _fzf_kill_flow() {
   # $1: whitespace-separated PIDs
   # $2: kill_now (true/false)
@@ -161,12 +179,12 @@ _fzf_kill_flow() {
   fi
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-git-branch: Browse and checkout branches
+# fzf-git-branch
+# Browse and checkout branches.
 # Usage: fzf-git-branch
+# Notes:
 # - Shows recent branches; preview displays recent commit graph.
 # - Confirms before `git checkout`.
-# ────────────────────────────────────────────────────────
 fzf-git-branch() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -203,12 +221,12 @@ fzf-git-branch() {
   fi
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-git-tag: Browse and checkout tags
+# fzf-git-tag
+# Browse and checkout tags.
 # Usage: fzf-git-tag
+# Notes:
 # - Lists tags (newest first); preview shows commit log for the tag.
 # - Confirms before checking out the tag's commit.
-# ────────────────────────────────────────────────────────
 fzf-git-tag() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -257,13 +275,13 @@ fzf-git-tag() {
   fi
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-process: Browse processes and optionally kill
+# fzf-process [-k|--kill] [-9|--force]
+# Browse processes and optionally kill them.
 # Usage: fzf-process [-k|--kill] [-9|--force]
+# Notes:
 # - Default: select rows → confirm kill → optional confirm SIGKILL (-9).
 # - Flags: -k immediate kill (SIGTERM); add -9/--force for SIGKILL.
 # - Multi-select supported. Preview shows CPU/MEM/PPID/start/time/cmd.
-# ────────────────────────────────────────────────────────
 fzf-process() {
   # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
   _fzf_parse_kill_flags "$@"
@@ -301,14 +319,14 @@ fzf-process() {
   _fzf_kill_flow "$pids" "$kill_now" "$force_kill"
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-port: Browse listening TCP ports and owning PIDs
+# fzf-port [-k|--kill] [-9|--force]
+# Browse listening TCP ports and owning PIDs.
 # Usage: fzf-port [-k|--kill] [-9|--force]
+# Notes:
 # - Default: select rows → confirm kill owning PIDs → optional confirm SIGKILL.
 # - Flags: -k immediate kill (SIGTERM); add -9/--force for SIGKILL.
 # - Uses: lsof -nP -iTCP -sTCP:LISTEN; falls back to netstat (view-only).
 # - Preview: protocol, addr:port, cmd, user, pid; plus lsof -p details.
-# ────────────────────────────────────────────────────────
 fzf-port() {
   # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
   _fzf_parse_kill_flags "$@"
@@ -355,12 +373,13 @@ fzf-port() {
   _fzf_kill_flow "$pids" "$kill_now" "$force_kill"
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-history-select: Build and select shell history entries
+# fzf-history-select
+# Build and select shell history entries.
 # Usage: fzf-history-select
-# - Presents history with timestamps; preview shows formatted time + command.
+# Output:
 # - Returns two lines (key, selected) for consumption by fzf-history.
-# ────────────────────────────────────────────────────────
+# Notes:
+# - Presents history with timestamps; preview shows formatted time + command.
 fzf-history-select() {
   local default_query="${BUFFER:-}"
 
@@ -389,11 +408,11 @@ printf "%s\n\n%s" "$fts" "$cmd"' \
          --expect=enter
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-history: Search and execute a history command
+# fzf-history
+# Search and execute a history command.
 # Usage: fzf-history
+# Notes:
 # - Uses fzf-history-select; executes selected command.
-# ────────────────────────────────────────────────────────
 fzf-history() {
   local selected output cmd
 
@@ -406,42 +425,40 @@ fzf-history() {
   [[ -n "$cmd" ]] && eval "$cmd"
 }
 
-# ────────────────────────────────────────────────────────
-# _fzf_file_select: File selector with bat preview
+# _fzf_file_select
+# File selector with bat preview.
 # Usage: _fzf_file_select
+# Notes:
 # - Helper used by fzf-file and fzf-vscode.
-# ────────────────────────────────────────────────────────
 _fzf_file_select() {
   fd --type f --max-depth=${FZF_FILE_MAX_DEPTH:-5} --hidden 2>/dev/null |
     fzf --ansi \
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-file: Pick a file and open with $EDITOR
+# fzf-file
+# Pick a file and open it with `$EDITOR`.
 # Usage: fzf-file
-# ────────────────────────────────────────────────────────
 fzf-file() {
   typeset file
   file=$(_fzf_file_select)
   [[ -n "$file" ]] && $EDITOR "$file"
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-vscode: Pick a file and open in VSCode
+# fzf-vscode
+# Pick a file and open it in VSCode.
 # Usage: fzf-vscode
-# ────────────────────────────────────────────────────────
 fzf-vscode() {
   typeset file
   file=$(_fzf_file_select)
   [[ -n "$file" ]] && code "$file"
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-git-status: Interactive git status with diff preview
+# fzf-git-status
+# Interactive git status with diff preview.
 # Usage: fzf-git-status
+# Notes:
 # - Preview `git diff` for the selected path; supports preview scroll bindings.
-# ────────────────────────────────────────────────────────
 fzf-git-status() {
   git status -s | fzf \
     --preview 'git diff --color=always {2}' \
@@ -449,11 +466,11 @@ fzf-git-status() {
     --bind=ctrl-k:preview-up
 }
 
-# ────────────────────────────────────────────────────────
-# _fzf_select_commit: Select a commit with preview
+# _fzf_select_commit [query] [selected]
+# Select a commit with preview.
 # Usage: _fzf_select_commit [query] [selected]
+# Output:
 # - Returns two lines (query, selected commit line).
-# ────────────────────────────────────────────────────────
 _fzf_select_commit() {
   local query="${1:-}"
   local selected="${2:-}"
@@ -510,11 +527,11 @@ _fzf_select_commit() {
   return 0
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-git-checkout: Pick a commit and checkout
+# fzf-git-checkout
+# Pick a commit and checkout.
 # Usage: fzf-git-checkout
+# Notes:
 # - Confirms checkout; offers auto-stash retry on failure.
-# ────────────────────────────────────────────────────────
 fzf-git-checkout() {
   local ref result
   result=$(_fzf_select_commit) || return 1
@@ -541,11 +558,11 @@ fzf-git-checkout() {
   git checkout "$ref" && printf "✅ Checked out to %s\n" "$ref"
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-git-commit: Browse commits, open changed files in VSCode
+# fzf-git-commit [ref]
+# Browse commits and open changed files in VSCode.
 # Usage: fzf-git-commit [ref]
+# Notes:
 # - Optional ref narrows initial query; per-commit file picker with previews.
-# ────────────────────────────────────────────────────────
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -609,11 +626,11 @@ fzf-git-commit() {
   done
 }
 
-# ────────────────────────────────────────────────────────
-# fzf_block_preview: Generic block generator + preview driver
+# fzf_block_preview <generator-fn> [default_query]
+# Generic block generator + preview driver.
 # Usage: fzf_block_preview <generator-fn> [default_query]
+# Notes:
 # - Requires FZF_DEF_DELIM and FZF_DEF_DELIM_END; copies result to clipboard.
-# ────────────────────────────────────────────────────────
 fzf_block_preview() {
   typeset generator="$1"
   typeset default_query="${2:-}"
@@ -699,7 +716,8 @@ typeset -gA _FZF_DEF_FN_DOC_BY_FILE=()
 typeset -gA _FZF_DEF_ALIAS_DOC_BY_NAME=()
 typeset -gi _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH=0
 
-# _fzf_def_doc_cache_enabled: Return success if persistent doc cache is enabled.
+# _fzf_def_doc_cache_enabled
+# Return success if persistent doc cache is enabled.
 # Usage: _fzf_def_doc_cache_enabled
 # Env:
 # - FZF_DEF_DOC_CACHE_ENABLE: when `true`, enable persistent doc cache.
@@ -707,7 +725,8 @@ _fzf_def_doc_cache_enabled() {
   [[ "${FZF_DEF_DOC_CACHE_ENABLE:-false}" == true ]]
 }
 
-# _fzf_def_doc_cache_ttl_seconds: Print cache TTL in seconds.
+# _fzf_def_doc_cache_ttl_seconds
+# Print cache TTL in seconds.
 # Usage: _fzf_def_doc_cache_ttl_seconds
 # Env:
 # - FZF_DEF_DOC_CACHE_EXPIRE_MINUTES: cache TTL in minutes (default: 10).
@@ -721,7 +740,8 @@ _fzf_def_doc_cache_ttl_seconds() {
   print -r -- $(( minutes * 60 ))
 }
 
-# _fzf_def_doc_cache_dir: Print the cache directory used for persistent doc cache files.
+# _fzf_def_doc_cache_dir
+# Print the cache directory used for persistent doc cache files.
 # Usage: _fzf_def_doc_cache_dir
 # Notes:
 # - Uses `$ZSH_CACHE_DIR` when set; otherwise falls back to `${ZDOTDIR:-$HOME/.config/zsh}/cache`.
@@ -738,7 +758,8 @@ _fzf_def_doc_cache_dir() {
   print -r -- "${root:A}/cache"
 }
 
-# _fzf_def_doc_cache_timestamp_file: Print the persistent cache timestamp file path.
+# _fzf_def_doc_cache_timestamp_file
+# Print the persistent cache timestamp file path.
 # Usage: _fzf_def_doc_cache_timestamp_file
 _fzf_def_doc_cache_timestamp_file() {
   emulate -L zsh
@@ -749,7 +770,8 @@ _fzf_def_doc_cache_timestamp_file() {
   print -r -- "$cache_dir/fzf-def-doc.timestamp"
 }
 
-# _fzf_def_doc_cache_data_file: Print the persistent cache data file path.
+# _fzf_def_doc_cache_data_file
+# Print the persistent cache data file path.
 # Usage: _fzf_def_doc_cache_data_file
 _fzf_def_doc_cache_data_file() {
   emulate -L zsh
@@ -760,7 +782,8 @@ _fzf_def_doc_cache_data_file() {
   print -r -- "$cache_dir/fzf-def-doc.cache.zsh"
 }
 
-# _fzf_def_list_first_party_files: Print the list of first-party files to index for docblocks.
+# _fzf_def_list_first_party_files
+# Print the list of first-party files to index for docblocks.
 # Usage: _fzf_def_list_first_party_files
 # Notes:
 # - Excludes `plugins/`; includes `.zshrc`, `.zprofile`, and `scripts/`, `bootstrap/`, `tools/`.
@@ -998,9 +1021,9 @@ _fzf_def_print_alias_doc() {
   [[ -n "$doc" ]] && _fzf_def_print_docblock_with_separators "$doc"
 }
 
-# ────────────────────────────────────────────────────────
-# _gen_env_block: Emit env var blocks (for fzf_block_preview)
-# ────────────────────────────────────────────────────────
+# _gen_env_block
+# Emit env var blocks for `fzf_block_preview`.
+# Usage: _gen_env_block
 _gen_env_block() {
   env | sort | while IFS='=' read -r name value; do
     printf "%s\n" "$FZF_DEF_DELIM"
@@ -1010,17 +1033,16 @@ _gen_env_block() {
   done
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-env: Browse environment variables with preview
+# fzf-env [query]
+# Browse environment variables with preview.
 # Usage: fzf-env [query]
-# ────────────────────────────────────────────────────────
 fzf-env() {
   fzf_block_preview _gen_env_block ${1:-}
 }
 
-# ────────────────────────────────────────────────────────
-# _gen_alias_block: Emit alias definition blocks
-# ────────────────────────────────────────────────────────
+# _gen_alias_block
+# Emit alias definition blocks for `fzf_block_preview`.
+# Usage: _gen_alias_block
 _gen_alias_block() {
   alias | sort | while IFS='=' read -r name raw; do
     printf "%s\n" "$FZF_DEF_DELIM"
@@ -1031,18 +1053,17 @@ _gen_alias_block() {
   done
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-alias: Browse aliases with preview
+# fzf-alias [query]
+# Browse aliases with preview.
 # Usage: fzf-alias [query]
-# ────────────────────────────────────────────────────────
 fzf-alias() {
   _fzf_def_rebuild_doc_cache
   fzf_block_preview _gen_alias_block ${1:-}
 }
 
-# ────────────────────────────────────────────────────────
-# _gen_function_block: Emit function source blocks
-# ────────────────────────────────────────────────────────
+# _gen_function_block
+# Emit function source blocks for `fzf_block_preview`.
+# Usage: _gen_function_block
 _gen_function_block() {
   for fn in ${(k)functions}; do
     printf "%s\n" "$FZF_DEF_DELIM"
@@ -1053,38 +1074,36 @@ _gen_function_block() {
   done
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-function: Browse functions with preview
+# fzf-function [query]
+# Browse functions with preview.
 # Usage: fzf-function [query]
-# ────────────────────────────────────────────────────────
 fzf-function() {
   _fzf_def_rebuild_doc_cache
   fzf_block_preview _gen_function_block ${1:-}
 }
 
-# ────────────────────────────────────────────────────────
-# _gen_all_def_block: Emit combined env/alias/function blocks
-# ────────────────────────────────────────────────────────
+# _gen_all_def_block
+# Emit combined env/alias/function blocks for `fzf_block_preview`.
+# Usage: _gen_all_def_block
 _gen_all_def_block() {
   _gen_env_block
   _gen_alias_block
   _gen_function_block
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-def: Browse env, aliases, and functions with preview
+# fzf-def [query]
+# Browse env, aliases, and functions with preview.
 # Usage: fzf-def [query]
-# ────────────────────────────────────────────────────────
 fzf-def() {
   _fzf_def_rebuild_doc_cache
   fzf_block_preview _gen_all_def_block ${1:-}
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-directory: Select a directory (fd + fzf) and cd
+# fzf-directory
+# Select a directory (fd + fzf) and cd.
 # Usage: fzf-directory
+# Notes:
 # - Shows hidden dirs; follows symlinks; preview via eza/ls.
-# ────────────────────────────────────────────────────────
 fzf-directory() {
   typeset dir
   dir=$(fd --type d --hidden --follow --exclude .git \
@@ -1093,11 +1112,12 @@ fzf-directory() {
   [[ -n "$dir" ]] && cd "$dir"
 }
 
-# ────────────────────────────────────────────────────────
-# fzf-tools: Main dispatcher and help menu
-# Usage: fzf-tools <command> [args]
-# - See help output for subcommands.
-# ────────────────────────────────────────────────────────
+# fzf-tools <command> [args...]
+# Main dispatcher and help menu.
+# Usage: fzf-tools <command> [args...]
+# Notes:
+# - Subcommands: file, vscode, directory, git-status, git-commit, git-checkout, git-branch, git-tag,
+#   process, port, history, env, alias, function, def
 fzf-tools() {
   typeset cmd="$1"
 
