@@ -6,7 +6,7 @@ This document explains how to write and maintain completion scripts in
 ## Scope and Load Order
 
 - Completion files live under `scripts/_completion`.
-- `scripts/ux/completion.zsh` adds this directory to `fpath` and runs `compinit`.
+- `scripts/interactive/completion.zsh` adds this directory to `fpath` and runs `compinit`.
 - If a new completion does not show up, rebuild the compdump:
   - `rm -f "$ZSH_COMPDUMP"`
   - `autoload -Uz compinit && compinit -i -d "$ZSH_COMPDUMP"`
@@ -23,7 +23,7 @@ This document explains how to write and maintain completion scripts in
 #compdef tool-name
 
 _tool-name() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local context state state_descr
   local -a line
@@ -100,7 +100,7 @@ compdef _tool-name 'tool-name.git'
   - Completion helpers often return non-zero as normal control flow.
   - `nounset` can fail on internal completion variables.
 - Keep options minimal:
-  - `emulate -L zsh` is sufficient for isolation.
+  - Prefer `emulate -L zsh -o extendedglob` (some completion helpers like `_files` rely on EXTENDED_GLOB).
 
 ## Testing Checklist
 

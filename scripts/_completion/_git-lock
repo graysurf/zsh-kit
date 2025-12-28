@@ -1,7 +1,7 @@
 #compdef git-lock
 
 __git_lock_labels() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local toplevel repo_id lock_dir file
   lock_dir="$ZSH_CACHE_DIR/git-locks"
@@ -24,7 +24,7 @@ __git_lock_labels() {
 
 
 _git-lock() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local context state state_descr
   local -a line

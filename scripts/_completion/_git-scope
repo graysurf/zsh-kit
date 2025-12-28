@@ -1,7 +1,7 @@
 #compdef git-scope
 
 _git-scope() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local context state state_descr
   local -a line
@@ -33,8 +33,7 @@ _git-scope() {
         commit)
           _arguments -C \
             '(-p --print)'{-p,--print}'[Print contents of each file in the commit (from HEAD or working tree)]' \
-            '2:commit hash:->commit_hashes' \
-            && return 0
+            '2:commit hash:->commit_hashes'
 
           case "${state-}" in
             commit_hashes)
@@ -52,6 +51,8 @@ _git-scope() {
               return 0
               ;;
           esac
+
+          return 0
           ;;
         tracked|staged|unstaged|all|untracked)
           _arguments -C \
@@ -59,6 +60,8 @@ _git-scope() {
             '2:prefix:_files -/' \
             '*:prefix:_files -/' \
             && return 0
+          _message 'prefix'
+          return 0
           ;;
       esac
       ;;

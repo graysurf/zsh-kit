@@ -1,6 +1,6 @@
 #compdef fzf-tools
 
-emulate -L zsh
+emulate -L zsh -o extendedglob
 
 # List of subcommands with their descriptions
 typeset -a commands

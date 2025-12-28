@@ -1,7 +1,7 @@
 #compdef git-tools
 
 _git_tools_commit_hashes() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   typeset -a commits=()
 
@@ -17,7 +17,7 @@ _git_tools_commit_hashes() {
 }
 
 _git_tools_remote_names() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   typeset -a remotes=()
 
@@ -33,7 +33,7 @@ _git_tools_remote_names() {
 }
 
 _git_tools_branch_names() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   typeset -a branches=()
 
@@ -50,7 +50,7 @@ _git_tools_branch_names() {
 }
 
 _git_tools_remote_refs() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   typeset -a refs=()
 
@@ -70,7 +70,7 @@ _git_tools_remote_refs() {
 }
 
 _git_tools_complete_branch_cleanup() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local context state state_descr
   local -a line
@@ -93,7 +93,7 @@ _git_tools_complete_branch_cleanup() {
 }
 
 _git_tools_complete_reset_remote() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local context state state_descr
   local -a line
@@ -137,7 +137,7 @@ _git_tools_complete_reset_remote() {
 }
 
 _git-tools() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   local context state state_descr
   local -a line

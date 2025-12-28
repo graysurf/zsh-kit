@@ -1,7 +1,7 @@
 #compdef git-summary
 
 _git-summary() {
-  emulate -L zsh
+  emulate -L zsh -o extendedglob
 
   typeset -a subcmds
   subcmds=(
