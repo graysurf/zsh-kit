@@ -658,6 +658,139 @@ BEGIN { inside=0 }
 }
 
 # ────────────────────────────────────────────────────────
+# fzf-def docs: extract comment blocks above definitions
+# - For first-party zsh files only (no plugins/).
+# ────────────────────────────────────────────────────────
+typeset -gA _FZF_DEF_FN_DOC_BY_NAME=()
+typeset -gA _FZF_DEF_FN_DOC_BY_FILE=()
+typeset -gA _FZF_DEF_ALIAS_DOC_BY_NAME=()
+
+_fzf_def_list_first_party_files() {
+  emulate -L zsh
+  setopt err_return
+
+  local root="${ZDOTDIR:-$HOME/.config/zsh}"
+  root="${root:A}"
+
+  local -a files=()
+  local file=''
+  [[ -f "$root/.zshrc" ]] && files+=("$root/.zshrc")
+  [[ -f "$root/.zprofile" ]] && files+=("$root/.zprofile")
+
+  local dir=''
+  for dir in "$root/scripts" "$root/bootstrap" "$root/tools"; do
+    [[ -d "$dir" ]] || continue
+    while IFS= read -r file; do
+      files+=("$file")
+    done < <(command find "$dir" -type f -name '*.zsh' -print 2>/dev/null | sort)
+  done
+
+  print -rl -- "${files[@]}"
+}
+
+_fzf_def_index_file_docs() {
+  emulate -L zsh
+  setopt err_return
+
+  local file="${1-}"
+  [[ -r "$file" ]] || return 0
+
+  local -a comment_buf=()
+  local line='' name='' doc='' key=''
+
+  while IFS= read -r line; do
+    if [[ "$line" =~ '^[[:space:]]*#' ]]; then
+      comment_buf+=("$line")
+      continue
+    fi
+
+    if [[ "$line" =~ '^[[:space:]]*$' ]]; then
+      comment_buf=()
+      continue
+    fi
+
+    if [[ "$line" =~ '^[[:space:]]*function[[:space:]]+([A-Za-z0-9_][A-Za-z0-9_:-]*)[[:space:]]*(\(\))?[[:space:]]*\{' ]]; then
+      name="${match[1]}"
+      if (( ${#comment_buf} )); then
+        doc="${(F)comment_buf}"
+        _FZF_DEF_FN_DOC_BY_NAME[$name]="$doc"
+        key="${file}$'\t'${name}"
+        _FZF_DEF_FN_DOC_BY_FILE[$key]="$doc"
+      fi
+      comment_buf=()
+      continue
+    fi
+
+    if [[ "$line" =~ '^[[:space:]]*([A-Za-z0-9_][A-Za-z0-9_:-]*)[[:space:]]*\(\)[[:space:]]*\{' ]]; then
+      name="${match[1]}"
+      if (( ${#comment_buf} )); then
+        doc="${(F)comment_buf}"
+        _FZF_DEF_FN_DOC_BY_NAME[$name]="$doc"
+        key="${file}$'\t'${name}"
+        _FZF_DEF_FN_DOC_BY_FILE[$key]="$doc"
+      fi
+      comment_buf=()
+      continue
+    fi
+
+    if [[ "$line" =~ '^[[:space:]]*alias[[:space:]]+(-g[[:space:]]+)?([A-Za-z0-9_][A-Za-z0-9_:-]*)[[:space:]]*=' ]]; then
+      name="${match[2]}"
+      if (( ${#comment_buf} )); then
+        _FZF_DEF_ALIAS_DOC_BY_NAME[$name]="${(F)comment_buf}"
+      fi
+      comment_buf=()
+      continue
+    fi
+
+    comment_buf=()
+  done < "$file"
+}
+
+_fzf_def_rebuild_doc_cache() {
+  emulate -L zsh
+  setopt err_return
+
+  _FZF_DEF_FN_DOC_BY_NAME=()
+  _FZF_DEF_FN_DOC_BY_FILE=()
+  _FZF_DEF_ALIAS_DOC_BY_NAME=()
+
+  local file=''
+  while IFS= read -r file; do
+    _fzf_def_index_file_docs "$file"
+  done < <(_fzf_def_list_first_party_files)
+}
+
+_fzf_def_print_function_doc() {
+  emulate -L zsh
+  setopt err_return
+
+  local fn="${1-}"
+  [[ -z "$fn" ]] && return 0
+
+  local doc=''
+  if (( ${+functions_source} )); then
+    local source_file="${functions_source[$fn]-}"
+    if [[ -n "$source_file" ]]; then
+      doc="${_FZF_DEF_FN_DOC_BY_FILE[${source_file}$'\t'${fn}]-}"
+    fi
+  fi
+
+  [[ -z "$doc" ]] && doc="${_FZF_DEF_FN_DOC_BY_NAME[$fn]-}"
+  [[ -n "$doc" ]] && print -r -- "$doc"
+}
+
+_fzf_def_print_alias_doc() {
+  emulate -L zsh
+  setopt err_return
+
+  local name="${1-}"
+  [[ -z "$name" ]] && return 0
+
+  local doc="${_FZF_DEF_ALIAS_DOC_BY_NAME[$name]-}"
+  [[ -n "$doc" ]] && print -r -- "$doc"
+}
+
+# ────────────────────────────────────────────────────────
 # _gen_env_block: Emit env var blocks (for fzf_block_preview)
 # ────────────────────────────────────────────────────────
 _gen_env_block() {
@@ -684,6 +817,7 @@ _gen_alias_block() {
   alias | sort | while IFS='=' read -r name raw; do
     printf "%s\n" "$FZF_DEF_DELIM"
     printf "🔗 %s\n" "$name"
+    _fzf_def_print_alias_doc "$name"
     alias "$name" | sed -E "s/^$name=//; s/^['\"](.*)['\"]$/\1/"
     printf "%s\n\n" "$FZF_DEF_DELIM_END"
   done
@@ -694,6 +828,7 @@ _gen_alias_block() {
 # Usage: fzf-alias [query]
 # ────────────────────────────────────────────────────────
 fzf-alias() {
+  _fzf_def_rebuild_doc_cache
   fzf_block_preview _gen_alias_block ${1:-}
 }
 
@@ -704,6 +839,7 @@ _gen_function_block() {
   for fn in ${(k)functions}; do
     printf "%s\n" "$FZF_DEF_DELIM"
     printf "🔧 %s\n" "$fn"
+    _fzf_def_print_function_doc "$fn"
     functions "$fn" 2>/dev/null
     printf "%s\n\n" "$FZF_DEF_DELIM_END"
   done
@@ -714,6 +850,7 @@ _gen_function_block() {
 # Usage: fzf-function [query]
 # ────────────────────────────────────────────────────────
 fzf-function() {
+  _fzf_def_rebuild_doc_cache
   fzf_block_preview _gen_function_block ${1:-}
 }
 
@@ -731,6 +868,7 @@ _gen_all_def_block() {
 # Usage: fzf-def [query]
 # ────────────────────────────────────────────────────────
 fzf-def() {
+  _fzf_def_rebuild_doc_cache
   fzf_block_preview _gen_all_def_block ${1:-}
 }
 
@@ -796,7 +934,7 @@ fzf-tools() {
     env)              fzf-env "$@" ;;
     alias)            fzf-alias "$@" ;;
     function)         fzf-function "$@" ;;
-    def)             fzf-def "$@" ;;
+    def)              fzf-def "$@" ;;
     *)
       printf "❗ Unknown command: %s\n" "$cmd"
       printf "Run 'fzf-tools help' for usage.\n"
