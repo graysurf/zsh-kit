@@ -14,7 +14,7 @@ typeset -g ZSH_COMPLETION_CACHE_DIR="${ZSH_COMPLETION_CACHE_DIR:-$ZSH_CACHE_DIR/
 # ──────────────────────────────
 # fzf-tab configuration (after compinit)
 # ──────────────────────────────
-setopt EXTENDED_GLOB GLOB_DOTS  
+setopt extendedglob glob_dots
 # avoid auto-inserting common prefix before menu
 unsetopt AUTO_MENU MENU_COMPLETE
 # Use modern menu selection

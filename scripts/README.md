@@ -2,9 +2,13 @@
 
 This document defines conventions for functions defined under `scripts/`.
 
+Note: `scripts/interactive/**` contains interactive entrypoints (key bindings, plugin hooks, completion init).
+These files are allowed to do work at source-time and may depend on an interactive TTY; see "Interactive scripts" below.
+
 Scope:
 
 - Zsh modules and helpers in `scripts/**/*.zsh`
+  - Interactive entrypoints under `scripts/interactive/**` are a deliberate exception to some "module" rules; see "Interactive scripts" below.
 - Zsh completion scripts in `scripts/_completion/_*` (see also `scripts/_completion/README.md`)
 - If `.sh` files are added later, treat them as POSIX `sh` or `bash` explicitly (do not assume zsh).
 
@@ -38,6 +42,18 @@ Conventions for entrypoints:
 - Ensure bootstrap/load order makes the dependencies available before the entrypoint is sourced.
 - Consider graceful failure when sourced standalone (print a clear error if a required function is missing).
 
+## Interactive scripts (`scripts/interactive/`)
+
+`scripts/interactive/**/*.zsh` contains interactive startup code (prompt, key bindings, plugin hooks, completion init).
+These files are loaded as a separate group after the general `scripts/` modules (see `bootstrap/bootstrap.zsh`).
+
+Conventions:
+
+- Source-time work is allowed and expected (e.g. `bindkey`/`zle`, `zstyle`, `compinit`, `setopt`).
+- Guard interactive-only features (ZLE, key bindings, `compinit`) with `[[ -o interactive && -t 0 ]]` where relevant.
+- Prefer feature detection (`command -v ...`, `(( ${+functions[...]} ))`) and degrade gracefully when optional tools/plugins are missing.
+- Keep completion initialization centralized in `scripts/interactive/completion.zsh`; completion definitions live in `scripts/_completion/_*` and follow `scripts/_completion/README.md`.
+
 ## Default zsh function template
 
 For most reusable functions (tools, helpers, library functions), use this preamble:
@@ -70,7 +86,7 @@ Rationale:
 - Do NOT set `err_return` or `nounset` (non-zero returns are normal control flow in completion).
 - Follow `scripts/_completion/README.md`.
 
-### Thin interactive wrappers (builtins, UX)
+### Thin interactive wrappers (builtins, interactive)
 
 For wrappers that intentionally preserve user/global options (e.g. overriding a builtin like `cd`):
 

@@ -1,4 +1,4 @@
-# 🗣️ Shell Runtime Features: `interactive.zsh` Overview
+# 🗣️ Shell Runtime Features: `scripts/interactive/runtime.zsh` Overview
 
 This file sets up the runtime behaviors of your Zsh session, including directory navigation, prompt configuration, and key bindings.  
 It complements `plugins.zsh` by configuring system-level features **after** all plugins are loaded.
@@ -48,7 +48,7 @@ This enables a context-aware, language-sensitive prompt with Git integration, st
 Zsh options are configured for consistent pattern matching and case-insensitive globbing:
 
 ```zsh
-setopt nocaseglob nocasematch extended_glob
+setopt nocaseglob nocasematch extendedglob
 ```
 
 ### History Search

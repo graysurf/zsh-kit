@@ -33,7 +33,7 @@ fi
 
 setopt nocaseglob
 setopt nocasematch
-setopt extended_glob
+setopt extendedglob
 
 # ──────────────────────────────
 # History substring search key bindings

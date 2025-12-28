@@ -37,7 +37,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │
 ├── bootstrap/                            # Script orchestrator and plugin logic
 │   ├── 00-preload.zsh                    # Early global helpers (safe_unalias, clipboard I/O, etc.)
-│   ├── define-loaders.zsh                # Base loader helpers (load_script, load_group, etc.)
+│   ├── define-loaders.zsh                # Base loader helpers (source_file, source_file_warn_missing, group loaders, etc.)
 │   ├── bootstrap.zsh                     # Centralized Zsh entrypoint (called from .zshrc)
 │   ├── plugin_fetcher.zsh                # Git-based plugin fetcher with auto-update, dry-run, and force
 │   ├── plugins.zsh                       # Plugin declaration + loading logic
@@ -65,15 +65,17 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │       ├── git-remote-open.zsh       # Open remotes/branches/commits
 │   │       ├── git-reset.zsh             # Reset/undo/back + reset-remote
 │   │       └── git-utils.zsh             # Copy staged diff + git-root + commit hash
+│   ├── interactive/                      # Interactive shell scripts (completion, plugin hooks, etc.)
+│   │   ├── completion.zsh                # Completion system bootstrap (compinit, options)
+│   │   ├── hotkeys.zsh                   # ZLE widgets and keybindings
+│   │   ├── runtime.zsh                   # Interactive runtime (prompt, zoxide, keybindings)
+│   │   └── plugin-hooks.zsh              # Plugin post-load hooks and overrides
 │   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
-│   ├── completion.zsh                    # Completion system bootstrap (compinit, options)
 │   ├── codex.zsh                         # Codex CLI helpers
 │   ├── env.zsh                           # Environment variable exports and init logic
 │   ├── eza.zsh                           # Aliases for eza (modern ls)
 │   ├── fzf-tools.zsh                     # FZF-based UI helpers for git, files, processes, etc.
-│   ├── interactive.zsh                   # Runtime UX (prompt, zoxide, keybindings)
 │   ├── macos.zsh                         # macOS-specific system tweaks
-│   ├── plugin-hooks.zsh                  # Plugin post-load hooks and overrides
 │   └── shell-utils.zsh                   # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
 ├── tools/                                # Standalone executable scripts or compiled helpers
@@ -100,11 +102,11 @@ Weather report: Taipei City, Taiwan
 🌿  Thinking shell initialized. Expect consequences...
 
 ✅ Loaded 00-preload.zsh in 0ms
-✅ Loaded plugins.zsh in 44ms
+✅ Loaded plugins.zsh in 43ms
 ✅ Loaded chrome-devtools-rdp.zsh in 0ms
 ✅ Loaded codex.zsh in 0ms
 ✅ Loaded eza.zsh in 0ms
-✅ Loaded fzf-tools.zsh in 1ms
+✅ Loaded fzf-tools.zsh in 0ms
 ✅ Loaded git-lock.zsh in 0ms
 ✅ Loaded git-magic.zsh in 0ms
 ✅ Loaded git-scope.zsh in 0ms
@@ -113,18 +115,16 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded git-branch-cleanup.zsh in 0ms
 ✅ Loaded git-commit.zsh in 0ms
 ✅ Loaded git-remote-open.zsh in 0ms
-✅ Loaded git-reset.zsh in 1ms
+✅ Loaded git-reset.zsh in 0ms
 ✅ Loaded git-utils.zsh in 0ms
-✅ Loaded hotkeys.zsh in 0ms
-✅ Loaded interactive.zsh in 16ms
-✅ Loaded macos.zsh in 4ms
+✅ Loaded macos.zsh in 5ms
 ✅ Loaded shell-utils.zsh in 0ms
 ✅ Loaded git-tools.zsh in 0ms
-✅ Loaded env.zsh in 7ms
-✅ Loaded plugin-hooks.zsh in 4ms
-✅ Loaded completion.zsh in 19ms
-✅ Loaded infra.sh in 4ms
-✅ Loaded language.sh in 3ms
+✅ Loaded env.zsh in 20ms
+✅ Loaded runtime.zsh in 13ms
+✅ Loaded hotkeys.zsh in 0ms
+✅ Loaded plugin-hooks.zsh in 0ms
+✅ Loaded completion.zsh in 165ms
 ✅ Loaded development.sh (delayed) in 2ms
 
 🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
@@ -147,7 +147,7 @@ Make sure that `.zshrc` begins by sourcing the env and plugin setup:
 source "$ZDOTDIR/bootstrap/bootstrap.zsh"
 ```
 
-This will initialize all scripts in proper order via the `load_script_group()` system.
+This will initialize all scripts in proper order via the `load_script_group_ordered()` / `load_script_group()` loader helpers.
 
 ## 🛠 Notes
 

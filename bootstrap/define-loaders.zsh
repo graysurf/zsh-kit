@@ -1,8 +1,8 @@
 # Only define once
-typeset -f load_script >/dev/null && return
+typeset -f source_file >/dev/null && return
 
-# Load a script and measure how long it takes
-load_with_timing() {
+# Source a file and measure how long it takes
+source_file() {
   typeset file="${1-}" label="${2-}"
   [[ -n "$file" ]] || return 0
   [[ -n "$label" ]] || label="${file:t}"
@@ -44,22 +44,22 @@ load_with_timing() {
   return "$source_status"
 }
 
+# Source a single file and always warn on missing
+source_file_warn_missing() {
+  typeset file="$1"
+
+  if [[ -f "$file" ]]; then
+    source_file "$file"
+  else
+    printf "⚠️  File not found: %s\n" "$file" >&2
+  fi
+}
+
 # Recursively collect all .sh and .zsh files under given directories
 collect_scripts() {
   for dir in "$@"; do
     print -l "$dir"/**/*.sh(N) "$dir"/**/*.zsh(N)
   done
-}
-
-# Load a single script file with timing and optional debug log
-load_script() {
-  typeset file="$1"
-
-  if [[ -f "$file" ]]; then
-    load_with_timing "$file"
-  else
-    printf "⚠️  File not found: %s\n" "$file" >&2
-  fi
 }
 
 # Load a group of scripts with timing, supporting exclusions and detailed debug
@@ -96,6 +96,107 @@ load_script_group() {
   fi
 
   for file in "${filtered_scripts[@]}"; do
-    load_with_timing "$file"
+    source_file "$file"
+  done
+}
+
+# Load scripts under a directory in a deterministic order, with optional pinned
+# "first" and "last" files and an exclusion list.
+#
+# Usage:
+#   load_script_group_ordered <group-name> <base-dir> \
+#     [--first <file...>] [--last <file...>] [--exclude <file...>] [--] [<exclude...>]
+#
+# Notes:
+# - Any arguments not preceded by --first/--last/--exclude are treated as excludes
+#   (for compatibility with load_script_group).
+# - Pinned first/last files are always loaded in the order provided.
+load_script_group_ordered() {
+  typeset group_name="$1"
+  typeset base_dir="$2"
+  shift 2
+
+  typeset -a first_scripts=() last_scripts=() exclude=()
+  typeset mode='exclude'
+  while (( $# > 0 )); do
+    case "$1" in
+      --first)
+        mode='first'
+        shift
+        continue
+        ;;
+      --last)
+        mode='last'
+        shift
+        continue
+        ;;
+      --exclude)
+        mode='exclude'
+        shift
+        continue
+        ;;
+      --)
+        shift
+        exclude+=("$@")
+        break
+        ;;
+      *)
+        case "$mode" in
+          first)  first_scripts+=("$1") ;;
+          last)   last_scripts+=("$1") ;;
+          *)      exclude+=("$1") ;;
+        esac
+        shift
+        ;;
+    esac
+  done
+
+  typeset -a all_scripts filtered_scripts remove_list
+  all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
+
+  remove_list=("${exclude[@]}" "${first_scripts[@]}" "${last_scripts[@]}")
+  remove_list=(${remove_list:#})
+  remove_list=(${(u)remove_list})
+
+  filtered_scripts=(${(f)"$(
+    printf "%s\n" "${all_scripts[@]}" | grep -vFxf <(printf "%s\n" "${remove_list[@]}")
+  )"})
+
+  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
+    printf "🗂 Loading group: %s\n" "$group_name"
+    printf "🔽 Base: %s\n" "$base_dir"
+
+    if (( ${#first_scripts[@]} > 0 )); then
+      printf "⏫ First:\n"
+      printf '   • %s\n' "${first_scripts[@]}"
+    fi
+    if (( ${#last_scripts[@]} > 0 )); then
+      printf "⏬ Last:\n"
+      printf '   • %s\n' "${last_scripts[@]}"
+    fi
+    if (( ${#exclude[@]} > 0 )); then
+      printf "🚫 Exclude:\n"
+      printf '   • %s\n' "${exclude[@]}"
+    fi
+  fi
+
+  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
+    printf "📦 All collected scripts:\n"
+    printf '   • %s\n' "${all_scripts[@]}"
+
+    printf "✅ Scripts after filtering:\n"
+    printf '   → %s\n' "${filtered_scripts[@]}"
+  fi
+
+  for file in "${first_scripts[@]}"; do
+    source_file "$file"
+  done
+
+  for file in "${filtered_scripts[@]}"; do
+    source_file "$file"
+  done
+
+  for file in "${last_scripts[@]}"; do
+    source_file "$file"
   done
 }

@@ -1,16 +1,16 @@
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/define-loaders.zsh"
 
-# Ensure load_script function is defined before proceeding
-typeset -f load_script &>/dev/null || {
-  printf "❌ load_script not defined. Check bootstrap/define-loaders.zsh\n"
+# Ensure source_file function is defined before proceeding
+typeset -f source_file &>/dev/null || {
+  printf "❌ source_file not defined. Check bootstrap/define-loaders.zsh\n"
   return 1
 }
 
 
-load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"
+source_file_warn_missing "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"
 
 # Attempt to load the plugin system, but allow fallback if it fails
-if ! load_script "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.zsh"; then
+if ! source_file_warn_missing "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.zsh"; then
   printf "⚠️  Plugin system failed to load, continuing without plugins.\n"
 fi
 
@@ -20,13 +20,26 @@ export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
 [[ -d "$ZSH_PRIVATE_SCRIPT_DIR" ]] || mkdir -p "$ZSH_PRIVATE_SCRIPT_DIR"
 
 # ──────────────────────────────
-# Exclude list (array version)
+# Script groups (order + exclude)
 # ──────────────────────────────
 ZSH_SCRIPT_EXCLUDE_LIST=(
+  "$ZSH_SCRIPT_DIR"/interactive/**/*.sh(N)
+  "$ZSH_SCRIPT_DIR"/interactive/**/*.zsh(N)
+)
+
+ZSH_SCRIPT_LAST_LIST=(
   "$ZSH_SCRIPT_DIR/git/git-tools.zsh"
   "$ZSH_SCRIPT_DIR/env.zsh"
-  "$ZSH_SCRIPT_DIR/plugin-hooks.zsh"
-  "$ZSH_SCRIPT_DIR/completion.zsh"
+)
+
+ZSH_INTERACTIVE_SCRIPT_FIRST_LIST=(
+  "$ZSH_SCRIPT_DIR/interactive/runtime.zsh"
+  "$ZSH_SCRIPT_DIR/interactive/hotkeys.zsh"
+)
+
+ZSH_INTERACTIVE_SCRIPT_LAST_LIST=(
+  "$ZSH_SCRIPT_DIR/interactive/plugin-hooks.zsh"
+  "$ZSH_SCRIPT_DIR/interactive/completion.zsh"
 )
 
 ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
@@ -37,25 +50,27 @@ ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
 # ──────────────────────────────
 # Load public scripts (excluding special core scripts)
 # ──────────────────────────────
-load_script_group "Public Scripts" "$ZSH_SCRIPT_DIR" "${ZSH_SCRIPT_EXCLUDE_LIST[@]}"
+load_script_group_ordered "Public Scripts" "$ZSH_SCRIPT_DIR" \
+  --exclude "${ZSH_SCRIPT_EXCLUDE_LIST[@]}" \
+  --last "${ZSH_SCRIPT_LAST_LIST[@]}"
 
 # ──────────────────────────────
-# Source environment and plugins
+# Load interactive scripts after general scripts
 # ──────────────────────────────
-load_with_timing "$ZDOTDIR/scripts/git/git-tools.zsh"
-load_with_timing "$ZDOTDIR/scripts/env.zsh"
-load_with_timing "$ZDOTDIR/scripts/plugin-hooks.zsh"
-load_with_timing "$ZDOTDIR/scripts/completion.zsh"
+load_script_group_ordered "Interactive Scripts" "$ZSH_SCRIPT_DIR/interactive" \
+  --first "${ZSH_INTERACTIVE_SCRIPT_FIRST_LIST[@]}" \
+  --last "${ZSH_INTERACTIVE_SCRIPT_LAST_LIST[@]}"
 
 # ──────────────────────────────
 # Load private scripts
 # ──────────────────────────────
-load_script_group "Private Scripts" "$ZSH_PRIVATE_SCRIPT_DIR" "${ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST[@]}"
+load_script_group_ordered "Private Scripts" "$ZSH_PRIVATE_SCRIPT_DIR" \
+  --exclude "${ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST[@]}"
 
 # ──────────────────────────────
 # Load development.sh last with timing
 # ──────────────────────────────
 dev_script="$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
 if [[ -f "$dev_script" ]]; then
-  load_with_timing "$dev_script" "${dev_script:t} (delayed)"
+  source_file "$dev_script" "${dev_script:t} (delayed)"
 fi
