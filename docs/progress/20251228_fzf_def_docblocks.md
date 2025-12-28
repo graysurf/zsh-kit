@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| in progress | 2025-12-28 | 2025-12-29 |
+| IN PROGRESS | 2025-12-28 | 2025-12-29 |
 
 Links:
 
@@ -142,7 +142,7 @@ Links:
 - [ ] Step 4: Wrap-up
   - Work Items:
     - [ ] Update the `docs/progress/README.md` index (fill in PR link)
-    - [ ] Set this progress file `Status` to `done` and move it to `docs/progress/archived/`
+    - [ ] Set this progress file `Status` to `DONE` and move it to `docs/progress/archived/`
   - Artifacts:
     - `docs/progress/README.md`
     - `docs/progress/archived/20251228_fzf_def_docblocks.md`

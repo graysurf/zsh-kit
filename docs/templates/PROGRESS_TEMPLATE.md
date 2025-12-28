@@ -4,7 +4,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| [[draft\|in progress\|done]] | [[YYYY-MM-DD]] | [[YYYY-MM-DD]] |
+| [[DRAFT\|IN PROGRESS\|DONE]] | [[YYYY-MM-DD]] | [[YYYY-MM-DD]] |
 
 Links:
 
@@ -106,7 +106,7 @@ Links:
     - [ ] Versioning and changes recorded: [[version]], [[CHANGELOG]], [[release notes]] (new content at the top)
     - [ ] Release actions completed: [[tag/release/deploy steps]], [[release link]]
     - [ ] Documentation completed and entry points updated (README / docs index links): [[links]]
-    - [ ] Cleanup completed (close issues, remove temporary flags/files, set status to done): [[notes]]
+    - [ ] Cleanup completed (close issues, remove temporary flags/files, set status to DONE): [[notes]]
 
 ## Modules
 
