@@ -28,11 +28,27 @@ export SHELL_SESSIONS_DISABLE=1
 # macOS-specific convenience aliases
 # ────────────────────────────────────────────────────────
 
-alias f='open'  # Quick open file or dir with default macOS app
+# f: Open a file or directory with the default macOS app.
+# Usage: f <path...>
+alias f='open'
+
+# weather [location]
+# Print weather information from wttr.in.
+# Usage: weather [location]
+# Notes:
+# - Requires network access.
 alias weather='curl wttr.in'
 
+# hidpi
+# Run the one-key-hidpi installer script (downloads and executes remote code).
+# Usage: hidpi
+# Safety:
+# - Executes a remote script via curl; review the URL before running.
 alias hidpi='bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"'
 
-export mactop() {
+# mactop
+# Run mactop with sudo and a fixed color theme.
+# Usage: mactop
+mactop() {
   sudo /opt/homebrew/bin/mactop --color cyan
 }

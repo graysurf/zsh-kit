@@ -111,10 +111,10 @@ Links:
     - [x] `scripts/interactive/hotkeys.zsh`
     - [x] `scripts/interactive/plugin-hooks.zsh`
     - [x] `scripts/interactive/runtime.zsh`
-    - [ ] `scripts/macos.zsh`
-    - [ ] `scripts/shell-utils.zsh`
-    - [ ] `tools/check.zsh`
-    - [ ] `tools/random_emoji_cmd.zsh`
+    - [x] `scripts/macos.zsh`
+    - [x] `scripts/shell-utils.zsh`
+    - [x] `tools/check.zsh`
+    - [x] `tools/random_emoji_cmd.zsh`
   - Artifacts:
     - updated `.zsh` files above
   - Exit Criteria:
