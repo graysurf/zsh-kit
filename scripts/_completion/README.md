@@ -100,7 +100,7 @@ compdef _tool-name 'tool-name.git'
   - Completion helpers often return non-zero as normal control flow.
   - `nounset` can fail on internal completion variables.
 - Keep options minimal:
-  - Prefer `emulate -L zsh -o extendedglob` (some completion helpers like `_files` rely on extendedglob).
+  - Prefer `emulate -L zsh -o extendedglob` (some completion helpers like `_files` rely on `extendedglob`).
 
 ## Testing Checklist
 
