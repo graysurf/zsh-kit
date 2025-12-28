@@ -91,10 +91,10 @@ Links:
     - [x] `bootstrap/plugins.zsh`
     - [x] `bootstrap/quote-init.zsh`
     - [x] `bootstrap/weather.zsh`
-    - [ ] `scripts/chrome-devtools-rdp.zsh`
-    - [ ] `scripts/codex.zsh`
-    - [ ] `scripts/env.zsh`
-    - [ ] `scripts/eza.zsh`
+    - [x] `scripts/chrome-devtools-rdp.zsh`
+    - [x] `scripts/codex.zsh`
+    - [x] `scripts/env.zsh`
+    - [x] `scripts/eza.zsh`
     - [ ] `scripts/fzf-tools.zsh`
     - [ ] `scripts/git/git-lock.zsh`
     - [ ] `scripts/git/git-magic.zsh`
