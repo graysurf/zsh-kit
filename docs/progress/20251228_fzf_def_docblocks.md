@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| draft | 2025-12-28 | 2025-12-29 |
+| in progress | 2025-12-28 | 2025-12-29 |
 
 Links:
 
@@ -86,11 +86,11 @@ Links:
     - [x] `bootstrap/00-preload.zsh`
     - [x] `bootstrap/bootstrap.zsh`
     - [x] `bootstrap/define-loaders.zsh`
-    - [ ] `bootstrap/install-tools.zsh`
-    - [ ] `bootstrap/plugin_fetcher.zsh`
-    - [ ] `bootstrap/plugins.zsh`
-    - [ ] `bootstrap/quote-init.zsh`
-    - [ ] `bootstrap/weather.zsh`
+    - [x] `bootstrap/install-tools.zsh`
+    - [x] `bootstrap/plugin_fetcher.zsh`
+    - [x] `bootstrap/plugins.zsh`
+    - [x] `bootstrap/quote-init.zsh`
+    - [x] `bootstrap/weather.zsh`
     - [ ] `scripts/chrome-devtools-rdp.zsh`
     - [ ] `scripts/codex.zsh`
     - [ ] `scripts/env.zsh`
