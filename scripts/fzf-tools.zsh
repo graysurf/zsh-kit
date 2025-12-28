@@ -77,7 +77,7 @@ _fzf_ensure_git_scope() {
 }
 
 # ────────────────────────────────────────────────────────
-# Shared helpers for kill flow across process/ports
+# Shared helpers for kill flow across process/port
 # - _fzf_parse_kill_flags: parse -k/--kill and -9/--force into globals
 # - _fzf_kill_flow: common confirmation + signal dispatch
 # ────────────────────────────────────────────────────────
@@ -731,7 +731,7 @@ fzf-tools() {
       git-branch   "Browse and checkout branches interactively" \
       git-tag      "Browse and checkout tags interactively" \
       process      "Browse and kill running processes (confirm before kill)" \
-      ports        "Browse listening ports and owners (confirm before kill)" \
+      port         "Browse listening ports and owners (confirm before kill)" \
       history      "Search and execute command history" \
       env          "Browse environment variables" \
       alias        "Browse shell aliases" \
