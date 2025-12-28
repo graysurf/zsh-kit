@@ -33,7 +33,11 @@ safe_unalias() {
   return 0
 }
 
-# Clipboard abstraction (macOS pbpaste, Linux xclip/xsel)
+# get_clipboard
+# Read clipboard contents and print to stdout.
+# Usage: get_clipboard
+# Notes:
+# - Requires pbpaste (macOS) or xclip/xsel (Linux).
 get_clipboard() {
   if command -v pbpaste >/dev/null 2>&1; then
     pbpaste
@@ -47,7 +51,11 @@ get_clipboard() {
   fi
 }
 
-# Clipboard abstraction for writing (macOS pbcopy, Linux xclip/xsel)
+# set_clipboard
+# Read stdin and write it to the system clipboard.
+# Usage: <command> | set_clipboard
+# Notes:
+# - Requires pbcopy (macOS) or xclip/xsel (Linux).
 set_clipboard() {
   if command -v pbcopy >/dev/null 2>&1; then
     pbcopy

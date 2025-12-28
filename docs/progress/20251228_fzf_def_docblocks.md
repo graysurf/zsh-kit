@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| draft | 2025-12-28 | 2025-12-28 |
+| draft | 2025-12-28 | 2025-12-29 |
 
 Links:
 
@@ -81,11 +81,11 @@ Links:
 
 - [ ] Step 1: Docblock backfill (per file)
   - Work Items:
-    - [ ] `.zshrc`
-    - [ ] `.zprofile`
-    - [ ] `bootstrap/00-preload.zsh`
-    - [ ] `bootstrap/bootstrap.zsh`
-    - [ ] `bootstrap/define-loaders.zsh`
+    - [x] `.zshrc`
+    - [x] `.zprofile`
+    - [x] `bootstrap/00-preload.zsh`
+    - [x] `bootstrap/bootstrap.zsh`
+    - [x] `bootstrap/define-loaders.zsh`
     - [ ] `bootstrap/install-tools.zsh`
     - [ ] `bootstrap/plugin_fetcher.zsh`
     - [ ] `bootstrap/plugins.zsh`
