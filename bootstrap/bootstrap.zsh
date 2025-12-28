@@ -44,7 +44,6 @@ ZSH_INTERACTIVE_SCRIPT_LAST_LIST=(
 
 ZSH_PRIVATE_SCRIPT_EXCLUDE_LIST=(
   "$ZSH_PRIVATE_SCRIPT_DIR/development.sh"
-  "$ZSH_PRIVATE_SCRIPT_DIR/tools/codex-tools.zsh"
 )
 
 # ──────────────────────────────

@@ -24,9 +24,9 @@ export HISTTIMEFORMAT='%F %T '
 
 export ZSH_BOOTSTRAP_SCRIPT_DIR="$ZDOTDIR/bootstrap"
 
-export ZSH_DEBUG=0
-export ZSH_BOOT_WEATHER=true
-export ZSH_BOOT_QUOTE=true
+export ZSH_DEBUG="${ZSH_DEBUG:-0}"
+export ZSH_BOOT_WEATHER="${ZSH_BOOT_WEATHER:-true}"
+export ZSH_BOOT_QUOTE="${ZSH_BOOT_QUOTE:-true}"
 
 # Display current weather if enabled
 [[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.zsh"
