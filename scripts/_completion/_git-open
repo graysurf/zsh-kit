@@ -1,0 +1,236 @@
+#compdef git-open
+
+__git_open_commit_hashes() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a commits=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    commits=(${(f)"$(command git log --pretty=format:'%h:%s' -n 20 2>/dev/null || true)"})
+  fi
+
+  if (( ${#commits[@]} > 0 )); then
+    print -r -- "${commits[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_remote_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a remotes=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    remotes=(${(f)"$(command git remote 2>/dev/null || true)"})
+  fi
+
+  if (( ${#remotes[@]} > 0 )); then
+    print -r -- "${remotes[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_branch_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a branches=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branches=(HEAD)
+    branches+=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null || true)"})
+  fi
+
+  if (( ${#branches[@]} > 0 )); then
+    print -r -- "${branches[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_remote_refs() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a refs=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    refs=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/remotes 2>/dev/null || true)"})
+  fi
+
+  if (( ${#refs[@]} > 0 )); then
+    typeset ref=''
+    for ref in "${refs[@]}"; do
+      [[ "$ref" == */HEAD ]] && continue
+      print -r -- "$ref"
+    done
+  fi
+
+  return 0
+}
+
+__git_open_tag_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a tags=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    tags=(${(f)"$(command git for-each-ref --sort=-creatordate --format='%(refname:short)' refs/tags 2>/dev/null | head -n 50 || true)"})
+  fi
+
+  if (( ${#tags[@]} > 0 )); then
+    print -r -- "${tags[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_workflow_files() {
+  emulate -L zsh -o extendedglob
+
+  typeset repo_root='' wf_dir=''
+
+  repo_root="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  wf_dir="$repo_root/.github/workflows"
+
+  [[ -d "$wf_dir" ]] || return 0
+
+  typeset -a files=()
+  files=("${wf_dir}/"*.yml(N:t) "${wf_dir}/"*.yaml(N:t))
+
+  if (( ${#files[@]} > 0 )); then
+    print -r -- "${files[@]}"
+  fi
+
+  return 0
+}
+
+_git-open() {
+  emulate -L zsh -o extendedglob
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
+  typeset -a subcmds
+  subcmds=(
+    'repo:Open repo page'
+    'branch:Open branch/tree (optional ref)'
+    'default-branch:Open default branch page'
+    'commit:Open commit page (optional ref)'
+    'compare:Open compare page (optional base/head)'
+    'pr:Open PR/MR (optional number)'
+    'pulls:Open PR/MR list (optional number)'
+    'issues:Open issues list (optional number)'
+    'actions:Open GitHub Actions (optional workflow/query)'
+    'releases:Open releases list (optional tag)'
+    'tags:Open tags list (optional tag; opens release page)'
+    'commits:Open commit history (optional ref)'
+    'file:Open file view at ref'
+    'blame:Open blame view at ref'
+    'help:Show help'
+    'default:Alias of default-branch'
+    'issue:Alias of issues'
+    'action:Alias of actions'
+    'release:Alias of releases'
+    'tag:Alias of tags'
+    'history:Alias of commits'
+    'blob:Alias of file'
+    'pull-request:Alias of pr'
+    'merge-request:Alias of pr'
+    'mr:Alias of pr'
+    'prs:Alias of pulls'
+    'merge-requests:Alias of pulls'
+    'mrs:Alias of pulls'
+  )
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:command:->subcmds' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    subcmds)
+      _describe -t commands 'git-open command' subcmds && return 0
+      ;;
+    args)
+      typeset subcmd="${line[1]-${words[2]-}}"
+
+      case "$subcmd" in
+        repo)
+          if (( CURRENT == 3 )); then
+            _values 'remote' $(__git_open_remote_names)
+            return 0
+          fi
+          ;;
+        default|default-branch)
+          if (( CURRENT == 3 )); then
+            _values 'remote' $(__git_open_remote_names)
+            return 0
+          fi
+          ;;
+        branch|compare|commits|history)
+          if (( CURRENT == 3 || CURRENT == 4 )); then
+            typeset -a refs=()
+            refs=(${(f)"$(__git_open_branch_names)"})
+            refs+=(${(f)"$(__git_open_remote_refs)"})
+            refs+=(${(f)"$(__git_open_tag_names)"})
+            _values 'ref' $refs
+            return 0
+          fi
+          ;;
+        commit)
+          if (( CURRENT == 3 )); then
+            typeset -a commit_hashes=()
+            commit_hashes=(${(f)"$(__git_open_commit_hashes)"})
+            if (( ${#commit_hashes[@]} > 0 )); then
+              _describe -t commits 'commit ref' commit_hashes && return 0
+            fi
+            _message 'commit ref (default HEAD)'
+            return 0
+          fi
+          ;;
+        pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs|issues|issue)
+          if (( CURRENT == 3 )); then
+            _message 'number (optional, e.g. 123 or #123)'
+            return 0
+          fi
+          ;;
+        actions|action)
+          if (( CURRENT == 3 )); then
+            typeset -a workflow_files=()
+            workflow_files=(${(f)"$(__git_open_workflow_files)"})
+            if (( ${#workflow_files[@]} > 0 )); then
+              _values 'workflow file' $workflow_files
+              return 0
+            fi
+            _message 'workflow (optional, file.yml or query)'
+            return 0
+          fi
+          ;;
+        releases|release|tags|tag)
+          if (( CURRENT == 3 )); then
+            _values 'tag' $(__git_open_tag_names)
+            return 0
+          fi
+          ;;
+        file|blob|blame)
+          if (( CURRENT == 3 )); then
+            _files
+            return 0
+          fi
+          if (( CURRENT == 4 )); then
+            typeset -a refs=()
+            refs=(${(f)"$(__git_open_branch_names)"})
+            refs+=(${(f)"$(__git_open_remote_refs)"})
+            refs+=(${(f)"$(__git_open_tag_names)"})
+            _values 'ref' $refs
+            return 0
+          fi
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _git-open git-open

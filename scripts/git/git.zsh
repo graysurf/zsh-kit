@@ -103,24 +103,24 @@ alias gpff='git push -f'
 # Push current branch and open `HEAD` commit in the browser.
 # Usage: gpo
 # Notes:
-# - Extra args are NOT forwarded to `git push` (they would go to `git-open-commit`).
-alias gpo='git push && git-open-commit HEAD'
+# - Extra args are NOT forwarded to `git push` (they would go to `git-open commit`).
+alias gpo='git push && git-open commit HEAD'
 
 # gpfo
 # Force-push with lease and open `HEAD` commit in the browser.
 # Usage: gpfo
 # Notes:
-# - Extra args are NOT forwarded to `git push` (they would go to `git-open-commit`).
-alias gpfo='git push --force-with-lease && git-open-commit HEAD'
+# - Extra args are NOT forwarded to `git push` (they would go to `git-open commit`).
+alias gpfo='git push --force-with-lease && git-open commit HEAD'
 
 # gpffo
 # Force-push and open `HEAD` commit in the browser (DANGEROUS).
 # Usage: gpffo
 # Notes:
-# - Extra args are NOT forwarded to `git push` (they would go to `git-open-commit`).
+# - Extra args are NOT forwarded to `git push` (they would go to `git-open commit`).
 # Safety:
 # - Overwrites remote history; prefer `gpfo` unless you explicitly need `-f`.
-alias gpffo='git push -f && git-open-commit HEAD'
+alias gpffo='git push -f && git-open commit HEAD'
 
 # ────────────────────────────────────────────────────────
 # Git utility aliases

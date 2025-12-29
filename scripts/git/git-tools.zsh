@@ -66,19 +66,19 @@ alias gdbs='gdb --squash'
 alias gop='git-open'
 
 # god
-# Alias of `git-open-default-branch`.
+# Alias of `git-open default-branch`.
 # Usage: god
-alias god='git-open-default-branch'
+alias god='git-open default-branch'
 
 # goc [ref]
-# Alias of `git-open-commit`.
+# Alias of `git-open commit`.
 # Usage: goc [ref]
-alias goc='git-open-commit'
+alias goc='git-open commit'
 
 # gob
-# Alias of `git-open-branch`.
+# Alias of `git-open branch`.
 # Usage: gob
-alias gob='git-open-branch'
+alias gob='git-open branch'
 
 # gcc
 # Alias of `git-commit-context`.
@@ -108,7 +108,6 @@ _git_tools_usage() {
   print -r -- "  reset    soft | mixed | hard | undo | back-head | back-checkout | remote"
   print -r -- "  commit   context | to-stash"
   print -r -- "  branch   cleanup"
-  print -r -- "  open     repo | branch | default-branch | commit | upstream | normalize-url | push-open"
   print -r --
   print -r -- "Help:"
   print -r -- "  git-tools help"
@@ -117,7 +116,6 @@ _git_tools_usage() {
   print -r -- "Examples:"
   print -r -- "  git-tools utils zip"
   print -r -- "  git-tools reset hard 3"
-  print -r -- "  git-tools open commit HEAD"
   return 0
 }
 
@@ -147,10 +145,6 @@ _git_tools_group_usage() {
       print -r -- "Usage: git-tools branch <command> [args]"
       print -r -- "  cleanup"
       ;;
-    open)
-      print -r -- "Usage: git-tools open <command> [args]"
-      print -r -- "  repo | branch | default-branch | commit | upstream | normalize-url | push-open"
-      ;;
     *)
       print -u2 -r -- "Unknown group: $group"
       _git_tools_usage
@@ -163,11 +157,10 @@ _git_tools_group_usage() {
 # Dispatcher for git helper subcommands.
 # Usage: git-tools <group> <command> [args...]
 # Notes:
-# - Groups: utils, reset, commit, branch, open
+# - Groups: utils, reset, commit, branch
 # - Run `git-tools help` or `git-tools <group> help` for subcommand lists.
 # Examples:
 #   git-tools reset hard 3
-#   git-tools open commit HEAD
 git-tools() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -266,38 +259,8 @@ git-tools() {
         *)
           print -u2 -r -- "Unknown branch command: $cmd"
           _git_tools_group_usage "$group"
-          return 2
-          ;;
-      esac
-      ;;
-    open)
-      case "$cmd" in
-        repo)
-          git-open "$@"
-          ;;
-        branch)
-          git-open-branch "$@"
-          ;;
-        default|default-branch)
-          git-open-default-branch "$@"
-          ;;
-        commit)
-          git-open-commit "$@"
-          ;;
-        upstream|resolve-upstream)
-          git-resolve-upstream "$@"
-          ;;
-        normalize-url|normalize-remote-url)
-          git-normalize-remote-url "$@"
-          ;;
-        push-open)
-          git-push-open "$@"
-          ;;
-        *)
-          print -u2 -r -- "Unknown open command: $cmd"
-          _git_tools_group_usage "$group"
-          return 2
-          ;;
+        return 2
+        ;;
       esac
       ;;
     *)

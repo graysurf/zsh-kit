@@ -1,17 +1,17 @@
 # 🧰 git-tools: Git Helper Router
 
 `git-tools` is a grouped CLI that routes to the Git helper functions shipped in this config.
-It keeps resets, commit helpers, branch cleanup, and remote opening under a single entrypoint.
+It keeps resets, commit helpers, branch cleanup, and utilities under a single entrypoint.
 
 ---
 
 ## 📦 Use Cases
 
 - Run safe reset flows with prompts and rollback awareness
-- Open repo/branch/commit pages from the current upstream
 - Generate commit context or convert a commit into a stash entry
 - Clean merged branches with base/squash awareness
 - Copy staged diffs or jump to the repo root
+- Open repo/branch/commit/PR pages with `git-open`
 
 ---
 
@@ -35,7 +35,7 @@ Show commands for a specific group.
 
 ```bash
 git-tools reset help
-git-tools open help
+git-tools utils help
 ```
 
 ---
@@ -201,74 +201,8 @@ git-tools branch cleanup --base main --squash
 
 ---
 
-### `git-tools open`
-
-Open repo, branch, or commit pages in the browser.
-
-#### `git-tools open repo`
-
-Open the upstream repository page.
-
-```bash
-git-tools open repo
-```
-
-#### `git-tools open branch`
-
-Open the upstream branch page for the current branch.
-
-```bash
-git-tools open branch
-```
-
-#### `git-tools open default-branch`
-
-Open the default branch page (remote HEAD).
-
-```bash
-git-tools open default-branch
-```
-
-#### `git-tools open commit [ref]`
-
-Open a commit page on GitHub (default: `HEAD`).  
-Only GitHub remotes are supported for this command.
-
-```bash
-git-tools open commit HEAD~1
-```
-
-#### `git-tools open upstream`
-
-Print the resolved upstream remote and branch (two lines).  
-Alias: `git-tools open resolve-upstream`
-
-```bash
-git-tools open upstream
-```
-
-#### `git-tools open normalize-url <remote>`
-
-Normalize a remote URL to an https form.  
-Alias: `git-tools open normalize-remote-url`
-
-```bash
-git-tools open normalize-url origin
-```
-
-#### `git-tools open push-open`
-
-Push the current branch, then open the pushed commit.
-
-```bash
-git-tools open push-open
-```
-
----
-
 ## 🧱 Implementation Notes
 
 - `git-tools` is a dispatcher that routes to the `git-*` helper functions.
 - Reset commands prompt before destructive actions; `reset remote` can overwrite local state.
 - Clipboard flows rely on `set_clipboard` being available in the shell.
-- Browser open commands require `open` (macOS) or `xdg-open` (Linux).

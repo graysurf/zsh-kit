@@ -149,7 +149,6 @@ _git-tools() {
     'reset:Reset helpers'
     'commit:Commit helpers'
     'branch:Branch cleanup helpers'
-    'open:Remote open helpers'
     'help:Show usage'
     'list:Show usage'
   )
@@ -197,20 +196,6 @@ _git-tools() {
           subcmds=(
             'cleanup:Delete merged branches'
             'delete-merged:Delete merged branches'
-          )
-          ;;
-        open)
-          subcmds=(
-            'repo:Open repo in browser'
-            'branch:Open branch page'
-            'default-branch:Open default branch page'
-            'default:Open default branch page'
-            'commit:Open commit page'
-            'upstream:Print upstream info'
-            'resolve-upstream:Print upstream info'
-            'normalize-url:Normalize remote URL'
-            'normalize-remote-url:Normalize remote URL'
-            'push-open:Push and open commit'
           )
           ;;
       esac
@@ -294,41 +279,6 @@ _git-tools() {
           case "$cmd" in
             cleanup|delete-merged)
               _git_tools_complete_branch_cleanup
-              return 0
-              ;;
-          esac
-          ;;
-        open)
-          case "$cmd" in
-            repo|branch|default|default-branch|upstream|resolve-upstream)
-              _message 'no more arguments'
-              return 0
-              ;;
-            commit)
-              if (( CURRENT == 4 )); then
-                typeset -a commit_hashes=()
-                commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
-                if (( ${#commit_hashes[@]} > 0 )); then
-                  _describe -t commits 'commit ref' commit_hashes && return 0
-                fi
-                _message 'commit ref (default HEAD)'
-                return 0
-              fi
-              ;;
-            normalize-url|normalize-remote-url)
-              if (( CURRENT == 4 )); then
-                typeset -a remotes=()
-                remotes=(${(f)"$(_git_tools_remote_names)"})
-                if (( ${#remotes[@]} > 0 )); then
-                  _values 'remote' $remotes
-                  return 0
-                fi
-                _message 'remote name'
-                return 0
-              fi
-              ;;
-            push-open)
-              _message 'git push args'
               return 0
               ;;
           esac

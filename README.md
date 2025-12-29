@@ -20,6 +20,8 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
 - 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
+- 🔗 [git-open](docs/git-open.md): Open repo/branch/commit/PR pages in browser
+- 🧰 [git-tools](docs/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
 - 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
@@ -56,13 +58,13 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── git.zsh                       # General Git aliases and settings
 │   │   ├── git-lock.zsh                  # Lock and restore git commits with labels
 │   │   ├── git-magic.zsh                 # Composite git workflows (push, fixup, review)
+│   │   ├── git-open.zsh                  # Open repo/branches/commits/PRs in browser
 │   │   ├── git-scope.zsh                 # Show git changes by scope, diff, or tree
 │   │   ├── git-summary.zsh               # Git contributions by author/date
 │   │   ├── git-tools.zsh                 # Git aliases + CLI entrypoint (impls in tools/)
 │   │   └── tools/                        # Git tool implementations (autoloaded)
 │   │       ├── git-branch-cleanup.zsh    # Delete merged/squash-applied branches
 │   │       ├── git-commit.zsh            # Commit context + commit-to-stash
-│   │       ├── git-remote-open.zsh       # Open remotes/branches/commits
 │   │       ├── git-reset.zsh             # Reset/undo/back + reset-remote
 │   │       └── git-utils.zsh             # Copy staged diff + git-root + commit hash
 │   ├── interactive/                      # Interactive shell scripts (completion, plugin hooks, etc.)
@@ -110,12 +112,12 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded fzf-tools.zsh in 0ms
 ✅ Loaded git-lock.zsh in 0ms
 ✅ Loaded git-magic.zsh in 0ms
+✅ Loaded git-open.zsh in 0ms
 ✅ Loaded git-scope.zsh in 0ms
 ✅ Loaded git-summary.zsh in 2ms
 ✅ Loaded git.zsh in 0ms
 ✅ Loaded git-branch-cleanup.zsh in 0ms
 ✅ Loaded git-commit.zsh in 0ms
-✅ Loaded git-remote-open.zsh in 0ms
 ✅ Loaded git-reset.zsh in 0ms
 ✅ Loaded git-utils.zsh in 0ms
 ✅ Loaded macos.zsh in 5ms

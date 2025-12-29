@@ -23,7 +23,6 @@ source "$ZDOTDIR/scripts/git/tools/git-utils.zsh"
 source "$ZDOTDIR/scripts/git/tools/git-reset.zsh"
 source "$ZDOTDIR/scripts/git/tools/git-commit.zsh"
 source "$ZDOTDIR/scripts/git/tools/git-branch-cleanup.zsh"
-source "$ZDOTDIR/scripts/git/tools/git-remote-open.zsh"
 source "$ZDOTDIR/scripts/git/git-tools.zsh"
 
 if ! typeset -f git-tools >/dev/null; then

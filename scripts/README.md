@@ -101,7 +101,7 @@ If a function deliberately uses non-zero returns as part of normal flow:
 
 ## Naming, scope, and parameters
 
-- User-facing functions: prefer kebab-case (e.g. `git-tools`, `git-open-commit`).
+- User-facing functions: prefer kebab-case (e.g. `git-tools`, `git-open`).
 - Internal helpers: prefix with `_` or `__` and keep them file-local by convention.
 - Avoid overriding builtins unless intentional; document overrides prominently.
 
