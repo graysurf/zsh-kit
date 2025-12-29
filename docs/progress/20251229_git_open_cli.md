@@ -91,9 +91,11 @@ Links:
     - [x] Remove `git-tools open` group and related completion/docs.
     - [x] Add common open targets (`compare`, `pr`, `pulls`, `issues`, etc.).
     - [x] Allow optional target args (remote/tag/number/workflow) where it improves UX.
+    - [x] Add `git-open` completion.
   - Artifacts:
     - `scripts/git/git-tools.zsh`
     - `scripts/_completion/_git-tools`
+    - `scripts/_completion/_git-open`
     - `scripts/git/git.zsh`
     - `scripts/git/git-magic.zsh`
     - `docs/git-tools.md`
@@ -120,4 +122,5 @@ Links:
 ## Modules
 
 - `scripts/git/git-open.zsh`: `git-open` CLI implementation and shared helpers.
+- `scripts/_completion/_git-open`: completion for `git-open`.
 - `scripts/git/git-tools.zsh`: aliases and `git-tools` dispatcher.
