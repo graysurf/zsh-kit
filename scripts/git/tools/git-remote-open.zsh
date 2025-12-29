@@ -108,6 +108,7 @@ _git_open_usage() {
   print -r -- "  - Uses the upstream remote if configured; falls back to origin."
   print -r -- "  - pr uses gh when available; otherwise falls back to the compare page."
   print -r -- "  - tags <tag> opens the release page for the given tag."
+  print -r -- "  - Singular aliases: issue, action, release, tag."
 }
 
 # _git_open_provider <base_url>
@@ -1036,19 +1037,19 @@ git-open() {
       shift
       _git_open_pulls "$@"
       ;;
-    issues)
+    issue|issues)
       shift
       _git_open_issues "$@"
       ;;
-    actions)
+    action|actions)
       shift
       _git_open_actions "$@"
       ;;
-    releases)
+    release|releases)
       shift
       _git_open_releases "$@"
       ;;
-    tags)
+    tag|tags)
       shift
       _git_open_tags "$@"
       ;;
