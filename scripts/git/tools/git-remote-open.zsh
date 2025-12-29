@@ -9,7 +9,7 @@ if command -v safe_unalias >/dev/null; then
     git-open-branch \
     git-open-default-branch \
     git-open-commit \
-    gh-push-open
+    git-push-open
 fi
 
 # git-resolve-upstream
@@ -236,12 +236,12 @@ git-open-default-branch() {
   print -r -- "🌿 Opened: $target_url"
 }
 
-# gh-push-open [git-push-args...]
+# git-push-open [git-push-args...]
 # Push the current branch and open the pushed `HEAD` commit in the browser.
-# Usage: gh-push-open [git-push-args...]
+# Usage: git-push-open [git-push-args...]
 # Safety:
 # - This runs `git push` and may publish commits to the remote.
-gh-push-open() {
+git-push-open() {
   git push "$@" || return $?
   git-open-commit HEAD
 }

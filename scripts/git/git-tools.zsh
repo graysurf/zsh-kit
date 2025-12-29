@@ -291,7 +291,7 @@ git-tools() {
           git-normalize-remote-url "$@"
           ;;
         push-open)
-          gh-push-open "$@"
+          git-push-open "$@"
           ;;
         *)
           print -u2 -r -- "Unknown open command: $cmd"
