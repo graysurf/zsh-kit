@@ -19,8 +19,9 @@ Links:
 
 - `git-open` (no args) opens the repo page (same behavior as before).
 - `git-open` subcommands work as expected:
-  - `repo`, `branch [ref]`, `default-branch`, `commit [ref]`
-  - `compare [base] [head]`, `pr`, `pulls`, `issues`, `actions`, `releases`, `tags`
+  - `repo [remote]`, `branch [ref]`, `default-branch [remote]`, `commit [ref]`
+  - `compare [base] [head]`, `pr [number]`, `pulls [number]`, `issues [number]`
+  - `actions [workflow]`, `releases [tag]`, `tags [tag]` (opens release page)
   - `commits [ref]`, `file <path> [ref]`, `blame <path> [ref]`
 - `git-tools open` supports `repo|branch|default-branch|commit` only (no upstream/normalize-url/push-open).
 - No remaining references to `git-open-branch`, `git-open-default-branch`, `git-open-commit`, or `git-push-open`.
@@ -63,6 +64,7 @@ Links:
 - Removal of `git-open-*` may break muscle memory; mitigated by updating aliases (`goc/gob/god`) and callers.
 - Provider detection is heuristic (github/gitlab/generic) and may not match all self-hosted setups.
 - `actions` is GitHub-only; `pr` prefers `gh` when available (fallback opens compare/new PR page).
+- `tags <tag>` is defined as “open release page for tag”; use `git-open branch <tag>` for tag tree.
 
 ## Steps (Checklist)
 
@@ -88,6 +90,7 @@ Links:
     - [x] Update aliases/callers/docs to use `git-open <subcommand>`.
     - [x] Remove `git-tools open` non-open subcommands.
     - [x] Add common open targets (`compare`, `pr`, `pulls`, `issues`, etc.).
+    - [x] Allow optional target args (remote/tag/number/workflow) where it improves UX.
   - Artifacts:
     - `scripts/git/git-tools.zsh`
     - `scripts/git/git.zsh`

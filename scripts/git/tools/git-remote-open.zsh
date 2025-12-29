@@ -89,17 +89,17 @@ _git_open_usage() {
 
   print -r -- "Usage:"
   print -r -- "  git-open"
-  print -r -- "  git-open repo"
+  print -r -- "  git-open repo [remote]"
   print -r -- "  git-open branch [ref]"
-  print -r -- "  git-open default-branch"
+  print -r -- "  git-open default-branch [remote]"
   print -r -- "  git-open commit [ref]"
   print -r -- "  git-open compare [base] [head]"
-  print -r -- "  git-open pr"
-  print -r -- "  git-open pulls"
-  print -r -- "  git-open issues"
-  print -r -- "  git-open actions"
-  print -r -- "  git-open releases"
-  print -r -- "  git-open tags"
+  print -r -- "  git-open pr [number]"
+  print -r -- "  git-open pulls [number]"
+  print -r -- "  git-open issues [number]"
+  print -r -- "  git-open actions [workflow]"
+  print -r -- "  git-open releases [tag]"
+  print -r -- "  git-open tags [tag]"
   print -r -- "  git-open commits [ref]"
   print -r -- "  git-open file <path> [ref]"
   print -r -- "  git-open blame <path> [ref]"
@@ -107,6 +107,7 @@ _git_open_usage() {
   print -r -- "Notes:"
   print -r -- "  - Uses the upstream remote if configured; falls back to origin."
   print -r -- "  - pr uses gh when available; otherwise falls back to the compare page."
+  print -r -- "  - tags <tag> opens the release page for the given tag."
 }
 
 # _git_open_provider <base_url>
@@ -383,6 +384,31 @@ _git_open_commits_url() {
   esac
 }
 
+# _git_open_release_tag_url <provider> <base_url> <tag>
+# Build a release page URL for a tag (provider-dependent).
+# Usage: _git_open_release_tag_url <provider> <base_url> <tag>
+_git_open_release_tag_url() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  typeset provider="${1-}"
+  typeset base_url="${2-}"
+  typeset tag="${3-}"
+  typeset encoded_tag=''
+
+  if [[ -z "$base_url" || -z "$tag" ]]; then
+    print -u2 -r -- "❌ Missing release tag URL inputs"
+    return 1
+  fi
+
+  encoded_tag=$(_git_open_urlencode_query_value "$tag") || return 1
+
+  case "$provider" in
+    gitlab) print -r -- "$base_url/-/releases/$encoded_tag" ;;
+    *)      print -r -- "$base_url/releases/tag/$encoded_tag" ;;
+  esac
+}
+
 # _git_open_context
 # Resolve base URL + remote + branch for the current repo.
 # Usage: _git_open_context
@@ -417,21 +443,57 @@ _git_open_context() {
   print -r -- "$provider"
 }
 
+# _git_open_remote_context <remote>
+# Resolve base URL + provider for a specific remote name.
+# Usage: _git_open_remote_context <remote>
+# Output:
+# - Line 1: base URL
+# - Line 2: provider (github|gitlab|generic)
+_git_open_remote_context() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  typeset remote="${1-}"
+  typeset base_url='' provider=''
+
+  if [[ -z "$remote" ]]; then
+    print -u2 -r -- "❌ Missing remote name"
+    return 1
+  fi
+
+  base_url=$(git-normalize-remote-url "$remote") || return 1
+  provider=$(_git_open_provider "$base_url") || return 1
+
+  print -r -- "$base_url"
+  print -r -- "$provider"
+}
+
 _git_open_repo() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open repo takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open repo takes at most one remote name"
     _git_open_usage
     return 2
   fi
 
-  typeset -a ctx=()
   typeset base_url=''
 
-  ctx=(${(@f)$(_git_open_context)}) || return 1
-  base_url="${ctx[1]}"
+  if (( $# == 1 )); then
+    case "$1" in
+      -h|--help|help)
+        _git_open_usage
+        return 0
+        ;;
+    esac
+
+    base_url=$(git-normalize-remote-url "$1") || return 1
+  else
+    typeset -a ctx=()
+    ctx=(${(@f)$(_git_open_context)}) || return 1
+    base_url="${ctx[1]}"
+  fi
 
   _git_open_open_url "$base_url" "🌐 Opened"
 }
@@ -499,19 +561,35 @@ _git_open_default_branch() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open default-branch takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open default-branch takes at most one remote name"
     _git_open_usage
     return 2
   fi
 
-  typeset -a ctx=()
   typeset base_url='' remote='' provider='' default_branch='' target_url=''
 
-  ctx=(${(@f)$(_git_open_context)}) || return 1
-  base_url="${ctx[1]}"
-  remote="${ctx[2]}"
-  provider="${ctx[4]}"
+  if (( $# == 1 )); then
+    case "$1" in
+      -h|--help|help)
+        _git_open_usage
+        return 0
+        ;;
+    esac
+
+    remote="$1"
+
+    typeset -a remote_ctx=()
+    remote_ctx=(${(@f)$(_git_open_remote_context "$remote")}) || return 1
+    base_url="${remote_ctx[1]}"
+    provider="${remote_ctx[2]}"
+  else
+    typeset -a ctx=()
+    ctx=(${(@f)$(_git_open_context)}) || return 1
+    base_url="${ctx[1]}"
+    remote="${ctx[2]}"
+    provider="${ctx[4]}"
+  fi
 
   default_branch=$(_git_open_default_branch_name "$remote") || return 1
   target_url=$(_git_open_tree_url "$provider" "$base_url" "$default_branch") || return 1
@@ -561,21 +639,48 @@ _git_open_pr() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open pr takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open pr takes at most one number"
     _git_open_usage
     return 2
   fi
 
   typeset -a ctx=()
   typeset base_url='' remote='' remote_branch='' provider=''
-  typeset base='' target_url='' source_enc='' target_enc=''
+  typeset base='' target_url='' source_enc='' target_enc='' pr_id=''
 
   ctx=(${(@f)$(_git_open_context)}) || return 1
   base_url="${ctx[1]}"
   remote="${ctx[2]}"
   remote_branch="${ctx[3]}"
   provider="${ctx[4]}"
+
+  if (( $# == 1 )); then
+    case "$1" in
+      -h|--help|help)
+        _git_open_usage
+        return 0
+        ;;
+    esac
+
+    pr_id="${1#\#}"
+    if [[ "$pr_id" != <-> ]]; then
+      print -u2 -r -- "❌ Invalid PR number: $1"
+      return 2
+    fi
+
+    case "$provider" in
+      github) target_url="$base_url/pull/$pr_id" ;;
+      gitlab) target_url="$base_url/-/merge_requests/$pr_id" ;;
+      *)
+        print -u2 -r -- "❗ pr <number> is only supported for GitHub/GitLab remotes."
+        return 1
+        ;;
+    esac
+
+    _git_open_open_url "$target_url" "🧷 Opened"
+    return 0
+  fi
 
   case "$provider" in
     github)
@@ -609,10 +714,15 @@ _git_open_pulls() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open pulls takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open pulls takes at most one number"
     _git_open_usage
     return 2
+  fi
+
+  if (( $# == 1 )); then
+    _git_open_pr "$1"
+    return $?
   fi
 
   typeset -a ctx=()
@@ -634,23 +744,36 @@ _git_open_issues() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open issues takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open issues takes at most one number"
     _git_open_usage
     return 2
   fi
 
-  typeset -a ctx=()
   typeset base_url='' provider='' target_url=''
 
+  typeset -a ctx=()
   ctx=(${(@f)$(_git_open_context)}) || return 1
   base_url="${ctx[1]}"
   provider="${ctx[4]}"
 
-  case "$provider" in
-    gitlab) target_url="$base_url/-/issues" ;;
-    *)      target_url="$base_url/issues" ;;
-  esac
+  if (( $# == 1 )); then
+    typeset issue_id="${1#\#}"
+    if [[ "$issue_id" != <-> ]]; then
+      print -u2 -r -- "❌ Invalid issue number: $1"
+      return 2
+    fi
+
+    case "$provider" in
+      gitlab) target_url="$base_url/-/issues/$issue_id" ;;
+      *)      target_url="$base_url/issues/$issue_id" ;;
+    esac
+  else
+    case "$provider" in
+      gitlab) target_url="$base_url/-/issues" ;;
+      *)      target_url="$base_url/issues" ;;
+    esac
+  fi
 
   _git_open_open_url "$target_url" "📌 Opened"
 }
@@ -659,8 +782,8 @@ _git_open_actions() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open actions takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open actions takes at most one workflow"
     _git_open_usage
     return 2
   fi
@@ -677,7 +800,29 @@ _git_open_actions() {
     return 1
   fi
 
-  target_url="$base_url/actions"
+  if (( $# == 1 )); then
+    typeset workflow="$1"
+    case "$workflow" in
+      -h|--help|help)
+        _git_open_usage
+        return 0
+        ;;
+    esac
+
+    if [[ "$workflow" == *.yml || "$workflow" == *.yaml ]]; then
+      typeset encoded_workflow=''
+      encoded_workflow=$(_git_open_urlencode_query_value "$workflow") || return 1
+      target_url="$base_url/actions/workflows/$encoded_workflow"
+    else
+      typeset q='' encoded_q=''
+      q="workflow:$workflow"
+      encoded_q=$(_git_open_urlencode_query_value "$q") || return 1
+      target_url="$base_url/actions?query=$encoded_q"
+    fi
+  else
+    target_url="$base_url/actions"
+  fi
+
   _git_open_open_url "$target_url" "📌 Opened"
 }
 
@@ -685,8 +830,8 @@ _git_open_releases() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open releases takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open releases takes at most one tag"
     _git_open_usage
     return 2
   fi
@@ -698,10 +843,21 @@ _git_open_releases() {
   base_url="${ctx[1]}"
   provider="${ctx[4]}"
 
-  case "$provider" in
-    gitlab) target_url="$base_url/-/releases" ;;
-    *)      target_url="$base_url/releases" ;;
-  esac
+  if (( $# == 1 )); then
+    case "$1" in
+      -h|--help|help)
+        _git_open_usage
+        return 0
+        ;;
+    esac
+
+    target_url=$(_git_open_release_tag_url "$provider" "$base_url" "$1") || return 1
+  else
+    case "$provider" in
+      gitlab) target_url="$base_url/-/releases" ;;
+      *)      target_url="$base_url/releases" ;;
+    esac
+  fi
 
   _git_open_open_url "$target_url" "📌 Opened"
 }
@@ -710,8 +866,8 @@ _git_open_tags() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
 
-  if (( $# > 0 )); then
-    print -u2 -r -- "❌ git-open tags takes no arguments"
+  if (( $# > 1 )); then
+    print -u2 -r -- "❌ git-open tags takes at most one tag"
     _git_open_usage
     return 2
   fi
@@ -723,10 +879,21 @@ _git_open_tags() {
   base_url="${ctx[1]}"
   provider="${ctx[4]}"
 
-  case "$provider" in
-    gitlab) target_url="$base_url/-/tags" ;;
-    *)      target_url="$base_url/tags" ;;
-  esac
+  if (( $# == 1 )); then
+    case "$1" in
+      -h|--help|help)
+        _git_open_usage
+        return 0
+        ;;
+    esac
+
+    target_url=$(_git_open_release_tag_url "$provider" "$base_url" "$1") || return 1
+  else
+    case "$provider" in
+      gitlab) target_url="$base_url/-/tags" ;;
+      *)      target_url="$base_url/tags" ;;
+    esac
+  fi
 
   _git_open_open_url "$target_url" "📌 Opened"
 }
@@ -817,23 +984,23 @@ _git_open_blame() {
 # git-open [command] [args...]
 # Open a repository/branch/commit page for the current repo in your browser.
 # Usage: git-open
-#        git-open repo
-#        git-open branch
-#        git-open default-branch
+#        git-open repo [remote]
+#        git-open branch [ref]
+#        git-open default-branch [remote]
 #        git-open commit [ref]
 #        git-open compare [base] [head]
-#        git-open pr
-#        git-open pulls
-#        git-open issues
-#        git-open actions
-#        git-open releases
-#        git-open tags
+#        git-open pr [number]
+#        git-open pulls [number]
+#        git-open issues [number]
+#        git-open actions [workflow]
+#        git-open releases [tag]
+#        git-open tags [tag]
 #        git-open commits [ref]
 #        git-open file <path> [ref]
 #        git-open blame <path> [ref]
 # Notes:
 # - Uses the upstream remote if configured; falls back to origin.
-# - `pr` uses gh when available; otherwise falls back to the compare page.
+# - pr uses gh when available; otherwise falls back to the compare page.
 git-open() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
