@@ -100,13 +100,13 @@ Links:
     - [ ] `scripts/git/git-magic.zsh`
     - [ ] `scripts/git/git-scope.zsh`
     - [ ] `scripts/git/git-summary.zsh`
-    - [ ] `scripts/git/git-tools.zsh`
-    - [ ] `scripts/git/git.zsh`
-    - [ ] `scripts/git/tools/git-branch-cleanup.zsh`
-    - [ ] `scripts/git/tools/git-commit.zsh`
-    - [ ] `scripts/git/tools/git-remote-open.zsh`
-    - [ ] `scripts/git/tools/git-reset.zsh`
-    - [ ] `scripts/git/tools/git-utils.zsh`
+    - [x] `scripts/git/git-tools.zsh`
+    - [x] `scripts/git/git.zsh`
+    - [x] `scripts/git/tools/git-branch-cleanup.zsh`
+    - [x] `scripts/git/tools/git-commit.zsh`
+    - [x] `scripts/git/tools/git-remote-open.zsh`
+    - [x] `scripts/git/tools/git-reset.zsh`
+    - [x] `scripts/git/tools/git-utils.zsh`
     - [x] `scripts/interactive/completion.zsh`
     - [x] `scripts/interactive/hotkeys.zsh`
     - [x] `scripts/interactive/plugin-hooks.zsh`

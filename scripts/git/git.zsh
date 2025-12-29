@@ -17,67 +17,139 @@ fi
 # Git staging/unstaging shortcuts
 # ────────────────────────────────────────────────────────
 
-# Stage all changes under the current directory
+# ga
+# Alias of `git add`.
+# Usage: ga [args...]
 alias ga='git add'
-# Stage all changes in the entire repository
+
+# gaa
+# Alias of `git add -A` (stage all changes).
+# Usage: gaa [args...]
 alias gaa='git add -A'
-# Stage only tracked file changes
+
+# gau
+# Alias of `git add -u` (stage tracked file changes).
+# Usage: gau [args...]
 alias gau='git add -u'
-# Interactively stage selected hunks/files
+
+# gap
+# Alias of `git add -p` (interactive staging).
+# Usage: gap [args...]
 alias gap='git add -p'
-# Unstage changes for the given path (keep working tree)
+
+# gu
+# Alias of `git restore --staged` (unstage; keep working tree).
+# Usage: gu [args...]
 alias gu='git restore --staged'
-# Interactively unstage selected hunks
+
+# gup
+# Alias of `git restore --staged -p` (interactive unstage).
+# Usage: gup [args...]
 alias gup='git restore --staged -p'
-# Discard working tree changes for the given path (IRREVERSIBLE)
+
+# gwd
+# Alias of `git restore --worktree` (DANGEROUS: discards local changes).
+# Usage: gwd [args...]
+# Safety:
+# - This can overwrite tracked working-tree changes; verify with `git status` first.
 alias gwd='git restore --worktree'
 
 # ────────────────────────────────────────────────────────
 # Git workflow aliases
 # ────────────────────────────────────────────────────────
 
-# Show staged changes and write to screen (for commit preview)
+# gd
+# Show staged diff and also write to the terminal (useful when piping/copying).
+# Usage: gd
 alias gd='git diff --cached --no-color | tee /dev/tty'
 
-# Pull latest changes from remote
+# gl
+# Alias of `git pull`.
+# Usage: gl [args...]
 alias gl='git pull'
 
-# Commit current staged changes
+# gc
+# Alias of `git commit`.
+# Usage: gc [args...]
 alias gc='git commit'
-# Amend the last commit (edit message or add staged changes)
+
+# gca
+# Alias of `git commit --amend` (rewrites the last commit).
+# Usage: gca [args...]
+# Safety:
+# - If the commit was pushed, amending requires force push and can affect others.
 alias gca='git commit --amend'
 
-# Push local commits to the remote (safe default)
+# gp
+# Alias of `git push`.
+# Usage: gp [args...]
 alias gp='git push'
-# Force-push with lease: ensures no one has pushed in the meantime (safer than -f)
+
+# gpf
+# Alias of `git push --force-with-lease` (safer force push).
+# Usage: gpf [args...]
+# Safety:
+# - Still rewrites remote history; use only when you know it’s safe.
 alias gpf='git push --force-with-lease'
-# Force-push unconditionally (DANGEROUS: may overwrite remote history)
+
+# gpff
+# Alias of `git push -f` (DANGEROUS: overwrites remote history).
+# Usage: gpff [args...]
+# Safety:
+# - Prefer `gpf` unless you explicitly need unconditional force push.
 alias gpff='git push -f'
 
-# Push and open latest commit on GitHub
+# gpo
+# Push current branch and open `HEAD` commit in the browser.
+# Usage: gpo
+# Notes:
+# - Extra args are NOT forwarded to `git push` (they would go to `git-open-commit`).
 alias gpo='git push && git-open-commit HEAD'
-# Force-push with lease and open latest commit on GitHub (safe force)
+
+# gpfo
+# Force-push with lease and open `HEAD` commit in the browser.
+# Usage: gpfo
+# Notes:
+# - Extra args are NOT forwarded to `git push` (they would go to `git-open-commit`).
 alias gpfo='git push --force-with-lease && git-open-commit HEAD'
-# Force-push unconditionally and open latest commit on GitHub (DANGEROUS)
+
+# gpffo
+# Force-push and open `HEAD` commit in the browser (DANGEROUS).
+# Usage: gpffo
+# Notes:
+# - Extra args are NOT forwarded to `git push` (they would go to `git-open-commit`).
+# Safety:
+# - Overwrites remote history; prefer `gpfo` unless you explicitly need `-f`.
 alias gpffo='git push -f && git-open-commit HEAD'
 
 # ────────────────────────────────────────────────────────
 # Git utility aliases
 # ────────────────────────────────────────────────────────
 
-# Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
+# git-zip
+# Export `HEAD` as a zip named by short hash (writes a file in the current directory).
+# Usage: git-zip
 alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
 
-# List all files with Git status in detailed view
+# lg
+# List files (long format) with Git status via `eza`.
+# Usage: lg [args...]
 alias lg='eza -alh --icons --group-directories-first --color=always --git --time-style=iso'
-# List directories with Git repo status indicators
+
+# lgr
+# List directories with Git repo status indicators via `eza`.
+# Usage: lgr [args...]
 alias lgr='eza -alh --icons --group-directories-first --color=always --git --git-repos --time-style=iso'
 
 # ────────────────────────────────────────────────────────
 # Directory tree view aliases (with Git-aware listings)
 # ────────────────────────────────────────────────────────
 
-# Visual tree view of current directory (depth = unlimited)
+# git-tree [depth] [path...]
+# Git-aware tree view using `eza`.
+# Usage: git-tree [depth] [path...]
+# Notes:
+# - If the first argument is a number, it is treated as the depth (`eza --level`).
 git-tree() {
   # If first argument is a number, treat it as depth (--level)
   local level_flag=()
@@ -90,11 +162,22 @@ git-tree() {
   return $?
 }
 
-# Tree view 
+# gt
+# Alias of `git-tree`.
+# Usage: gt [args...]
 alias gt='git-tree'
-# Tree view limited to depth 2 (e.g. folders + their subfolders)
+
+# gt2
+# Alias of `gt -L 2` (tree depth 2).
+# Usage: gt2 [args...]
 alias gt2='gt -L 2'
-# Tree view limited to depth 3 (folders + 2 sub-levels)
+
+# gt3
+# Alias of `gt -L 3` (tree depth 3).
+# Usage: gt3 [args...]
 alias gt3='gt -L 3'
-# Tree view limited to depth 5 (for inspecting deeper structures)
+
+# gt5
+# Alias of `gt -L 5` (tree depth 5).
+# Usage: gt5 [args...]
 alias gt5='gt -L 5'

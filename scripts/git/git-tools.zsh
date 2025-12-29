@@ -14,33 +14,88 @@ fi
 # Git operation aliases
 # ────────────────────────────────────────────────────────
 
-# Reset staged files (equivalent to "git reset")
+# gr
+# Alias of `git reset` (commonly used to unstage paths).
+# Usage: gr [args...]
 alias gr='git reset'
 
-# Short aliases for common undo/reset operations
+# grs [N]
+# Alias of `git-reset-soft`.
+# Usage: grs [N]
 alias grs='git-reset-soft'
+
+# grm [N]
+# Alias of `git-reset-mixed`.
+# Usage: grm [N]
 alias grm='git-reset-mixed'
+
+# grh [N]
+# Alias of `git-reset-hard` (DANGEROUS).
+# Usage: grh [N]
+# Safety:
+# - Discards tracked staged/unstaged changes; untracked files are NOT removed.
 alias grh='git-reset-hard'
+
+# gbh
+# Alias of `git-back-head`.
+# Usage: gbh
 alias gbh='git-back-head'
+
+# gbc
+# Alias of `git-back-checkout`.
+# Usage: gbc
 alias gbc='git-back-checkout'
 
-# Branch cleanup aliases
+# gdb
+# Alias of `git-delete-merged-branches`.
+# Usage: gdb [-b|--base <ref>] [-s|--squash]
+# Safety:
+# - Deletes local branches after confirmation; review the list before proceeding.
 alias gdb='git-delete-merged-branches'
+
+# gdbs
+# Alias of `gdb --squash`.
+# Usage: gdbs [-b|--base <ref>]
+# Safety:
+# - Deletes local branches after confirmation; review the list before proceeding.
 alias gdbs='gdb --squash'
 
-# GitHub / GitLab remote open aliases
+# gop
+# Alias of `git-open`.
+# Usage: gop
 alias gop='git-open'
+
+# god
+# Alias of `git-open-default-branch`.
+# Usage: god
 alias god='git-open-default-branch'
+
+# goc [ref]
+# Alias of `git-open-commit`.
+# Usage: goc [ref]
 alias goc='git-open-commit'
+
+# gob
+# Alias of `git-open-branch`.
+# Usage: gob
 alias gob='git-open-branch'
 
-# Commit context alias
+# gcc
+# Alias of `git-commit-context`.
+# Usage: gcc [--stdout|--both] [--no-color]
 alias gcc='git-commit-context'
+
+# gdc
+# Alias of `git-copy-staged`.
+# Usage: gdc [--stdout|--both]
 alias gdc='git-copy-staged'
 
 # ────────────────────────────────────────────────────────
 # Git tools CLI entrypoint
 # ────────────────────────────────────────────────────────
+# _git_tools_usage
+# Print top-level usage for `git-tools`.
+# Usage: _git_tools_usage
 _git_tools_usage() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -66,6 +121,9 @@ _git_tools_usage() {
   return 0
 }
 
+# _git_tools_group_usage <group>
+# Print `git-tools <group>` usage.
+# Usage: _git_tools_group_usage <group>
 _git_tools_group_usage() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -101,6 +159,15 @@ _git_tools_group_usage() {
   esac
 }
 
+# git-tools <group> <command> [args...]
+# Dispatcher for git helper subcommands.
+# Usage: git-tools <group> <command> [args...]
+# Notes:
+# - Groups: utils, reset, commit, branch, open
+# - Run `git-tools help` or `git-tools <group> help` for subcommand lists.
+# Examples:
+#   git-tools reset hard 3
+#   git-tools open commit HEAD
 git-tools() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

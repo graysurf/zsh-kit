@@ -5,19 +5,14 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias git-delete-merged-branches
 fi
 
-# Delete local branches that are already merged, with confirmation.
-#
-# This function lists local branches merged into a base ref (default: HEAD),
-# then asks for confirmation before deleting them using `git branch -d`.
-# With --squash, it also treats branches as deletable when all commits are
-# already present in the base by patch-id (via `git cherry`).
-# It protects the current branch, the base ref (and its local name if applicable),
-# and common mainline branches (main/master/develop/trunk).
-#
-# Usage:
-#   git-delete-merged-branches
-#   git-delete-merged-branches -b main
-#   git-delete-merged-branches --squash
+# git-delete-merged-branches [-b|--base <ref>] [-s|--squash]
+# Delete merged local branches with confirmation.
+# Usage: git-delete-merged-branches [-b|--base <ref>] [-s|--squash]
+# Notes:
+# - Protects current branch, base ref, and main/master/develop/trunk.
+# - With `--squash`, treats branches as deletable when their commits are already applied (git cherry).
+# Safety:
+# - Deleting local branches is irreversible unless you still have the commit SHA (reflog may help).
 git-delete-merged-branches() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
