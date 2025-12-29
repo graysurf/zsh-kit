@@ -26,6 +26,7 @@ Links:
 - `git-tools` no longer exposes an `open` group (use `git-open ...`).
 - No remaining references to `git-open-branch`, `git-open-default-branch`, `git-open-commit`, or `git-push-open`.
 - Repo checks pass: `./tools/check.zsh` (pass).
+- Documentation exists: `docs/git-open.md`.
 
 ## Scope
 
@@ -98,6 +99,7 @@ Links:
     - `scripts/_completion/_git-open`
     - `scripts/git/git.zsh`
     - `scripts/git/git-magic.zsh`
+    - `docs/git-open.md`
     - `docs/git-tools.md`
     - `scripts/README.md`
   - Exit Criteria:
@@ -123,4 +125,5 @@ Links:
 
 - `scripts/git/git-open.zsh`: `git-open` CLI implementation and shared helpers.
 - `scripts/_completion/_git-open`: completion for `git-open`.
+- `docs/git-open.md`: `git-open` documentation.
 - `scripts/git/git-tools.zsh`: aliases and `git-tools` dispatcher.
