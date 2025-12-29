@@ -79,7 +79,7 @@ Links:
     - [x] Risks and mitigations are documented (see Risks / Uncertainties)
     - [x] Minimal reproducible verification command is defined: `./tools/check.zsh`
 
-- [ ] Step 1: Docblock backfill (per file)
+- [x] Step 1: Docblock backfill (per file)
   - Work Items:
     - [x] `.zshrc`
     - [x] `.zprofile`
@@ -118,8 +118,11 @@ Links:
   - Artifacts:
     - updated `.zsh` files above
   - Exit Criteria:
-    - [ ] Each file has been audited at least once (categorize A–F → backfill required docblocks)
-    - [ ] No behavior changes introduced (comments only; `Usage:` text adjusted only when needed for accuracy)
+    - [x] Each file has been audited at least once (categorize A–F → backfill required docblocks)
+    - [x] No behavior changes introduced (docblock work only; comments/whitespace; `Usage:` text adjusted only when needed for accuracy)
+  - Verification:
+    - `./tools/audit-fzf-def-docblocks.zsh --check` (no gaps)
+    - `./tools/check.zsh --smoke` (pass)
 
 - [x] Step 2: Optional tooling / reporting
   - Work Items:
@@ -140,15 +143,19 @@ Links:
     - `./tools/audit-fzf-def-docblocks.zsh --check` (fail if gaps exist)
     - `zsh -f ./tests/run.zsh`
 
-- [ ] Step 3: Validation / testing
+- [x] Step 3: Validation / testing
   - Work Items:
-    - [ ] Run repo checks
-    - [ ] Spot-check `fzf-tools def` previews manually
+    - [x] Run repo checks
+    - [x] Spot-check `fzf-tools def` previews manually
   - Artifacts:
     - `./tools/check.zsh` output (capture in PR description or notes)
+    - `cache/fzf-def-docblocks-spotcheck.txt` (local spot-check snapshot; ignored by git)
   - Exit Criteria:
-    - [ ] `./tools/check.zsh` (pass)
-    - [ ] `fzf-tools def` spot-check confirms docblocks are attached and readable
+    - [x] `./tools/check.zsh --all` (pass)
+    - [x] `fzf-tools def` spot-check confirms docblocks are attached and readable
+  - Verification:
+    - `./tools/check.zsh --all`
+    - `zsh -f ./tests/run.zsh`
 
 - [ ] Step 4: Wrap-up
   - Work Items:
