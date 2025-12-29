@@ -104,7 +104,7 @@ Links:
     - [x] `scripts/git/git.zsh`
     - [x] `scripts/git/tools/git-branch-cleanup.zsh`
     - [x] `scripts/git/tools/git-commit.zsh`
-    - [x] `scripts/git/tools/git-remote-open.zsh`
+    - [x] `scripts/git/git-open.zsh`
     - [x] `scripts/git/tools/git-reset.zsh`
     - [x] `scripts/git/tools/git-utils.zsh`
     - [x] `scripts/interactive/completion.zsh`

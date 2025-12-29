@@ -7,13 +7,13 @@
 Links:
 
 - PR: [graysurf/zsh-kit/pull/11](https://github.com/graysurf/zsh-kit/pull/11)
-- Docs: `scripts/git/tools/git-remote-open.zsh`
+- Docs: `scripts/git/git-open.zsh`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
 ## Goal
 
 - Replace `git-open-*` commands with a single `git-open <subcommand>` CLI.
-- Remove non-open commands from `git-tools open` to keep it focused and predictable.
+- Remove `git-tools open` now that `git-open` is the dedicated CLI.
 
 ## Acceptance Criteria
 
@@ -23,7 +23,7 @@ Links:
   - `compare [base] [head]`, `pr [number]`, `pulls [number]`, `issues [number]`
   - `actions [workflow]`, `releases [tag]`, `tags [tag]` (opens release page)
   - `commits [ref]`, `file <path> [ref]`, `blame <path> [ref]`
-- `git-tools open` supports `repo|branch|default-branch|commit` only (no upstream/normalize-url/push-open).
+- `git-tools` no longer exposes an `open` group (use `git-open ...`).
 - No remaining references to `git-open-branch`, `git-open-default-branch`, `git-open-commit`, or `git-push-open`.
 - Repo checks pass: `./tools/check.zsh` (pass).
 
@@ -57,7 +57,7 @@ Links:
 ### Rationale
 
 - A single `git-open` CLI reduces surface area and makes discovery/usage consistent.
-- Keep `git-tools open` narrowly scoped to open-related actions; remove info/debug and workflow actions.
+- Keep `git-tools` focused on non-open utilities; `git-open` is its own CLI.
 
 ### Risks / Uncertainties
 
@@ -82,19 +82,21 @@ Links:
     - [x] Implement `git-open` dispatcher and shared helpers.
     - [x] Remove legacy `git-open-*` functions.
   - Artifacts:
-    - `scripts/git/tools/git-remote-open.zsh`
+    - `scripts/git/git-open.zsh`
   - Exit Criteria:
     - [x] `git-open` and key subcommands run end-to-end.
 - [x] Step 2: Expansion / integration
   - Work Items:
     - [x] Update aliases/callers/docs to use `git-open <subcommand>`.
-    - [x] Remove `git-tools open` non-open subcommands.
+    - [x] Remove `git-tools open` group and related completion/docs.
     - [x] Add common open targets (`compare`, `pr`, `pulls`, `issues`, etc.).
     - [x] Allow optional target args (remote/tag/number/workflow) where it improves UX.
   - Artifacts:
     - `scripts/git/git-tools.zsh`
+    - `scripts/_completion/_git-tools`
     - `scripts/git/git.zsh`
     - `scripts/git/git-magic.zsh`
+    - `docs/git-tools.md`
     - `scripts/README.md`
   - Exit Criteria:
     - [x] No remaining references to legacy command names.
@@ -117,5 +119,5 @@ Links:
 
 ## Modules
 
-- `scripts/git/tools/git-remote-open.zsh`: `git-open` CLI implementation and shared helpers.
-- `scripts/git/git-tools.zsh`: aliases and `git-tools open` dispatch.
+- `scripts/git/git-open.zsh`: `git-open` CLI implementation and shared helpers.
+- `scripts/git/git-tools.zsh`: aliases and `git-tools` dispatcher.
