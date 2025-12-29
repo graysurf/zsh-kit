@@ -121,13 +121,24 @@ Links:
     - [ ] Each file has been audited at least once (categorize A–F → backfill required docblocks)
     - [ ] No behavior changes introduced (comments only; `Usage:` text adjusted only when needed for accuracy)
 
-- [ ] Step 2: Optional tooling / reporting
+- [x] Step 2: Optional tooling / reporting
   - Work Items:
-    - [ ] (Optional) Add an audit command that prints the baseline and gap list (for PR/review tracking)
+    - [x] Add an audit command that prints the baseline and gap list (for PR/review tracking)
+    - [x] Add a GitHub Actions step that runs the audit and uploads the report as an artifact
+    - [x] Add fixture-based tests to verify the audit detects gaps (missing/disabled docblocks)
   - Artifacts:
-    - `tools/` (TBD)
+    - `tools/audit-fzf-def-docblocks.zsh`
+    - default output: `$ZSH_CACHE_DIR/fzf-def-docblocks-audit.txt` (override via `FZF_DEF_DOC_AUDIT_OUT`)
+    - `.github/workflows/check.yml` (CI runs the audit and uploads `fzf-def-docblocks-audit`)
+    - `tests/fixtures/audit-fzf-def-docblocks/` (known-good and known-bad cases)
+    - `tests/run.zsh` and `tests/audit-fzf-def-docblocks.test.zsh`
   - Exit Criteria:
-    - [ ] A repeatable audit command exists, and this progress file includes the command + output location
+    - [x] A repeatable audit command exists, and this progress file includes the command + output location
+    - [x] CI runs the audit and publishes `cache/fzf-def-docblocks-audit.txt` as `fzf-def-docblocks-audit`
+  - Command:
+    - `./tools/audit-fzf-def-docblocks.zsh`
+    - `./tools/audit-fzf-def-docblocks.zsh --check` (fail if gaps exist)
+    - `zsh -f ./tests/run.zsh`
 
 - [ ] Step 3: Validation / testing
   - Work Items:

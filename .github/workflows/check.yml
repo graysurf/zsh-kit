@@ -27,3 +27,23 @@ jobs:
           else
             zsh -f ./tools/check.zsh --smoke
           fi
+
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          zsh -f ./tests/run.zsh
+
+      - name: Run fzf-def docblock audit
+        env:
+          ZSH_CACHE_DIR: cache
+        run: |
+          set -euo pipefail
+          zsh -f ./tools/audit-fzf-def-docblocks.zsh --check --stdout --out "$ZSH_CACHE_DIR/fzf-def-docblocks-audit.txt"
+
+      - name: Upload fzf-def docblock audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fzf-def-docblocks-audit
+          path: cache/fzf-def-docblocks-audit.txt
+          if-no-files-found: warn
