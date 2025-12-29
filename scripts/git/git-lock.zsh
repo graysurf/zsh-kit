@@ -13,6 +13,9 @@ fi
 typeset -r GIT_LOCK_TIMESTAMP_PATTERN='^timestamp='
 typeset -r GIT_LOCK_ABORTED_MSG='🚫 Aborted'
 
+# _git_lock_confirm <prompt> [printf_args...]
+# Prompt for y/N confirmation (returns 0 only on "y"/"Y").
+# Usage: _git_lock_confirm <prompt> [printf_args...]
 _git_lock_confirm() {
   emulate -L zsh
   setopt localoptions
@@ -33,7 +36,11 @@ _git_lock_confirm() {
   return 0
 }
 
-# Resolve label from argument or latest fallback
+# _git_lock_resolve_label [label]
+# Resolve a git-lock label (explicit label or per-repo "latest").
+# Usage: _git_lock_resolve_label [label]
+# Output:
+# - Prints the resolved label to stdout.
 _git_lock_resolve_label() {
   typeset input_label="$1"
   typeset repo_id lock_dir latest_file
@@ -53,12 +60,12 @@ _git_lock_resolve_label() {
 }
 
 
-# Display a list of all saved git-locks (labels) in the current repository
-# - Includes commit hash, note, timestamp, and commit subject
-# - Highlights the latest label with ⭐
-#
-# Example:
-#   git-lock-list
+# _git_lock [label] [note] [commit]
+# Save a git-lock label pointing at a commit (writes a per-repo lock file).
+# Usage: _git_lock [label] [note] [commit]
+# Notes:
+# - Defaults: label=default, commit=HEAD.
+# - Stores lock files under `$ZSH_CACHE_DIR/git-locks/<repo>-<label>.lock`.
 _git_lock() {
   typeset label note commit repo_id lock_dir lock_file latest_file timestamp hash
 
@@ -96,6 +103,13 @@ _git_lock() {
   printf "    at %s\n" "$timestamp"
 }
 
+# _git_lock_unlock [label]
+# Hard reset the current repo to the commit recorded by a git-lock label (DANGEROUS).
+# Usage: _git_lock_unlock [label]
+# Notes:
+# - When label is omitted, it uses the per-repo "latest" label if present.
+# Safety:
+# - Runs `git reset --hard <hash>` which discards tracked changes.
 _git_lock_unlock() {
   typeset label repo_id lock_dir lock_file latest_file
   typeset label_arg="${1-}"
@@ -138,6 +152,12 @@ _git_lock_unlock() {
 }
 
 
+# _git_lock_list
+# List git-locks for the current repository.
+# Usage: _git_lock_list
+# Notes:
+# - Shows label, commit hash, note, timestamp, and commit subject.
+# - Marks the per-repo "latest" label.
 _git_lock_list() {
   typeset repo_id lock_dir latest
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
@@ -188,13 +208,12 @@ _git_lock_list() {
   done
 }
 
-# Copy an existing git-lock to a new label (preserving all metadata)
-# - Copies both hash and note content as-is to a new lock file
-# - Prompts before overwrite if the target already exists
-# - Sets the copied label as latest
-#
-# Example:
-#   git-lock-copy dev staging
+# _git_lock_copy <from-label> <to-label>
+# Copy a git-lock label (preserves hash/note/timestamp metadata).
+# Usage: _git_lock_copy <from-label> <to-label>
+# Notes:
+# - Prompts before overwriting the target label if it exists.
+# - Sets the copied label as the per-repo "latest".
 _git_lock_copy() {
   typeset repo_id lock_dir src_label dst_label src_file dst_file
   typeset src_label_arg="${1-}"
@@ -247,13 +266,12 @@ _git_lock_copy() {
   [[ -n "$timestamp" ]] && printf "   📅 time:    %s\n" "$timestamp"
 }
 
-# Delete a git-lock by label or the most recent one
-# - Displays details of the git-lock before deletion (hash, note, timestamp)
-# - Prompts for confirmation before deletion
-# - Removes latest marker if the deleted one was the latest
-#
-# Example:
-#   git-lock-delete dev
+# _git_lock_delete [label]
+# Delete a git-lock label for the current repository.
+# Usage: _git_lock_delete [label]
+# Notes:
+# - When label is omitted, it uses the per-repo "latest" label if present.
+# - Removes the "latest" marker if you delete the latest label.
 _git_lock_delete() {
   typeset repo_id lock_dir label lock_file latest_file latest_label
   typeset label_arg="${1-}"
@@ -306,12 +324,11 @@ _git_lock_delete() {
   fi
 }
 
-# Compare two git-locks by label and show their commit diff (log)
-#
-# Usage:
-#   git-lock-diff <label1> <label2>
-#
-# This will show the commits between the two git-lock points using: git log <hash1>..<hash2>
+# _git_lock_diff <label1> <label2> [--no-color]
+# Show commit log between two git-lock labels.
+# Usage: _git_lock_diff <label1> <label2> [--no-color]
+# Notes:
+# - Runs: `git log <hash1>..<hash2>`.
 _git_lock_diff() {
   emulate -L zsh
   setopt localoptions pipe_fail
@@ -383,20 +400,13 @@ _git_lock_diff() {
 }
 
 
-# git-lock-tag: Create a git tag from a saved git-lock lock file
-#
-# Usage:
-#   git-lock-tag <git-lock-label> <tag-name> [-m <tag-message>] [--push]
-#
-# - <git-lock-label>: Label of the saved git-lock (e.g., "111")
-# - <tag-name>: Name of the git tag to create
-# - -m: Optional tag message; if omitted, uses the commit's subject
-# - --push: Pushes the tag to origin, then deletes the local tag
-#
-# Behavior:
-# - Reads commit hash from lock file at $ZSH_CACHE_DIR/git-locks/<repo>-<label>.lock
-# - Falls back to the commit subject as the tag message if none is provided
-# - Prompts before overwriting existing tags
+# _git_lock_tag <label> <tag-name> [-m <tag-message>] [--push]
+# Create an annotated Git tag at the commit recorded by a git-lock label.
+# Usage: _git_lock_tag <label> <tag-name> [-m <tag-message>] [--push]
+# Notes:
+# - Default tag message is the commit subject when `-m` is omitted.
+# Safety:
+# - `--push` publishes the tag to `origin` and deletes the local tag afterwards.
 _git_lock_tag() {
   typeset label tag_name tag_msg="" do_push=false
   typeset repo_id lock_dir lock_file hash timestamp line1
@@ -465,13 +475,15 @@ _git_lock_tag() {
   fi
 }
 
-# ────────────────────────────────────────────────────────
-# git-lock: Save/restore repo snapshots and utilities
-# Usage: git-lock <command> [args]
-# - Subcommands: lock, unlock, list, copy, delete, diff, tag
-# - Stores lock files under $ZSH_CACHE_DIR/git-locks per-repo
-# - Confirms before destructive operations (e.g., reset, overwrite tag)
-# ────────────────────────────────────────────────────────
+# git-lock <command> [args...]
+# Save/restore repo snapshots via per-repo lock labels.
+# Usage: git-lock <lock|unlock|list|copy|delete|diff|tag> [args...]
+# Notes:
+# - Stores lock files under `$ZSH_CACHE_DIR/git-locks` (per repo).
+# - Confirms before destructive operations (e.g., `unlock`, overwriting tags).
+# Examples:
+#   git-lock lock wip "before refactor"
+#   git-lock unlock wip
 git-lock() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
     printf "❗ Not a Git repository. Run this command inside a Git project.\n"

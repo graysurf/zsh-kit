@@ -96,10 +96,10 @@ Links:
     - [x] `scripts/env.zsh`
     - [x] `scripts/eza.zsh`
     - [x] `scripts/fzf-tools.zsh`
-    - [ ] `scripts/git/git-lock.zsh`
-    - [ ] `scripts/git/git-magic.zsh`
-    - [ ] `scripts/git/git-scope.zsh`
-    - [ ] `scripts/git/git-summary.zsh`
+    - [x] `scripts/git/git-lock.zsh`
+    - [x] `scripts/git/git-magic.zsh`
+    - [x] `scripts/git/git-scope.zsh`
+    - [x] `scripts/git/git-summary.zsh`
     - [x] `scripts/git/git-tools.zsh`
     - [x] `scripts/git/git.zsh`
     - [x] `scripts/git/tools/git-branch-cleanup.zsh`
