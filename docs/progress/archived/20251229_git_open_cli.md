@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2025-12-29 | 2025-12-30 |
+| DONE | 2025-12-29 | 2025-12-30 |
 
 Links:
 
@@ -106,20 +106,24 @@ Links:
     - [x] No remaining references to legacy command names.
 - [x] Step 3: Validation / testing
   - Work Items:
-    - [x] Run repo checks.
+    - [x] Run repo checks and audit.
+    - [x] Run tests.
   - Artifacts:
     - `./tools/check.zsh` (pass)
+    - `./tools/check.zsh --smoke` (pass)
+    - `zsh -f ./tests/run.zsh` (pass)
+    - `./tools/audit-fzf-def-docblocks.zsh --check --stdout` (pass)
   - Exit Criteria:
-    - [x] Validation and test commands executed with results recorded: `./tools/check.zsh` (pass).
-- [ ] Step 4: Release / wrap-up
+    - [x] Validation and test commands executed with results recorded (pass).
+- [x] Step 4: Release / wrap-up
   - Work Items:
     - [x] Open PR and collect review feedback.
-    - [ ] After merge: set Status to DONE and move to `docs/progress/archived/`.
+    - [x] Set Status to DONE and move to `docs/progress/archived/`.
   - Artifacts:
     - PR: https://github.com/graysurf/zsh-kit/pull/11
   - Exit Criteria:
-    - [ ] Documentation completed and entry points updated.
-    - [ ] Cleanup completed (status DONE; archived; index updated).
+    - [x] Documentation completed and entry points updated.
+    - [x] Cleanup completed (status DONE; archived; index updated).
 
 ## Modules
 
