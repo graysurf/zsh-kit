@@ -6,7 +6,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| - | - | - |
+| 2025-12-29 | [git_open_cli](20251229_git_open_cli.md) | [graysurf/zsh-kit/pull/11](https://github.com/graysurf/zsh-kit/pull/11) |
 
 ### Archived
 

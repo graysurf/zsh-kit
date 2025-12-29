@@ -13,7 +13,7 @@ fi
 # These aliases combine multiple actions into a single command.
 # Notes:
 # - Clipboard variants require `get_clipboard`.
-# - Open variants require `git-open-commit` (browser open).
+# - Open variants require `git-open commit` (browser open).
 # ────────────────────────────────────────────────────────
 
 # gcp
@@ -35,14 +35,14 @@ alias gcap='git commit --amend && git push'
 # Usage: gcpo
 # Safety:
 # - Runs `git push` and may publish commits to the remote.
-alias gcpo='git commit && git push && git-open-commit HEAD'
+alias gcpo='git commit && git push && git-open commit HEAD'
 
 # gcapo
 # Amend the last commit, push, and open `HEAD` commit in the browser.
 # Usage: gcapo
 # Safety:
 # - `git commit --amend` rewrites the last commit; if already pushed, you may need force push.
-alias gcapo='git commit --amend && git push && git-open-commit HEAD'
+alias gcapo='git commit --amend && git push && git-open commit HEAD'
 
 # gcapf
 # Amend the last commit, then force-push with lease.
@@ -56,7 +56,7 @@ alias gcapf='git commit --amend && git push --force-with-lease'
 # Usage: gcapfo
 # Safety:
 # - Rewrites remote history (`git push --force-with-lease`).
-alias gcapfo='git commit --amend && git push --force-with-lease && git-open-commit HEAD'
+alias gcapfo='git commit --amend && git push --force-with-lease && git-open commit HEAD'
 
 # gcapff
 # Amend the last commit, then force-push (DANGEROUS).
@@ -70,7 +70,7 @@ alias gcapff='git commit --amend && git push -f'
 # Usage: gcapffo
 # Safety:
 # - Overwrites remote history (`git push -f`).
-alias gcapffo='git commit --amend && git push -f && git-open-commit HEAD'
+alias gcapffo='git commit --amend && git push -f && git-open commit HEAD'
 
 # gpc
 # Commit staged changes using a commit message from clipboard.
@@ -113,7 +113,7 @@ alias gpcpff='git commit -F <(get_clipboard) && git push -f'
 # - Requires `get_clipboard`.
 # Safety:
 # - Runs `git push` and may publish commits to the remote.
-alias gpcpo='git commit -F <(get_clipboard) && git push && git-open-commit HEAD'
+alias gpcpo='git commit -F <(get_clipboard) && git push && git-open commit HEAD'
 
 # gpcpfo
 # Commit using clipboard message, force-push with lease, and open `HEAD` commit in the browser.
@@ -122,7 +122,7 @@ alias gpcpo='git commit -F <(get_clipboard) && git push && git-open-commit HEAD'
 # - Requires `get_clipboard`.
 # Safety:
 # - Rewrites remote history (`git push --force-with-lease`).
-alias gpcpfo='git commit -F <(get_clipboard) && git push --force-with-lease && git-open-commit HEAD'
+alias gpcpfo='git commit -F <(get_clipboard) && git push --force-with-lease && git-open commit HEAD'
 
 # gpcpffo
 # Commit using clipboard message, force-push, and open `HEAD` commit in the browser (DANGEROUS).
@@ -131,7 +131,7 @@ alias gpcpfo='git commit -F <(get_clipboard) && git push --force-with-lease && g
 # - Requires `get_clipboard`.
 # Safety:
 # - Overwrites remote history (`git push -f`).
-alias gpcpffo='git commit -F <(get_clipboard) && git push -f && git-open-commit HEAD'
+alias gpcpffo='git commit -F <(get_clipboard) && git push -f && git-open commit HEAD'
 
 # gpca
 # Amend the last commit message using clipboard content.
@@ -176,7 +176,7 @@ alias gpcapff='git commit --amend -F <(get_clipboard) && git push -f'
 # - Requires `get_clipboard`.
 # Safety:
 # - Rewrites the last commit; if already pushed, you may need force push.
-alias gpcapo='git commit --amend -F <(get_clipboard) && git push && git-open-commit HEAD'
+alias gpcapo='git commit --amend -F <(get_clipboard) && git push && git-open commit HEAD'
 
 # gpcapfo
 # Amend using clipboard content, force-push with lease, and open `HEAD` commit in the browser.
@@ -185,7 +185,7 @@ alias gpcapo='git commit --amend -F <(get_clipboard) && git push && git-open-com
 # - Requires `get_clipboard`.
 # Safety:
 # - Rewrites remote history (`git push --force-with-lease`).
-alias gpcapfo='git commit --amend -F <(get_clipboard) && git push --force-with-lease && git-open-commit HEAD'
+alias gpcapfo='git commit --amend -F <(get_clipboard) && git push --force-with-lease && git-open commit HEAD'
 
 # gpcapffo
 # Amend using clipboard content, force-push, and open `HEAD` commit in the browser (DANGEROUS).
@@ -194,4 +194,4 @@ alias gpcapfo='git commit --amend -F <(get_clipboard) && git push --force-with-l
 # - Requires `get_clipboard`.
 # Safety:
 # - Overwrites remote history (`git push -f`).
-alias gpcapffo='git commit --amend -F <(get_clipboard) && git push -f && git-open-commit HEAD'
+alias gpcapffo='git commit --amend -F <(get_clipboard) && git push -f && git-open commit HEAD'

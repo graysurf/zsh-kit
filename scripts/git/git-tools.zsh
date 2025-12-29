@@ -66,19 +66,19 @@ alias gdbs='gdb --squash'
 alias gop='git-open'
 
 # god
-# Alias of `git-open-default-branch`.
+# Alias of `git-open default-branch`.
 # Usage: god
-alias god='git-open-default-branch'
+alias god='git-open default-branch'
 
 # goc [ref]
-# Alias of `git-open-commit`.
+# Alias of `git-open commit`.
 # Usage: goc [ref]
-alias goc='git-open-commit'
+alias goc='git-open commit'
 
 # gob
-# Alias of `git-open-branch`.
+# Alias of `git-open branch`.
 # Usage: gob
-alias gob='git-open-branch'
+alias gob='git-open branch'
 
 # gcc
 # Alias of `git-commit-context`.
@@ -108,7 +108,7 @@ _git_tools_usage() {
   print -r -- "  reset    soft | mixed | hard | undo | back-head | back-checkout | remote"
   print -r -- "  commit   context | to-stash"
   print -r -- "  branch   cleanup"
-  print -r -- "  open     repo | branch | default-branch | commit | upstream | normalize-url | push-open"
+  print -r -- "  open     repo | branch | default-branch | commit"
   print -r --
   print -r -- "Help:"
   print -r -- "  git-tools help"
@@ -149,7 +149,7 @@ _git_tools_group_usage() {
       ;;
     open)
       print -r -- "Usage: git-tools open <command> [args]"
-      print -r -- "  repo | branch | default-branch | commit | upstream | normalize-url | push-open"
+      print -r -- "  repo | branch | default-branch | commit"
       ;;
     *)
       print -u2 -r -- "Unknown group: $group"
@@ -276,22 +276,13 @@ git-tools() {
           git-open "$@"
           ;;
         branch)
-          git-open-branch "$@"
+          git-open branch "$@"
           ;;
         default|default-branch)
-          git-open-default-branch "$@"
+          git-open default-branch "$@"
           ;;
         commit)
-          git-open-commit "$@"
-          ;;
-        upstream|resolve-upstream)
-          git-resolve-upstream "$@"
-          ;;
-        normalize-url|normalize-remote-url)
-          git-normalize-remote-url "$@"
-          ;;
-        push-open)
-          git-push-open "$@"
+          git-open commit "$@"
           ;;
         *)
           print -u2 -r -- "Unknown open command: $cmd"
