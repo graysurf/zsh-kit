@@ -224,41 +224,26 @@ Consider adding (L3) when:
 - High-risk behavior exists: explicitly label `Safety:` or `DANGER:` (irreversible ops, kill, reset,
   delete).
 
-## Rollout Plan
+## Audit / Verification
 
-### 1) Baseline (snapshot)
+Local audit (fails if gaps exist):
 
-Current snapshot of first-party `.zsh` scan (numbers will change over time):
+- `./tools/audit-fzf-def-docblocks.zsh --check`
+- Default output: `$ZSH_CACHE_DIR/fzf-def-docblocks-audit.txt`
+- Override output: `FZF_DEF_DOC_AUDIT_OUT` or `--out <path>`
 
-- functions: `176` definitions, `118` with docblocks
-  - internal (`_` prefix): `77`, `43` with docblocks
-  - non-internal: `99`, `75` with docblocks
-- aliases: `94` definitions, `57` with docblocks
+Tests (fixtures that verify gap detection):
 
-Files with relatively larger gaps (useful for prioritizing backfill):
+- `zsh -f ./tests/run.zsh`
 
-- `scripts/fzf-tools.zsh`: many aliases/helpers; prioritize user-facing commands + non-obvious helpers
-- `scripts/git/git-tools.zsh`: many workflow aliases; prioritize non-obvious + risky aliases
-- `scripts/shell-utils.zsh`: includes overrides and kill utilities; ensure risky items have Safety/Notes
-- `scripts/eza.zsh`: mostly aliases; easy wins via one-line summaries (L1)
+CI (GitHub Actions):
 
-### 2) Targets (adjustable)
+- Workflow: `.github/workflows/check.yml`
+- Artifact: `fzf-def-docblocks-audit` (from `cache/fzf-def-docblocks-audit.txt`)
 
-- Category A/B (user-facing + dispatcher): 100% coverage, at least L2
-- Category E (override/high-risk): 100% coverage, must be L3 with Safety/Notes
-- Category D (internal helpers): no need for 100%, but non-obvious/side-effect helpers must be at least L1
-- Category F (aliases): backfill non-obvious/risky ones to L1 first; then iterate
+Manual spot-check (preview quality):
 
-### 3) Review checklist (for code review)
-
-- Which category (A–F) is this function/alias?
-- Is the docblock attached (no blank line between docblock and definition)?
-- Does it meet the minimum level (L1/L2/L3) for the category?
-- Does `Usage:` match the actual argument parsing?
-- Are side effects / risk / dependencies (git repo, external commands, env vars) clearly stated?
-
-Optional: if you want to track coverage periodically, add a `tools/` audit command that prints the
-baseline + a gap list, and reference it in reviews/PRs.
+- `fzf-tools def` for representative commands, dispatchers, and high-risk aliases/functions
 
 ## Appendix: Existing Styles & Convergence
 
@@ -272,3 +257,4 @@ Recommended convergence:
 
 - For user-facing commands/dispatchers (A/B): prefer signature-first and ensure a `Usage:` line exists.
 - For internal helpers (D): keep it 1–2 lines, but make “what it does / input-output” clear.
+- `name: summary` is mainly for L1/alias; keep A/B aligned to signature-first.
