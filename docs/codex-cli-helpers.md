@@ -81,9 +81,3 @@ Use them only when you trust the workflow and want to bypass Codex sandbox const
 - `CODEX_CLI_MODEL` (default: `gpt-5.1-codex-mini`)
 - `CODEX_CLI_REASONING` (default: `medium`)
 
----
-
-## 🧠 Summary
-
-Codex CLI helpers provide an opt-in, scriptable interface to the most common Codex workflows while
-keeping dangerous execution gated behind an explicit environment flag.

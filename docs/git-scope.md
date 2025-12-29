@@ -218,8 +218,3 @@ git-scope commit HEAD~6
 - File content display supports both text and binary-aware output
 - Internally manages file state parsing using unified helpers
 
----
-
-## 🧠 Summary
-
-`git-scope` helps you reason about your Git repository visually. Whether you're preparing to commit or reviewing a historical change, it gives you a structured way to see what’s going on — file by file, tree by tree.

@@ -104,15 +104,3 @@ Special-case logic (e.g., `abbr`) is hardcoded for known plugins needing extra s
 
 - [.plugins.list.example](../config/.plugins.list.example) — contains examples and format notes
 - [interactive.md](./interactive.md) — runtime behaviors like Starship, Zoxide, keybinds
-
----
-
-## 🧠 Summary
-
-This plugin system is:
-
-- Shell-native and portable
-- Git-powered but manager-free
-- Structured, readable, and declarative
-
-Ideal for users who want minimalism **without sacrificing automation**.

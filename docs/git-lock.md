@@ -130,9 +130,3 @@ To clear all git-locks in current repo:
 ```bash
 rm ~/.config/zsh/cache/git-locks/$(basename `git rev-parse --show-toplevel`)*.lock
 ```
-
----
-
-## 🧠 Summary
-
-git-lock enables Git users to mark meaningful checkpoints in a manual but structured way. It is ideal for monorepo workflows, hotfix backouts, and solo dev snapshots.

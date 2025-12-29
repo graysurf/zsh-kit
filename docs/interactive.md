@@ -61,12 +61,3 @@ bindkey "$terminfo[kcud1]" history-substring-search-down
 bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 ```
-
----
-
-## 🧠 Summary
-
-These runtime features provide **ergonomic defaults** and **intelligent enhancements** for daily shell workflows.  
-They are modular, fast-loading, and work seamlessly with the plugin system — offering a clean, expressive, and productive Zsh experience.
-
-If you wish to extend this runtime layer, consider creating `scripts/runtime.d/*.zsh` and sourcing them in `runtime.zsh`.

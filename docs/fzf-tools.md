@@ -231,11 +231,3 @@ fzf-tools directory
 
 Previews directory contents using `eza`, or falls back to `ls`.
 
----
-
-## 🧠 Summary
-
-Fzf Tools enhances your terminal flow by bridging common developer tasks into a single,
-discoverable command. With `fzf`, `bat`, `eza`, and Git integration, you get a lightweight but
-powerful toolbox for navigating projects, managing sessions, and inspecting your codebase—without
-leaving the shell.

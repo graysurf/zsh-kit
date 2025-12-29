@@ -87,16 +87,3 @@ Weather report: Taipei City, Taiwan
      /(___(__)  10 km
                 0.0 mm
 ```
-
----
-
-## 🧠 Summary
-
-This login system is:
-
-- Terminal-native and dependency-light
-- Quietly opinionated, but easy to bend
-- A small ritual of focus in a world full of noise
-
-Use it, change it, or delete it. But if you're reading quotes in a terminal,  
-you're probably doing something right.
