@@ -9,7 +9,11 @@ if command -v safe_unalias >/dev/null; then
     get_commit_hash
 fi
 
-# Export current HEAD as zip file named by short hash (e.g. backup-a1b2c3d.zip)
+# git-zip
+# Export `HEAD` as a zip file named by short hash.
+# Usage: git-zip
+# Notes:
+# - Writes `backup-<sha>.zip` in the current directory.
 git-zip() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -18,7 +22,12 @@ git-zip() {
   return $?
 }
 
-# Copy staged diff to clipboard (default) or print to stdout for LLM usage.
+# git-copy-staged [--stdout|--both]
+# Copy staged diff to clipboard (default) or print to stdout.
+# Usage: git-copy-staged [--stdout|--both]
+# Notes:
+# - Requires `set_clipboard` for clipboard mode.
+# - Returns non-zero when there are no staged changes.
 git-copy-staged() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -84,7 +93,11 @@ git-copy-staged() {
   return 0
 }
 
-# Jump to the root directory of the current Git repository
+# git-root
+# `cd` to the root directory of the current Git repository.
+# Usage: git-root
+# Notes:
+# - Prints the resolved root path after changing directory.
 git-root() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -106,6 +119,10 @@ git-root() {
 }
 
 # get_commit_hash <ref>
+# Print the commit SHA for a ref (supports annotated tags via `^{commit}`).
+# Usage: get_commit_hash <ref>
+# Output:
+# - Prints the commit SHA to stdout.
 get_commit_hash() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

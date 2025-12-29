@@ -1,7 +1,12 @@
 # Only define once
 typeset -f source_file >/dev/null && return
 
-# Source a file and measure how long it takes
+# source_file <file> [label]
+# Source a file and print load timing (always prints a timing line).
+# Usage: source_file <path> [label]
+# Notes:
+# - No-ops (returns 0) when <path> is empty or missing.
+# - Returns the exit status of `source` for existing files.
 source_file() {
   typeset file="${1-}" label="${2-}"
   [[ -n "$file" ]] || return 0
@@ -44,7 +49,9 @@ source_file() {
   return "$source_status"
 }
 
-# Source a single file and always warn on missing
+# source_file_warn_missing <file>
+# Source a single file; warn to stderr when the file is missing.
+# Usage: source_file_warn_missing <path>
 source_file_warn_missing() {
   typeset file="$1"
 
@@ -55,7 +62,10 @@ source_file_warn_missing() {
   fi
 }
 
-# Recursively collect all .sh and .zsh files under given directories
+# collect_scripts <dir...>
+# Print all `.sh` and `.zsh` files under the given directories (recursive).
+# Usage: collect_scripts <dir...>
+# Output: newline-separated file paths.
 collect_scripts() {
   typeset dir=''
   for dir in "$@"; do
@@ -63,9 +73,10 @@ collect_scripts() {
   done
 }
 
-# Returns 0 if file is under an underscored path segment (folder or basename).
-# Underscored paths are checked relative to base_dir, so underscores outside the
-# base directory don't affect results.
+# script_is_in_underscored_path <base_dir> <file>
+# Return 0 if <file> is under an underscored path segment (folder or basename).
+# Notes:
+# - Paths are checked relative to <base_dir>, so underscores outside the base directory don't count.
 script_is_in_underscored_path() {
   typeset base_dir="$1"
   typeset file="$2"
@@ -90,7 +101,11 @@ script_is_in_underscored_path() {
   return 1
 }
 
-# Load a group of scripts with timing, supporting exclusions and detailed debug
+# load_script_group <group_name> <base_dir> [exclude...]
+# Load scripts under a directory with timing output.
+# Usage: load_script_group <group_name> <base_dir> [exclude...]
+# Notes:
+# - Respects `ZSH_DEBUG` for verbose output.
 load_script_group() {
   typeset group_name="$1"
   typeset base_dir="$2"
@@ -142,6 +157,7 @@ load_script_group() {
   done
 }
 
+# load_script_group_ordered <group-name> <base-dir> [--first <file...>] [--last <file...>] [--exclude <file...>] [--] [<exclude...>]
 # Load scripts under a directory in a deterministic order, with optional pinned
 # "first" and "last" files and an exclusion list.
 #

@@ -13,7 +13,11 @@ if command -v safe_unalias >/dev/null; then
 fi
 
 # git-resolve-upstream
-# Resolve the remote/branch pair backing the current HEAD (prints remote then branch).
+# Resolve the upstream remote/branch backing the current HEAD.
+# Usage: git-resolve-upstream
+# Output:
+# - Line 1: remote (default: origin)
+# - Line 2: remote branch name
 git-resolve-upstream() {
   emulate -L zsh
   setopt localoptions
@@ -45,6 +49,9 @@ git-resolve-upstream() {
 
 # git-normalize-remote-url <remote>
 # Convert a Git remote URL to an https form suitable for browsers and print it.
+# Usage: git-normalize-remote-url <remote>
+# Output:
+# - Prints the normalized URL to stdout.
 git-normalize-remote-url() {
   emulate -L zsh
   setopt localoptions
@@ -77,7 +84,11 @@ git-normalize-remote-url() {
   print -r -- "$normalized"
 }
 
-# Open the repository page on GitHub or GitLab
+# git-open
+# Open the repository page for the upstream remote in your browser.
+# Usage: git-open
+# Notes:
+# - Uses `open` (macOS) or `xdg-open`.
 git-open() {
   emulate -L zsh
   setopt localoptions
@@ -106,7 +117,9 @@ git-open() {
   print -r -- "🌐 Opened: $url"
 }
 
-# Open the current branch page on GitHub or GitLab
+# git-open-branch
+# Open the current branch page for the upstream remote in your browser.
+# Usage: git-open-branch
 git-open-branch() {
   emulate -L zsh
   setopt localoptions
@@ -137,7 +150,11 @@ git-open-branch() {
   print -r -- "🌿 Opened: $target_url"
 }
 
-# Open a specific commit on GitHub (supports tag, branch, or commit hash)
+# git-open-commit [ref]
+# Open a commit page on GitHub (supports tag, branch, or commit ref; default: HEAD).
+# Usage: git-open-commit [ref]
+# Notes:
+# - Only GitHub URLs are supported (https://github.com/*).
 git-open-commit() {
   emulate -L zsh
   setopt localoptions
@@ -179,7 +196,9 @@ git-open-commit() {
   fi
 }
 
-# Open default branch (main or master)
+# git-open-default-branch
+# Open the default branch page for the upstream remote in your browser.
+# Usage: git-open-default-branch
 git-open-default-branch() {
   emulate -L zsh
   setopt localoptions
@@ -217,7 +236,11 @@ git-open-default-branch() {
   print -r -- "🌿 Opened: $target_url"
 }
 
-# Push current branch and open the pushed commit on GitHub or GitLab
+# gh-push-open [git-push-args...]
+# Push the current branch and open the pushed `HEAD` commit in the browser.
+# Usage: gh-push-open [git-push-args...]
+# Safety:
+# - This runs `git push` and may publish commits to the remote.
 gh-push-open() {
   git push "$@" || return $?
   git-open-commit HEAD

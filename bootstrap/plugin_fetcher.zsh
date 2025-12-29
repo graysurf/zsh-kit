@@ -10,7 +10,15 @@ PLUGIN_FETCH_DRY_RUN="${PLUGIN_FETCH_DRY_RUN:-false}"
 PLUGIN_FETCH_FORCE="${PLUGIN_FETCH_FORCE:-false}"
 PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.timestamp"
 
-# Fetch plugin if not present, or force-refetch if requested
+# plugin_fetch_if_missing_from_entry <entry>
+# Ensure the plugin referenced by a `config/plugins.list` entry exists under $ZSH_PLUGINS_DIR.
+# Usage: plugin_fetch_if_missing_from_entry <entry>
+# Env:
+# - ZSH_PLUGINS_DIR: plugin base directory (default: $ZDOTDIR/plugins)
+# - PLUGIN_FETCH_DRY_RUN: when true, do not modify filesystem (default: false)
+# - PLUGIN_FETCH_FORCE: when true, delete and re-clone existing plugin dirs (default: false)
+# Safety:
+# - When PLUGIN_FETCH_FORCE=true and PLUGIN_FETCH_DRY_RUN=false, this removes the plugin directory.
 plugin_fetch_if_missing_from_entry() {
   typeset entry="$1"
   typeset -a parts
@@ -57,6 +65,12 @@ plugin_fetch_if_missing_from_entry() {
   fi
 }
 
+# plugin_update_all
+# Update all git plugin repos under $ZSH_PLUGINS_DIR (fast-forward only).
+# Usage: plugin_update_all
+# Env:
+# - ZSH_PLUGINS_DIR: plugin base directory (default: $ZDOTDIR/plugins)
+# - PLUGIN_FETCH_DRY_RUN: when true, do not modify repos; print intended commands (default: false)
 plugin_update_all() {
   emulate -L zsh
   setopt pipe_fail err_return nounset null_glob
@@ -94,9 +108,15 @@ plugin_update_all() {
       printf "%s\n" "$output" | sed 's/^/    ❌ /'
       printf "    ❌ Failed to update %s\n" "$plugin_name"
     fi
-  done
+	  done
 }
 
+# plugin_maybe_auto_update
+# Auto-update plugins based on the timestamp in $PLUGIN_UPDATE_FILE.
+# Usage: plugin_maybe_auto_update
+# Notes:
+# - Calls plugin_update_all and writes a new timestamp when an update is performed.
+# - Current threshold: 7 days (see implementation).
 plugin_maybe_auto_update() {
   typeset now_epoch last_epoch
 
@@ -112,9 +132,12 @@ plugin_maybe_auto_update() {
     printf "📦 Auto-updating Zsh plugins (last update over 7 days ago)...\n\n"
     plugin_update_all
     printf "%s\n" "$now_epoch" > "$PLUGIN_UPDATE_FILE"
-  fi
+	  fi
 }
 
+# plugin_print_status
+# Print plugin auto-update status based on $PLUGIN_UPDATE_FILE.
+# Usage: plugin_print_status
 plugin_print_status() {
   if [[ ! -f "$PLUGIN_UPDATE_FILE" ]]; then
     printf "📦 Plugin update status: never updated\n"

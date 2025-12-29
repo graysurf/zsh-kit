@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| draft | 2025-12-28 | 2025-12-28 |
+| DONE | 2025-12-28 | 2025-12-30 |
 
 Links:
 
@@ -44,7 +44,7 @@ Links:
 
 ### Intermediate Artifacts
 
-- `docs/progress/20251228_fzf_def_docblocks.md` (this file)
+- `docs/progress/archived/20251228_fzf_def_docblocks.md` (this file)
 
 ## Design / Decisions
 
@@ -72,83 +72,103 @@ Links:
     - `docs/templates/PROGRESS_TEMPLATE.md`
     - `docs/templates/PROGRESS_GLOSSARY.md`
     - `docs/progress/README.md`
-    - `docs/progress/20251228_fzf_def_docblocks.md`
+    - `docs/progress/archived/20251228_fzf_def_docblocks.md`
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned (see this progress file)
     - [x] I/O contract is defined (see I/O Contract)
     - [x] Risks and mitigations are documented (see Risks / Uncertainties)
     - [x] Minimal reproducible verification command is defined: `./tools/check.zsh`
 
-- [ ] Step 1: Docblock backfill (per file)
+- [x] Step 1: Docblock backfill (per file)
   - Work Items:
-    - [ ] `.zshrc`
-    - [ ] `.zprofile`
-    - [ ] `bootstrap/00-preload.zsh`
-    - [ ] `bootstrap/bootstrap.zsh`
-    - [ ] `bootstrap/define-loaders.zsh`
-    - [ ] `bootstrap/install-tools.zsh`
-    - [ ] `bootstrap/plugin_fetcher.zsh`
-    - [ ] `bootstrap/plugins.zsh`
-    - [ ] `bootstrap/quote-init.zsh`
-    - [ ] `bootstrap/weather.zsh`
-    - [ ] `scripts/chrome-devtools-rdp.zsh`
-    - [ ] `scripts/codex.zsh`
-    - [ ] `scripts/env.zsh`
-    - [ ] `scripts/eza.zsh`
-    - [ ] `scripts/fzf-tools.zsh`
-    - [ ] `scripts/git/git-lock.zsh`
-    - [ ] `scripts/git/git-magic.zsh`
-    - [ ] `scripts/git/git-scope.zsh`
-    - [ ] `scripts/git/git-summary.zsh`
-    - [ ] `scripts/git/git-tools.zsh`
-    - [ ] `scripts/git/git.zsh`
-    - [ ] `scripts/git/tools/git-branch-cleanup.zsh`
-    - [ ] `scripts/git/tools/git-commit.zsh`
-    - [ ] `scripts/git/tools/git-remote-open.zsh`
-    - [ ] `scripts/git/tools/git-reset.zsh`
-    - [ ] `scripts/git/tools/git-utils.zsh`
-    - [ ] `scripts/interactive/completion.zsh`
-    - [ ] `scripts/interactive/hotkeys.zsh`
-    - [ ] `scripts/interactive/plugin-hooks.zsh`
-    - [ ] `scripts/interactive/runtime.zsh`
-    - [ ] `scripts/macos.zsh`
-    - [ ] `scripts/shell-utils.zsh`
-    - [ ] `tools/check.zsh`
-    - [ ] `tools/random_emoji_cmd.zsh`
+    - [x] `.zshrc`
+    - [x] `.zprofile`
+    - [x] `bootstrap/00-preload.zsh`
+    - [x] `bootstrap/bootstrap.zsh`
+    - [x] `bootstrap/define-loaders.zsh`
+    - [x] `bootstrap/install-tools.zsh`
+    - [x] `bootstrap/plugin_fetcher.zsh`
+    - [x] `bootstrap/plugins.zsh`
+    - [x] `bootstrap/quote-init.zsh`
+    - [x] `bootstrap/weather.zsh`
+    - [x] `scripts/chrome-devtools-rdp.zsh`
+    - [x] `scripts/codex.zsh`
+    - [x] `scripts/env.zsh`
+    - [x] `scripts/eza.zsh`
+    - [x] `scripts/fzf-tools.zsh`
+    - [x] `scripts/git/git-lock.zsh`
+    - [x] `scripts/git/git-magic.zsh`
+    - [x] `scripts/git/git-scope.zsh`
+    - [x] `scripts/git/git-summary.zsh`
+    - [x] `scripts/git/git-tools.zsh`
+    - [x] `scripts/git/git.zsh`
+    - [x] `scripts/git/tools/git-branch-cleanup.zsh`
+    - [x] `scripts/git/tools/git-commit.zsh`
+    - [x] `scripts/git/tools/git-remote-open.zsh`
+    - [x] `scripts/git/tools/git-reset.zsh`
+    - [x] `scripts/git/tools/git-utils.zsh`
+    - [x] `scripts/interactive/completion.zsh`
+    - [x] `scripts/interactive/hotkeys.zsh`
+    - [x] `scripts/interactive/plugin-hooks.zsh`
+    - [x] `scripts/interactive/runtime.zsh`
+    - [x] `scripts/macos.zsh`
+    - [x] `scripts/shell-utils.zsh`
+    - [x] `tools/check.zsh`
+    - [x] `tools/random_emoji_cmd.zsh`
   - Artifacts:
     - updated `.zsh` files above
   - Exit Criteria:
-    - [ ] Each file has been audited at least once (categorize A–F → backfill required docblocks)
-    - [ ] No behavior changes introduced (comments only; `Usage:` text adjusted only when needed for accuracy)
+    - [x] Each file has been audited at least once (categorize A–F → backfill required docblocks)
+    - [x] No behavior changes introduced (docblock work only; comments/whitespace; `Usage:` text adjusted only when needed for accuracy)
+  - Verification:
+    - `./tools/audit-fzf-def-docblocks.zsh --check` (no gaps)
+    - `./tools/check.zsh --smoke` (pass)
 
-- [ ] Step 2: Optional tooling / reporting
+- [x] Step 2: Optional tooling / reporting
   - Work Items:
-    - [ ] (Optional) Add an audit command that prints the baseline and gap list (for PR/review tracking)
+    - [x] Add an audit command that prints the baseline and gap list (for PR/review tracking)
+    - [x] Add a GitHub Actions step that runs the audit and uploads the report as an artifact
+    - [x] Add fixture-based tests to verify the audit detects gaps (missing/disabled docblocks)
   - Artifacts:
-    - `tools/` (TBD)
+    - `tools/audit-fzf-def-docblocks.zsh`
+    - default output: `$ZSH_CACHE_DIR/fzf-def-docblocks-audit.txt` (override via `FZF_DEF_DOC_AUDIT_OUT`)
+    - `.github/workflows/check.yml` (CI runs the audit and uploads `fzf-def-docblocks-audit`)
+    - `tests/fixtures/audit-fzf-def-docblocks/` (known-good and known-bad cases)
+    - `tests/run.zsh` and `tests/audit-fzf-def-docblocks.test.zsh`
   - Exit Criteria:
-    - [ ] A repeatable audit command exists, and this progress file includes the command + output location
+    - [x] A repeatable audit command exists, and this progress file includes the command + output location
+    - [x] CI runs the audit and publishes `cache/fzf-def-docblocks-audit.txt` as `fzf-def-docblocks-audit`
+  - Command:
+    - `./tools/audit-fzf-def-docblocks.zsh`
+    - `./tools/audit-fzf-def-docblocks.zsh --check` (fail if gaps exist)
+    - `zsh -f ./tests/run.zsh`
 
-- [ ] Step 3: Validation / testing
+- [x] Step 3: Validation / testing
   - Work Items:
-    - [ ] Run repo checks
-    - [ ] Spot-check `fzf-tools def` previews manually
+    - [x] Run repo checks
+    - [x] Spot-check `fzf-tools def` previews manually
   - Artifacts:
     - `./tools/check.zsh` output (capture in PR description or notes)
+    - `cache/fzf-def-docblocks-spotcheck.txt` (local spot-check snapshot; ignored by git)
   - Exit Criteria:
-    - [ ] `./tools/check.zsh` (pass)
-    - [ ] `fzf-tools def` spot-check confirms docblocks are attached and readable
+    - [x] `./tools/check.zsh --all` (pass)
+    - [x] `fzf-tools def` spot-check confirms docblocks are attached and readable
+  - Verification:
+    - `./tools/check.zsh --all`
+    - `zsh -f ./tests/run.zsh`
 
-- [ ] Step 4: Wrap-up
+- [x] Step 4: Wrap-up
   - Work Items:
-    - [ ] Update the `docs/progress/README.md` index (fill in PR link)
-    - [ ] Set this progress file `Status` to `done` and move it to `docs/progress/archived/`
+    - [x] Update the `docs/progress/README.md` index (fill in PR link)
+    - [x] Set this progress file `Status` to `DONE` and move it to `docs/progress/archived/`
   - Artifacts:
     - `docs/progress/README.md`
     - `docs/progress/archived/20251228_fzf_def_docblocks.md`
   - Exit Criteria:
-    - [ ] This progress file has no placeholders, and all tentative notes are replaced with concrete outcomes
-    - [ ] Index and archiving are complete
+    - [x] This progress file has no placeholders, and all tentative notes are replaced with concrete outcomes
+    - [x] Index and archiving are complete
+  - Verification:
+    - `rg -n "\\[\\[.*\\]\\]" docs/progress -S` (no output)
 
 ## Modules
 

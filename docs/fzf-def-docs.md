@@ -111,6 +111,27 @@ To keep the guideline actionable, docblocks are grouped into levels and mapped t
 - L2: Summary + Usage (typically 2–4 lines)
 - L3: Full block (Summary + Usage + 1–3 sections: Options/Examples/Env/Output/Notes/Safety)
 
+## Standard Layout (Preferred)
+
+To keep previews consistent and easy to scan, standardize the *shape* of docblocks:
+
+- L1 (one line): `# <name>: <summary>`
+- L2/L3 (multi-line): start with a name/signature line, then a summary line:
+  - `# <name> [args...]`
+  - `# <summary>`
+
+Then add `Usage:` and optional sections (`Examples:`, `Notes:`, `Env:`, `Safety:`) as needed.
+
+## Preview Separators (fzf-tools)
+
+For readability, `fzf-tools def` / `fzf-tools function` / `fzf-tools alias` wraps captured docblocks
+with comment separator lines in the preview output (and therefore in the copied result).
+
+- These separator lines are inserted at render time and are not part of the source docblock.
+- Do not add `# -----` separator lines into docblocks themselves; keep docblocks focused on
+  Summary/Usage and related sections.
+- `FZF_DEF_DOC_SEPARATOR_PAD` (default: `2`) controls the extra width added to the separator line.
+
 ## Recommended Formats (Templates)
 
 The guiding principles are: scannable, copyable, and consistent.
@@ -134,8 +155,10 @@ my-command() {
 ### 2) Dispatcher (L3)
 
 ```zsh
-# my-tools: Dispatcher for related subcommands.
+# my-tools
+# Dispatcher for related subcommands.
 # Usage: my-tools <command> [args]
+# Notes:
 # - Subcommands: alpha, beta, gamma
 # Examples:
 #   my-tools alpha
@@ -164,16 +187,17 @@ alias kp='kill-port'
 
 ## Writing Guidelines (What to Include / Avoid)
 
-### Summary (first line, sometimes first two lines)
+### Header + Summary
 
 Do:
 
-- Start with a verb; describe what it does, not how it is implemented.
+- Use the Standard Layout (Preferred) section above.
+- Start the summary with a verb; describe what it does, not how it is implemented.
 - Prefer calling out scope and side effects (e.g. changes git state, writes files, kills processes).
 
 Avoid:
 
-- Implementation details (internal function names, awk/sed pipelines) in the Summary.
+- Implementation details (internal function names, awk/sed pipelines) in the summary.
 
 ### Usage
 

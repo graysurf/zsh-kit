@@ -7,6 +7,9 @@ if command -v safe_unalias >/dev/null; then
     git-commit-context
 fi
 
+# _git_commit_confirm <prompt>
+# Prompt for y/N confirmation (returns 0 only on "y"/"Y").
+# Usage: _git_commit_confirm <prompt>
 _git_commit_confirm() {
   emulate -L zsh
   setopt localoptions
@@ -22,51 +25,24 @@ _git_commit_confirm() {
   [[ "$confirm" == [yY] ]]
 }
 
+# _git_commit_confirm_or_abort <prompt>
+# Prompt for confirmation; print "Aborted" and return non-zero on decline.
+# Usage: _git_commit_confirm_or_abort <prompt>
 _git_commit_confirm_or_abort() {
   _git_commit_confirm "$@" && return 0
   print "🚫 Aborted"
   return 1
 }
 
-# Convert a commit into a stash entry (commit → stash), with safety checks.
-#
-# Motivation / typical use:
-# - You made a "WIP" commit to save work, but later want it back as an uncommitted state
-#   (like a stash) so you can continue splitting/editing without keeping that commit in history.
-#
-# What this function does (high-level):
-# 1) Resolve the target commit (default: HEAD).
-# 2) Create a stash entry that captures EXACTLY the patch introduced by that commit
-#    relative to its parent (i.e., parent..commit).
-# 3) Optionally rewind the current branch to the parent commit (so the commit disappears
-#    from history), leaving the changes safely stored in stash.
-#
-# Important semantics:
-# - This stashes the COMMIT'S DIFF, not your current working tree.
-# - It does NOT automatically include untracked files created outside that commit
-#   (because commits do not represent untracked files). If you need untracked too,
-#   use a separate `git stash push -u` before/after, or extend this helper.
-#
-# Apply behavior:
-# - Stash apply can still conflict if your current working tree diverged in the same area.
-# - Including parent SHA in message helps you know the best base to apply on, but
-#   success is still determined by mergeability, not the message.
-#
-# Safety:
-# - Warns if the commit is not on the current branch ancestry.
-# - Warns if the commit looks pushed upstream (heuristic) and requires extra confirmation
-#   if you choose to drop it from history.
-# - Warns if a merge commit (multiple parents) is given (defaults to parent #1).
-#
-# Usage:
-#   git-commit-to-stash              # convert HEAD commit → stash; offer to drop from history
-#   git-commit-to-stash <commit>     # convert specific commit → stash
-#
+# git-commit-to-stash [commit]
+# Convert a commit into a stash entry (commit → stash); optionally drop it from history.
+# Usage: git-commit-to-stash [commit]
 # Notes:
-# - Requires: git, zsh, and `git stash` support (standard).
-# - This function creates a stash entry via plumbing:
-#     git stash create + git stash store
-#   to store a patch not necessarily equal to current working tree state.
+# - Default target is `HEAD`.
+# - Captures the commit's patch (parent..commit), not the current working tree.
+# - Merge commits: uses first parent (prompts).
+# Safety:
+# - Dropping a pushed commit rewrites history and may require force push.
 git-commit-to-stash() {
   typeset commit_ref commit_sha parent_sha branch_name subject
   typeset stash_msg stash_sha
@@ -263,34 +239,13 @@ git-commit-to-stash() {
   print "   $(git stash list -1)"
 }
 
-# git-commit-context
-#
-# This function generates a comprehensive Markdown-formatted summary of the current staged Git changes,
-# to assist with writing a precise and valid commit message (especially for use with commitlint rules).
-#
-# It performs the following steps:
-#  1. Collects the full diff of staged files (`git diff --cached`).
-#  2. Generates a file scope summary and directory tree using `git-scope staged`.
-#  3. Iterates through each staged file to include its staged (index) version (after changes).
-#     - For deleted files: notes that index content is unavailable.
-#     - For added/modified/renamed files: includes the staged content.
-#  4. Formats all this into a Markdown document, including:
-#     - 📄 Git staged diff (as `diff` block)
-#     - 📂 Scope and directory tree (as `bash` block)
-#     - 📚 Staged file contents (as `ts` blocks per file)
-#
-# The result is piped to both:
-#  - `set_clipboard` for immediate pasting into ChatGPT or documentation tools.
-#  - A temporary file via `mktemp` for future reference/debugging.
-#
-# ⚠️ The resulting document also includes instructions for generating Semantic Commit messages
-#     that follow commitlint standards.
-#
-# Example usage:
-#   $ git add .
-#   $ git-commit-context
-#
-# Output: Markdown commit context is copied to clipboard and logged to a temp file.
+# git-commit-context [--stdout|--both] [--no-color]
+# Generate a Markdown commit context for the current staged changes.
+# Usage: git-commit-context [--stdout|--both] [--no-color]
+# Notes:
+# - Includes: scope tree (`git-scope staged`), staged diff, and per-file staged contents (index version).
+# - Default copies to clipboard via `set_clipboard`; use `--stdout` to print only.
+# - `--no-color` also applies when `NO_COLOR` is set.
 git-commit-context () {
   emulate -L zsh
   setopt localoptions pipe_fail

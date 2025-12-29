@@ -6,6 +6,7 @@ typeset -gr SCRIPT_PATH="${0:A}"
 typeset -gr SCRIPT_NAME="${SCRIPT_PATH:t}"
 typeset -gr SCRIPT_HINT="./tools/$SCRIPT_NAME"
 
+# print_usage: Print CLI usage/help for tools/check.zsh.
 print_usage() {
   emulate -L zsh
   setopt pipe_fail nounset
@@ -24,6 +25,7 @@ print_usage() {
   print -r -- "  $SCRIPT_HINT --all"
 }
 
+# repo_root_from_script: Resolve the repo root directory from this script path.
 repo_root_from_script() {
   emulate -L zsh
   setopt pipe_fail nounset
@@ -35,6 +37,9 @@ repo_root_from_script() {
   print -r -- "$root_dir"
 }
 
+# is_zsh_style_sh_file <file>
+# Decide whether a *.sh file should be checked with `zsh -n`.
+# Usage: is_zsh_style_sh_file <file>
 is_zsh_style_sh_file() {
   emulate -L zsh
   setopt pipe_fail nounset
@@ -53,6 +58,9 @@ is_zsh_style_sh_file() {
   return 0
 }
 
+# check_zsh_syntax <root_dir>
+# Run `zsh -n` across first-party zsh files (and zsh-style *.sh files).
+# Usage: check_zsh_syntax <root_dir>
 check_zsh_syntax() {
   emulate -L zsh
   setopt pipe_fail nounset extendedglob null_glob
@@ -90,6 +98,9 @@ check_zsh_syntax() {
   return "$failed"
 }
 
+# check_smoke_load <root_dir>
+# Smoke-load `.zshrc` in an isolated environment; treat any stderr as failure.
+# Usage: check_smoke_load <root_dir>
 check_smoke_load() {
   emulate -L zsh
   setopt pipe_fail nounset
@@ -124,6 +135,9 @@ check_smoke_load() {
   }
 }
 
+# check_bash_scripts <root_dir>
+# Run `bash -n` (and ShellCheck when available) on bash scripts under `.private/`.
+# Usage: check_bash_scripts <root_dir>
 check_bash_scripts() {
   emulate -L zsh
   setopt pipe_fail nounset extendedglob null_glob
@@ -162,6 +176,9 @@ check_bash_scripts() {
   return "$failed"
 }
 
+# main [args...]
+# CLI entrypoint for the repo check script.
+# Usage: main [args...]
 main() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

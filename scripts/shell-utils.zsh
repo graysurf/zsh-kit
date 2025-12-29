@@ -15,9 +15,16 @@ fi
 # ────────────────────────────────────────────────────────
 
 export EDITOR="nvim"
+
+# vi: Alias to `$EDITOR`.
+# Usage: vi [args...]
 alias vi=$EDITOR
 
-# Override 'cd' to auto-list
+# cd [path]
+# Change directory then list contents via eza.
+# Usage: cd [path]
+# Notes:
+# - Overrides builtin `cd` in interactive shells.
 cd() {
   builtin cd "$@" && eza -alh --icons --group-directories-first --time-style=iso
 }
@@ -26,31 +33,49 @@ cd() {
 # fd aliases (file and directory search)
 # ────────────────────────────────────────────────────────
 
+# fdf: Find files via fd (includes hidden; excludes .git).
+# Usage: fdf [fd args...]
 alias fdf='fd --type f --hidden --follow --exclude .git'
+
+# fdd: Find directories via fd (includes hidden; excludes .git).
+# Usage: fdd [fd args...]
 alias fdd='fd --type d --hidden --follow --exclude .git'
 
 # ────────────────────────────────────────────────────────
 # bat aliases (syntax-highlighted file viewing)
 # ────────────────────────────────────────────────────────
 
-# Replace cat with bat for plain, no-pager display
+# cat: Alias to bat (plain output; no pager).
+# Usage: cat <path...>
+# Notes:
+# - Overrides `cat` in interactive shells.
 alias cat='bat --style=plain --pager=never'
 
-# Pretty bat view: line numbers, paging, theme
+# batp: View files with bat (line numbers; paging enabled).
+# Usage: batp <path...>
 alias batp='bat --style=numbers --paging=always'
 
 # ────────────────────────────────────────────────────────
 # fd + bat + fzf integration functions
 # ────────────────────────────────────────────────────────
 
-# bff: select and preview multiple files using bat
+# bat-all
+# Select one or more files via fzf and preview them with bat.
+# Usage: bat-all
+# Notes:
+# - Requires `fd`, `fzf`, and `bat`.
 bat-all() {
   fdf | fzf -m --preview 'bat --color=always --style=numbers {}' |
     xargs -r bat --style=numbers --paging=always
 }
+
+# bff: Alias of bat-all.
+# Usage: bff
 alias bff='bat-all'
 
-# Show current shell aliases, functions, and environment variables for debugging
+# zdef
+# Browse aliases, functions, and environment variables via fzf.
+# Usage: zdef
 zdef() {
   {
   printf "🔗 Aliases:\n"
@@ -66,7 +91,11 @@ zdef() {
     } | fzf --ansi --header="🔍 Zsh Definitions (aliases, functions, env)" --preview-window=wrap
 }
 
-# fsearch: search for file content and preview with bat + ripgrep
+# fsearch <query>
+# Fuzzy-pick a file and preview grep context for the query.
+# Usage: fsearch <query>
+# Notes:
+# - Requires `fd`, `fzf`, `bat`, and `rg`.
 fsearch() {
   typeset query="$1"
   fd --type f --hidden --exclude .git |
@@ -79,7 +108,8 @@ fsearch() {
 # Shared helpers (shell-utils)
 # ────────────────────────────────────────────────────────
 
-# Execute kill with dedupe and basic validation.
+# _su_kill_do <signal> <pid...>
+# Validate and send a signal to one or more PIDs (deduped).
 # Usage: _su_kill_do <signal> <pid...>
 _su_kill_do() {
   emulate -L zsh
@@ -107,12 +137,15 @@ _su_kill_do() {
   kill -${signal} -- ${^filtered}
 }
 
-# ────────────────────────────────────────────────────────
-# kill-port: Kill process(es) listening on a TCP/UDP port
+# kill-port [-9] <port>
+# Kill process(es) listening on a TCP/UDP port.
 # Usage: kill-port [-9] <port>
-# - Default sends SIGTERM (15). Use -9 to send SIGKILL.
-# - macOS friendly (uses lsof); works wherever lsof provides -t.
-# ────────────────────────────────────────────────────────
+# Options:
+# - -9: send SIGKILL (9) instead of SIGTERM (15).
+# Notes:
+# - Uses `lsof` to resolve PIDs (TCP LISTEN + UDP).
+# Safety:
+# - Killing processes may interrupt services and cause data loss.
 kill-port() {
   emulate -L zsh
   setopt localoptions pipe_fail
@@ -146,14 +179,17 @@ kill-port() {
   _su_kill_do ${signal} ${^pids}
 }
 
+# kp: Alias of kill-port.
+# Usage: kp [-9] <port>
 alias kp='kill-port'
 
-# ────────────────────────────────────────────────────────
-# kill-process: Kill one or more PIDs
+# kill-process [-9] <pid> [pid...]
+# Kill one or more PIDs.
 # Usage: kill-process [-9] <pid> [pid...]
-# - Default sends SIGTERM (15). Use -9 to send SIGKILL.
-# - Validates that all provided PIDs are numeric.
-# ────────────────────────────────────────────────────────
+# Options:
+# - -9: send SIGKILL (9) instead of SIGTERM (15).
+# Safety:
+# - Killing processes may interrupt services and cause data loss.
 kill-process() {
   emulate -L zsh
   setopt localoptions pipe_fail
@@ -185,12 +221,13 @@ kill-process() {
   _su_kill_do ${signal} ${^pids}
 }
 
+# kpid: Alias of kill-process.
+# Usage: kpid [-9] <pid> [pid...]
 alias kpid='kill-process'
 
-# ────────────────────────────────────────────────────────
-# Reload the Zsh environment via bootstrap init
-# Use for small config changes without restarting shell
-# ────────────────────────────────────────────────────────
+# reload
+# Reload the Zsh environment by re-sourcing bootstrap/bootstrap.zsh.
+# Usage: reload
 reload() {
   printf "\n"
   printf "🔁 Reloading bootstrap/bootstrap.zsh...\n"
@@ -201,33 +238,41 @@ reload() {
   fi
 }
 
-# ────────────────────────────────────────────────────────
-# Restart shell completely with a fresh session
-# Useful after modifying core loader, plugin system, etc.
-# ────────────────────────────────────────────────────────
+# execz
+# Restart the current shell session (exec zsh).
+# Usage: execz
+# Notes:
+# - Replaces the current process; unsaved shell state is lost.
 execz() {
   printf "\n🚪 Restarting Zsh shell (exec zsh)...\n"
   printf "🧼 This will start a clean session using current configs.\n\n"
     exec zsh
 }
 
+# zz: Alias of execz.
+# Usage: zz
 alias zz='execz'
 
-# ────────────────────────────────────────────────────────
-# Force flush memory history to file
-# reload latest history entries
-# ────────────────────────────────────────────────────────
+# histflush
+# Flush in-memory history to the history file.
+# Usage: histflush
 histflush() {
   fc -AI  # Append memory history, re-read file
 }
 
-# ────────────────────────────────────────────────────────
-# Override `history` to launch fzf-history interactively when called with no arguments.
-# Falls back to the original builtin `history` when arguments are passed (e.g. -d, -c, etc).
-# ────────────────────────────────────────────────────────
+# history: Alias of fzf-history-wrapper.
+# Usage: history [history args...]
+# Notes:
+# - With no arguments, launches fzf-history; otherwise falls back to builtin `history`.
 alias history='fzf-history-wrapper'
+
+# his: Alias of fzf-history-wrapper.
+# Usage: his [history args...]
 alias his='fzf-history-wrapper'
 
+# fzf-history-wrapper [history args...]
+# Fuzzy-search shell history when called with no arguments.
+# Usage: fzf-history-wrapper [history args...]
 fzf-history-wrapper() {
   if [[ "$1" == "" ]]; then
     # Fuzzy search command history and execute selected entry
@@ -237,20 +282,20 @@ fzf-history-wrapper() {
   fi
 }
 
-# ────────────────────────────────────────────────────────
-# Open your Zsh config directory in VSCode
-# ────────────────────────────────────────────────────────
+# edit-zsh
+# Open the Zsh config directory in VS Code, then return to the current directory.
+# Usage: edit-zsh
 edit-zsh() {
   typeset cwd="$(pwd)"
   code "$ZDOTDIR"
   cd "$cwd" >/dev/null
 }
 
-# ────────────────────────────────────────────────────────
-# Fuzzy cd using Yazi, then jump to selected directory
-# Wrapper: `y <dir>` jumps to <dir> via zoxide first, then launches yazi.
-# If the first argument begins with a dash (`-`) it is treated as a yazi flag.
-# ────────────────────────────────────────────────────────
+# y [dir] [yazi args...]
+# Launch yazi and change to the last visited directory on exit.
+# Usage: y [dir] [yazi args...]
+# Notes:
+# - If the first argument does not start with `-`, it is treated as a zoxide target.
 y () {
   # Detect directory alias/keyword as the first argument (non‑flag)
   if [[ -n "$1" && "$1" != -* ]]; then
@@ -271,6 +316,12 @@ y () {
 # ────────────────────────────────────────────────────────
 # Query cheat.sh (curl-based CLI cheatsheets)
 # ────────────────────────────────────────────────────────
+
+# cheat <query>
+# Query cheat.sh via curl.
+# Usage: cheat <query>
+# Notes:
+# - Requires network access.
 cheat() {
   curl -s cheat.sh/"$@"
 }

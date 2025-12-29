@@ -12,7 +12,9 @@ if date -v +0d +"%Y-%m-%d" >/dev/null 2>&1; then
   GIT_SUMMARY_DATE_HAS_V=true
 fi
 
-# Resolve date using the configured format; fallback to ISO if empty/invalid.
+# _git_summary_date [format]
+# Resolve the current date using the given format; fallback to ISO if empty/invalid.
+# Usage: _git_summary_date [format]
 _git_summary_date() {
   typeset fmt="${1-}"
   typeset out=''
@@ -36,8 +38,12 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias _git_summary
 fi
 
-# Generate a contribution summary by author over a given date range.
-# Accepts two parameters: start date and end date (YYYY-MM-DD).
+# _git_summary [since] [until]
+# Generate a per-author contribution summary over a date range.
+# Usage: _git_summary [YYYY-MM-DD] [YYYY-MM-DD]
+# Notes:
+# - Provide both dates or neither (full history).
+# - Filters out common lockfiles from line counts.
 _git_summary() {
   typeset since_param="$1"
   typeset until_param="$2"
@@ -86,7 +92,9 @@ _git_summary() {
   return $?
 }
 
+# _git_today
 # Show a summary of today's commits (local timezone).
+# Usage: _git_today
 _git_today() {
   typeset today=$(_git_summary_date "$GIT_SUMMARY_DATE_FMT")
   print "\n📅 Git summary for today: $today"
@@ -95,7 +103,9 @@ _git_today() {
   return $?
 }
 
+# _git_yesterday
 # Show a summary of yesterday's commits (cross-platform).
+# Usage: _git_yesterday
 _git_yesterday() {
   typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
   typeset yesterday=''
@@ -110,7 +120,9 @@ _git_yesterday() {
   return $?
 }
 
+# _git_this_month
 # Show a summary from the first day of the month to today.
+# Usage: _git_this_month
 _git_this_month() {
   typeset today=$(_git_summary_date "$GIT_SUMMARY_DATE_FMT")
   typeset start_date=$(date +"%Y-%m-01")
@@ -120,7 +132,9 @@ _git_this_month() {
   return $?
 }
 
+# _git_last_month
 # Show a summary for the last full month.
+# Usage: _git_last_month
 _git_last_month() {
   typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
   typeset start_date='' end_date=''
@@ -140,7 +154,9 @@ _git_last_month() {
 }
 
 
+# _git_last_week
 # Show a summary for the last full week (Monday to Sunday).
+# Usage: _git_last_week
 _git_last_week() {
   typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
   typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
@@ -162,7 +178,9 @@ _git_last_week() {
   return $?
 }
 
+# _git_this_week
 # Show a summary for this week (Monday to Sunday).
+# Usage: _git_this_week
 _git_this_week() {
   typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
   typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
@@ -184,13 +202,11 @@ _git_this_week() {
   return $?
 }
 
-# ────────────────────────────────────────────────────────
-# git-summary: Author-based contribution report (CLI entry)
-# Usage: git-summary <command> [args]
-# - Presets: today, yesterday, this-month, last-month, this-week, last-week
-# - Custom range: git-summary <start> <end> (YYYY-MM-DD)
-# - Full history: git-summary all
-# ────────────────────────────────────────────────────────
+# git-summary <preset>|<from> <to>
+# Show per-author contribution summary (added/deleted/net/commits) for a date range.
+# Usage: git-summary all | <today|yesterday|this-week|last-week|this-month|last-month> | <from> <to>
+# Notes:
+# - Dates are `YYYY-MM-DD` and interpreted in local timezone boundaries.
 git-summary() {
   typeset cmd="${1-}"
   typeset arg1="${1-}"

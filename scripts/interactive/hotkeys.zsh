@@ -5,6 +5,12 @@
 # - Inserts selected subcommand into shell prompt
 # ────────────────────────────────────────────────────────
 
+# fzf-tools-launcher-widget
+# ZLE widget: pick an `fzf-tools` subcommand via `fzf` and execute it.
+# Usage: fzf-tools-launcher-widget
+# Notes:
+# - Bound to Ctrl+F.
+# - Requires an interactive ZLE session and `fzf`.
 fzf-tools-launcher-widget() {
   typeset raw selected subcommand
 
@@ -50,6 +56,11 @@ bindkey '^F' fzf-tools-launcher-widget
 # Bind `fzf-tools def` to Ctrl+T
 # ────────────────────────────────────────────────────────
 
+# fzf-tools-def-widget
+# ZLE widget: prefix the current buffer with `fzf-tools def` and execute it.
+# Usage: fzf-tools-def-widget
+# Notes:
+# - Bound to Ctrl+T.
 fzf-tools-def-widget() {
   BUFFER="fzf-tools def $BUFFER"
   CURSOR=${#BUFFER}
@@ -64,6 +75,11 @@ bindkey '^T' fzf-tools-def-widget
 # Bind `fzf-tools git-commit` to Ctrl+G
 # ────────────────────────────────────────────────────────
 
+# fzf-tools-git-commit-widget
+# ZLE widget: prefix the current buffer with `fzf-tools git-commit` and execute it.
+# Usage: fzf-tools-git-commit-widget
+# Notes:
+# - Bound to Ctrl+G.
 fzf-tools-git-commit-widget() {
   BUFFER="fzf-tools git-commit $BUFFER"
   CURSOR=${#BUFFER}
@@ -80,6 +96,12 @@ bindkey '^G' fzf-tools-git-commit-widget
 # - Bound to Ctrl+R via ZLE
 # ────────────────────────────────────────────────────────
 
+# fzf-history-widget
+# ZLE widget: fuzzy-search history and insert the selected command into the buffer.
+# Usage: fzf-history-widget
+# Notes:
+# - Bound to Ctrl+R.
+# - Depends on `fzf-history-select` (defined in `scripts/fzf-tools.zsh`).
 fzf-history-widget() {
   local selected output cmd
 

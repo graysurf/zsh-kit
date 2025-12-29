@@ -22,8 +22,11 @@ typeset -x CHROME_REMOTE_DEBUG_USER_DATA_DIR_DEFAULT="${CHROME_REMOTE_DEBUG_USER
 
 # ---- shared helpers ---------------------------------------------------------
 
-# Print a standard confirm prompt (template aligned with your style)
-# Usage: _confirm_or_abort "Question text"
+# _confirm_or_abort <question>
+# Prompt for confirmation; return non-zero if declined or non-interactive.
+# Usage: _confirm_or_abort <question>
+# Env:
+# - RDP_ASSUME_YES: when true, auto-confirm without prompting.
 _confirm_or_abort() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -50,8 +53,11 @@ _confirm_or_abort() {
   return 0
 }
 
-# Check if a TCP port is already in use; if yes, print owner info and return 0; else return 1
-# macOS: lsof is available by default
+# _port_in_use <port>
+# Print listener info for a TCP port (best-effort).
+# Usage: _port_in_use <port>
+# Notes:
+# - macOS: relies on `lsof`.
 _port_in_use() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -60,7 +66,11 @@ _port_in_use() {
   lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null
 }
 
-# Check whether the Chrome DevTools endpoint is responding on the given port.
+# _rdp_endpoint_ready <port>
+# Return success if the Chrome DevTools HTTP endpoint is responding on the port.
+# Usage: _rdp_endpoint_ready <port>
+# Notes:
+# - Requires `curl`.
 _rdp_endpoint_ready() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -77,7 +87,9 @@ _rdp_endpoint_ready() {
   return 0
 }
 
-# Try to quit an app gracefully via AppleScript; return 0 if seems gone
+# _quit_app_gracefully <app_name>
+# Ask a macOS app to quit via AppleScript and wait briefly for exit.
+# Usage: _quit_app_gracefully <app_name>
 _quit_app_gracefully() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -98,7 +110,11 @@ _quit_app_gracefully() {
   return 1
 }
 
-# Force kill processes by executable path match (best-effort)
+# _force_kill_by_path <exe_path>
+# Force-kill processes whose command line matches the given executable path.
+# Usage: _force_kill_by_path <exe_path>
+# Safety:
+# - Uses `kill -9` (best-effort).
 _force_kill_by_path() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -112,7 +128,9 @@ _force_kill_by_path() {
   fi
 }
 
-# Check if browser is already running (by app process name OR exe path in args)
+# _browser_running <app_name> <exe_path>
+# Return success if the browser appears to be running (by process name or exe path).
+# Usage: _browser_running <app_name> <exe_path>
 _browser_running() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -133,6 +151,11 @@ _browser_running() {
   return 1
 }
 
+# _kill_all_chrome_processes <app_name> <exe_path>
+# Terminate browser processes (best-effort) for relaunch.
+# Usage: _kill_all_chrome_processes <app_name> <exe_path>
+# Safety:
+# - Sends SIGTERM then SIGKILL to matched PIDs.
 _kill_all_chrome_processes() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -156,6 +179,9 @@ _kill_all_chrome_processes() {
   return 0
 }
 
+# _wait_for_browser_exit <app_name> <exe_path>
+# Wait for browser processes to exit (short bounded wait).
+# Usage: _wait_for_browser_exit <app_name> <exe_path>
 _wait_for_browser_exit() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -175,6 +201,11 @@ _wait_for_browser_exit() {
   return 1
 }
 
+# _cleanup_singleton_locks <profile_dir>
+# Remove stale Chrome Singleton* lock/socket files under a profile directory.
+# Usage: _cleanup_singleton_locks <profile_dir>
+# Safety:
+# - Deletes files named `SingletonLock`, `SingletonCookie`, `SingletonSocket`.
 _cleanup_singleton_locks() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -197,6 +228,13 @@ _cleanup_singleton_locks() {
   done
 }
 
+# _ensure_cached_default_profile <app_name> <source_dir> <target_dir> [local_state_path]
+# Create/refresh a cached copy of a browser profile for remote debugging.
+# Usage: _ensure_cached_default_profile <app_name> <source_dir> <target_dir> [local_state_path]
+# Env:
+# - RDP_REFRESH_PROFILE: when true, force refresh of the cached profile.
+# Notes:
+# - Uses `rsync` when available; falls back to `cp`.
 _ensure_cached_default_profile() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -281,8 +319,15 @@ _ensure_cached_default_profile() {
 
 # ---- main launcher ----------------------------------------------------------
 
-# Usage:
-#   _launch_rdp "Google Chrome" "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" 19222
+# _launch_rdp <app_name> <exe_path> <port> [user_data_dir]
+# Launch a Chromium-based browser with a DevTools remote debugging endpoint.
+# Usage: _launch_rdp <app_name> <exe_path> <port> [user_data_dir]
+# Env:
+# - RDP_ASSUME_YES: when true, auto-confirm prompts.
+# - RDP_DEBUG: when true, write debug log.
+# - RDP_DEBUG_LOG: debug log path (default: ~/.codex/chrome-rdp.log).
+# Safety:
+# - May terminate browser processes and remove stale profile lock files.
 _launch_rdp() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -490,6 +535,22 @@ _launch_rdp() {
 
 # ---- public commands --------------------------------------------------------
 
+# chrome-rdp
+# Launch Google Chrome with DevTools remote debugging enabled.
+# Usage: chrome-rdp
+# Examples:
+#   chrome-rdp
+#   CHROME_REMOTE_DEBUG_PORT_DEFAULT=9222 chrome-rdp
+# Env:
+# - CHROME_REMOTE_DEBUG_PORT_DEFAULT: remote debugging port (default: 19222).
+# - CHROME_REMOTE_DEBUG_USER_DATA_DIR: explicit profile dir (skip auto-caching).
+# - RDP_USE_ISOLATED_PROFILE: when true, use CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT.
+# - CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT: isolated profile dir (default: ~/.codex/chrome-profile).
+# - RDP_ASSUME_YES: when true, auto-confirm prompts.
+# - RDP_DEBUG: when true, write debug log.
+# - RDP_DEBUG_LOG: debug log path.
+# Safety:
+# - May quit and/or kill Chrome processes to apply remote debugging flags.
 chrome-rdp() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

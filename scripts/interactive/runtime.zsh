@@ -4,10 +4,15 @@
 
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
+  # z
+  # zoxide smart directory jumping.
+  # Usage: z <query>
   alias z=__zoxide_z
 fi
 
-# Wrapper to execute `eza -alh` after directory jump
+# __zoxide_cd
+# Wrapper to execute `eza -alh` after directory jump.
+# Usage: __zoxide_cd <dir>
 __zoxide_cd() {
   builtin cd -- "$1" || return
   printf "\n📁 Now in: %s\n\n" "$PWD"

@@ -12,6 +12,9 @@ if command -v safe_unalias >/dev/null; then
     git-reset-remote
 fi
 
+# _git_reset_confirm <prompt>
+# Prompt for y/N confirmation (returns 0 only on "y"/"Y").
+# Usage: _git_reset_confirm <prompt>
 _git_reset_confirm() {
   emulate -L zsh
   setopt localoptions
@@ -27,12 +30,18 @@ _git_reset_confirm() {
   [[ "$confirm" == [yY] ]]
 }
 
+# _git_reset_confirm_or_abort <prompt>
+# Prompt for confirmation; print "Aborted" and return non-zero on decline.
+# Usage: _git_reset_confirm_or_abort <prompt>
 _git_reset_confirm_or_abort() {
   _git_reset_confirm "$@" && return 0
   print -r -- "🚫 Aborted"
   return 1
 }
 
+# _git_reset_by_count <mode> [N]
+# Reset `HEAD` back by N commits using the given mode (interactive confirmation).
+# Usage: _git_reset_by_count <soft|mixed|hard> [N]
 _git_reset_by_count() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -128,14 +137,11 @@ _git_reset_by_count() {
   return 0
 }
 
-# Undo the last commit while keeping all changes staged (soft reset)
-#
-# This function performs a `git reset --soft HEAD~<n>` (default n=1), which removes the
-# last commit(s) from history but keeps all changes staged. This is useful
-# when you want to rewrite the commit message or make additional edits
-# before recommitting.
-#
-# It is a safer alternative to hard resets and preserves your working state.
+# git-reset-soft [N]
+# Undo the last commit(s) while keeping changes staged (soft reset).
+# Usage: git-reset-soft [N]
+# Notes:
+# - Runs `git reset --soft HEAD~N` after showing the commits to be rewound.
 git-reset-soft() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -144,16 +150,11 @@ git-reset-soft() {
   return $?
 }
 
-# Hard reset to the previous commit with confirmation (DANGEROUS)
-#
-# This function performs a `git reset --hard HEAD~<n>` (default n=1), which removes the last
-# commit(s) and discards all staged and unstaged changes for tracked files by
-# synchronizing HEAD, index, and working tree to the previous commit.
-#
-# ⚠️ WARNING: This operation is destructive for uncommitted tracked changes.
-# - The removed commit can often be recovered via `git reflog`, but uncommitted
-#   tracked edits overwritten by `--hard` may be difficult or impossible to restore.
-# - Untracked files are NOT removed by `git reset --hard` (use `git clean` if needed).
+# git-reset-hard [N]
+# Hard reset to the previous commit(s) with confirmation (DANGEROUS).
+# Usage: git-reset-hard [N]
+# Safety:
+# - Discards tracked staged/unstaged changes; untracked files are NOT removed.
 git-reset-hard() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -163,14 +164,11 @@ git-reset-hard() {
   return $?
 }
 
-# Undo the last commit and unstage all changes (mixed reset)
-#
-# This function performs a `git reset --mixed HEAD~<n>` (default n=1), which removes the
-# last commit(s) and moves all associated changes into the working directory
-# in an unstaged state. This is useful when you want to revise changes
-# more freely before recommitting.
-#
-# This is Git's default reset mode if no flag is given.
+# git-reset-mixed [N]
+# Undo the last commit(s) and unstage changes (mixed reset).
+# Usage: git-reset-mixed [N]
+# Notes:
+# - Runs `git reset --mixed HEAD~N` after showing the commits to be rewound.
 git-reset-mixed() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -179,47 +177,14 @@ git-reset-mixed() {
   return $?
 }
 
-# Undo the last HEAD move using reflog (safer "back one step" with staged/unstaged choices)
-#
-# This function restores the repository to the previous HEAD position using reflog:
-#   - Target: HEAD@{1}  (the previous HEAD position)
-#
-# It adds safety layers by distinguishing:
-#   - HEAD@{0}: the CURRENT HEAD reflog entry (describes the LAST action that moved HEAD to *current* state)
-#   - HEAD@{1}: the TARGET previous HEAD position (where we want to go back to)
-#
-# Why check HEAD@{0} (current action) instead of HEAD@{1}?
-# - If you just ran `git reset`, the reflog subject for HEAD@{0} typically starts with `reset: ...`.
-# - HEAD@{1}'s subject describes an earlier movement (often commit/checkout), which can be misleading for
-#   determining what you "just did". Since this is an "undo last move" helper, HEAD@{0} is the right signal.
-#
-# Why reset to a resolved SHA ($target_commit) instead of using HEAD@{1} directly?
-# - This function is interactive: it prints the target commit and waits for user input.
-# - Using the resolved SHA guarantees "preview == action" even if reflog changes during the prompt
-#   (e.g., external tools writing reflog entries). It makes behavior deterministic and consistent.
-#
-# Reflog display portability:
-# - Many environments accept `HEAD@{0}` / `HEAD@{1}` directly in `git reflog`.
-# - For maximum robustness, this function includes a fallback using `git reflog show` if the direct
-#   form fails (e.g., unusual wrappers or edge environments). Fallback is informational only.
-#
-# Optional safety: detect in-progress operations
-# - If you are in the middle of merge/rebase/cherry-pick/revert/bisect, users often actually want an
-#   abort command instead of moving HEAD with reset. This function warns and asks for confirmation.
-#
-# Local-change awareness (tracked + untracked):
-# - If working tree is clean (no staged/unstaged/untracked changes), it runs:
-#     git reset --hard <target_commit>
-# - If changes exist, it offers explicit choices:
-#     1) Keep changes + PRESERVE INDEX (staged reinterpreted vs new base) -> git reset --soft  <target_commit>
-#     2) Keep changes + UNSTAGE ALL                                -> git reset --mixed <target_commit>
-#     3) Discard tracked changes                                   -> git reset --hard  <target_commit>
-#     4) Abort
-#
+# git-reset-undo
+# Undo the last HEAD move using reflog (interactive; offers soft/mixed/hard choices).
+# Usage: git-reset-undo
 # Notes:
-# - `git reset --hard` does NOT remove untracked files; use `git clean` if needed.
-# - HEAD@{1} is "previous HEAD position", not necessarily "previous reset".
-# - If you already pushed rewritten history, resetting locally may require force push and can impact others.
+# - Target: HEAD@{1} (previous HEAD position).
+# - Detects in-progress operations (merge/rebase/etc.) and asks for extra confirmation.
+# Safety:
+# - Can rewrite history and/or discard tracked changes depending on your choice.
 git-reset-undo() {
   typeset target_commit
   typeset status_lines
@@ -389,20 +354,12 @@ git-reset-undo() {
   return 0
 }
 
-# Rewind HEAD to its previous position with confirmation (using HEAD@{1})
-#
-# This function uses the reflog entry `HEAD@{1}` to move HEAD back to its
-# previous position. It is useful when you have recently moved HEAD by mistake
-# (e.g., via checkout, reset, commit, merge, rebase), and want to undo that movement.
-#
-# It shows the target commit before proceeding, so you can verify what you'll
-# jump back to.
-#
-# ⚠️ Note:
-# - This function uses `git checkout HEAD@{1}` and may update tracked files in
-#   your working tree to match that previous state (or refuse if it would
-#   overwrite local changes). It does NOT guarantee a no-touch working tree.
-# - Depending on what `HEAD@{1}` points to, you may end up in a detached HEAD state.
+# git-back-head
+# Move HEAD back to its previous position using reflog (via `git checkout HEAD@{1}`).
+# Usage: git-back-head
+# Notes:
+# - May update tracked files to match the target state; checkout can fail if it would overwrite changes.
+# - Depending on reflog, you may end up in detached HEAD.
 git-back-head() {
   typeset prev_head
 
@@ -427,18 +384,14 @@ git-back-head() {
   print "✅ Restored to previous HEAD (HEAD@{1}): $prev_head"
 }
 
-# Restore HEAD to previous checkout branch (avoids detached HEAD)
-#
-# This function attempts to return to the branch you were on *before* you last
-# checked out the current branch. It searches reflog for the most recent checkout
-# entry that moved *to* the current branch, then extracts the "from" side.
-#
-# Safety improvements over the original version:
-# - Handles detached HEAD (current branch == "HEAD") by aborting with a clear message.
-# - Skips entries where the "from" token looks like a commit SHA (to avoid detached HEAD).
-# - Verifies that the extracted "from" value is an existing local branch before checkout.
-#
-# Note: Checkout may fail if local changes would be overwritten.
+# git-back-checkout
+# Return to the previous branch from reflog (avoids detached HEAD when possible).
+# Usage: git-back-checkout
+# Notes:
+# - Aborts in detached HEAD.
+# - Verifies the previous branch exists locally before checkout.
+# Safety:
+# - Checkout may fail if local changes would be overwritten.
 git-back-checkout() {
   typeset current_branch from_branch
 
@@ -501,7 +454,11 @@ git-back-checkout() {
   print "✅ Restored to previous branch: $from_branch"
 }
 
-# Reset current branch to a remote-tracking ref (DANGEROUS)
+# git-reset-remote [options]
+# Overwrite the current local branch with a remote-tracking branch (DANGEROUS).
+# Usage: git-reset-remote [--ref <remote/branch>] [-r|--remote <name>] [-b|--branch <name>] [--no-fetch] [--prune] [--clean] [--set-upstream] [-y|--yes]
+# Safety:
+# - Discards tracked changes via `git reset --hard` and can optionally remove untracked files via `git clean -fd`.
 git-reset-remote() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

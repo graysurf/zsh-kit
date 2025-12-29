@@ -1,5 +1,9 @@
 #!/usr/bin/env -S zsh -f
 
+# random_emoji_cmd.zsh
+# Print a random emoji to stdout.
+# Usage: tools/random_emoji_cmd.zsh
+
 emojis=(
   ✨ 🌟 🚀 🧠 🐋 🎯 🔥 🍀 📚 💡 💬 🛠️ 🧩 🧘 🥷 🐾 🍎 🌈 🐱 🐳
   🍺 🌍 🎵 🌅 🌌 🧃 🎉 🧊 🪄 🪐 ⚡ 🧪 🧬 🧱 ⚙️ 🛸 🔮 🧲 🧨 🧵 🧶

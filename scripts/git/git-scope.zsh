@@ -5,13 +5,26 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias gs gsc gst
 fi
 
+# gs
+# Alias of `git-scope`.
+# Usage: gs <command> [args...]
 alias gs='git-scope'
+
+# gsc
+# Alias of `git-scope commit`.
+# Usage: gsc <commit-ish> [--parent <n>] [-p|--print]
 alias gsc='git-scope commit'
+
+# gst
+# Alias of `git-scope tracked`.
+# Usage: gst [prefix...]
 alias gst='git-scope tracked'
 
 _git_scope_no_color=false
 
-# Return ANSI color code based on file change kind
+# _git_scope_kind_color <A|M|D|U|->
+# Return ANSI color code for a file change kind.
+# Usage: _git_scope_kind_color <A|M|D|U|->
 _git_scope_kind_color() {
   if [[ "$_git_scope_no_color" == true ]]; then
     return 0
@@ -27,6 +40,9 @@ _git_scope_kind_color() {
   esac
 }
 
+# _git_scope_color_reset
+# Print ANSI reset code (no-op when no-color is enabled).
+# Usage: _git_scope_color_reset
 _git_scope_color_reset() {
   if [[ "$_git_scope_no_color" == true ]]; then
     return 0
@@ -35,7 +51,9 @@ _git_scope_color_reset() {
   printf '\033[0m'
 }
 
-# Render directory tree from a list of file paths
+# _git_scope_render_tree <newline_separated_paths>
+# Render a directory tree from a list of file paths.
+# Usage: _git_scope_render_tree <newline_separated_paths>
 _git_scope_render_tree() {
   typeset -a file_list=("${(@f)}$1")
 
@@ -76,7 +94,9 @@ _git_scope_render_tree() {
 }
 
 
-# Render file list with A/M/D tags and color, then show tree
+# _git_scope_render_with_type <name_status_lines>
+# Render `git diff --name-status`-style lines and show a directory tree.
+# Usage: _git_scope_render_with_type <name_status_lines>
 _git_scope_render_with_type() {
   typeset input="$1"
 
@@ -109,7 +129,9 @@ _git_scope_render_with_type() {
 }
 
 
-# Common file status collector
+# _git_scope_collect <mode> [args...]
+# Collect file lists for `git-scope` subcommands.
+# Usage: _git_scope_collect <tracked|staged|unstaged|all|untracked|commit> [args...]
 _git_scope_collect() {
   typeset mode="$1"
   (( $# > 0 )) && shift
@@ -168,7 +190,9 @@ _git_scope_collect() {
   esac
 }
 
-# Print full content of a given file, from working tree or HEAD fallback
+# print_file_content <path>
+# Print file contents from working tree, or fallback to `HEAD:<path>` when missing locally.
+# Usage: print_file_content <path>
 print_file_content() {
   typeset file="$1"
 
@@ -210,13 +234,17 @@ print_file_content() {
 }
 
 # Command handlers
+# _git_scope_tracked: Handler for `git-scope tracked`.
 _git_scope_tracked()   { _git_scope_render_with_type "$(_git_scope_collect tracked "$@")"; }
+# _git_scope_staged: Handler for `git-scope staged`.
 _git_scope_staged()    { _git_scope_render_with_type "$(_git_scope_collect staged "$@")"; }
+# _git_scope_unstaged: Handler for `git-scope unstaged`.
 _git_scope_unstaged()  { _git_scope_render_with_type "$(_git_scope_collect unstaged "$@")"; }
+# _git_scope_all: Handler for `git-scope all`.
 _git_scope_all()       { _git_scope_render_with_type "$(_git_scope_collect all "$@")"; }
+# _git_scope_untracked: Handler for `git-scope untracked`.
 _git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untracked "$@")"; }
 
-# ─────────────────────────────────────────────────────────────
 # _git_scope_commit - Show detailed information of a git commit
 #
 # Unlike other git-scope commands (e.g., `staged`, `tracked`), which operate
@@ -245,7 +273,6 @@ _git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untra
 #
 # This command is especially useful for code review, audit trails, or
 # inspecting past changes in high detail.
-# ─────────────────────────────────────────────────────────────
 _git_scope_commit() {
   emulate -L zsh
   setopt localoptions pipe_fail
@@ -344,6 +371,11 @@ _git_scope_commit_parents() {
   return 0
 }
 
+# _git_scope_render_commit_files <commit> [parent_selector]
+# Render changed files for a commit (supports merge commits via parent selection).
+# Usage: _git_scope_render_commit_files <commit> [parent_selector]
+# Notes:
+# - Writes the file list to `/tmp/.git-scope-filelist` for optional printing.
 _git_scope_render_commit_files() {
   emulate -L zsh
   setopt localoptions pipe_fail
@@ -445,13 +477,11 @@ _git_scope_render_commit_files() {
   printf "%s\n" "${file_list[@]}" > /tmp/.git-scope-filelist
 }
 
-# ────────────────────────────────────────────────────────
 # git-scope: Working tree/commit introspection (dispatcher)
 # Usage: git-scope <command> [args]
 # - Subcommands: tracked, staged, unstaged, all, untracked, commit <id>
 # - Flags: -p|--print prints file contents where applicable (e.g., commit)
 # - Runs inside a Git repo; renders trees, diffs, and summaries
-# ────────────────────────────────────────────────────────
 git-scope() {
   if ! git rev-parse --git-dir > /dev/null 2>&1; then
     printf "⚠️ Not a Git repository. Run this command inside a Git project.\n"
