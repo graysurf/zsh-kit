@@ -469,6 +469,9 @@ _git_open_remote_context() {
   print -r -- "$provider"
 }
 
+# _git_open_repo [remote]
+# Open the repository homepage for the current repo (or a named remote).
+# Usage: _git_open_repo [remote]
 _git_open_repo() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -499,6 +502,9 @@ _git_open_repo() {
   _git_open_open_url "$base_url" "🌐 Opened"
 }
 
+# _git_open_branch [ref]
+# Open the tree page for a branch/tag/ref (default: upstream branch).
+# Usage: _git_open_branch [ref]
 _git_open_branch() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -531,6 +537,9 @@ _git_open_branch() {
   _git_open_open_url "$target_url" "🌿 Opened"
 }
 
+# _git_open_commit [ref]
+# Open the commit page for a ref (default: HEAD).
+# Usage: _git_open_commit [ref]
 _git_open_commit() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -558,6 +567,9 @@ _git_open_commit() {
   _git_open_open_url "$commit_url" "🔗 Opened"
 }
 
+# _git_open_default_branch [remote]
+# Open the default branch tree page (default: upstream remote).
+# Usage: _git_open_default_branch [remote]
 _git_open_default_branch() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -597,6 +609,9 @@ _git_open_default_branch() {
   _git_open_open_url "$target_url" "🌿 Opened"
 }
 
+# _git_open_compare [base] [head]
+# Open the compare page (default: <default-branch>...<current-branch>).
+# Usage: _git_open_compare [base] [head]
 _git_open_compare() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -636,6 +651,11 @@ _git_open_compare() {
   _git_open_open_url "$target_url" "🔀 Opened"
 }
 
+# _git_open_pr [number]
+# Open PR/MR page (or the current-branch compare/new PR page when number is omitted).
+# Usage: _git_open_pr [number]
+# Notes:
+# - GitHub: prefers `gh pr view --web` when available.
 _git_open_pr() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -711,6 +731,9 @@ _git_open_pr() {
   esac
 }
 
+# _git_open_pulls [number]
+# Open PR/MR list (or a specific PR/MR when a number is provided).
+# Usage: _git_open_pulls [number]
 _git_open_pulls() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -741,6 +764,9 @@ _git_open_pulls() {
   _git_open_open_url "$target_url" "📌 Opened"
 }
 
+# _git_open_issues [number]
+# Open issues list (or a specific issue when a number is provided).
+# Usage: _git_open_issues [number]
 _git_open_issues() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -779,6 +805,11 @@ _git_open_issues() {
   _git_open_open_url "$target_url" "📌 Opened"
 }
 
+# _git_open_actions [workflow]
+# Open GitHub Actions (optionally for a workflow or query).
+# Usage: _git_open_actions [workflow]
+# Notes:
+# - GitHub only.
 _git_open_actions() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -827,6 +858,9 @@ _git_open_actions() {
   _git_open_open_url "$target_url" "📌 Opened"
 }
 
+# _git_open_releases [tag]
+# Open releases list (or the release page for a tag).
+# Usage: _git_open_releases [tag]
 _git_open_releases() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -863,6 +897,11 @@ _git_open_releases() {
   _git_open_open_url "$target_url" "📌 Opened"
 }
 
+# _git_open_tags [tag]
+# Open tags list (or the release page for a tag).
+# Usage: _git_open_tags [tag]
+# Notes:
+# - Tag tree uses `git-open branch <tag>`.
 _git_open_tags() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -899,6 +938,9 @@ _git_open_tags() {
   _git_open_open_url "$target_url" "📌 Opened"
 }
 
+# _git_open_commits [ref]
+# Open commit history page for a ref (default: upstream branch).
+# Usage: _git_open_commits [ref]
 _git_open_commits() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -922,6 +964,9 @@ _git_open_commits() {
   _git_open_open_url "$target_url" "📜 Opened"
 }
 
+# _git_open_file <path> [ref]
+# Open file view at a ref (default: upstream branch).
+# Usage: _git_open_file <path> [ref]
 _git_open_file() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
@@ -952,6 +997,9 @@ _git_open_file() {
   _git_open_open_url "$target_url" "📄 Opened"
 }
 
+# _git_open_blame <path> [ref]
+# Open blame view for a file at a ref (default: upstream branch).
+# Usage: _git_open_blame <path> [ref]
 _git_open_blame() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset
