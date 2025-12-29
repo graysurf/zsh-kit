@@ -78,6 +78,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── macos.zsh                         # macOS-specific system tweaks
 │   └── shell-utils.zsh                   # Core shell helpers: reload tools, cd wrappers, cheat.sh
 │
+├── tests/                                # Zsh test scripts (audit, regression, etc.)
 ├── tools/                                # Standalone executable scripts or compiled helpers
 └── install-tools.zsh                     # Root-level wrapper for bootstrap/install-tools.zsh
 ```
