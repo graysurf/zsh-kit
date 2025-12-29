@@ -230,4 +230,3 @@ fzf-tools directory
 ```
 
 Previews directory contents using `eza`, or falls back to `ls`.
-

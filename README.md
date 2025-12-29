@@ -21,6 +21,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 - 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
 - 🔗 [git-open](docs/git-open.md): Open repo/branch/commit/PR pages in browser
+- 🧰 [git-tools](docs/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
 - 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
