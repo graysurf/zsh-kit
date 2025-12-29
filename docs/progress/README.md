@@ -6,13 +6,13 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2025-12-28 | [fzf_def_docblocks](20251228_fzf_def_docblocks.md) | [graysurf/zsh-kit/pull/10](https://github.com/graysurf/zsh-kit/pull/10) |
+| - | - | - |
 
 ### Archived
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| - | - | - |
+| 2025-12-28 | [fzf_def_docblocks](archived/20251228_fzf_def_docblocks.md) | [graysurf/zsh-kit/pull/10](https://github.com/graysurf/zsh-kit/pull/10) |
 
 ## Rule
 

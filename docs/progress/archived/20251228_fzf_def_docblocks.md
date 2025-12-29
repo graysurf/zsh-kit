@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2025-12-28 | 2025-12-29 |
+| DONE | 2025-12-28 | 2025-12-30 |
 
 Links:
 
@@ -44,7 +44,7 @@ Links:
 
 ### Intermediate Artifacts
 
-- `docs/progress/20251228_fzf_def_docblocks.md` (this file)
+- `docs/progress/archived/20251228_fzf_def_docblocks.md` (this file)
 
 ## Design / Decisions
 
@@ -72,7 +72,7 @@ Links:
     - `docs/templates/PROGRESS_TEMPLATE.md`
     - `docs/templates/PROGRESS_GLOSSARY.md`
     - `docs/progress/README.md`
-    - `docs/progress/20251228_fzf_def_docblocks.md`
+    - `docs/progress/archived/20251228_fzf_def_docblocks.md`
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned (see this progress file)
     - [x] I/O contract is defined (see I/O Contract)
@@ -157,16 +157,18 @@ Links:
     - `./tools/check.zsh --all`
     - `zsh -f ./tests/run.zsh`
 
-- [ ] Step 4: Wrap-up
+- [x] Step 4: Wrap-up
   - Work Items:
-    - [ ] Update the `docs/progress/README.md` index (fill in PR link)
-    - [ ] Set this progress file `Status` to `DONE` and move it to `docs/progress/archived/`
+    - [x] Update the `docs/progress/README.md` index (fill in PR link)
+    - [x] Set this progress file `Status` to `DONE` and move it to `docs/progress/archived/`
   - Artifacts:
     - `docs/progress/README.md`
     - `docs/progress/archived/20251228_fzf_def_docblocks.md`
   - Exit Criteria:
-    - [ ] This progress file has no placeholders, and all tentative notes are replaced with concrete outcomes
-    - [ ] Index and archiving are complete
+    - [x] This progress file has no placeholders, and all tentative notes are replaced with concrete outcomes
+    - [x] Index and archiving are complete
+  - Verification:
+    - `rg -n "\\[\\[.*\\]\\]" docs/progress -S` (no output)
 
 ## Modules
 
