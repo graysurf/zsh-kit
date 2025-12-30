@@ -132,7 +132,9 @@ __git_open_pr_numbers() {
 
   command git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
 
-  typeset -a prs=()
+  typeset -i cache_version_target=2
+  typeset -i pr_cache_version=0
+  typeset -a pr_rows=()
   typeset repo_root=''
   typeset repo_key=''
   typeset cache_id=''
@@ -142,15 +144,24 @@ __git_open_pr_numbers() {
   repo_key="${repo_key//[^A-Za-z0-9_.-]/_}"
   cache_id="git-open/prs/${repo_key}"
 
-  if ! _retrieve_cache "$cache_id"; then
-    if command -v gh >/dev/null 2>&1; then
-      prs=(${(f)"$(command gh pr list --state all --limit 30 --json number,title --jq '.[] | "#\(.number):\(.title)"' 2>/dev/null || true)"})
+  if _retrieve_cache "$cache_id"; then
+    if (( pr_cache_version != cache_version_target )); then
+      pr_cache_version=0
+      pr_rows=()
     fi
-    _store_cache "$cache_id" prs >/dev/null 2>&1 || true
   fi
 
-  if (( ${#prs[@]} > 0 )); then
-    print -rl -- "${prs[@]}"
+  if (( pr_cache_version != cache_version_target )); then
+    if command -v gh >/dev/null 2>&1; then
+      pr_rows=(${(f)"$(command gh pr list --state all --limit 30 --json number,title,state,isDraft --jq '.[] | "\(.number)\t\(.state)\t\(.isDraft)\t\(.title | gsub("[\\t\\n]+"; " "))"' 2>/dev/null || true)"})
+    fi
+
+    pr_cache_version="$cache_version_target"
+    _store_cache "$cache_id" pr_cache_version pr_rows >/dev/null 2>&1 || true
+  fi
+
+  if (( ${#pr_rows[@]} > 0 )); then
+    print -rl -- "${pr_rows[@]}"
   fi
 
   return 0
@@ -288,11 +299,56 @@ _git-open() {
           ;;
         pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs)
           if (( orig_current == 3 )); then
-            typeset -a prs=()
-            prs=(${(f)"$(__git_open_pr_numbers)"})
-            if (( ${#prs[@]} > 0 )); then
-              _describe -t prs 'pull request' prs && return 0
+            typeset -i use_ansi=0
+            typeset -a pr_rows=()
+            typeset -a pr_numbers=()
+            typeset -a pr_displays=()
+
+            (( ${+IN_FZF_TAB} && IN_FZF_TAB )) && use_ansi=1
+
+            pr_rows=(${(f)"$(__git_open_pr_numbers)"})
+
+            if (( ${#pr_rows[@]} > 0 )); then
+              typeset row='' rest='' number='' state='' is_draft='' title=''
+              typeset label='' color='' reset=''
+
+              for row in "${pr_rows[@]}"; do
+                number="${row%%$'\t'*}"
+                rest="${row#*$'\t'}"
+                state="${rest%%$'\t'*}"
+                rest="${rest#*$'\t'}"
+                is_draft="${rest%%$'\t'*}"
+                title="${rest#*$'\t'}"
+
+                [[ "$number" == <-> ]] || continue
+
+                label="$state"
+                if [[ "$is_draft" == 'true' ]]; then
+                  label='DRAFT'
+                fi
+
+                if (( use_ansi )); then
+                  reset=$'\e[0m'
+                  case "$label" in
+                    DRAFT)  color=$'\e[33m' ;; # yellow
+                    OPEN)   color=$'\e[32m' ;; # green
+                    MERGED) color=$'\e[35m' ;; # magenta
+                    CLOSED) color=$'\e[31m' ;; # red
+                    *)      color=$'\e[36m' ;; # cyan
+                  esac
+                  label="${color}${label}${reset}"
+                fi
+
+                pr_numbers+=("#${number}")
+                pr_displays+=("#${number}  ${label}  -- ${title}")
+              done
             fi
+
+            if (( ${#pr_numbers[@]} > 0 )); then
+              local expl
+              _wanted -V prs expl 'pull request' compadd -d pr_displays -- $pr_numbers && return 0
+            fi
+
             _message 'number (optional, e.g. 123 or #123)'
             return 0
           fi
