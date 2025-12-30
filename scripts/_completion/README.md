@@ -74,6 +74,65 @@ compdef _tool-name 'tool-name.git'
   - Pure values → `_values`
   - No list, only a hint → `_message`
 
+## Common Pitfall: `_arguments -C` can rewrite `words` / `CURRENT`
+
+When you use `_arguments -C` with a catch-all like `*::arg:->args`, zsh may enter the
+`argument-rest` state and **rewrite** `words` / `CURRENT` to represent only the “rest”
+segment (not the full command line). This can break argument completion if you keep
+using `CURRENT == 3` / `words[2]` after `_arguments`.
+
+Symptoms:
+
+- Subcommand completion works, but `tool subcmd <TAB>` shows no candidates.
+- Your helper functions print correct candidates when run manually, but completion is empty.
+
+Fix pattern:
+
+1. Capture the original completion coordinates *before* calling `_arguments`.
+2. Resolve `subcmd` from `line[1]` (positional args parsed by `_arguments`) with a fallback to `orig_words[2]`.
+3. Trim trailing whitespace (completion can pass words with trailing spaces).
+4. Use `orig_current` when checking “which argument position is being completed”.
+
+Example:
+
+```zsh
+#compdef tool-name
+
+_tool-name() {
+  emulate -L zsh -o extendedglob
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
+  typeset -i orig_current="$CURRENT"
+  typeset -a orig_words=("${words[@]}")
+
+  _arguments -C \
+    '1:command:->subcmds' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    args)
+      local subcmd="${line[1]:-${orig_words[2]-}}"
+      subcmd="${subcmd%%[[:space:]]#}"
+
+      if (( orig_current == 3 )); then
+        # complete the first arg after subcmd
+        :
+      fi
+      ;;
+  esac
+}
+```
+
+Notes:
+
+- Use `${var:-default}` not `${var-default}` when you want the default for **unset OR empty**.
+  - In completion, `line[1]` can be set but empty depending on state.
+- The whitespace trim (`%%[[:space:]]#`) is defensive: some completion contexts include trailing spaces
+  in `line` / `words` elements.
+
 ## Dynamic Candidates (Git Examples)
 
 - Always guard Git queries:

@@ -55,14 +55,27 @@ __git_open_remote_refs() {
   typeset -a refs=()
 
   if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    refs=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/remotes 2>/dev/null || true)"})
+    refs=(${(f)"$(command git for-each-ref --format='%(refname)' refs/remotes 2>/dev/null || true)"})
   fi
 
   if (( ${#refs[@]} > 0 )); then
-    typeset ref=''
-    for ref in "${refs[@]}"; do
-      [[ "$ref" == */HEAD ]] && continue
-      print -r -- "$ref"
+    typeset -A seen=()
+    typeset full_ref='' ref='' remote='' branch=''
+
+    for full_ref in "${refs[@]}"; do
+      [[ "$full_ref" == */HEAD ]] && continue
+
+      ref="${full_ref#refs/remotes/}"
+      [[ "$ref" == "$full_ref" ]] && continue
+
+      remote="${ref%%/*}"
+      branch="${ref#*/}"
+      [[ -z "$remote" || -z "$branch" || "$branch" == "$ref" ]] && continue
+
+      [[ -n "${seen[$branch]-}" ]] && continue
+      seen[$branch]=1
+
+      print -r -- "$branch"
     done
   fi
 
@@ -170,6 +183,9 @@ _git-open() {
   local -a line
   typeset -A opt_args
 
+  typeset -i orig_current="$CURRENT"
+  typeset -a orig_words=("${words[@]}")
+
   typeset -a subcmds
   subcmds=(
     'repo:Open repo page'
@@ -212,44 +228,66 @@ _git-open() {
       _describe -t commands 'git-open command' subcmds && return 0
       ;;
     args)
-      typeset subcmd="${line[1]-${words[2]-}}"
+      typeset subcmd="${line[1]:-${orig_words[2]-}}"
+      subcmd="${subcmd%%[[:space:]]#}"
 
       case "$subcmd" in
         repo)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
             _values 'remote' $(__git_open_remote_names)
             return 0
           fi
           ;;
         default|default-branch)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
             _values 'remote' $(__git_open_remote_names)
             return 0
           fi
           ;;
         branch|compare|commits|history)
-          if (( CURRENT == 3 || CURRENT == 4 )); then
+          if (( orig_current == 3 || orig_current == 4 )); then
             typeset -a refs=()
             refs=(${(f)"$(__git_open_branch_names)"})
             refs+=(${(f)"$(__git_open_remote_refs)"})
             refs+=(${(f)"$(__git_open_tag_names)"})
-            _values 'ref' $refs
+            if (( ${#refs[@]} > 0 )); then
+              local expl
+              _wanted -V refs expl 'ref' compadd -- $refs && return 0
+            fi
+            _message 'ref (default upstream branch)'
             return 0
           fi
           ;;
         commit)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
+            typeset -a commit_entries=()
             typeset -a commit_hashes=()
-            commit_hashes=(${(f)"$(__git_open_commit_hashes)"})
-            if (( ${#commit_hashes[@]} > 0 )); then
-              _describe -t commits 'commit ref' commit_hashes && return 0
+            typeset -a commit_displays=()
+
+            commit_entries=(${(f)"$(__git_open_commit_hashes)"})
+
+            if (( ${#commit_entries[@]} > 0 )); then
+              typeset entry='' hash='' subject=''
+              for entry in "${commit_entries[@]}"; do
+                hash="${entry%%:*}"
+                subject="${entry#*:}"
+                [[ -z "$hash" ]] && continue
+                commit_hashes+=("$hash")
+                commit_displays+=("${hash}  -- ${subject}")
+              done
             fi
+
+            if (( ${#commit_hashes[@]} > 0 )); then
+              local expl
+              _wanted -V commits expl 'commit ref' compadd -d commit_displays -- $commit_hashes && return 0
+            fi
+
             _message 'commit ref (default HEAD)'
             return 0
           fi
           ;;
         pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
             typeset -a prs=()
             prs=(${(f)"$(__git_open_pr_numbers)"})
             if (( ${#prs[@]} > 0 )); then
@@ -260,13 +298,13 @@ _git-open() {
           fi
           ;;
         issues|issue)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
             _message 'number (optional, e.g. 123 or #123)'
             return 0
           fi
           ;;
         actions|action)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
             typeset -a workflow_files=()
             workflow_files=(${(f)"$(__git_open_workflow_files)"})
             if (( ${#workflow_files[@]} > 0 )); then
@@ -278,17 +316,23 @@ _git-open() {
           fi
           ;;
         releases|release|tags|tag)
-          if (( CURRENT == 3 )); then
-            _values 'tag' $(__git_open_tag_names)
+          if (( orig_current == 3 )); then
+            typeset -a tags=()
+            tags=(${(f)"$(__git_open_tag_names)"})
+            if (( ${#tags[@]} > 0 )); then
+              local expl
+              _wanted -V tags expl 'tag' compadd -- $tags && return 0
+            fi
+            _message 'tag (optional)'
             return 0
           fi
           ;;
         file|blob|blame)
-          if (( CURRENT == 3 )); then
+          if (( orig_current == 3 )); then
             _files
             return 0
           fi
-          if (( CURRENT == 4 )); then
+          if (( orig_current == 4 )); then
             typeset -a refs=()
             refs=(${(f)"$(__git_open_branch_names)"})
             refs+=(${(f)"$(__git_open_remote_refs)"})

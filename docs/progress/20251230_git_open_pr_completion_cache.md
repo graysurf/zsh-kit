@@ -55,6 +55,7 @@ Links:
 - Cache key includes the repo root path (sanitized) under `git-open/prs/` to avoid cross-repo mixing.
 - Cache invalidation uses `cache-policy` with a 30s TTL, applied only to `*/git-open/prs/*` cache files.
 - Candidate format is `#<number>:<title>` to work well with `_describe` (and `#123` input).
+- Completion routing captures `orig_current`/`orig_words` before `_arguments` because `_arguments` may rewrite `CURRENT`/`words` when entering the `argument-rest` state (breaking subcommand/arg detection if not preserved).
 
 ### Risks / Uncertainties
 
@@ -107,6 +108,7 @@ Links:
 - [x] Step 3: Validation / testing
   - Work Items:
     - [x] Run syntax and repo checks.
+    - [x] Smoke completion: `git-open branch|compare|commit <TAB>` yields candidates.
   - Artifacts:
     - `zsh -n -- scripts/_completion/_git-open` (pass)
     - `./tools/check.zsh` (pass)
