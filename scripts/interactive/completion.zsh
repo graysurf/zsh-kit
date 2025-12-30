@@ -40,5 +40,9 @@ zmodload zsh/complist
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$ZSH_COMPLETION_CACHE_DIR"
 
+# fzf-tab sorts candidates by default when the completion `sort` style is unset.
+# Preserve the original candidate order for git-open (e.g. `git log` order).
+zstyle ':completion:*:git-open:*' sort false
+
 # Ensure common file‑reading commands complete both files and directories
 (( ${+functions[compdef]} )) && compdef _files cat less bat
