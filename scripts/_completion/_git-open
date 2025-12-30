@@ -309,20 +309,20 @@ _git-open() {
             pr_rows=(${(f)"$(__git_open_pr_numbers)"})
 
             if (( ${#pr_rows[@]} > 0 )); then
-              typeset row='' rest='' number='' state='' is_draft='' title=''
+              typeset row='' rest='' number='' pr_state='' is_draft='' title=''
               typeset label='' color='' reset=''
 
               for row in "${pr_rows[@]}"; do
                 number="${row%%$'\t'*}"
                 rest="${row#*$'\t'}"
-                state="${rest%%$'\t'*}"
+                pr_state="${rest%%$'\t'*}"
                 rest="${rest#*$'\t'}"
                 is_draft="${rest%%$'\t'*}"
                 title="${rest#*$'\t'}"
 
                 [[ "$number" == <-> ]] || continue
 
-                label="$state"
+                label="$pr_state"
                 if [[ "$is_draft" == 'true' ]]; then
                   label='DRAFT'
                 fi
