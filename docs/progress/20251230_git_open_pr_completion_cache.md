@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2025-12-30 | 2025-12-30 |
+| IN PROGRESS | 2025-12-30 | 2025-12-31 |
 
 Links:
 
@@ -24,10 +24,12 @@ Links:
 ## Scope
 
 - In-scope:
-  - `scripts/_completion/_git-open`: add PR number candidates with compsys cache + 30s TTL.
+  - `scripts/_completion/_git-open`: PR number candidates with compsys cache + 30s TTL.
+  - Completion coverage inventory (commit/branch/tag/remotes/workflows/files) and gap tracking.
+  - Follow-up completion improvements after PR merge (see Step 2).
 - Out-of-scope:
   - GitLab MR number completion (non-`gh` providers).
-  - Issue number completion.
+  - Non-`gh` issue/PR resolution.
 
 ## I/O Contract
 
@@ -65,12 +67,21 @@ Links:
 
 - [x] Step 0: Alignment / prerequisites
   - Work Items:
-    - [x] Confirm scope: PR number completion only (GitHub via `gh`), no GitLab/issue support.
+    - [x] Confirm scope: GitHub completion improvements via `gh` (PR now; follow-ups in Step 2), no GitLab support.
     - [x] Confirm UX: show `#<number>:<title>` and cache for 30 seconds.
+    - [x] Inventory `git-open` completion coverage and gaps (see Step 2).
   - Artifacts:
     - `docs/progress/20251230_git_open_pr_completion_cache.md` (this file)
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned.
+
+  - Current coverage (already implemented):
+    - [x] `git-open commit`: commit hashes (last ~20, from `git log`).
+    - [x] `git-open branch|compare|commits|history`: refs from local branches + remote refs + tags.
+    - [x] `git-open tags|releases`: tag names (last ~50).
+    - [x] `git-open repo|default-branch`: remote names.
+    - [x] `git-open actions`: workflow files under `.github/workflows/*.y{a,}ml`.
+    - [x] `git-open file|blame`: `_files` for path + refs from branches/remotes/tags.
 
 - [x] Step 1: Minimum viable output (MVP)
   - Work Items:
@@ -83,11 +94,15 @@ Links:
 
 - [ ] Step 2: Expansion / integration
   - Work Items:
-    - [ ] Consider issue number completion and/or GitLab support if needed.
+    - [ ] Add issue number completion for `git-open issues [number]` via `gh issue list` (with 30s cache).
+    - [ ] Decide PR/issue candidate insertion format: `123` vs `#123` (note: `#` can be treated as comment in zsh).
+    - [ ] Decide whether PR candidates should be `--state open` only (current behavior) or include merged/closed.
+    - [ ] Consider `file/blame` path candidates from `git ls-files` (tracked-only) vs `_files` (current behavior).
+    - [ ] Consider adding commit hashes to other `ref` positions (currently limited to `git-open commit` by design).
   - Artifacts:
-    - TBD
+    - `scripts/_completion/_git-open`
   - Exit Criteria:
-    - [ ] TBD
+    - [ ] Completion coverage matches agreed scope (PR, issues, file paths, ref positions) without slow/fragile IO.
 
 - [x] Step 3: Validation / testing
   - Work Items:
