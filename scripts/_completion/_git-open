@@ -85,6 +85,64 @@ __git_open_tag_names() {
   return 0
 }
 
+__git_open_cache_policy() {
+  emulate -L zsh -o extendedglob
+
+  typeset cache_path="${1-}"
+
+  [[ -z "$cache_path" ]] && return 0
+  [[ "$cache_path" != */git-open/prs/* ]] && return 1
+
+  typeset -i mtime=0
+
+  if zmodload -F zsh/stat b:zstat 2>/dev/null; then
+    typeset -a stat=()
+    zstat -A stat +mtime -- "$cache_path" 2>/dev/null || return 0
+    mtime="${stat[1]-0}"
+  else
+    mtime="$(command stat -f %m -- "$cache_path" 2>/dev/null)" || \
+      mtime="$(command stat -c %Y -- "$cache_path" 2>/dev/null)" || return 0
+  fi
+
+  (( EPOCHSECONDS - mtime > 30 )) && return 0
+  return 1
+}
+
+__git_open_pr_numbers() {
+  emulate -L zsh -o extendedglob
+
+  autoload -Uz _cache_invalid _retrieve_cache _store_cache
+
+  typeset cache_policy=''
+  zstyle -s ":completion:${curcontext}:" cache-policy cache_policy
+  [[ -z "$cache_policy" ]] && zstyle ":completion:${curcontext}:" cache-policy __git_open_cache_policy
+
+  command git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+
+  typeset -a prs=()
+  typeset repo_root=''
+  typeset repo_key=''
+  typeset cache_id=''
+
+  repo_root="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  repo_key="${repo_root//\//_}"
+  repo_key="${repo_key//[^A-Za-z0-9_.-]/_}"
+  cache_id="git-open/prs/${repo_key}"
+
+  if ! _retrieve_cache "$cache_id"; then
+    if command -v gh >/dev/null 2>&1; then
+      prs=(${(f)"$(command gh pr list --limit 30 --json number,title --jq '.[] | "#\(.number):\(.title)"' 2>/dev/null || true)"})
+    fi
+    _store_cache "$cache_id" prs >/dev/null 2>&1 || true
+  fi
+
+  if (( ${#prs[@]} > 0 )); then
+    print -r -- "${prs[@]}"
+  fi
+
+  return 0
+}
+
 __git_open_workflow_files() {
   emulate -L zsh -o extendedglob
 
@@ -190,7 +248,18 @@ _git-open() {
             return 0
           fi
           ;;
-        pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs|issues|issue)
+        pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs)
+          if (( CURRENT == 3 )); then
+            typeset -a prs=()
+            prs=(${(f)"$(__git_open_pr_numbers)"})
+            if (( ${#prs[@]} > 0 )); then
+              _describe -t prs 'pull request' prs && return 0
+            fi
+            _message 'number (optional, e.g. 123 or #123)'
+            return 0
+          fi
+          ;;
+        issues|issue)
           if (( CURRENT == 3 )); then
             _message 'number (optional, e.g. 123 or #123)'
             return 0

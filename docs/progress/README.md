@@ -6,6 +6,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2025-12-30 | [git_open_pr_completion_cache](20251230_git_open_pr_completion_cache.md) | [graysurf/zsh-kit/pull/12](https://github.com/graysurf/zsh-kit/pull/12) |
 
 ### Archived
 
