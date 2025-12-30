@@ -10,7 +10,7 @@ __git_open_commit_hashes() {
   fi
 
   if (( ${#commits[@]} > 0 )); then
-    print -r -- "${commits[@]}"
+    print -rl -- "${commits[@]}"
   fi
 
   return 0
@@ -26,7 +26,7 @@ __git_open_remote_names() {
   fi
 
   if (( ${#remotes[@]} > 0 )); then
-    print -r -- "${remotes[@]}"
+    print -rl -- "${remotes[@]}"
   fi
 
   return 0
@@ -43,7 +43,7 @@ __git_open_branch_names() {
   fi
 
   if (( ${#branches[@]} > 0 )); then
-    print -r -- "${branches[@]}"
+    print -rl -- "${branches[@]}"
   fi
 
   return 0
@@ -79,7 +79,7 @@ __git_open_tag_names() {
   fi
 
   if (( ${#tags[@]} > 0 )); then
-    print -r -- "${tags[@]}"
+    print -rl -- "${tags[@]}"
   fi
 
   return 0
@@ -131,13 +131,13 @@ __git_open_pr_numbers() {
 
   if ! _retrieve_cache "$cache_id"; then
     if command -v gh >/dev/null 2>&1; then
-      prs=(${(f)"$(command gh pr list --limit 30 --json number,title --jq '.[] | "#\(.number):\(.title)"' 2>/dev/null || true)"})
+      prs=(${(f)"$(command gh pr list --state all --limit 30 --json number,title --jq '.[] | "#\(.number):\(.title)"' 2>/dev/null || true)"})
     fi
     _store_cache "$cache_id" prs >/dev/null 2>&1 || true
   fi
 
   if (( ${#prs[@]} > 0 )); then
-    print -r -- "${prs[@]}"
+    print -rl -- "${prs[@]}"
   fi
 
   return 0
@@ -157,7 +157,7 @@ __git_open_workflow_files() {
   files=("${wf_dir}/"*.yml(N:t) "${wf_dir}/"*.yaml(N:t))
 
   if (( ${#files[@]} > 0 )); then
-    print -r -- "${files[@]}"
+    print -rl -- "${files[@]}"
   fi
 
   return 0
