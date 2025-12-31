@@ -22,8 +22,8 @@
 
 ## 🤝 Collaboration Remote (optional)
 
-Some `git-open` commands open repo-level “collaboration” pages (PRs, issues, Actions, releases). If you want those pages
-to always target a specific remote regardless of the current branch upstream, set:
+Some `git-open` commands open repo-level “collaboration” pages (PRs, issues, Actions, releases, tags). If you want those
+pages to always target a specific remote regardless of the current branch upstream, set:
 
 ```bash
 export GIT_OPEN_COLLAB_REMOTE=origin
@@ -36,6 +36,7 @@ When set (and the remote exists), these commands prefer the collab remote reposi
 - `git-open issues`
 - `git-open actions`
 - `git-open releases`
+- `git-open tags`
 
 If the remote is missing, `git-open` falls back to the normal upstream resolution.
 

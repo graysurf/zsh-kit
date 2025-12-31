@@ -85,11 +85,14 @@ Links:
 
 - [x] Step 2: Expansion / integration
   - Work Items:
-    - [x] Keep `tags` and `commits` following upstream (not treated as collab pages).
+    - [x] Treat `tags` as a collab page (align with `releases`); keep `commits` following upstream.
   - Artifacts:
     - `docs/git-open.md`
   - Exit Criteria:
     - [x] Coverage is explicitly documented (which subcommands are collab vs content).
+  - Addendum (2025-12-31)
+    - Follow-up decision: route `git-open tags` via `GIT_OPEN_COLLAB_REMOTE` as well (repo-level list page, aligns with `releases`).
+    - Implementation: `_git_open_tags` now uses `_git_open_collab_context` (same routing as `releases`), and docs/usage notes list `tags` as a collab page.
 
 - [x] Step 3: Validation / testing
   - Work Items:

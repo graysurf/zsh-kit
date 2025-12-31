@@ -107,7 +107,7 @@ _git_open_usage() {
   print -r --
   print -r -- "Notes:"
   print -r -- "  - Uses the upstream remote if configured; falls back to origin."
-  print -r -- "  - Collaboration pages prefer GIT_OPEN_COLLAB_REMOTE when set (pr/pulls/issues/actions/releases)."
+  print -r -- "  - Collaboration pages prefer GIT_OPEN_COLLAB_REMOTE when set (pr/pulls/issues/actions/releases/tags)."
   print -r -- "  - pr uses gh when available; otherwise falls back to the compare page."
   print -r -- "  - tags <tag> opens the release page for the given tag."
   print -r -- "  - Singular aliases: issue, action, release, tag."
@@ -1017,9 +1017,9 @@ _git_open_tags() {
   typeset -a ctx=()
   typeset base_url='' provider='' target_url=''
 
-  ctx=(${(@f)$(_git_open_context)}) || return 1
+  ctx=(${(@f)$(_git_open_collab_context)}) || return 1
   base_url="${ctx[1]}"
-  provider="${ctx[4]}"
+  provider="${ctx[3]}"
 
   if (( $# == 1 )); then
     case "$1" in
