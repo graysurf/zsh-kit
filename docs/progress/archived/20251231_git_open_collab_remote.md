@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2025-12-31 | 2025-12-31 |
+| DONE | 2025-12-31 | 2025-12-31 |
 
 Links:
 
@@ -72,7 +72,7 @@ Links:
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned.
 
-- [ ] Step 1: Minimum viable output (MVP)
+- [x] Step 1: Minimum viable output (MVP)
   - Work Items:
     - [x] Implement collab context resolution from `GIT_OPEN_COLLAB_REMOTE`.
     - [x] Route `pr/pulls/issues/actions/releases` through collab context (including `pr` without number).
@@ -100,14 +100,14 @@ Links:
   - Exit Criteria:
     - [x] Validation commands executed with results recorded.
 
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
     - [x] Open PR.
-    - [ ] Set Status to DONE and archive the progress file after merge.
+    - [x] Set Status to DONE and move this file to `docs/progress/archived/`.
   - Artifacts:
     - PR: https://github.com/graysurf/zsh-kit/pull/13
   - Exit Criteria:
-    - [ ] Progress archived and index updated.
+    - [x] Progress archived and index updated.
 
 ## Modules
 
