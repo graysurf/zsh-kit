@@ -80,7 +80,8 @@ Links:
     - `scripts/git/git-open.zsh`
     - `docs/git-open.md`
   - Exit Criteria:
-    - [ ] `GIT_OPEN_COLLAB_REMOTE=origin git-open pulls` opens the correct repository URL.
+    - [x] `GIT_OPEN_COLLAB_REMOTE=origin git-open pulls` opens the correct repository URL.
+      - Verified in `~/Project/graysurf/context7`: opened `https://github.com/upstash/context7/pulls`
 
 - [x] Step 2: Expansion / integration
   - Work Items:
@@ -88,7 +89,7 @@ Links:
   - Artifacts:
     - `docs/git-open.md`
   - Exit Criteria:
-    - [ ] Coverage is explicitly documented (which subcommands are collab vs content).
+    - [x] Coverage is explicitly documented (which subcommands are collab vs content).
 
 - [x] Step 3: Validation / testing
   - Work Items:
