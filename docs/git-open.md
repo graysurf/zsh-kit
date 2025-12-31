@@ -20,6 +20,25 @@
 - If upstream is missing, falls back to `origin` and the current branch name.
 - Remote URLs are normalized into https form (works with typical `git@...` / `ssh://...` remotes).
 
+## 🤝 Collaboration Remote (optional)
+
+Some `git-open` commands open repo-level “collaboration” pages (PRs, issues, Actions, releases). If you want those pages
+to always target a specific remote regardless of the current branch upstream, set:
+
+```bash
+export GIT_OPEN_COLLAB_REMOTE=origin
+```
+
+When set (and the remote exists), these commands prefer the collab remote repository:
+
+- `git-open pr` (including the no-number fallback)
+- `git-open pulls`
+- `git-open issues`
+- `git-open actions`
+- `git-open releases`
+
+If the remote is missing, `git-open` falls back to the normal upstream resolution.
+
 ---
 
 ## 🛠 Commands

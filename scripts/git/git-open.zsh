@@ -107,6 +107,7 @@ _git_open_usage() {
   print -r --
   print -r -- "Notes:"
   print -r -- "  - Uses the upstream remote if configured; falls back to origin."
+  print -r -- "  - Collaboration pages prefer GIT_OPEN_COLLAB_REMOTE when set (pr/pulls/issues/actions/releases)."
   print -r -- "  - pr uses gh when available; otherwise falls back to the compare page."
   print -r -- "  - tags <tag> opens the release page for the given tag."
   print -r -- "  - Singular aliases: issue, action, release, tag."
@@ -145,6 +146,41 @@ _git_open_provider() {
   esac
 
   print -r -- "$provider"
+}
+
+# _git_open_github_repo_slug <base_url>
+# Extract "<owner>/<repo>" from a normalized GitHub base URL.
+# Usage: _git_open_github_repo_slug <base_url>
+_git_open_github_repo_slug() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  typeset base_url="${1-}"
+  typeset path='' owner='' rest='' repo=''
+
+  if [[ -z "$base_url" ]]; then
+    print -u2 -r -- "❌ Missing base URL"
+    return 1
+  fi
+
+  path="${base_url#*://}"
+  path="${path#*/}"
+
+  owner="${path%%/*}"
+  rest="${path#*/}"
+
+  if [[ -z "$owner" || -z "$rest" || "$rest" == "$path" ]]; then
+    print -u2 -r -- "❌ Invalid GitHub base URL: $base_url"
+    return 1
+  fi
+
+  repo="${rest%%/*}"
+  if [[ -z "$repo" ]]; then
+    print -u2 -r -- "❌ Invalid GitHub base URL: $base_url"
+    return 1
+  fi
+
+  print -r -- "${owner}/${repo}"
 }
 
 # _git_open_open_url <url> [label]
@@ -470,6 +506,43 @@ _git_open_remote_context() {
   print -r -- "$provider"
 }
 
+# _git_open_collab_context
+# Resolve base URL + remote + provider for collaboration/list pages.
+# Uses `GIT_OPEN_COLLAB_REMOTE` when set (and exists); otherwise falls back to `_git_open_context`.
+# Usage: _git_open_collab_context
+# Output:
+# - Line 1: base URL
+# - Line 2: remote
+# - Line 3: provider (github|gitlab|generic)
+_git_open_collab_context() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  typeset collab_remote="${GIT_OPEN_COLLAB_REMOTE-}"
+  typeset base_url='' provider=''
+
+  if [[ -n "$collab_remote" ]]; then
+    base_url="$(git-normalize-remote-url "$collab_remote" 2>/dev/null || true)"
+    if [[ -n "$base_url" ]]; then
+      provider=$(_git_open_provider "$base_url") || return 1
+      print -r -- "$base_url"
+      print -r -- "$collab_remote"
+      print -r -- "$provider"
+      return 0
+    fi
+  fi
+
+  typeset -a ctx=()
+  ctx=(${(@f)$(_git_open_context)}) || return 1
+  base_url="${ctx[1]}"
+  collab_remote="${ctx[2]}"
+  provider="${ctx[4]}"
+
+  print -r -- "$base_url"
+  print -r -- "$collab_remote"
+  print -r -- "$provider"
+}
+
 # _git_open_repo [remote]
 # Open the repository homepage for the current repo (or a named remote).
 # Usage: _git_open_repo [remote]
@@ -667,8 +740,9 @@ _git_open_pr() {
     return 2
   fi
 
-  typeset -a ctx=()
+  typeset -a ctx=() collab_ctx=()
   typeset base_url='' remote='' remote_branch='' provider=''
+  typeset collab_base_url='' collab_remote='' collab_provider=''
   typeset base='' target_url='' source_enc='' target_enc='' pr_id=''
 
   ctx=(${(@f)$(_git_open_context)}) || return 1
@@ -676,6 +750,11 @@ _git_open_pr() {
   remote="${ctx[2]}"
   remote_branch="${ctx[3]}"
   provider="${ctx[4]}"
+
+  collab_ctx=(${(@f)$(_git_open_collab_context)}) || return 1
+  collab_base_url="${collab_ctx[1]}"
+  collab_remote="${collab_ctx[2]}"
+  collab_provider="${collab_ctx[3]}"
 
   if (( $# == 1 )); then
     case "$1" in
@@ -691,9 +770,9 @@ _git_open_pr() {
       return 2
     fi
 
-    case "$provider" in
-      github) target_url="$base_url/pull/$pr_id" ;;
-      gitlab) target_url="$base_url/-/merge_requests/$pr_id" ;;
+    case "$collab_provider" in
+      github) target_url="$collab_base_url/pull/$pr_id" ;;
+      gitlab) target_url="$collab_base_url/-/merge_requests/$pr_id" ;;
       *)
         print -u2 -r -- "❗ pr <number> is only supported for GitHub/GitLab remotes."
         return 1
@@ -704,29 +783,51 @@ _git_open_pr() {
     return 0
   fi
 
-  case "$provider" in
+  case "$collab_provider" in
     github)
       if command -v gh &>/dev/null; then
+        typeset collab_slug=''
+        if [[ "$collab_base_url" == *'github.com/'* ]]; then
+          collab_slug="$(_git_open_github_repo_slug "$collab_base_url" 2>/dev/null || true)"
+        fi
+        if [[ -n "$collab_slug" ]]; then
+          if gh pr view --web --repo "$collab_slug" >/dev/null 2>&1; then
+            print -r -- "🧷 Opened PR via gh"
+            return 0
+          fi
+        fi
+
         if gh pr view --web >/dev/null 2>&1; then
           print -r -- "🧷 Opened PR via gh"
           return 0
         fi
       fi
 
-      base=$(_git_open_default_branch_name "$remote") || return 1
-      target_url="$base_url/compare/${base}...${remote_branch}?expand=1"
+      base=$(_git_open_default_branch_name "$collab_remote") || return 1
+
+      typeset head_ref="$remote_branch"
+      if [[ "$collab_base_url" != "$base_url" && "$collab_base_url" == *'github.com/'* && "$base_url" == *'github.com/'* ]]; then
+        typeset upstream_slug='' upstream_owner=''
+        upstream_slug="$(_git_open_github_repo_slug "$base_url" 2>/dev/null || true)"
+        upstream_owner="${upstream_slug%%/*}"
+        if [[ -n "$upstream_owner" ]]; then
+          head_ref="${upstream_owner}:${remote_branch}"
+        fi
+      fi
+
+      target_url="$collab_base_url/compare/${base}...${head_ref}?expand=1"
       _git_open_open_url "$target_url" "🧷 Opened"
       ;;
     gitlab)
-      base=$(_git_open_default_branch_name "$remote") || return 1
+      base=$(_git_open_default_branch_name "$collab_remote") || return 1
       source_enc=$(_git_open_urlencode_query_value "$remote_branch") || return 1
       target_enc=$(_git_open_urlencode_query_value "$base") || return 1
-      target_url="$base_url/-/merge_requests/new?merge_request[source_branch]=$source_enc&merge_request[target_branch]=$target_enc"
+      target_url="$collab_base_url/-/merge_requests/new?merge_request[source_branch]=$source_enc&merge_request[target_branch]=$target_enc"
       _git_open_open_url "$target_url" "🧷 Opened"
       ;;
     *)
-      base=$(_git_open_default_branch_name "$remote") || return 1
-      target_url="$base_url/compare/${base}...${remote_branch}"
+      base=$(_git_open_default_branch_name "$collab_remote") || return 1
+      target_url="$collab_base_url/compare/${base}...${remote_branch}"
       _git_open_open_url "$target_url" "🧷 Opened"
       ;;
   esac
@@ -753,9 +854,9 @@ _git_open_pulls() {
   typeset -a ctx=()
   typeset base_url='' provider='' target_url=''
 
-  ctx=(${(@f)$(_git_open_context)}) || return 1
+  ctx=(${(@f)$(_git_open_collab_context)}) || return 1
   base_url="${ctx[1]}"
-  provider="${ctx[4]}"
+  provider="${ctx[3]}"
 
   case "$provider" in
     gitlab) target_url="$base_url/-/merge_requests" ;;
@@ -781,9 +882,9 @@ _git_open_issues() {
   typeset base_url='' provider='' target_url=''
 
   typeset -a ctx=()
-  ctx=(${(@f)$(_git_open_context)}) || return 1
+  ctx=(${(@f)$(_git_open_collab_context)}) || return 1
   base_url="${ctx[1]}"
-  provider="${ctx[4]}"
+  provider="${ctx[3]}"
 
   if (( $# == 1 )); then
     typeset issue_id="${1#\#}"
@@ -824,9 +925,9 @@ _git_open_actions() {
   typeset -a ctx=()
   typeset base_url='' provider='' target_url=''
 
-  ctx=(${(@f)$(_git_open_context)}) || return 1
+  ctx=(${(@f)$(_git_open_collab_context)}) || return 1
   base_url="${ctx[1]}"
-  provider="${ctx[4]}"
+  provider="${ctx[3]}"
 
   if [[ "$provider" != "github" ]]; then
     print -u2 -r -- "❗ actions is only supported for GitHub remotes."
@@ -875,9 +976,9 @@ _git_open_releases() {
   typeset -a ctx=()
   typeset base_url='' provider='' target_url=''
 
-  ctx=(${(@f)$(_git_open_context)}) || return 1
+  ctx=(${(@f)$(_git_open_collab_context)}) || return 1
   base_url="${ctx[1]}"
-  provider="${ctx[4]}"
+  provider="${ctx[3]}"
 
   if (( $# == 1 )); then
     case "$1" in
