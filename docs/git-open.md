@@ -272,6 +272,7 @@ Shell-level shortcuts (defined in `scripts/git/git-open.zsh`):
 - `gob` → `git-open branch`
 - `god` → `git-open default-branch`
 - `goc` → `git-open commit`
+- `gocs` → `git-open commits`
 - `gor` → `git-open repo`
 - `goi` → `git-open issues`
 - `goa` → `git-open actions`

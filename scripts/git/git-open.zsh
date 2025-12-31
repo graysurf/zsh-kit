@@ -6,7 +6,7 @@ if command -v safe_unalias >/dev/null; then
     git-resolve-upstream \
     git-normalize-remote-url \
     git-open gho \
-    gop gopl gob god goc \
+    gop gopl gob god goc gocs \
     gor goi goa got
 fi
 
@@ -1251,6 +1251,11 @@ alias god='git-open default-branch'
 # Alias of `git-open commit`.
 # Usage: goc [ref]
 alias goc='git-open commit'
+
+# gocs [ref]
+# Alias of `git-open commits`.
+# Usage: gocs [ref]
+alias gocs='git-open commits'
 
 # gopl [number]
 # Alias of `git-open pulls`.
