@@ -122,6 +122,3 @@ zstyle -e ':fzf-tab:*:*:*:git-open:*' group-colors '
     reply+=("$color")
   done
 '
-
-# Ensure common file‑reading commands complete both files and directories
-(( ${+functions[compdef]} )) && compdef _files cat less bat

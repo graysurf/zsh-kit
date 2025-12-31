@@ -3,109 +3,44 @@
 # ────────────────────────────────────────────────────────
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
-    vi cd edit-zsh y \
-    fdf fdd cat batp bat-all bff \
-    fsearch zdef cheat kp kpid \
-    reload execz zz histflush \
-    history his fzf-history-wrapper
+    fd-files fd-dirs fdf fdd \
+    bat-view batp \
+    kp kpid \
+    reload execz zz zsh-reload zsh-restart \
+    histflush history-flush \
+    edit-zsh y \
+    cheat weather \
+    bff his
 fi
 
-# ────────────────────────────────────────────────────────
-# Basic editors & overrides
-# ────────────────────────────────────────────────────────
-
-export EDITOR="nvim"
-
-# vi: Alias to `$EDITOR`.
-# Usage: vi [args...]
-alias vi=$EDITOR
-
-# cd [path]
-# Change directory then list contents via eza.
-# Usage: cd [path]
-# Notes:
-# - Overrides builtin `cd` in interactive shells.
-cd() {
-  builtin cd "$@" && eza -alh --icons --group-directories-first --time-style=iso
-}
+# Legacy cleanup (functions removed from shell-tools.zsh).
+for _su_fn in bat-all zdef fsearch fzf-history-wrapper; do
+  (( $+functions[$_su_fn] )) && unfunction "$_su_fn"
+done
+unset _su_fn
 
 # ────────────────────────────────────────────────────────
-# fd aliases (file and directory search)
+# fd helpers (file and directory search)
 # ────────────────────────────────────────────────────────
 
-# fdf: Find files via fd (includes hidden; excludes .git).
+# fd-files: Find files via fd (includes hidden; excludes .git).
+# Usage: fd-files [fd args...]
+alias fd-files='fd --type f --hidden --follow --exclude .git'
+
+# fd-dirs: Find directories via fd (includes hidden; excludes .git).
+# Usage: fd-dirs [fd args...]
+alias fd-dirs='fd --type d --hidden --follow --exclude .git'
+
+# fdf: Alias of fd-files.
 # Usage: fdf [fd args...]
-alias fdf='fd --type f --hidden --follow --exclude .git'
+alias fdf='fd-files'
 
-# fdd: Find directories via fd (includes hidden; excludes .git).
+# fdd: Alias of fd-dirs.
 # Usage: fdd [fd args...]
-alias fdd='fd --type d --hidden --follow --exclude .git'
+alias fdd='fd-dirs'
 
 # ────────────────────────────────────────────────────────
-# bat aliases (syntax-highlighted file viewing)
-# ────────────────────────────────────────────────────────
-
-# cat: Alias to bat (plain output; no pager).
-# Usage: cat <path...>
-# Notes:
-# - Overrides `cat` in interactive shells.
-alias cat='bat --style=plain --pager=never'
-
-# batp: View files with bat (line numbers; paging enabled).
-# Usage: batp <path...>
-alias batp='bat --style=numbers --paging=always'
-
-# ────────────────────────────────────────────────────────
-# fd + bat + fzf integration functions
-# ────────────────────────────────────────────────────────
-
-# bat-all
-# Select one or more files via fzf and preview them with bat.
-# Usage: bat-all
-# Notes:
-# - Requires `fd`, `fzf`, and `bat`.
-bat-all() {
-  fdf | fzf -m --preview 'bat --color=always --style=numbers {}' |
-    xargs -r bat --style=numbers --paging=always
-}
-
-# bff: Alias of bat-all.
-# Usage: bff
-alias bff='bat-all'
-
-# zdef
-# Browse aliases, functions, and environment variables via fzf.
-# Usage: zdef
-zdef() {
-  {
-  printf "🔗 Aliases:\n"
-      alias | sed 's/^/  /'
-
-  printf "\n🔧 Functions:\n"
-      for fn in ${(k)functions}; do
-  printf "  $fn\n"
-      done
-
-  printf "\n🌱 Environment Variables:\n"
-      printenv | sort | sed 's/^/  /'
-    } | fzf --ansi --header="🔍 Zsh Definitions (aliases, functions, env)" --preview-window=wrap
-}
-
-# fsearch <query>
-# Fuzzy-pick a file and preview grep context for the query.
-# Usage: fsearch <query>
-# Notes:
-# - Requires `fd`, `fzf`, `bat`, and `rg`.
-fsearch() {
-  typeset query="$1"
-  fd --type f --hidden --exclude .git |
-    fzf --preview "bat --color=always --style=numbers {} | rg --color=always --context 5 '$query'" \
-        --bind=ctrl-j:preview-down \
-        --bind=ctrl-k:preview-up 
-}
-
-# ────────────────────────────────────────────────────────
-# Shared helpers (shell-utils)
+# Process helpers
 # ────────────────────────────────────────────────────────
 
 # _su_kill_do <signal> <pid...>
@@ -113,7 +48,7 @@ fsearch() {
 # Usage: _su_kill_do <signal> <pid...>
 _su_kill_do() {
   emulate -L zsh
-  setopt localoptions
+  setopt localoptions err_return
 
   typeset -i signal
   signal=${1:-15}
@@ -225,70 +160,83 @@ kill-process() {
 # Usage: kpid [-9] <pid> [pid...]
 alias kpid='kill-process'
 
-# reload
+# ────────────────────────────────────────────────────────
+# Shell session helpers
+# ────────────────────────────────────────────────────────
+
+# zsh-reload
 # Reload the Zsh environment by re-sourcing bootstrap/bootstrap.zsh.
-# Usage: reload
-reload() {
-  printf "\n"
-  printf "🔁 Reloading bootstrap/bootstrap.zsh...\n"
-  printf "💡 For major changes, consider running: execz\n\n"
+# Usage: zsh-reload
+zsh-reload() {
+  emulate -L zsh
+  setopt localoptions err_return
+
+  print -r -- ""
+  print -r -- "🔁 Reloading bootstrap/bootstrap.zsh..."
+  print -r -- "💡 For major changes, consider running: zsh-restart"
+  print -r -- ""
 
   if ! source "$ZDOTDIR/bootstrap/bootstrap.zsh"; then
-    printf "❌ Failed to reload Zsh environment\n\n"
+    print -u2 -r -- "❌ Failed to reload Zsh environment"
+    print -r -- ""
+    return 1
   fi
 }
 
-# execz
+# reload: Alias of zsh-reload.
+# Usage: reload
+alias reload='zsh-reload'
+
+# zsh-restart
 # Restart the current shell session (exec zsh).
-# Usage: execz
+# Usage: zsh-restart
 # Notes:
 # - Replaces the current process; unsaved shell state is lost.
-execz() {
-  printf "\n🚪 Restarting Zsh shell (exec zsh)...\n"
-  printf "🧼 This will start a clean session using current configs.\n\n"
-    exec zsh
+zsh-restart() {
+  emulate -L zsh
+  setopt localoptions err_return
+
+  print -r -- ""
+  print -r -- "🚪 Restarting Zsh shell (exec zsh)..."
+  print -r -- "🧼 This will start a clean session using current configs."
+  print -r -- ""
+  exec zsh
 }
 
-# zz: Alias of execz.
+# execz: Alias of zsh-restart.
+# Usage: execz
+alias execz='zsh-restart'
+
+# zz: Alias of zsh-restart.
 # Usage: zz
-alias zz='execz'
+alias zz='zsh-restart'
 
-# histflush
+# history-flush
 # Flush in-memory history to the history file.
+# Usage: history-flush
+history-flush() {
+  emulate -L zsh
+  setopt localoptions err_return
+
+  fc -AI # Append memory history, re-read file
+}
+
+# histflush: Alias of history-flush.
 # Usage: histflush
-histflush() {
-  fc -AI  # Append memory history, re-read file
-}
-
-# history: Alias of fzf-history-wrapper.
-# Usage: history [history args...]
-# Notes:
-# - With no arguments, launches fzf-history; otherwise falls back to builtin `history`.
-alias history='fzf-history-wrapper'
-
-# his: Alias of fzf-history-wrapper.
-# Usage: his [history args...]
-alias his='fzf-history-wrapper'
-
-# fzf-history-wrapper [history args...]
-# Fuzzy-search shell history when called with no arguments.
-# Usage: fzf-history-wrapper [history args...]
-fzf-history-wrapper() {
-  if [[ "$1" == "" ]]; then
-    # Fuzzy search command history and execute selected entry
-    fzf-history
-  else
-    builtin history "$@"
-  fi
-}
+alias histflush='history-flush'
 
 # edit-zsh
 # Open the Zsh config directory in VS Code, then return to the current directory.
 # Usage: edit-zsh
 edit-zsh() {
-  typeset cwd="$(pwd)"
+  emulate -L zsh
+  setopt localoptions err_return
+
+  typeset cwd
+  cwd="$(pwd)"
+
   code "$ZDOTDIR"
-  cd "$cwd" >/dev/null
+  builtin cd -- "$cwd" >/dev/null
 }
 
 # y [dir] [yazi args...]
@@ -296,16 +244,32 @@ edit-zsh() {
 # Usage: y [dir] [yazi args...]
 # Notes:
 # - If the first argument does not start with `-`, it is treated as a zoxide target.
-y () {
+y() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return
+
+  if ! command -v yazi >/dev/null 2>&1; then
+    print -u2 -r -- "❌ yazi not found"
+    return 127
+  fi
+
   # Detect directory alias/keyword as the first argument (non‑flag)
   if [[ -n "$1" && "$1" != -* ]]; then
-    local target="$1"
+    typeset target="$1"
     shift
-    __zoxide_z "$target"
+    if (( $+functions[__zoxide_z] )); then
+      __zoxide_z "$target"
+    else
+      builtin cd -- "$target" 2>/dev/null || {
+        print -u2 -r -- "❌ Unable to resolve directory: $target"
+        return 1
+      }
+    fi
   fi
 
   # Launch yazi and persist the last visited directory on exit
-  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  typeset tmp cwd
+  tmp="$(mktemp -t 'yazi-cwd.XXXXXX')" || return 1
   yazi "$@" --cwd-file="$tmp"
   if cwd="$(<"$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
     builtin cd -- "$cwd"
@@ -314,7 +278,7 @@ y () {
 }
 
 # ────────────────────────────────────────────────────────
-# Query cheat.sh (curl-based CLI cheatsheets)
+# Network helpers (curl-based)
 # ────────────────────────────────────────────────────────
 
 # cheat <query>
@@ -323,5 +287,36 @@ y () {
 # Notes:
 # - Requires network access.
 cheat() {
-  curl -s cheat.sh/"$@"
+  emulate -L zsh
+  setopt localoptions err_return
+
+  if (( $# == 0 )); then
+    print -u2 -r -- "Usage: cheat <query>"
+    return 2
+  fi
+
+  typeset query="${(j:+:)@}"
+  curl -s -- "https://cheat.sh/${query}"
+}
+
+# weather [location]
+# Print weather information from wttr.in.
+# Usage: weather [location]
+# Notes:
+# - Requires network access.
+weather() {
+  emulate -L zsh
+  setopt localoptions err_return
+
+  if ! command -v curl >/dev/null 2>&1; then
+    print -u2 -r -- "❌ curl not found"
+    return 127
+  fi
+
+  typeset location="${(j:+:)@}"
+  if [[ -n "$location" ]]; then
+    curl -s -- "https://wttr.in/${location}"
+  else
+    curl -s -- "https://wttr.in"
+  fi
 }
