@@ -6,11 +6,13 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| - | (none) | - |
 
 ### Archived
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2025-12-30 | [git_open_pr_completion_cache](archived/20251230_git_open_pr_completion_cache.md) | [graysurf/zsh-kit/pull/12](https://github.com/graysurf/zsh-kit/pull/12) |
 | 2025-12-29 | [git_open_cli](archived/20251229_git_open_cli.md) | [graysurf/zsh-kit/pull/11](https://github.com/graysurf/zsh-kit/pull/11) |
 | 2025-12-28 | [fzf_def_docblocks](archived/20251228_fzf_def_docblocks.md) | [graysurf/zsh-kit/pull/10](https://github.com/graysurf/zsh-kit/pull/10) |
 
