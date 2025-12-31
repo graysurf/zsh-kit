@@ -5,7 +5,8 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     git-resolve-upstream \
     git-normalize-remote-url \
-    git-open
+    git-open \
+    gho
 fi
 
 # git-resolve-upstream
@@ -1123,3 +1124,8 @@ git-open() {
       ;;
   esac
 }
+
+# gho
+# Alias of `git-open`.
+# Usage: gho [command] [args...]
+alias gho='git-open'

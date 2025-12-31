@@ -88,7 +88,7 @@ __git_open_tag_names() {
   typeset -a tags=()
 
   if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    tags=(${(f)"$(command git for-each-ref --sort=-creatordate --format='%(refname:short)' refs/tags 2>/dev/null | head -n 50 || true)"})
+    tags=(${(f)"$(command git for-each-ref --sort=-creatordate --format='%(refname:short)' refs/tags 2>/dev/null || true)"})
   fi
 
   if (( ${#tags[@]} > 0 )); then
@@ -106,6 +106,13 @@ __git_open_cache_policy() {
   [[ -z "$cache_path" ]] && return 0
   [[ "$cache_path" != */git-open/prs/* ]] && return 1
 
+  # GIT_OPEN_PR_CACHE_TTL_SECONDS
+  # Override the completion cache TTL (in seconds) for git-open PR candidates.
+  # Default: 60
+  typeset -i pr_cache_ttl_default=60
+  typeset -i pr_cache_ttl_current="${GIT_OPEN_PR_CACHE_TTL_SECONDS:-$pr_cache_ttl_default}"
+  (( pr_cache_ttl_current <= 0 )) && pr_cache_ttl_current="$pr_cache_ttl_default"
+
   typeset -i mtime=0
 
   if zmodload -F zsh/stat b:zstat 2>/dev/null; then
@@ -117,7 +124,7 @@ __git_open_cache_policy() {
       mtime="$(command stat -c %Y -- "$cache_path" 2>/dev/null)" || return 0
   fi
 
-  (( EPOCHSECONDS - mtime > 30 )) && return 0
+  (( EPOCHSECONDS - mtime > pr_cache_ttl_current )) && return 0
   return 1
 }
 
@@ -126,14 +133,22 @@ __git_open_pr_numbers() {
 
   autoload -Uz _cache_invalid _retrieve_cache _store_cache
 
+  # GIT_OPEN_PR_LIST_LIMIT
+  # Override the `gh pr list --limit` used for PR number completion.
+  # Default: 100
+  typeset -i pr_list_limit_default=100
+  typeset -i pr_list_limit_current="${GIT_OPEN_PR_LIST_LIMIT:-$pr_list_limit_default}"
+  (( pr_list_limit_current <= 0 )) && pr_list_limit_current="$pr_list_limit_default"
+
   typeset cache_policy=''
   zstyle -s ":completion:${curcontext}:" cache-policy cache_policy
   [[ -z "$cache_policy" ]] && zstyle ":completion:${curcontext}:" cache-policy __git_open_cache_policy
 
   command git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
 
-  typeset -i cache_version_target=2
+  typeset -i cache_version_target=1
   typeset -i pr_cache_version=0
+  typeset -i pr_list_limit=0
   typeset -a pr_rows=()
   typeset repo_root=''
   typeset repo_key=''
@@ -145,19 +160,21 @@ __git_open_pr_numbers() {
   cache_id="git-open/prs/${repo_key}"
 
   if _retrieve_cache "$cache_id"; then
-    if (( pr_cache_version != cache_version_target )); then
+    if (( pr_cache_version != cache_version_target || pr_list_limit != pr_list_limit_current )); then
       pr_cache_version=0
+      pr_list_limit=0
       pr_rows=()
     fi
   fi
 
   if (( pr_cache_version != cache_version_target )); then
+    pr_list_limit="$pr_list_limit_current"
     if command -v gh >/dev/null 2>&1; then
-      pr_rows=(${(f)"$(command gh pr list --state all --limit 100 --json number,title,state,isDraft --jq '.[] | "\(.number)\t\(.state)\t\(.isDraft)\t\(.title | gsub("[\\t\\n]+"; " "))"' 2>/dev/null || true)"})
+      pr_rows=(${(f)"$(command gh pr list --state all --limit "$pr_list_limit" --json number,title,state,isDraft --jq '.[] | "\(.number)\t\(.state)\t\(.isDraft)\t\(.title | gsub("[\\t\\n]+"; " "))"' 2>/dev/null || true)"})
     fi
 
     pr_cache_version="$cache_version_target"
-    _store_cache "$cache_id" pr_cache_version pr_rows >/dev/null 2>&1 || true
+    _store_cache "$cache_id" pr_cache_version pr_list_limit pr_rows >/dev/null 2>&1 || true
   fi
 
   if (( ${#pr_rows[@]} > 0 )); then
