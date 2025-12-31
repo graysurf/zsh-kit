@@ -6,7 +6,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| - | (none) | - |
+| 2025-12-31 | [git_open_collab_remote](20251231_git_open_collab_remote.md) | [graysurf/zsh-kit/pull/13](https://github.com/graysurf/zsh-kit/pull/13) |
 
 ### Archived
 
