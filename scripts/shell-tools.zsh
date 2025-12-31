@@ -169,7 +169,9 @@ alias kpid='kill-process'
 # Usage: zsh-reload
 zsh-reload() {
   emulate -L zsh
-  setopt localoptions err_return
+  # NOTE: Do NOT enable `err_return` here.
+  # The bootstrap/plugin loader is best-effort and may intentionally return non-zero.
+  # Enabling `err_return` could abort the reload prematurely.
 
   print -r -- ""
   print -r -- "🔁 Reloading bootstrap/bootstrap.zsh..."
