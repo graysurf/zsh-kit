@@ -6,7 +6,7 @@ __git_open_commit_hashes() {
   typeset -a commits=()
 
   if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    commits=(${(f)"$(command git log --pretty=format:'%h:%s' -n 20 2>/dev/null || true)"})
+    commits=(${(f)"$(command git log --pretty=format:'%h:%s' 2>/dev/null || true)"})
   fi
 
   if (( ${#commits[@]} > 0 )); then
@@ -153,7 +153,7 @@ __git_open_pr_numbers() {
 
   if (( pr_cache_version != cache_version_target )); then
     if command -v gh >/dev/null 2>&1; then
-      pr_rows=(${(f)"$(command gh pr list --state all --limit 30 --json number,title,state,isDraft --jq '.[] | "\(.number)\t\(.state)\t\(.isDraft)\t\(.title | gsub("[\\t\\n]+"; " "))"' 2>/dev/null || true)"})
+      pr_rows=(${(f)"$(command gh pr list --state all --limit 100 --json number,title,state,isDraft --jq '.[] | "\(.number)\t\(.state)\t\(.isDraft)\t\(.title | gsub("[\\t\\n]+"; " "))"' 2>/dev/null || true)"})
     fi
 
     pr_cache_version="$cache_version_target"
@@ -299,18 +299,13 @@ _git-open() {
           ;;
         pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs)
           if (( orig_current == 3 )); then
-            typeset -i use_ansi=0
             typeset -a pr_rows=()
-            typeset -a pr_numbers=()
-            typeset -a pr_displays=()
-
-            (( ${+IN_FZF_TAB} && IN_FZF_TAB )) && use_ansi=1
+            typeset -i added=0
 
             pr_rows=(${(f)"$(__git_open_pr_numbers)"})
 
             if (( ${#pr_rows[@]} > 0 )); then
               typeset row='' rest='' number='' pr_state='' is_draft='' title=''
-              typeset label='' color='' reset=''
 
               for row in "${pr_rows[@]}"; do
                 number="${row%%$'\t'*}"
@@ -322,31 +317,26 @@ _git-open() {
 
                 [[ "$number" == <-> ]] || continue
 
-                label="$pr_state"
+                typeset word="#${number}"
+                typeset display="${word}  -- ${title}"
+                typeset group=''
                 if [[ "$is_draft" == 'true' ]]; then
-                  label='DRAFT'
-                fi
-
-                if (( use_ansi )); then
-                  reset=$'\e[0m'
-                  case "$label" in
-                    DRAFT)  color=$'\e[33m' ;; # yellow
-                    OPEN)   color=$'\e[32m' ;; # green
-                    MERGED) color=$'\e[35m' ;; # magenta
-                    CLOSED) color=$'\e[31m' ;; # red
-                    *)      color=$'\e[36m' ;; # cyan
+                  group='DRAFT'
+                else
+                  case "$pr_state" in
+                    OPEN|MERGED|CLOSED) group="$pr_state" ;;
+                    *) group='OPEN' ;;
                   esac
-                  label="${color}${label}${reset}"
                 fi
 
-                pr_numbers+=("#${number}")
-                pr_displays+=("#${number}  ${label}  -- ${title}")
+                typeset -a displays=("$display")
+                compadd -V prs -X "$group" -d displays -- "$word"
+                (( added++ ))
               done
             fi
 
-            if (( ${#pr_numbers[@]} > 0 )); then
-              local expl
-              _wanted -V prs expl 'pull request' compadd -d pr_displays -- $pr_numbers && return 0
+            if (( added > 0 )); then
+              return 0
             fi
 
             _message 'number (optional, e.g. 123 or #123)'
