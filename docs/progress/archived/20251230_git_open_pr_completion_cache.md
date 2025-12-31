@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2025-12-30 | 2025-12-31 |
+| DONE | 2025-12-30 | 2025-12-31 |
 
 Links:
 
@@ -75,7 +75,7 @@ Links:
     - [x] Confirm UX: show `#<number>  -- <title>` and cache for 60 seconds.
     - [x] Inventory `git-open` completion coverage and gaps (see Step 2).
   - Artifacts:
-    - `docs/progress/20251230_git_open_pr_completion_cache.md` (this file)
+    - `docs/progress/archived/20251230_git_open_pr_completion_cache.md` (this file)
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned.
 
@@ -134,16 +134,17 @@ Links:
   - Exit Criteria:
     - [x] Validation commands executed with results recorded (pass).
 
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
     - [x] Open PR.
-    - [ ] After merge: set Status to DONE and move to `docs/progress/archived/`.
+    - [x] Merge PR and delete feature branch.
+    - [x] Set Status to DONE and move to `docs/progress/archived/`.
   - Artifacts:
     - PR: https://github.com/graysurf/zsh-kit/pull/12
   - Exit Criteria:
-    - [ ] PR merged; progress archived; index updated.
+    - [x] PR merged; progress archived; index updated.
 
 ## Modules
 
 - `scripts/_completion/_git-open`: PR number completion + cache policy.
-- `docs/progress/20251230_git_open_pr_completion_cache.md`: tracking doc for this change.
+- `docs/progress/archived/20251230_git_open_pr_completion_cache.md`: tracking doc for this change.
