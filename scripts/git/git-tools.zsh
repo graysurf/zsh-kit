@@ -5,7 +5,6 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     gr grs grm grh \
     gbh gbc gdb gdbs \
-    gop god goc gob \
     gcc gdc \
     git-tools
 fi
@@ -59,26 +58,6 @@ alias gdb='git-delete-merged-branches'
 # Safety:
 # - Deletes local branches after confirmation; review the list before proceeding.
 alias gdbs='gdb --squash'
-
-# gop
-# Alias of `git-open`.
-# Usage: gop
-alias gop='git-open'
-
-# god
-# Alias of `git-open default-branch`.
-# Usage: god
-alias god='git-open default-branch'
-
-# goc [ref]
-# Alias of `git-open commit`.
-# Usage: goc [ref]
-alias goc='git-open commit'
-
-# gob
-# Alias of `git-open branch`.
-# Usage: gob
-alias gob='git-open branch'
 
 # gcc
 # Alias of `git-commit-context`.

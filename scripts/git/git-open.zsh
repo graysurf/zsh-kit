@@ -5,8 +5,9 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     git-resolve-upstream \
     git-normalize-remote-url \
-    git-open \
-    gho
+    git-open gho \
+    gop gopl gob god goc \
+    gor goi goa got
 fi
 
 # git-resolve-upstream
@@ -1230,3 +1231,48 @@ git-open() {
 # Alias of `git-open`.
 # Usage: gho [command] [args...]
 alias gho='git-open'
+
+# gop [number]
+# Alias of `git-open pr`.
+# Usage: gop [number]
+alias gop='git-open pr'
+
+# gob [ref]
+# Alias of `git-open branch`.
+# Usage: gob [ref]
+alias gob='git-open branch'
+
+# god [remote]
+# Alias of `git-open default-branch`.
+# Usage: god [remote]
+alias god='git-open default-branch'
+
+# goc [ref]
+# Alias of `git-open commit`.
+# Usage: goc [ref]
+alias goc='git-open commit'
+
+# gopl [number]
+# Alias of `git-open pulls`.
+# Usage: gopl [number]
+alias gopl='git-open pulls'
+
+# gor [remote]
+# Alias of `git-open repo`.
+# Usage: gor [remote]
+alias gor='git-open repo'
+
+# goi [number]
+# Alias of `git-open issues`.
+# Usage: goi [number]
+alias goi='git-open issues'
+
+# goa [workflow]
+# Alias of `git-open actions`.
+# Usage: goa [workflow]
+alias goa='git-open actions'
+
+# got [tag]
+# Alias of `git-open tags`.
+# Usage: got [tag]
+alias got='git-open tags'

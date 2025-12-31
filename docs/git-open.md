@@ -36,7 +36,7 @@ than raw feature coverage.
 
 ## 🤝 Collaboration Remote (optional)
 
-Some `git-open` commands open repo-level “collaboration” pages (PRs, issues, Actions, releases, tags). If you want those
+Some `git-open` commands open repo-level “collaboration” pages (PRs, pulls, issues, Actions, releases, tags). If you want those
 pages to always target a specific remote regardless of the current branch upstream, set:
 
 ```bash
@@ -114,7 +114,7 @@ git-open commit HEAD~1
 git-open commit v1.2.3
 ```
 
-#### 🧩 fzf-tab completion (placeholder)
+Completion
 
 Press `<TAB>` after `git-open commit` to browse recent commits as `"<hash>  -- <subject>"`, while inserting only the hash.
 
@@ -144,16 +144,16 @@ git-open pr 123
 git-open pr #123
 ```
 
+Completion
+
+  Press `<TAB>` after `git-open pr` to browse PR numbers as `"#<number>  -- <title>"`. Candidates are fetched via `gh` and
+  cached with a short TTL to avoid repeated API calls while you iterate.
+
+  ![git-open pr completion (fzf-tab)](../assets/git-open-fzf-tab-pr.png)
+
 Notes:
 
 - On GitHub, `git-open pr` prefers `gh pr view --web` when available.
-
-#### 🧩 fzf-tab completion (placeholder)
-
-Press `<TAB>` after `git-open pr` to browse PR numbers as `"#<number>  -- <title>"`. Candidates are fetched via `gh` and
-cached with a short TTL to avoid repeated API calls while you iterate.
-
-![git-open pr completion (fzf-tab)](../assets/git-open-fzf-tab-pr.png)
 
 ---
 
@@ -264,12 +264,18 @@ git-open blame scripts/git/git-open.zsh main
 - `pull-request`, `mr`, `merge-request` → `pr`
 - `merge-requests`, `mrs` → `pulls`
 
-Shell-level shortcuts (defined in `scripts/git/git-tools.zsh`):
+Shell-level shortcuts (defined in `scripts/git/git-open.zsh`):
 
-- `gop` → `git-open`
+- `gho` → `git-open`
+- `gop` → `git-open pr`
+- `gopl` → `git-open pulls`
 - `gob` → `git-open branch`
 - `god` → `git-open default-branch`
 - `goc` → `git-open commit`
+- `gor` → `git-open repo`
+- `goi` → `git-open issues`
+- `goa` → `git-open actions`
+- `got` → `git-open tags`
 
 ---
 
