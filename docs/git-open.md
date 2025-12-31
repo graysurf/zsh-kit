@@ -2,6 +2,20 @@
 
 `git-open` is a single CLI entrypoint that opens common repository pages (repo, branch, commit, PR, etc.) in your browser for the current Git repo.
 
+## ✨ Why `git-open` (vs `gh browse`)
+
+`git-open` and `gh browse` overlap in the sense that both ultimately open web pages, but the focus of `git-open` is the
+end-to-end workflow experience:
+
+- A single, opinionated command tree for repo navigation (`branch`, `compare`, `commits`, `file`, `blame`, `tags`, etc.)
+- Provider-agnostic URL routing (GitHub/GitLab/generic) instead of GitHub-only behavior
+- Git-context defaults (follow `@{u}` when it makes sense; reduce fork noise for collab pages)
+- Zsh completion as a first-class feature: complete *your* `git-open` subcommands + arguments (not just flags)
+- Dynamic PR number completion (via `gh pr list`) with TTL cache for fast repeated `<TAB>` usage
+
+If you use `gho` (alias of `git-open`) with Zsh completion + fzf-tab, the differentiation becomes more about overall UX
+than raw feature coverage.
+
 ---
 
 ## 📦 Use Cases
@@ -100,6 +114,12 @@ git-open commit HEAD~1
 git-open commit v1.2.3
 ```
 
+#### 🧩 fzf-tab completion (placeholder)
+
+Press `<TAB>` after `git-open commit` to browse recent commits as `"<hash>  -- <subject>"`, while inserting only the hash.
+
+![git-open commit completion (fzf-tab)](../assets/git-open-fzf-tab-commit.png)
+
 ---
 
 ### `git-open compare [base] [head]`
@@ -127,6 +147,13 @@ git-open pr #123
 Notes:
 
 - On GitHub, `git-open pr` prefers `gh pr view --web` when available.
+
+#### 🧩 fzf-tab completion (placeholder)
+
+Press `<TAB>` after `git-open pr` to browse PR numbers as `"#<number>  -- <title>"`. Candidates are fetched via `gh` and
+cached with a short TTL to avoid repeated API calls while you iterate.
+
+![git-open pr completion (fzf-tab)](../assets/git-open-fzf-tab-pr.png)
 
 ---
 
