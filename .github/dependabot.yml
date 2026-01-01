@@ -1,0 +1,14 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Keep GitHub Actions in workflows up to date (e.g. actions/checkout, upload-artifact).
+  - package-ecosystem: "github-actions"
+    # Workflow files are stored in the default location of `.github/workflows`.
+    # For `github-actions`, you can use `directory: "/"`.
+    directory: "/"
+    schedule:
+      interval: "weekly"
