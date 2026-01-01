@@ -31,13 +31,39 @@ alias fd-files='fd --type f --hidden --follow --exclude .git'
 # Usage: fd-dirs [fd args...]
 alias fd-dirs='fd --type d --hidden --follow --exclude .git'
 
-# fdf: Alias of fd-files.
-# Usage: fdf [fd args...]
-alias fdf='fd-files'
+# fdf
+# Prefer `fzf-tools vscode` when available; fallback to `fd-files`.
+# Usage: fdf [args...]
+# Notes:
+# - If `fzf-tools` exists (and interactive TTY), dispatches to: fzf-tools vscode [args...]
+# - Otherwise, falls back to: fd-files [args...]
+fdf() {
+  emulate -L zsh
+  setopt err_return
 
-# fdd: Alias of fd-dirs.
-# Usage: fdd [fd args...]
-alias fdd='fd-dirs'
+  if [[ -o interactive && -t 1 ]] && command -v fzf-tools >/dev/null 2>&1; then
+    fzf-tools vscode "$@"
+  else
+    fd-files "$@"
+  fi
+}
+
+# fdd
+# Prefer `fzf-tools directory` when available; fallback to `fd-dirs`.
+# Usage: fdd [args...]
+# Notes:
+# - If `fzf-tools` exists (and interactive TTY), dispatches to: fzf-tools directory [args...]
+# - Otherwise, falls back to: fd-dirs [args...]
+fdd() {
+  emulate -L zsh
+  setopt err_return
+
+  if [[ -o interactive && -t 1 ]] && command -v fzf-tools >/dev/null 2>&1; then
+    fzf-tools directory "$@"
+  else
+    fd-dirs "$@"
+  fi
+}
 
 # ────────────────────────────────────────────────────────
 # Process helpers
