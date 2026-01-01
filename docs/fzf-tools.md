@@ -23,10 +23,11 @@ contextual interactions directly from the terminal.
 🌱 Browse environment variables with fuzzy search and preview
 
 ```bash
-fzf-tools env
+fzf-tools env [query]
 ```
 
 Each environment variable is shown with its full value for quick inspection or copying.
+If provided, `query` pre-fills the initial fzf search input.
 
 ![fzf-env](../assets/fzf-env.png)
 
@@ -37,10 +38,11 @@ Each environment variable is shown with its full value for quick inspection or c
 🔗 Browse and inspect defined shell aliases
 
 ```bash
-fzf-tools alias
+fzf-tools alias [query]
 ```
 
 See your configured shortcuts in one place, with real evaluated output.
+If provided, `query` pre-fills the initial fzf search input.
 
 ![fzf-alias](../assets/fzf-alias.png)
 
@@ -51,10 +53,11 @@ See your configured shortcuts in one place, with real evaluated output.
 🔧 View loaded shell functions with source content
 
 ```bash
-fzf-tools function
+fzf-tools function [query]
 ```
 
 Lists all functions in your shell session and shows their implementation.
+If provided, `query` pre-fills the initial fzf search input.
 
 ![fzf-function](../assets/fzf-function.png)
 
@@ -65,10 +68,11 @@ Lists all functions in your shell session and shows their implementation.
 📦 Explore all shell definitions (env, alias, functions)
 
 ```bash
-fzf-tools def
+fzf-tools def [query]
 ```
 
 Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
+If provided, `query` pre-fills the initial fzf search input.
 
 ![fzf-def](../assets/fzf-def.png)
 
@@ -79,10 +83,11 @@ Aggregate view of your shell environment: useful for debugging or reviewing your
 🔍 Browse commit history, preview files in any commit, and open in VSCode
 
 ```bash
-fzf-tools git-commit
+fzf-tools git-commit [query]
 ```
 
-You can enter a hash like `HEAD~1`, or interactively pick from log.
+Optionally pass a query to pre-fill the initial fuzzy search. If the input also resolves to a commit ref
+(e.g. `HEAD~1`), it will be converted to its short hash to seed the search.
 
 **Preview includes:**
 
@@ -120,10 +125,11 @@ You can enter a hash like `HEAD~1`, or interactively pick from log.
 🌀 Checkout a previous commit using fuzzy log navigation
 
 ```bash
-fzf-tools git-checkout
+fzf-tools git-checkout [query]
 ```
 
 Select a past commit and checkout to it. If local changes block it, you’ll be prompted to stash.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
@@ -132,10 +138,11 @@ Select a past commit and checkout to it. If local changes block it, you’ll be 
 🌿 Browse and checkout Git branches interactively with preview and confirmation
 
 ```bash
-fzf-tools git-branch
+fzf-tools git-branch [query]
 ```
 
 Presents a list of local branches, sorted by most recent activity. The current branch is marked with `*`. Use fuzzy search to pick a branch.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
@@ -144,10 +151,11 @@ Presents a list of local branches, sorted by most recent activity. The current b
 🏷️  Browse and checkout Git tags interactively with preview and confirmation
 
 ```bash
-fzf-tools git-tag
+fzf-tools git-tag [query]
 ```
 
 Lists all tags in your repository, sorted by creation date (most recent first). Use fuzzy search to select a tag.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
@@ -156,22 +164,24 @@ Lists all tags in your repository, sorted by creation date (most recent first). 
 📜 Search and run from recent shell commands
 
 ```bash
-fzf-tools history
+fzf-tools history [query]
 ```
 
 Great for recalling complex or recently used one-liners without retyping.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
 ### `fzf-tools file`
 
-📝 Open a file using `vi` after previewing its contents with `bat`
+📝 Open a file using `$EDITOR` after previewing its contents with `bat`
 
 ```bash
-fzf-tools file
+fzf-tools file [query]
 ```
 
 Search for any file in your project, preview its contents with syntax highlighting, and open it in `$EDITOR` with one keystroke.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
@@ -180,10 +190,11 @@ Search for any file in your project, preview its contents with syntax highlighti
 🧠 Open a file in VSCode (instead of $EDITOR), with fuzzy selection
 
 ```bash
-fzf-tools vscode
+fzf-tools vscode [query]
 ```
 
 Same behavior as `fzf-tools file`, but uses your GUI editor.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
@@ -192,32 +203,54 @@ Same behavior as `fzf-tools file`, but uses your GUI editor.
 📂 Pick and preview modified files from `git status`
 
 ```bash
-fzf-tools git-status
+fzf-tools git-status [query]
 ```
 
 Shows inline diffs and lets you quickly inspect file changes.
+If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
 ### `fzf-tools process`
 
-🥪 View and inspect running processes (non-interactive kill)
+🥪 View and inspect running processes (optional kill)
 
 ```bash
-fzf-tools process
+fzf-tools process [-k|--kill] [-9|--force] [query]
 ```
 
 Lightweight fallback using `ps` with fuzzy search for diagnostic use.
+If provided, `query` pre-fills the initial fzf search input.
 
 #### 🔪 Kill mode
 
-Add `-k` or `--kill` to enter kill mode. Selected processes will be forcefully terminated.
+Add `-k` or `--kill` to immediately terminate selected PID(s) (SIGTERM). Add `-9` or `--force` for SIGKILL.
 
 ```bash
 fzf-tools process -k
 ```
 
-This runs `kill -9` on selected PID(s). Useful for terminating frozen or rogue processes.
+Useful for terminating frozen or rogue processes.
+
+---
+
+### `fzf-tools port`
+
+🔌 Browse listening TCP ports and owning processes (optional kill)
+
+```bash
+fzf-tools port [-k|--kill] [-9|--force] [query]
+```
+
+If provided, `query` pre-fills the initial fzf search input.
+
+#### 🔪 Kill mode
+
+Add `-k` or `--kill` to immediately kill the owning PID(s). Add `-9` or `--force` to use SIGKILL.
+
+```bash
+fzf-tools port -k
+```
 
 ---
 
@@ -226,13 +259,14 @@ This runs `kill -9` on selected PID(s). Useful for terminating frozen or rogue p
 📁 Pick a directory, then browse files inside it
 
 ```bash
-fzf-tools directory
+fzf-tools directory [query]
 ```
 
 This is a two-step flow:
 
 1. **Step 1: Pick a directory**  
    Preview directory contents using `eza` (or fallback to `ls`).
+   If provided, `query` pre-fills the Step 1 fzf search input.
 
 2. **Step 2: Browse files in that directory**
    Preview file contents using `bat` (or fallback to `sed`).

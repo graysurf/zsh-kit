@@ -127,7 +127,7 @@ _fzf_ensure_git_scope() {
 # Parse -k/--kill and -9/--force flags into globals.
 # Usage: _fzf_parse_kill_flags [-k|--kill] [-9|--force] [args...]
 # Output:
-# - Sets `_fzf_kill_now` and `_fzf_force_kill`.
+# - Sets `_fzf_kill_now`, `_fzf_force_kill`, and `_fzf_kill_rest` (remaining args).
 _fzf_parse_kill_flags() {
   # Parses -k/--kill and -9/--force from args into globals
   _fzf_kill_now=false
@@ -140,6 +140,7 @@ _fzf_parse_kill_flags() {
     esac
     shift
   done
+  _fzf_kill_rest=("$@")
 }
 
 # _fzf_kill_flow <pids> <kill_now> <force_kill>
@@ -181,7 +182,7 @@ _fzf_kill_flow() {
 
 # fzf-git-branch
 # Browse and checkout branches.
-# Usage: fzf-git-branch
+# Usage: fzf-git-branch [query]
 # Notes:
 # - Shows recent branches; preview displays recent commit graph.
 # - Confirms before `git checkout`.
@@ -191,12 +192,15 @@ fzf-git-branch() {
     return 1
   fi
 
+  local query="$*"
+
   # List local branches, strip '* ' from current, but show it
   local selected
   selected=$(git branch --color=always --sort=-committerdate | \
     sed 's/^..//' | \
     fzf --ansi --reverse \
       --prompt="🌿 Branch > " \
+      --query="$query" \
       --preview-window="right:60%:wrap" \
       --preview='
         branch=$(printf "%s\n" {} | sed "s/^[* ]*//")
@@ -223,7 +227,7 @@ fzf-git-branch() {
 
 # fzf-git-tag
 # Browse and checkout tags.
-# Usage: fzf-git-tag
+# Usage: fzf-git-tag [query]
 # Notes:
 # - Lists tags (newest first); preview shows commit log for the tag.
 # - Confirms before checking out the tag's commit.
@@ -233,11 +237,14 @@ fzf-git-tag() {
     return 1
   fi
 
+  local query="$*"
+
   # List tags, sorted by most recent
   local selected
   selected=$(git tag --sort=-creatordate | \
     fzf --ansi --reverse \
       --prompt="🏷️  Tag > " \
+      --query="$query" \
       --preview-window="right:60%:wrap" \
       --preview='
         tag=$(printf "%s\n" {} | sed "s/^[* ]*//")
@@ -277,7 +284,7 @@ fzf-git-tag() {
 
 # fzf-process [-k|--kill] [-9|--force]
 # Browse processes and optionally kill them.
-# Usage: fzf-process [-k|--kill] [-9|--force]
+# Usage: fzf-process [-k|--kill] [-9|--force] [query]
 # Notes:
 # - Default: select rows → confirm kill → optional confirm SIGKILL (-9).
 # - Flags: -k immediate kill (SIGTERM); add -9/--force for SIGKILL.
@@ -286,10 +293,12 @@ fzf-process() {
   # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
   _fzf_parse_kill_flags "$@"
   local kill_now="$_fzf_kill_now" force_kill="$_fzf_force_kill"
+  local query="${(j: :)_fzf_kill_rest}"
 
   local line
   line=$(ps -eo user,pid,ppid,pcpu,pmem,stat,lstart,time,args | sed 1d | \
     fzf -m \
+      --query="$query" \
       --preview-window='right:30%:wrap' \
       --preview='printf "%s\n" {} | awk '\''{
         uid  = $1;
@@ -321,7 +330,7 @@ fzf-process() {
 
 # fzf-port [-k|--kill] [-9|--force]
 # Browse listening TCP ports and owning PIDs.
-# Usage: fzf-port [-k|--kill] [-9|--force]
+# Usage: fzf-port [-k|--kill] [-9|--force] [query]
 # Notes:
 # - Default: select rows → confirm kill owning PIDs → optional confirm SIGKILL.
 # - Flags: -k immediate kill (SIGTERM); add -9/--force for SIGKILL.
@@ -331,6 +340,7 @@ fzf-port() {
   # Flags: -k/--kill (no prompt), -9/--force (SIGKILL)
   _fzf_parse_kill_flags "$@"
   local kill_now="$_fzf_kill_now" force_kill="$_fzf_force_kill"
+  local query="${(j: :)_fzf_kill_rest}"
 
   # Prefer lsof for cross-platform listing (macOS/Linux). Show TCP LISTEN and UDP sockets.
   local line
@@ -339,6 +349,7 @@ fzf-port() {
     line=$(lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | sed 1d | \
       fzf -m \
         --prompt="🔌 Port > " \
+        --query="$query" \
         --preview-window='right:50%:wrap' \
         --preview='printf "%s\n" {} | awk '\''{
           cmd = $1; pid = $2; user = $3;
@@ -363,6 +374,7 @@ fzf-port() {
       awk '/^(tcp|udp)/ {print}' | \
       fzf -m \
         --prompt="🔌 Port > " \
+        --query="$query" \
         --preview-window='right:50%:wrap' \
         --preview='printf "%s\n\n(netstat view; no lsof PID info)\n" {}') || return
   fi
@@ -375,13 +387,14 @@ fzf-port() {
 
 # fzf-history-select
 # Build and select shell history entries.
-# Usage: fzf-history-select
+# Usage: fzf-history-select [query]
 # Output:
 # - Returns two lines (key, selected) for consumption by fzf-history.
 # Notes:
 # - Presents history with timestamps; preview shows formatted time + command.
 fzf-history-select() {
-  local default_query="${BUFFER:-}"
+  local default_query="${1-}"
+  [[ -z "$default_query" ]] && default_query="${BUFFER:-}"
 
   iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
   awk -F';' '
@@ -410,13 +423,13 @@ printf "%s\n\n%s" "$fts" "$cmd"' \
 
 # fzf-history
 # Search and execute a history command.
-# Usage: fzf-history
+# Usage: fzf-history [query]
 # Notes:
 # - Uses fzf-history-select; executes selected command.
 fzf-history() {
   local selected output cmd
 
-  output="$(fzf-history-select)"
+  output="$(fzf-history-select "$*")"
   selected="$(printf "%s\n" "$output" | sed -n '2p')"
 
   cmd="$(printf "%s\n" "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
@@ -427,40 +440,44 @@ fzf-history() {
 
 # _fzf_file_select
 # File selector with bat preview.
-# Usage: _fzf_file_select
+# Usage: _fzf_file_select [query]
 # Notes:
 # - Helper used by fzf-file and fzf-vscode.
 _fzf_file_select() {
+  typeset default_query="${1-}"
   fd --type f --max-depth=${FZF_FILE_MAX_DEPTH:-5} --hidden 2>/dev/null |
     fzf --ansi \
+        --query="$default_query" \
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
 }
 
 # fzf-file
 # Pick a file and open it with `$EDITOR`.
-# Usage: fzf-file
+# Usage: fzf-file [query]
 fzf-file() {
   typeset file
-  file=$(_fzf_file_select)
+  file=$(_fzf_file_select "$*")
   [[ -n "$file" ]] && $EDITOR "$file"
 }
 
 # fzf-vscode
 # Pick a file and open it in VSCode.
-# Usage: fzf-vscode
+# Usage: fzf-vscode [query]
 fzf-vscode() {
   typeset file
-  file=$(_fzf_file_select)
+  file=$(_fzf_file_select "$*")
   [[ -n "$file" ]] && code "$file"
 }
 
 # fzf-git-status
 # Interactive git status with diff preview.
-# Usage: fzf-git-status
+# Usage: fzf-git-status [query]
 # Notes:
 # - Preview `git diff` for the selected path; supports preview scroll bindings.
 fzf-git-status() {
+  local query="$*"
   git status -s | fzf \
+    --query="$query" \
     --preview 'git diff --color=always {2}' \
     --bind=ctrl-j:preview-down \
     --bind=ctrl-k:preview-up
@@ -527,14 +544,15 @@ _fzf_select_commit() {
   return 0
 }
 
-# fzf-git-checkout
+# fzf-git-checkout [query]
 # Pick a commit and checkout.
-# Usage: fzf-git-checkout
+# Usage: fzf-git-checkout [query]
 # Notes:
 # - Confirms checkout; offers auto-stash retry on failure.
 fzf-git-checkout() {
+  local query="$*"
   local ref result
-  result=$(_fzf_select_commit) || return 1
+  result=$(_fzf_select_commit "$query") || return 1
 
   ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
 
@@ -558,11 +576,11 @@ fzf-git-checkout() {
   git checkout "$ref" && printf "✅ Checked out to %s\n" "$ref"
 }
 
-# fzf-git-commit [ref]
+# fzf-git-commit [query]
 # Browse commits and open changed files in VSCode.
-# Usage: fzf-git-commit [ref]
+# Usage: fzf-git-commit [query]
 # Notes:
-# - Optional ref narrows initial query; per-commit file picker with previews.
+# - Optional query pre-fills the initial fzf search. If it also resolves to a commit ref, uses its short hash.
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -572,14 +590,17 @@ fzf-git-commit() {
   _fzf_ensure_git_utils || return 1
   _fzf_ensure_git_scope || return 1
 
-  local input_ref="$1"
+  local input="$*"
   local full_hash="" commit="" file=""
   local tmp="" commit_query="" commit_query_restore="" selected_commit=""
 
-  if [[ -n "$input_ref" ]]; then
-    full_hash=$(get_commit_hash "$input_ref")
-    [[ -z "$full_hash" ]] && printf "❌ Invalid ref: %s\n" "$input_ref" >&2 && return 1
-    commit_query="${full_hash:0:7}"
+  if [[ -n "$input" ]]; then
+    full_hash=$(get_commit_hash "$input" 2>/dev/null)
+    if [[ -n "$full_hash" ]]; then
+      commit_query="${full_hash:0:7}"
+    else
+      commit_query="$input"
+    fi
   fi
 
   while true; do
@@ -1068,7 +1089,7 @@ _gen_env_block() {
 # Browse environment variables with preview.
 # Usage: fzf-env [query]
 fzf-env() {
-  fzf_block_preview _gen_env_block ${1:-}
+  fzf_block_preview _gen_env_block "$*"
 }
 
 # _gen_alias_block
@@ -1089,7 +1110,7 @@ _gen_alias_block() {
 # Usage: fzf-alias [query]
 fzf-alias() {
   _fzf_def_rebuild_doc_cache
-  fzf_block_preview _gen_alias_block ${1:-}
+  fzf_block_preview _gen_alias_block "$*"
 }
 
 # _gen_function_block
@@ -1110,7 +1131,7 @@ _gen_function_block() {
 # Usage: fzf-function [query]
 fzf-function() {
   _fzf_def_rebuild_doc_cache
-  fzf_block_preview _gen_function_block ${1:-}
+  fzf_block_preview _gen_function_block "$*"
 }
 
 # _gen_all_def_block
@@ -1127,12 +1148,12 @@ _gen_all_def_block() {
 # Usage: fzf-def [query]
 fzf-def() {
   _fzf_def_rebuild_doc_cache
-  fzf_block_preview _gen_all_def_block ${1:-}
+  fzf_block_preview _gen_all_def_block "$*"
 }
 
 # fzf-directory
 # Pick a directory, then browse files with preview.
-# Usage: fzf-directory
+# Usage: fzf-directory [query]
 # Env:
 # - FZF_FILE_MAX_DEPTH: max depth for file listing (default: 5).
 # - FZF_DIRECTORY_FILE_OPEN_WITH: file opener for Step2: `vi` (default) or `vscode`.
@@ -1147,7 +1168,7 @@ fzf-directory() {
     return 0
   fi
 
-  typeset dir_query="" dir_result="" dir=""
+  typeset dir_query="$*" dir_result="" dir=""
   typeset max_depth="${FZF_FILE_MAX_DEPTH:-5}"
   typeset open_with="${FZF_DIRECTORY_FILE_OPEN_WITH:-vi}"
 
@@ -1238,7 +1259,7 @@ fzf-tools() {
       history      "Search and execute command history" \
       env          "Browse environment variables" \
       alias        "Browse shell aliases" \
-      functions    "Browse defined shell functions" \
+      function     "Browse defined shell functions" \
       def          "Browse all definitions (env, alias, functions)"
     printf "\n"
     return 0
