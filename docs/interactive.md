@@ -1,6 +1,6 @@
-# 🗣️ Shell Runtime Features: `scripts/interactive/runtime.zsh` Overview
+# 🗣️ Shell Runtime Features: `scripts/interactive/runtime.zsh` / `scripts/interactive/hotkeys.zsh`
 
-This file sets up the runtime behaviors of your Zsh session, including directory navigation, prompt configuration, and key bindings.  
+These files set up the runtime behaviors of your Zsh session, including directory navigation, prompt configuration, and key bindings.  
 It complements `plugins.zsh` by configuring system-level features **after** all plugins are loaded.
 
 ---
@@ -74,3 +74,16 @@ bindkey "$terminfo[kcud1]" history-substring-search-down
 bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 ```
+
+### fzf-tools Hotkeys
+
+ZLE widgets are defined in `scripts/interactive/hotkeys.zsh`:
+
+- `Ctrl+B`: `fzf-tools-launcher-widget` (pick a subcommand via `fzf` and execute it)
+- `Ctrl+F`: `fzf-tools-file-widget` (run `fzf-tools file [query]`)
+- `Ctrl+T`: `fzf-tools-def-widget` (run `fzf-tools def [query]`)
+- `Ctrl+G`: `fzf-tools-git-commit-widget` (run `fzf-tools git-commit [query]`)
+- `Ctrl+R`: `fzf-history-widget` (fzf history insert; no execution)
+
+> Note: `Ctrl+B` and `Ctrl+F` override the default Emacs-style cursor movement bindings.  
+> If you use tmux with the default prefix (`Ctrl+B`), press `Ctrl+B` twice to send it to Zsh (or rebind the tmux prefix).

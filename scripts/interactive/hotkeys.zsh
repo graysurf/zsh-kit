@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────
 # Interactive launcher for `fzf-tools`
-# - Bound to Ctrl+F
+# - Bound to Ctrl+B
 # - Presents categorized, emoji-enhanced command list via `fzf`
 # - Inserts selected subcommand into shell prompt
 # ────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@
 # ZLE widget: pick an `fzf-tools` subcommand via `fzf` and execute it.
 # Usage: fzf-tools-launcher-widget
 # Notes:
-# - Bound to Ctrl+F.
+# - Bound to Ctrl+B.
 # - Requires an interactive ZLE session and `fzf`.
 fzf-tools-launcher-widget() {
   typeset raw selected subcommand
@@ -48,9 +48,28 @@ EOF
   return 0
 }
 
-# Register ZLE widget and bind to Ctrl+F
+# Register ZLE widget and bind to Ctrl+B
 zle -N fzf-tools-launcher-widget
-bindkey '^F' fzf-tools-launcher-widget
+bindkey '^B' fzf-tools-launcher-widget
+
+# ────────────────────────────────────────────────────────
+# Bind `fzf-tools file` to Ctrl+F
+# ────────────────────────────────────────────────────────
+
+# fzf-tools-file-widget
+# ZLE widget: prefix the current buffer with `fzf-tools file` and execute it.
+# Usage: fzf-tools-file-widget
+# Notes:
+# - Bound to Ctrl+F.
+fzf-tools-file-widget() {
+  BUFFER="fzf-tools file $BUFFER"
+  CURSOR=${#BUFFER}
+  zle accept-line
+  return 0
+}
+
+zle -N fzf-tools-file-widget
+bindkey '^F' fzf-tools-file-widget
 
 # ────────────────────────────────────────────────────────
 # Bind `fzf-tools def` to Ctrl+T
