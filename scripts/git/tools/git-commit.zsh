@@ -43,9 +43,12 @@ _git_commit_confirm_or_abort() {
 # Safety:
 # - Dropping a pushed commit rewrites history and may require force push.
 git-commit-to-stash() {
-  typeset commit_ref commit_sha parent_sha branch_name subject
-  typeset stash_msg stash_sha
-  typeset upstream ref_upstream merge_parents_count
+  emulate -L zsh
+  setopt pipe_fail
+
+  typeset commit_ref="" commit_sha="" parent_sha="" branch_name="" subject=""
+  typeset stash_msg="" stash_sha=""
+  typeset upstream="" ref_upstream="" merge_parents_count=""
 
   # ── Safety: ensure we are inside a Git repository ───────────────────────────
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -103,43 +106,34 @@ git-commit-to-stash() {
 
   # ── Create stash entry for the commit's patch ───────────────────────────────
   #
-  # `git stash create` creates a stash commit object from the current index/worktree state,
-  # but we want "parent..commit patch" even if current worktree differs.
+  # We want a stash representing the diff parent..commit, regardless of the current
+  # working tree state.
   #
-  # Workaround approach:
-  # - Use `git diff` to generate the patch for parent..commit.
-  # - Apply it onto the *index* of the parent state (in-memory) is non-trivial without
-  #   touching working tree, so we use a standard plumbing trick:
+  # Note: `git stash create [<message>]` only snapshots the *current* index/worktree.
+  # It cannot directly "stash a commit". To avoid touching the working tree, we
+  # synthesize a minimal stash-like commit via `git commit-tree` and then store it
+  # via `git stash store`.
   #
-  #   1) Save current state safety by requiring CLEAN worktree? (optional)
-  #      We won't require it, because we aren't mutating worktree by default for stash creation.
-  #
-  #   2) Use `git stash create` on a temporary state:
-  #      The most reliable portable method is:
-  #        - checkout the parent into a temporary detached state? (touches worktree)  ❌
-  #
-  # Instead, we use:
-  #   - `git stash store` with an object made by `git commit-tree` (complex) ❌
-  #
-  # A simpler, robust method that doesn't require exotic plumbing is:
-  #   - Use `git stash store` on top of `git stash create` by *temporarily*
-  #     setting worktree to the commit's tree and index to parent? Still messy.
-  #
-  # Practical compromise (common in tooling):
-  # - We create a stash from the commit itself by asking Git to create a WIP-like stash
-  #   representing that commit relative to its parent using `git stash create <tree-ish>`.
-  #
-  # Good news: `git stash create <commit>` exists and creates a stash object as if the
-  # working tree were at <commit>. It still includes staged/unstaged separation heuristics,
-  # but for our use, it reliably captures the changes from parent→commit as a stash-like object.
-  #
-  # If a given Git build doesn't support `git stash create <commit>`, we will fallback to
-  # a worktree-touching method (prompted).
-  stash_sha=$(git stash create "$commit_sha" 2>/dev/null)
+  # Stash shape (minimal):
+  # - WIP commit tree = <commit_sha>^{tree}
+  #   parents:
+  #     - base commit  = <parent_sha>
+  #     - index commit = synthetic (tree = <parent_sha>^{tree}, parent = <parent_sha>)
+  typeset base_tree="" commit_tree="" index_commit="" wip_commit=""
+  base_tree=$(git rev-parse --verify "${parent_sha}^{tree}" 2>/dev/null) || base_tree=""
+  commit_tree=$(git rev-parse --verify "${commit_sha}^{tree}" 2>/dev/null) || commit_tree=""
+  if [[ -n "$base_tree" && -n "$commit_tree" ]]; then
+    index_commit=$(git commit-tree "$base_tree" -p "$parent_sha" -m "index on ${branch_name}: ${stash_msg}" 2>/dev/null) || index_commit=""
+    if [[ -n "$index_commit" ]]; then
+      wip_commit=$(git commit-tree "$commit_tree" -p "$parent_sha" -p "$index_commit" -m "$stash_msg" 2>/dev/null) || wip_commit=""
+    fi
+  fi
+
+  stash_sha="$wip_commit"
 
   if [[ -z "$stash_sha" ]]; then
-    print "⚠️  Failed to create stash object via: git stash create <commit>"
-    print "🧠 Your Git may not support this form. Fallback would require touching the working tree."
+    print "⚠️  Failed to synthesize stash object without touching worktree."
+    print "🧠 Fallback would require touching the working tree."
     _git_commit_confirm_or_abort "❓ Fallback by temporarily checking out parent and applying patch (will modify worktree)? [y/N] " || return 1
 
     # ── Fallback (touches worktree): store patch into stash via temp apply ─────
@@ -151,7 +145,7 @@ git-commit-to-stash() {
     fi
 
     # Save where we are
-    typeset current_head
+    typeset current_head=""
     current_head=$(git rev-parse HEAD 2>/dev/null) || return 1
 
     # Move to parent in detached HEAD to apply patch cleanly
