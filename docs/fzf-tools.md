@@ -120,6 +120,19 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 
 ---
 
+### `fzf-tools git-status`
+
+📂 Pick and preview modified files from `git status`
+
+```bash
+fzf-tools git-status [query]
+```
+
+Shows inline diffs and lets you quickly inspect file changes.
+If provided, `query` pre-fills the initial fzf search input.
+
+---
+
 ### `fzf-tools git-checkout`
 
 🌀 Checkout a previous commit using fuzzy log navigation
@@ -172,6 +185,42 @@ If provided, `query` pre-fills the initial fzf search input.
 
 ---
 
+### `fzf-tools directory`
+
+📁 Pick a directory, then browse files inside it
+
+```bash
+fzf-tools directory [query]
+```
+
+This is a two-step flow:
+
+1. **Step 1: Pick a directory**  
+   Preview directory contents using `eza` (or fallback to `ls`).
+   If provided, `query` pre-fills the Step 1 fzf search input.
+
+2. **Step 2: Browse files in that directory**
+   Preview file contents using `bat` (or fallback to `sed`).
+
+#### ⌨️ Step 2 keys
+
+- `Enter` / `Ctrl-F`: open the selected file (then exit)
+- `Ctrl-D`: `cd` to the selected directory (then exit)
+- `Esc`: back to Step 1 (preserves your Step 1 query)
+
+#### ⚙️ Environment variables
+
+- `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `5`)
+- `FZF_DIRECTORY_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
+
+Example: open files in VSCode instead of `vi`:
+
+```bash
+FZF_DIRECTORY_FILE_OPEN_WITH=vscode fzf-tools directory
+```
+
+---
+
 ### `fzf-tools file`
 
 📝 Open a file using `$EDITOR` after previewing its contents with `bat`
@@ -194,19 +243,6 @@ fzf-tools vscode [query]
 ```
 
 Same behavior as `fzf-tools file`, but uses your GUI editor.
-If provided, `query` pre-fills the initial fzf search input.
-
----
-
-### `fzf-tools git-status`
-
-📂 Pick and preview modified files from `git status`
-
-```bash
-fzf-tools git-status [query]
-```
-
-Shows inline diffs and lets you quickly inspect file changes.
 If provided, `query` pre-fills the initial fzf search input.
 
 ---
@@ -250,40 +286,4 @@ Add `-k` or `--kill` to immediately kill the owning PID(s). Add `-9` or `--force
 
 ```bash
 fzf-tools port -k
-```
-
----
-
-### `fzf-tools directory`
-
-📁 Pick a directory, then browse files inside it
-
-```bash
-fzf-tools directory [query]
-```
-
-This is a two-step flow:
-
-1. **Step 1: Pick a directory**  
-   Preview directory contents using `eza` (or fallback to `ls`).
-   If provided, `query` pre-fills the Step 1 fzf search input.
-
-2. **Step 2: Browse files in that directory**
-   Preview file contents using `bat` (or fallback to `sed`).
-
-#### ⌨️ Step 2 keys
-
-- `Enter` / `Ctrl-F`: open the selected file (then exit)
-- `Ctrl-D`: `cd` to the selected directory (then exit)
-- `Esc`: back to Step 1 (preserves your Step 1 query)
-
-#### ⚙️ Environment variables
-
-- `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `5`)
-- `FZF_DIRECTORY_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
-
-Example: open files in VSCode instead of `vi`:
-
-```bash
-FZF_DIRECTORY_FILE_OPEN_WITH=vscode fzf-tools directory
 ```
