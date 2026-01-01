@@ -217,4 +217,3 @@ git-scope commit HEAD~6
 - Uses `awk` to reconstruct full directory hierarchy
 - File content display supports both text and binary-aware output
 - Internally manages file state parsing using unified helpers
-

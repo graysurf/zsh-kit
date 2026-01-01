@@ -80,4 +80,3 @@ Use them only when you trust the workflow and want to bypass Codex sandbox const
 
 - `CODEX_CLI_MODEL` (default: `gpt-5.1-codex-mini`)
 - `CODEX_CLI_REASONING` (default: `medium`)
-
