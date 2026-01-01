@@ -452,12 +452,25 @@ _fzf_file_select() {
 }
 
 # fzf-file
-# Pick a file and open it with `$EDITOR`.
+# Pick a file and open it in an editor.
 # Usage: fzf-file [query]
+# Env:
+# - FZF_FILE_OPEN_WITH: file opener: `vi` (default) or `vscode`.
 fzf-file() {
-  typeset file
+  typeset file open_with="${FZF_FILE_OPEN_WITH:-vi}"
   file=$(_fzf_file_select "$*")
-  [[ -n "$file" ]] && $EDITOR "$file"
+  [[ -z "$file" ]] && return 0
+
+  if [[ "$open_with" == "vscode" ]]; then
+    if command -v code >/dev/null 2>&1; then
+      code -- "$file"
+    else
+      print -u2 -r -- "❌ 'code' not found; falling back to vi"
+      vi -- "$file"
+    fi
+  else
+    vi -- "$file"
+  fi
 }
 
 # fzf-vscode
@@ -581,7 +594,7 @@ fzf-git-checkout() {
 # Usage: fzf-git-commit [query]
 # Notes:
 # - Optional query pre-fills the initial fzf search. If it also resolves to a commit ref, uses its short hash.
-# - Uses `FZF_DIRECTORY_FILE_OPEN_WITH` to choose editor: `vi` (default) or `vscode`.
+# - Uses `FZF_FILE_OPEN_WITH` to choose editor: `vi` (default) or `vscode`.
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -594,7 +607,7 @@ fzf-git-commit() {
   local input="$*"
   local full_hash="" commit="" file=""
   local tmp="" commit_query="" commit_query_restore="" selected_commit=""
-  typeset open_with="${FZF_DIRECTORY_FILE_OPEN_WITH:-vi}"
+  typeset open_with="${FZF_FILE_OPEN_WITH:-vi}"
 
   if [[ -n "$input" ]]; then
     full_hash=$(get_commit_hash "$input" 2>/dev/null)
@@ -1167,7 +1180,7 @@ fzf-def() {
 # Usage: fzf-directory [query]
 # Env:
 # - FZF_FILE_MAX_DEPTH: max depth for file listing (default: 5).
-# - FZF_DIRECTORY_FILE_OPEN_WITH: file opener for Step2: `vi` (default) or `vscode`.
+# - FZF_FILE_OPEN_WITH: file opener for Step2: `vi` (default) or `vscode`.
 # Notes:
 # - Step1 preserves directory query only.
 # - Step2 keys: enter/ctrl-f opens file and exits, ctrl-d cd to directory and exits, esc returns to Step1.
@@ -1181,7 +1194,7 @@ fzf-directory() {
 
   typeset dir_query="$*" dir_result="" dir=""
   typeset max_depth="${FZF_FILE_MAX_DEPTH:-5}"
-  typeset open_with="${FZF_DIRECTORY_FILE_OPEN_WITH:-vi}"
+  typeset open_with="${FZF_FILE_OPEN_WITH:-vi}"
 
   while true; do
     dir_result=$(

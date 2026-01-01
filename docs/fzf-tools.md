@@ -115,7 +115,7 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 ![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
 
 > Press `Enter` to open the selected file snapshot in your editor.  
-> Configure `FZF_DIRECTORY_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.
+> Configure `FZF_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.
 
 ---
 
@@ -210,26 +210,30 @@ This is a two-step flow:
 #### ⚙️ Environment variables
 
 - `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `5`)
-- `FZF_DIRECTORY_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
+- `FZF_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
 
 Example: open files in VSCode instead of `vi`:
 
 ```bash
-FZF_DIRECTORY_FILE_OPEN_WITH=vscode fzf-tools directory
+FZF_FILE_OPEN_WITH=vscode fzf-tools directory
 ```
 
 ---
 
 ### `fzf-tools file`
 
-📝 Open a file using `$EDITOR` after previewing its contents with `bat`
+📝 Open a file using `vi` (wraps `$EDITOR`) after previewing its contents with `bat`
 
 ```bash
 fzf-tools file [query]
 ```
 
-Search for any file in your project, preview its contents with syntax highlighting, and open it in `$EDITOR` with one keystroke.
+Search for any file in your project, preview its contents with syntax highlighting, and open it in `vi` (which wraps `$EDITOR`) with one keystroke.
 If provided, `query` pre-fills the initial fzf search input.
+
+#### ⚙️ Environment variables
+
+- `FZF_FILE_OPEN_WITH`: file opener (`vi` default, or `vscode`)
 
 ---
 

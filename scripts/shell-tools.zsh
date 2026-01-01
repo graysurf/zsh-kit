@@ -32,17 +32,19 @@ alias fd-files='fd --type f --hidden --follow --exclude .git'
 alias fd-dirs='fd --type d --hidden --follow --exclude .git'
 
 # fdf
-# Prefer `fzf-tools vscode` when available; fallback to `fd-files`.
+# Prefer `fzf-tools file` when available; fallback to `fd-files`.
 # Usage: fdf [args...]
+# Env:
+# - FZF_FILE_OPEN_WITH: file opener: `vi` (default) or `vscode`.
 # Notes:
-# - If `fzf-tools` exists (and interactive TTY), dispatches to: fzf-tools vscode [args...]
+# - If `fzf-tools` exists (and interactive TTY), dispatches to: fzf-tools file [args...]
 # - Otherwise, falls back to: fd-files [args...]
 fdf() {
   emulate -L zsh
   setopt err_return
 
   if [[ -o interactive && -t 1 ]] && command -v fzf-tools >/dev/null 2>&1; then
-    fzf-tools vscode "$@"
+    fzf-tools file "$@"
   else
     fd-files "$@"
   fi
