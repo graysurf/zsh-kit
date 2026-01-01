@@ -80,7 +80,7 @@ If provided, `query` pre-fills the initial fzf search input.
 
 ### `fzf-tools git-commit`
 
-🔍 Browse commit history, preview files in any commit, and open in VSCode
+🔍 Browse commit history, preview files in any commit, and open in an editor
 
 ```bash
 fzf-tools git-commit [query]
@@ -93,7 +93,7 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 
 - `bat`-highlighted file content
 - Commit-specific snapshot
-- Automatic temp file export to open in VSCode
+- Automatic temp file export to open in your editor
 
 ### 🧭 Two-step interaction
 
@@ -104,7 +104,7 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 2. **Step 2: Pick a file**  
    After selecting a commit, choose a modified file.  
    The preview shows a colorized `git diff` via `delta`.  
-   Upon selection, the file's snapshot is extracted and opened in VSCode.
+   Upon selection, the file's snapshot is extracted and opened in your editor.
 
 #### 📌 Step 1: Commit selection with scope preview
 
@@ -114,9 +114,8 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 
 ![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
 
-> Press `Enter` to open the selected file snapshot in **VSCode**.  
-> You can customize the editor by changing the command inside the script—  
-> for example, replace `code` with `nvim` or any other editor you prefer.
+> Press `Enter` to open the selected file snapshot in your editor.  
+> Configure `FZF_DIRECTORY_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.
 
 ---
 

@@ -577,10 +577,11 @@ fzf-git-checkout() {
 }
 
 # fzf-git-commit [query]
-# Browse commits and open changed files in VSCode.
+# Browse commits and open changed files in an editor.
 # Usage: fzf-git-commit [query]
 # Notes:
 # - Optional query pre-fills the initial fzf search. If it also resolves to a commit ref, uses its short hash.
+# - Uses `FZF_DIRECTORY_FILE_OPEN_WITH` to choose editor: `vi` (default) or `vscode`.
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -593,6 +594,7 @@ fzf-git-commit() {
   local input="$*"
   local full_hash="" commit="" file=""
   local tmp="" commit_query="" commit_query_restore="" selected_commit=""
+  typeset open_with="${FZF_DIRECTORY_FILE_OPEN_WITH:-vi}"
 
   if [[ -n "$input" ]]; then
     full_hash=$(get_commit_hash "$input" 2>/dev/null)
@@ -642,7 +644,16 @@ fzf-git-commit() {
 
     tmp="/tmp/git-${commit//\//_}-${file##*/}"
     git show "${commit}:${file}" > "$tmp"
-    code "$tmp"
+    if [[ "$open_with" == "vscode" ]]; then
+      if command -v code >/dev/null 2>&1; then
+        code -- "$tmp"
+      else
+        print -u2 -r -- "❌ 'code' not found; falling back to vi"
+        vi -- "$tmp"
+      fi
+    else
+      vi -- "$tmp"
+    fi
     break
   done
 }
@@ -1250,7 +1261,7 @@ fzf-tools() {
       vscode       "Search and preview text files in VSCode" \
       directory    "Search directories and cd into selection" \
       git-status   "Interactive git status viewer" \
-      git-commit   "Browse commits and open changed files in VSCode" \
+      git-commit   "Browse commits and open changed files in editor" \
       git-checkout "Pick and checkout a previous commit" \
       git-branch   "Browse and checkout branches interactively" \
       git-tag      "Browse and checkout tags interactively" \
