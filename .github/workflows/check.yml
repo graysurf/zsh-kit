@@ -45,7 +45,7 @@ jobs:
 
       - name: Upload fzf-def docblock audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fzf-def-docblocks-audit
           path: cache/fzf-def-docblocks-audit.txt
