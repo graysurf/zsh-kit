@@ -233,7 +233,7 @@ If provided, `query` pre-fills the initial fzf search input.
 
 #### ⚙️ Environment variables
 
-- `FZF_FILE_OPEN_WITH`: file opener (`vi` default, or `vscode`)
+- `FZF_FILE_OPEN_WITH`: file opener (`vi` default, or `vscode`); when `vscode`, uses the nearest Git root (up to 5 parent dirs) as the VSCode workspace root, and opens a new window when switching repos
 
 ---
 

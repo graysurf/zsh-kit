@@ -451,6 +451,72 @@ _fzf_file_select() {
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
 }
 
+# _fzf_find_git_root_upwards <start_dir> [max_depth]
+# Find a git root directory (contains `.git`) within N parent levels.
+# Usage: _fzf_find_git_root_upwards <start_dir> [max_depth]
+# Output:
+# - Prints the git root directory to stdout on success.
+_fzf_find_git_root_upwards() {
+  emulate -L zsh
+  setopt err_return
+
+  typeset dir="${1-}"
+  typeset -i max_depth="${2:-5}"
+  [[ -z "$dir" ]] && return 1
+
+  dir="${dir:A}"
+
+  typeset -i depth=0
+  while (( depth <= max_depth )); do
+    if [[ -e "$dir/.git" ]]; then
+      print -r -- "$dir"
+      return 0
+    fi
+
+    [[ "$dir" == "/" ]] && break
+    dir="${dir:h}"
+    (( ++depth ))
+  done
+
+  return 1
+}
+
+# _fzf_open_in_vscode <file>
+# Open a file in VSCode, preferring a Git root folder as workspace.
+# Usage: _fzf_open_in_vscode <file>
+# Notes:
+# - Searches up to 5 parent dirs for `.git`; if found, opens that directory as the VSCode workspace root.
+# - If the resolved git root differs from the last opened one in this shell session, forces a new window.
+_fzf_open_in_vscode() {
+  emulate -L zsh
+  setopt err_return
+
+  typeset file="${1-}"
+  [[ -z "$file" ]] && return 1
+
+  if ! command -v code >/dev/null 2>&1; then
+    print -u2 -r -- "❌ 'code' not found"
+    return 127
+  fi
+
+  typeset file_path="${file:A}"
+  typeset git_root=""
+  git_root="$(_fzf_find_git_root_upwards "${file_path:h}" 5)" || git_root=""
+
+  typeset -a code_args
+  code_args=(--goto "$file_path")
+
+  if [[ -n "$git_root" ]]; then
+    if [[ "${_FZF_VSCODE_LAST_GIT_ROOT-}" != "$git_root" ]]; then
+      code_args=(--new-window "${code_args[@]}")
+    fi
+    typeset -g _FZF_VSCODE_LAST_GIT_ROOT="$git_root"
+    code_args+=(-- "$git_root")
+  fi
+
+  code "${code_args[@]}"
+}
+
 # fzf-file
 # Pick a file and open it in an editor.
 # Usage: fzf-file [query]
@@ -462,10 +528,8 @@ fzf-file() {
   [[ -z "$file" ]] && return 0
 
   if [[ "$open_with" == "vscode" ]]; then
-    if command -v code >/dev/null 2>&1; then
-      code -- "$file"
-    else
-      print -u2 -r -- "❌ 'code' not found; falling back to vi"
+    if ! _fzf_open_in_vscode "$file"; then
+      print -u2 -r -- "❌ Failed to open in VSCode; falling back to vi"
       vi -- "$file"
     fi
   else
@@ -479,7 +543,8 @@ fzf-file() {
 fzf-vscode() {
   typeset file
   file=$(_fzf_file_select "$*")
-  [[ -n "$file" ]] && code "$file"
+  [[ -z "$file" ]] && return 0
+  _fzf_open_in_vscode "$file"
 }
 
 # fzf-git-status
