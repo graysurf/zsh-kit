@@ -223,10 +223,33 @@ This runs `kill -9` on selected PID(s). Useful for terminating frozen or rogue p
 
 ### `fzf-tools directory`
 
-📁 Fuzzy-find a directory and cd into it
+📁 Pick a directory, then browse files inside it
 
 ```bash
 fzf-tools directory
 ```
 
-Previews directory contents using `eza`, or falls back to `ls`.
+This is a two-step flow:
+
+1. **Step 1: Pick a directory**  
+   Preview directory contents using `eza` (or fallback to `ls`).
+
+2. **Step 2: Browse files in that directory**
+   Preview file contents using `bat` (or fallback to `sed`).
+
+#### ⌨️ Step 2 keys
+
+- `Enter` / `Ctrl-F`: open the selected file (then exit)
+- `Ctrl-D`: `cd` to the selected directory (then exit)
+- `Esc`: back to Step 1 (preserves your Step 1 query)
+
+#### ⚙️ Environment variables
+
+- `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `5`)
+- `FZF_DIRECTORY_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
+
+Example: open files in VSCode instead of `vi`:
+
+```bash
+FZF_DIRECTORY_FILE_OPEN_WITH=vscode fzf-tools directory
+```

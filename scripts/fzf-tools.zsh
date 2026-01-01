@@ -1131,16 +1131,84 @@ fzf-def() {
 }
 
 # fzf-directory
-# Select a directory (fd + fzf) and cd.
+# Pick a directory, then browse files with preview.
 # Usage: fzf-directory
+# Env:
+# - FZF_FILE_MAX_DEPTH: max depth for file listing (default: 5).
+# - FZF_DIRECTORY_FILE_OPEN_WITH: file opener for Step2: `vi` (default) or `vscode`.
 # Notes:
-# - Shows hidden dirs; follows symlinks; preview via eza/ls.
+# - Step1 preserves directory query only.
+# - Step2 keys: enter/ctrl-f opens file and exits, ctrl-d cd to directory and exits, esc returns to Step1.
+# - Shows hidden dirs/files; follows symlinks; preview via eza/ls and bat/sed.
 fzf-directory() {
-  typeset dir
-  dir=$(fd --type d --hidden --follow --exclude .git \
-    | fzf --ansi --preview 'command -v eza >/dev/null && eza -alhT --level=2 --color=always {} || ls -la {}')
+  emulate -L zsh -o no_xtrace -o no_verbose
 
-  [[ -n "$dir" ]] && cd "$dir"
+  if [[ ! -o interactive || ! -t 1 ]]; then
+    return 0
+  fi
+
+  typeset dir_query="" dir_result="" dir=""
+  typeset max_depth="${FZF_FILE_MAX_DEPTH:-5}"
+  typeset open_with="${FZF_DIRECTORY_FILE_OPEN_WITH:-vi}"
+
+  while true; do
+    dir_result=$(
+      fd --type d --hidden --follow --exclude .git 2>/dev/null |
+        fzf --ansi \
+            --prompt="📁 Directory > " \
+            --preview 'command -v eza >/dev/null && eza -alhT --level=2 --color=always {} || ls -la {}' \
+            --print-query \
+            --query="$dir_query"
+    ) || return 1
+
+    dir_query=$(printf "%s\n" "$dir_result" | sed -n '1p')
+    dir=$(printf "%s\n" "$dir_result" | sed -n '2p')
+    [[ -z "$dir" ]] && return 1
+
+    while true; do
+      typeset file_result="" key="" file="" full_path=""
+      file_result=$(
+        (
+          cd "$dir" 2>/dev/null || exit 1
+          fd --type f --max-depth="$max_depth" --hidden --follow --exclude .git 2>/dev/null
+        ) |
+          FZF_DIRECTORY_ROOT="$dir" \
+                fzf --ansi \
+                    --prompt="📄 Files in ${dir:t} > " \
+                --header='enter/ctrl-f: open (exit)    ctrl-d: cd (exit)    esc: back' \
+                    --preview-window="${FZF_PREVIEW_WINDOW:-right:50%:wrap}" \
+                    --preview='if command -v bat >/dev/null; then bat --color=always --style=numbers --line-range :200 -- "$FZF_DIRECTORY_ROOT"/{}; else sed -n "1,200p" "$FZF_DIRECTORY_ROOT"/{}; fi' \
+                    --expect=enter,ctrl-f,ctrl-d
+      ) || break
+
+      key=$(printf "%s\n" "$file_result" | sed -n '1p')
+      file=$(printf "%s\n" "$file_result" | sed -n '2p')
+
+      case "$key" in
+        ctrl-d)
+          cd "$dir" || return 1
+          return 0
+          ;;
+        enter | ctrl-f)
+          [[ -z "$file" ]] && continue
+          full_path="${dir%/}/${file}"
+          if [[ "$open_with" == "vscode" ]]; then
+            if command -v code >/dev/null 2>&1; then
+              code -- "$full_path"
+            else
+              print -u2 -r -- "❌ 'code' not found; falling back to vi"
+              vi -- "$full_path"
+            fi
+          else
+            vi -- "$full_path"
+          fi
+          return 0
+          ;;
+        *)
+          ;;
+      esac
+    done
+  done
 }
 
 # fzf-tools <command> [args...]
