@@ -7,26 +7,39 @@ It complements `plugins.zsh` by configuring system-level features **after** all 
 
 ## 🧭 Directory Navigation Enhancer: Zoxide
 
-```zsh
-eval "$(zoxide init zsh)"
-```
+Initializes zoxide (if installed), providing `z` / `zi` commands.
 
-Overrides the `z` command to provide smart directory jumping **with `eza` preview**.
+This config also overrides zoxide’s internal `__zoxide_cd` to show an `eza` listing
+after a successful jump (interactive TTY only).
 
 ```zsh
-z() {
-  if zoxide query -l "$@" &>/dev/null; then
-    builtin cd "$(zoxide query "$@")" && {
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+
+  __zoxide_cd() {
+    builtin cd -- "$1" || return
+
+    if [[ -o interactive && -t 1 ]]; then
       printf "\n📁 Now in: %s\n\n" "$PWD"
-      eza -alh --icons --group-directories-first --time-style=iso
-    }
-  else
-    printf "❌ No matching directory for: %s\n" "$*"
-    return 1
-  fi
-}
+      if command -v eza >/dev/null 2>&1; then
+        eza -alh --icons --group-directories-first --time-style=iso || :
+      fi
+    fi
 
+    return 0
+  }
+fi
 ```
+
+### Usage
+
+- Jump: `z <query>`
+- Interactive search: `zi [query]` (runs `zoxide query --interactive`)
+- Interactive completion (cursor at end of line): `z <query><Space><Tab>` (press Space, release, then press Tab)
+
+> Note: zoxide registers its completion via `compdef`. Since zoxide is initialized
+> before `compinit` in this repo, `scripts/interactive/completion.zsh` re-registers
+> zoxide’s completion after `compinit` to make `<Space><Tab>` reliable.
 
 ---
 

@@ -4,21 +4,23 @@
 
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
-  # z
-  # zoxide smart directory jumping.
-  # Usage: z <query>
-  alias z=__zoxide_z
+
+  # __zoxide_cd
+  # Wrapper to execute `eza -alh` after directory jump.
+  # Usage: __zoxide_cd <dir>
+  __zoxide_cd() {
+    builtin cd -- "$1" || return
+
+    if [[ -o interactive && -t 1 ]]; then
+      printf "\n📁 Now in: %s\n\n" "$PWD"
+      if command -v eza >/dev/null 2>&1; then
+        eza -alh --icons --group-directories-first --time-style=iso || :
+      fi
+    fi
+
+    return 0
+  }
 fi
-
-# __zoxide_cd
-# Wrapper to execute `eza -alh` after directory jump.
-# Usage: __zoxide_cd <dir>
-__zoxide_cd() {
-  builtin cd -- "$1" || return
-  printf "\n📁 Now in: %s\n\n" "$PWD"
-  eza -alh --icons --group-directories-first --time-style=iso
-}
-
 
 # ──────────────────────────────
 # Starship prompt

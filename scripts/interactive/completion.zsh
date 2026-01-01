@@ -39,6 +39,12 @@ compinit-reset() {
 fpath=("$ZDOTDIR/scripts/_completion" $fpath)
 autoload -Uz compinit
 compinit -i -d "$ZSH_COMPDUMP"
+
+# zoxide registers its completion via `compdef`, but it may be initialized
+# before `compinit` (and thus miss the `compdef` call). Re-register here.
+if (( $+functions[__zoxide_z_complete] )); then
+  compdef __zoxide_z_complete z
+fi
 typeset -g ZSH_COMPLETION_CACHE_DIR="${ZSH_COMPLETION_CACHE_DIR:-$ZSH_CACHE_DIR/completion-cache}"
 [[ -d "$ZSH_COMPLETION_CACHE_DIR" ]] || mkdir -p -- "$ZSH_COMPLETION_CACHE_DIR"
 
