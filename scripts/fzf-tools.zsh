@@ -445,7 +445,7 @@ fzf-history() {
 # - Helper used by fzf-file and fzf-vscode.
 _fzf_file_select() {
   typeset default_query="${1-}"
-  fd --type f --max-depth=${FZF_FILE_MAX_DEPTH:-5} --hidden 2>/dev/null |
+  fd --type f --hidden --follow --hidden --exclude .git --max-depth=${FZF_FILE_MAX_DEPTH:-5} 2>/dev/null |
     fzf --ansi \
         --query="$default_query" \
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
