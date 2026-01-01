@@ -7,10 +7,10 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > This Zsh environment provides a clean structure and several built-in tools.
 
 - 🌟 [Login banner](docs/login-banner.md): Emoji-powered shell intro with rotating quotes
-- 🧩 [plugin-system](docs/plugin-system.md): Git-powered declarative loader with auto-clone and update support
+- 🧩 [Plugin System](docs/plugin-system.md): Git-powered declarative loader with auto-clone and update support
 - 🤖 [Codex CLI helpers](docs/codex-cli-helpers.md): Opt-in wrappers for Codex skills with safety gate
-- 🚀 Customized [Starship](https://starship.rs) prompt with language & context awareness
-- 🧭 Smart directory jumping with [Zoxide](https://github.com/ajeetdsouza/zoxide), aliased as `z`
+- 🚀 [Starship](https://starship.rs): Customized prompt with language & context awareness
+- 🧭 [Zoxide](https://github.com/ajeetdsouza/zoxide): Smart directory jumping, aliased as `z`
 - 🔧 Modular and lazy-friendly structure under `scripts/`
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
@@ -19,12 +19,12 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > The following tools are developed as part of this environment and tightly integrated.
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
-- 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
-- 🔗 [git-open](docs/git-open.md): Open repo/branch/commit/PR pages in browser
-- 🧰 [git-tools](docs/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
-- 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
-- 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 - 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
+- 🔗 [git-open](docs/git-open.md): Open repo/branch/commit/PR pages in browser
+- 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
+- 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
+- 🧰 [git-tools](docs/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
+- 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
 
 ## Structure
 
