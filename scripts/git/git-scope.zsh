@@ -275,7 +275,7 @@ _git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untra
 # inspecting past changes in high detail.
 _git_scope_commit() {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset parent_selector=''
   typeset -a positional=()
@@ -354,7 +354,7 @@ _git_scope_print_commit_message() {
 # Render file change list with color and stats
 _git_scope_commit_parents() {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset commit="$1"
   typeset parents_raw=''
@@ -378,7 +378,7 @@ _git_scope_commit_parents() {
 # - Writes the file list to `/tmp/.git-scope-filelist` for optional printing.
 _git_scope_render_commit_files() {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset commit="$1"
   typeset parent_selector="$2"

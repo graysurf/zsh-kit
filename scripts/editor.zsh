@@ -14,7 +14,7 @@ export EDITOR="${EDITOR:-nvim}"
 # - Uses the current $EDITOR at runtime (supports multi-word commands).
 vi() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if [[ -z "${EDITOR-}" ]]; then
     print -u2 -r -- "❌ EDITOR is not set"

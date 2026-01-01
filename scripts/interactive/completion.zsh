@@ -15,7 +15,7 @@ fi
 # - Removes the dump file and rebuilds it; the next completion may be slower.
 compinit-reset() {
   emulate -L zsh
-  setopt localoptions err_return pipe_fail nounset
+  setopt err_return pipe_fail nounset
 
   typeset dump_file="${1-${ZSH_COMPDUMP-}}"
   if [[ -z "$dump_file" ]]; then

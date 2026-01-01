@@ -65,7 +65,7 @@ export SHELL_SESSIONS_DISABLE
 # Usage: f <path...>
 f() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   typeset opener=''
   if [[ -x /usr/bin/open ]]; then
@@ -94,7 +94,7 @@ alias hidpi='bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-k
 # - Requires sudo.
 flushdns() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return
+  setopt pipe_fail err_return
 
   if ! command -v dscacheutil >/dev/null 2>&1; then
     print -u2 -r -- "❌ dscacheutil not found"
@@ -119,7 +119,7 @@ flushdns() {
 # Usage: _macos_restart_finder
 _macos_restart_finder() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   command killall Finder >/dev/null 2>&1 || true
 }
@@ -129,7 +129,7 @@ _macos_restart_finder() {
 # Usage: finder-show-hidden
 finder-show-hidden() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   command defaults write com.apple.finder AppleShowAllFiles -bool true
   _macos_restart_finder
@@ -140,7 +140,7 @@ finder-show-hidden() {
 # Usage: finder-hide-hidden
 finder-hide-hidden() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   command defaults write com.apple.finder AppleShowAllFiles -bool false
   _macos_restart_finder
@@ -151,7 +151,7 @@ finder-hide-hidden() {
 # Usage: finder-toggle-hidden
 finder-toggle-hidden() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   typeset current=''
   current="$(command defaults read com.apple.finder AppleShowAllFiles 2>/dev/null || true)"
@@ -166,7 +166,7 @@ finder-toggle-hidden() {
 # Usage: reveal <path...>
 reveal() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if (( $# == 0 )); then
     print -u2 -r -- "Usage: reveal <path...>"
@@ -194,7 +194,7 @@ reveal() {
 # Usage: ql <path...>
 ql() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if (( $# == 0 )); then
     print -u2 -r -- "Usage: ql <path...>"
@@ -220,7 +220,7 @@ ql() {
 # - If the first arg is a number, it is interpreted as minutes (uses `-t`).
 caff() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if ! command -v caffeinate >/dev/null 2>&1; then
     print -u2 -r -- "❌ caffeinate not found"
@@ -251,7 +251,7 @@ caff() {
 # Usage: brew-update
 brew-update() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if ! command -v brew >/dev/null 2>&1; then
     print -u2 -r -- "❌ brew not found"
@@ -267,7 +267,7 @@ brew-update() {
 # Usage: brew-cleanup
 brew-cleanup() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if ! command -v brew >/dev/null 2>&1; then
     print -u2 -r -- "❌ brew not found"
@@ -283,7 +283,7 @@ brew-cleanup() {
 # Usage: mactop
 mactop() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   typeset mactop_bin=''
   if [[ -x /opt/homebrew/bin/mactop ]]; then

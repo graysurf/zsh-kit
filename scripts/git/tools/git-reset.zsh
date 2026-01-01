@@ -17,7 +17,6 @@ fi
 # Usage: _git_reset_confirm <prompt>
 _git_reset_confirm() {
   emulate -L zsh
-  setopt localoptions
 
   typeset prompt="${1-}"
   [[ -n "$prompt" ]] || return 1

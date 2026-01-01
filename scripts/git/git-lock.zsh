@@ -18,7 +18,6 @@ typeset -r GIT_LOCK_ABORTED_MSG='🚫 Aborted'
 # Usage: _git_lock_confirm <prompt> [printf_args...]
 _git_lock_confirm() {
   emulate -L zsh
-  setopt localoptions
 
   typeset prompt="${1-}"
   [[ -n "$prompt" ]] || return 1
@@ -331,7 +330,7 @@ _git_lock_delete() {
 # - Runs: `git log <hash1>..<hash2>`.
 _git_lock_diff() {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset repo_id='' lock_dir='' label1='' label2='' file1='' file2='' hash1='' hash2=''
   typeset no_color=false

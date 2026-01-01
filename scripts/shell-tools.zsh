@@ -48,7 +48,7 @@ alias fdd='fd-dirs'
 # Usage: _su_kill_do <signal> <pid...>
 _su_kill_do() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   typeset -i signal
   signal=${1:-15}
@@ -83,7 +83,7 @@ _su_kill_do() {
 # - Killing processes may interrupt services and cause data loss.
 kill-port() {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset -i signal=15
   if [[ "$1" == "-9" ]]; then
@@ -127,7 +127,7 @@ alias kp='kill-port'
 # - Killing processes may interrupt services and cause data loss.
 kill-process() {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset -i signal=15
   if [[ "$1" == "-9" ]]; then
@@ -169,6 +169,7 @@ alias kpid='kill-process'
 # Usage: zsh-reload
 zsh-reload() {
   emulate -L zsh
+
   # NOTE: Do NOT enable `err_return` here.
   # The bootstrap/plugin loader is best-effort and may intentionally return non-zero.
   # Enabling `err_return` could abort the reload prematurely.
@@ -196,12 +197,15 @@ alias reload='zsh-reload'
 # - Replaces the current process; unsaved shell state is lost.
 zsh-restart() {
   emulate -L zsh
-  setopt localoptions err_return
 
   print -r -- ""
   print -r -- "🚪 Restarting Zsh shell (exec zsh)..."
   print -r -- "🧼 This will start a clean session using current configs."
   print -r -- ""
+
+  # Best-effort: don't let history flush failure block restart.
+  (( $+functions[history-flush] )) && history-flush || true
+
   exec zsh
 }
 
@@ -218,9 +222,9 @@ alias zz='zsh-restart'
 # Usage: history-flush
 history-flush() {
   emulate -L zsh
-  setopt localoptions err_return
 
-  fc -AI # Append memory history, re-read file
+  # Append in-memory history to $HISTFILE; optionally re-read to merge.
+  fc -AI
 }
 
 # histflush: Alias of history-flush.
@@ -232,7 +236,7 @@ alias histflush='history-flush'
 # Usage: edit-zsh
 edit-zsh() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   typeset cwd
   cwd="$(pwd)"
@@ -248,7 +252,7 @@ edit-zsh() {
 # - If the first argument does not start with `-`, it is treated as a zoxide target.
 y() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return
+  setopt pipe_fail err_return
 
   if ! command -v yazi >/dev/null 2>&1; then
     print -u2 -r -- "❌ yazi not found"
@@ -290,7 +294,7 @@ y() {
 # - Requires network access.
 cheat() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if (( $# == 0 )); then
     print -u2 -r -- "Usage: cheat <query>"
@@ -308,7 +312,7 @@ cheat() {
 # - Requires network access.
 weather() {
   emulate -L zsh
-  setopt localoptions err_return
+  setopt err_return
 
   if ! command -v curl >/dev/null 2>&1; then
     print -u2 -r -- "❌ curl not found"

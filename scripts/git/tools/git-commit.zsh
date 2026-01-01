@@ -12,7 +12,6 @@ fi
 # Usage: _git_commit_confirm <prompt>
 _git_commit_confirm() {
   emulate -L zsh
-  setopt localoptions
 
   typeset prompt="${1-}"
   [[ -n "$prompt" ]] || return 1
@@ -248,7 +247,7 @@ git-commit-to-stash() {
 # - `--no-color` also applies when `NO_COLOR` is set.
 git-commit-context () {
   emulate -L zsh
-  setopt localoptions pipe_fail
+  setopt pipe_fail
 
   typeset tmpfile='' diff='' scope='' contents='' mode='clipboard'
   typeset no_color=false

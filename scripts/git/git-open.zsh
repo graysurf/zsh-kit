@@ -18,7 +18,7 @@ fi
 # - Line 2: remote branch name
 git-resolve-upstream() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset fallback_remote='origin' branch='' upstream='' remote='' remote_branch=''
 
@@ -52,7 +52,7 @@ git-resolve-upstream() {
 # - Prints the normalized URL to stdout.
 git-normalize-remote-url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset remote="$1"
   typeset raw_url='' normalized=''
@@ -87,7 +87,7 @@ git-normalize-remote-url() {
 # Usage: _git_open_usage
 _git_open_usage() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   print -r -- "Usage:"
   print -r -- "  git-open"
@@ -119,7 +119,7 @@ _git_open_usage() {
 # Usage: _git_open_provider <base_url>
 _git_open_provider() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset base_url="${1-}"
   typeset host='' provider=''
@@ -154,7 +154,7 @@ _git_open_provider() {
 # Usage: _git_open_github_repo_slug <base_url>
 _git_open_github_repo_slug() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset base_url="${1-}"
   typeset path='' owner='' rest='' repo=''
@@ -189,7 +189,7 @@ _git_open_github_repo_slug() {
 # Usage: _git_open_open_url <url> [label]
 _git_open_open_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset url="${1-}"
   typeset label="${2-Opened}"
@@ -216,7 +216,7 @@ _git_open_open_url() {
 # Usage: _git_open_urlencode_path <path>
 _git_open_urlencode_path() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset path="${1-}"
 
@@ -242,7 +242,7 @@ PY
 # Usage: _git_open_urlencode_query_value <value>
 _git_open_urlencode_query_value() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset value="${1-}"
 
@@ -263,7 +263,7 @@ PY
 # Usage: _git_open_default_branch_name <remote>
 _git_open_default_branch_name() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset remote="${1-}"
   typeset default_branch=''
@@ -287,7 +287,7 @@ _git_open_default_branch_name() {
 # Usage: _git_open_tree_url <provider> <base_url> <ref>
 _git_open_tree_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -309,7 +309,7 @@ _git_open_tree_url() {
 # Usage: _git_open_commit_url <provider> <base_url> <commit>
 _git_open_commit_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -331,7 +331,7 @@ _git_open_commit_url() {
 # Usage: _git_open_compare_url <provider> <base_url> <base> <head>
 _git_open_compare_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -354,7 +354,7 @@ _git_open_compare_url() {
 # Usage: _git_open_blob_url <provider> <base_url> <ref> <path>
 _git_open_blob_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -380,7 +380,7 @@ _git_open_blob_url() {
 # Usage: _git_open_blame_url <provider> <base_url> <ref> <path>
 _git_open_blame_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -406,7 +406,7 @@ _git_open_blame_url() {
 # Usage: _git_open_commits_url <provider> <base_url> <ref>
 _git_open_commits_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -428,7 +428,7 @@ _git_open_commits_url() {
 # Usage: _git_open_release_tag_url <provider> <base_url> <tag>
 _git_open_release_tag_url() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset provider="${1-}"
   typeset base_url="${2-}"
@@ -458,7 +458,7 @@ _git_open_release_tag_url() {
 # - Line 4: provider (github|gitlab|generic)
 _git_open_context() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset -a upstream=()
   typeset remote='' remote_branch='' base_url=''
@@ -490,7 +490,7 @@ _git_open_context() {
 # - Line 2: provider (github|gitlab|generic)
 _git_open_remote_context() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset remote="${1-}"
   typeset base_url='' provider=''
@@ -517,7 +517,7 @@ _git_open_remote_context() {
 # - Line 3: provider (github|gitlab|generic)
 _git_open_collab_context() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset collab_remote="${GIT_OPEN_COLLAB_REMOTE-}"
   typeset base_url='' provider=''
@@ -549,7 +549,7 @@ _git_open_collab_context() {
 # Usage: _git_open_repo [remote]
 _git_open_repo() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open repo takes at most one remote name"
@@ -582,7 +582,7 @@ _git_open_repo() {
 # Usage: _git_open_branch [ref]
 _git_open_branch() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open branch takes at most one ref"
@@ -617,7 +617,7 @@ _git_open_branch() {
 # Usage: _git_open_commit [ref]
 _git_open_commit() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open commit takes at most one ref"
@@ -647,7 +647,7 @@ _git_open_commit() {
 # Usage: _git_open_default_branch [remote]
 _git_open_default_branch() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open default-branch takes at most one remote name"
@@ -689,7 +689,7 @@ _git_open_default_branch() {
 # Usage: _git_open_compare [base] [head]
 _git_open_compare() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 2 )); then
     print -u2 -r -- "❌ git-open compare takes at most two refs"
@@ -733,7 +733,7 @@ _git_open_compare() {
 # - GitHub: prefers `gh pr view --web` when available.
 _git_open_pr() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open pr takes at most one number"
@@ -839,7 +839,7 @@ _git_open_pr() {
 # Usage: _git_open_pulls [number]
 _git_open_pulls() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open pulls takes at most one number"
@@ -872,7 +872,7 @@ _git_open_pulls() {
 # Usage: _git_open_issues [number]
 _git_open_issues() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open issues takes at most one number"
@@ -915,7 +915,7 @@ _git_open_issues() {
 # - GitHub only.
 _git_open_actions() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open actions takes at most one workflow"
@@ -966,7 +966,7 @@ _git_open_actions() {
 # Usage: _git_open_releases [tag]
 _git_open_releases() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open releases takes at most one tag"
@@ -1007,7 +1007,7 @@ _git_open_releases() {
 # - Tag tree uses `git-open branch <tag>`.
 _git_open_tags() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open tags takes at most one tag"
@@ -1046,7 +1046,7 @@ _git_open_tags() {
 # Usage: _git_open_commits [ref]
 _git_open_commits() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# > 1 )); then
     print -u2 -r -- "❌ git-open commits takes at most one ref"
@@ -1072,7 +1072,7 @@ _git_open_commits() {
 # Usage: _git_open_file <path> [ref]
 _git_open_file() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# < 1 || $# > 2 )); then
     print -u2 -r -- "❌ Usage: git-open file <path> [ref]"
@@ -1105,7 +1105,7 @@ _git_open_file() {
 # Usage: _git_open_blame <path> [ref]
 _git_open_blame() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   if (( $# < 1 || $# > 2 )); then
     print -u2 -r -- "❌ Usage: git-open blame <path> [ref]"
@@ -1155,7 +1155,7 @@ _git_open_blame() {
 # - pr uses gh when available; otherwise falls back to the compare page.
 git-open() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return nounset
+  setopt pipe_fail err_return nounset
 
   typeset cmd="${1-}"
 

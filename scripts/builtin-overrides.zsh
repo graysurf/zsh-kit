@@ -24,7 +24,6 @@ fi
 # - Builtin override for interactive UX.
 cd() {
   emulate -L zsh
-  setopt localoptions err_return
 
   builtin cd "$@" || return
 
@@ -46,7 +45,6 @@ cd() {
 # - Builtin override for interactive UX.
 cat() {
   emulate -L zsh
-  setopt localoptions err_return
 
   # Non-interactive shell (scripts) or explicit opt-out: fall back to the real `cat`.
   if [[ ! -o interactive || -n "${SHELL_UTILS_NO_BUILTIN_OVERRIDES-}" ]]; then
@@ -79,7 +77,7 @@ cat() {
 # - Builtin override for interactive UX.
 history() {
   emulate -L zsh
-  setopt localoptions pipe_fail err_return
+  setopt pipe_fail
 
   if [[ ! -o interactive || -n "${SHELL_UTILS_NO_BUILTIN_OVERRIDES-}" ]]; then
     builtin history "$@"
