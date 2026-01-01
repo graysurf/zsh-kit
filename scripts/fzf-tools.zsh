@@ -510,20 +510,20 @@ _fzf_select_commit() {
     fi
 
     result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
-      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
+      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --reverse --track \
           --prompt="🌀 Commit > " \
-          --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
+          --preview-window="$right:50%:wrap" \
           --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
           --print-query \
           --bind="$restore_bind" \
           --query="$selected")
   else
     result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
-      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset) %C(yellow)%d%C(reset) %s' |
+      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
       fzf --ansi --reverse \
           --prompt="🌀 Commit > " \
-          --preview-window="${FZF_PREVIEW_WINDOW:-right:40%:wrap}" \
+          --preview-window="$right:50%:wrap" \
           --preview='git-scope commit {1} | sed "s/^📅.*/&\n/"' \
           --print-query \
           --query="$query")
