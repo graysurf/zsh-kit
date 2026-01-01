@@ -10,6 +10,7 @@ gh::gh::GitHub CLI
 git::git::Core version control
 mactop::mactop::Apple Silicon Monitor Top
 rg::ripgrep::Fast grep engine
-tree::tree::Directory structure view
-zoxide::zoxide::Smart cd
 starship::starship::Customizable prompt
+tree::tree::Directory structure view
+yazi::yazi::Blazing fast terminal file manager
+zoxide::zoxide::Smart cd
