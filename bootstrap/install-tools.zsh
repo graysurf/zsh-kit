@@ -42,7 +42,7 @@ function _install_tools::parse_tools_list_line() {
 
   local tool="${parts[1]}"
   local brew_name="${parts[2]-}"
-  local comment=""
+  local comment=''
   if (( ${#parts} >= 3 )); then
     comment="${(j/::/)parts[3,-1]}"
   fi

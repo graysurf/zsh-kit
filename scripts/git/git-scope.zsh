@@ -457,7 +457,7 @@ _git_scope_render_commit_files() {
 
     typeset add="-"
     typeset del="-"
-    typeset match_line=""
+    typeset match_line=''
     match_line=$(printf "%s\n" "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
 
     if [[ -n "$match_line" ]]; then

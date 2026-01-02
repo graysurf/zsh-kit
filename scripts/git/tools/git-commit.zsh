@@ -46,9 +46,9 @@ git-commit-to-stash() {
   emulate -L zsh
   setopt pipe_fail
 
-  typeset commit_ref="" commit_sha="" parent_sha="" branch_name="" subject=""
-  typeset stash_msg="" stash_sha=""
-  typeset upstream="" ref_upstream="" merge_parents_count=""
+  typeset commit_ref='' commit_sha='' parent_sha='' branch_name='' subject=''
+  typeset stash_msg='' stash_sha=''
+  typeset upstream='' ref_upstream='' merge_parents_count=''
 
   # ── Safety: ensure we are inside a Git repository ───────────────────────────
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -119,7 +119,7 @@ git-commit-to-stash() {
   #   parents:
   #     - base commit  = <parent_sha>
   #     - index commit = synthetic (tree = <parent_sha>^{tree}, parent = <parent_sha>)
-  typeset base_tree="" commit_tree="" index_commit="" wip_commit=""
+  typeset base_tree='' commit_tree='' index_commit='' wip_commit=''
   base_tree=$(git rev-parse --verify "${parent_sha}^{tree}" 2>/dev/null) || base_tree=""
   commit_tree=$(git rev-parse --verify "${commit_sha}^{tree}" 2>/dev/null) || commit_tree=""
   if [[ -n "$base_tree" && -n "$commit_tree" ]]; then
@@ -145,7 +145,7 @@ git-commit-to-stash() {
     fi
 
     # Save where we are
-    typeset current_head=""
+    typeset current_head=''
     current_head=$(git rev-parse HEAD 2>/dev/null) || return 1
 
     # Move to parent in detached HEAD to apply patch cleanly

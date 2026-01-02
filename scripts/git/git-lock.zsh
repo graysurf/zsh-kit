@@ -407,7 +407,7 @@ _git_lock_diff() {
 # Safety:
 # - `--push` publishes the tag to `origin` and deletes the local tag afterwards.
 _git_lock_tag() {
-  typeset label tag_name tag_msg="" do_push=false
+  typeset label tag_name tag_msg='' do_push=false
   typeset repo_id lock_dir lock_file hash timestamp line1
   typeset -a positional=()
 

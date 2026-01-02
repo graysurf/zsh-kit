@@ -116,7 +116,7 @@ _wrappers::write_wrapper() {
       print -r -- "  \"$src\""
     done
     print -r -- ')'
-    print -r -- 'typeset src=""'
+    print -r -- "typeset src=''"
     print -r -- 'for src in "${sources[@]}"; do'
     print -r -- '  if [[ -f "$ZSH_SCRIPT_DIR/$src" ]]; then'
     print -r -- '    source "$ZSH_SCRIPT_DIR/$src"'

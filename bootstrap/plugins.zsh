@@ -35,7 +35,7 @@ load_plugin_entry() {
   typeset plugin_name="${parts[1]}"
   typeset main_file="${parts[2]:-${plugin_name}.plugin.zsh}"
   typeset extra="${parts[3]:-}"
-  typeset git_url=""
+  typeset git_url=''
 
   # look for git URL in the rest of the fields
   for part in "${parts[@]:3}"; do

@@ -63,7 +63,7 @@ _fzf_confirm() {
 # Notes:
 # - Prefers `$ZSH_SCRIPT_DIR`, then `$ZDOTDIR/scripts`, then `$HOME/.config/zsh/scripts`.
 _fzf_script_root() {
-  local script_root=""
+  local script_root=''
   if [[ -n "${ZSH_SCRIPT_DIR-}" ]]; then
     script_root="$ZSH_SCRIPT_DIR"
   elif [[ -n "${ZDOTDIR-}" ]]; then
@@ -548,7 +548,7 @@ _fzf_open_in_vscode() {
   fi
 
   typeset file_path="${file:A}"
-  typeset git_root=""
+  typeset git_root=''
   git_root="$(_fzf_find_git_root_upwards "${file_path:h}" 5)" || git_root=""
 
   typeset -a code_args
@@ -651,7 +651,7 @@ _fzf_open_file() {
 # Notes:
 # - `--vi` / `--vscode` override `FZF_FILE_OPEN_WITH`.
 fzf-file() {
-  typeset open_with=""
+  typeset open_with=''
   typeset -a query_parts=()
   _fzf_parse_open_with_flags "$@" || return $?
   open_with="$REPLY"
@@ -687,7 +687,7 @@ _fzf_select_commit() {
   local query="${1:-}"
   local selected="${2:-}"
   local result
-  local debug=false debug_log=""
+  local debug=false debug_log=''
   if [[ -n "${FZF_GIT_COMMIT_DEBUG-}" && "${FZF_GIT_COMMIT_DEBUG-}" != "0" ]]; then
     debug=true
     debug_log="${FZF_GIT_COMMIT_DEBUG_LOG_FILE:-$HOME/.codex/output/fzf-git-commit.debug.log}"
@@ -789,8 +789,8 @@ fzf-git-commit() {
   _fzf_ensure_git_scope || return 1
 
   local input="$*"
-  local full_hash="" commit="" file=""
-  local tmp="" commit_query="" commit_query_restore="" selected_commit=""
+  local full_hash='' commit='' file=''
+  local tmp='' commit_query='' commit_query_restore='' selected_commit=''
   typeset open_with="${FZF_FILE_OPEN_WITH:-vi}"
 
   if [[ -n "$input" ]]; then
@@ -803,14 +803,14 @@ fzf-git-commit() {
   fi
 
   while true; do
-    local result=""
+    local result=''
     result=$(_fzf_select_commit "$commit_query" "$selected_commit") || return 1
 
     commit_query_restore=$(sed -n '1p' <<< "$result")
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
     selected_commit="$commit"
 
-    local stats_list="" file_list=() color="" stat_line=""
+    local stats_list='' file_list=() color='' stat_line=''
     stats_list=$(git show --numstat --format= "$commit")
 
     while IFS=$'\t' read -r kind filepath; do
@@ -1377,13 +1377,13 @@ fzf-directory() {
     return 0
   fi
 
-  typeset open_with=""
+  typeset open_with=''
   typeset -a query_parts=()
   _fzf_parse_open_with_flags "$@" || return $?
   open_with="$REPLY"
   query_parts=("${reply[@]}")
 
-  typeset dir_query="${query_parts[*]}" dir_result="" dir=""
+  typeset dir_query="${query_parts[*]}" dir_result='' dir=''
   typeset max_depth="${FZF_FILE_MAX_DEPTH:-5}"
 
   while true; do
@@ -1401,7 +1401,7 @@ fzf-directory() {
     [[ -z "$dir" ]] && return 1
 
     while true; do
-      typeset file_result="" key="" file="" full_path=""
+      typeset file_result='' key='' file='' full_path=''
       file_result=$(
         (
           cd "$dir" 2>/dev/null || exit 1

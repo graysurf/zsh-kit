@@ -22,6 +22,11 @@ jobs:
             sudo apt-get install -y zsh
           fi
 
+      - name: Enforce typeset empty-string quotes
+        run: |
+          set -euo pipefail
+          zsh -f ./tools/fix-typeset-empty-string-quotes.zsh --check
+
       - name: Run smoke check
         run: |
           set -euo pipefail
