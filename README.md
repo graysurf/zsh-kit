@@ -162,18 +162,6 @@ source "$ZDOTDIR/bootstrap/bootstrap.zsh"
 
 This will initialize all scripts in proper order via the `load_script_group_ordered()` / `load_script_group()` loader helpers.
 
-## 🛠 Notes
-
-To enable quote display on login, make sure to create the following file manually:
-
-```bash
-mkdir -p $ZDOTDIR/assets
-touch $ZDOTDIR/assets/quotes.txt
-```
-
-This file is **not tracked by Git** and will be automatically appended with quotes over time.  
-If it does not exist, the system will fall back to a default quote.
-
 > 🧰 This setup expects you to have your favorite CLI tools installed.  
 > It won't hand-hold you, and assumes tools like `eza`, `tree`, `bat`, or `fzf` are already available.  
 > If something errors out, you're probably just missing a binary — install and carry on.  
