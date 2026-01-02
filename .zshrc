@@ -1,12 +1,13 @@
 # ──────────────────────────────
 # Define Zsh environment paths early (must be first!)
 # ──────────────────────────────
-export ZSH_CACHE_DIR="${ZSH_CACHE_DIR:-$ZDOTDIR/cache}"
 export ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-$ZDOTDIR/config}"
-export ZSH_BOOTSTRAP_SCRIPT_DIR="$ZDOTDIR/bootstrap"
-export ZSH_COMPDUMP="$ZSH_CACHE_DIR/.zcompdump"
-export _Z_DATA="$ZSH_CACHE_DIR/.z"
-export ZSHZ_DATA="$_Z_DATA"
+export ZSH_BOOTSTRAP_SCRIPT_DIR="${ZSH_BOOTSTRAP_SCRIPT_DIR:-$ZDOTDIR/bootstrap}"
+export ZSH_CACHE_DIR="${ZSH_CACHE_DIR:-$ZDOTDIR/cache}"
+export ZSH_COMPDUMP="${ZSH_COMPDUMP:-$ZSH_CACHE_DIR/.zcompdump}"
+
+# Ensure cache dir exists
+[[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
 
 # History config
 export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
@@ -20,9 +21,6 @@ setopt EXTENDED_HISTORY HIST_FIND_NO_DUPS HIST_SAVE_NO_DUPS
 
 # Show formatted timestamps when using `history`
 export HISTTIMEFORMAT='%F %T '
-
-# Ensure cache dir exists
-[[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
 
 export ZSH_DEBUG="${ZSH_DEBUG:-0}"
 export ZSH_BOOT_WEATHER="${ZSH_BOOT_WEATHER:-true}"
