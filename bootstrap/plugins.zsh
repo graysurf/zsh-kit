@@ -10,7 +10,7 @@ typeset -f plugin_fetch_if_missing_from_entry &>/dev/null || {
 }
 
 ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-$ZDOTDIR/plugins}"
-ZSH_PLUGIN_LIST_FILE="${ZSH_PLUGIN_LIST_FILE:-$ZDOTDIR/config/plugins.list}"
+ZSH_PLUGIN_LIST_FILE="${ZSH_PLUGIN_LIST_FILE:-${ZSH_CONFIG_DIR:-$ZDOTDIR/config}/plugins.list}"
 
 ZSH_PLUGINS=()
 while IFS= read -r line; do
@@ -19,11 +19,11 @@ while IFS= read -r line; do
 done < "$ZSH_PLUGIN_LIST_FILE"
 
 # load_plugin_entry <entry>
-# Fetch (if needed) and source a plugin described by a `config/plugins.list` entry.
+# Fetch (if needed) and source a plugin described by a `$ZSH_CONFIG_DIR/plugins.list` entry.
 # Usage: load_plugin_entry <entry>
 # Env:
 # - ZSH_PLUGINS_DIR: plugin base directory (default: $ZDOTDIR/plugins)
-# - ZSH_PLUGIN_LIST_FILE: plugin list file (default: $ZDOTDIR/config/plugins.list)
+# - ZSH_PLUGIN_LIST_FILE: plugin list file (default: $ZSH_CONFIG_DIR/plugins.list)
 # Notes:
 # - Supports `abbr` for the zsh-abbr plugin (adds completions + job queue).
 # - Supports `KEY=VALUE` style extras via eval (trusted config only).

@@ -26,8 +26,8 @@ fi
 # Starship prompt
 # ──────────────────────────────
 
-if [[ -f "$ZDOTDIR/config/starship.toml" ]]; then
-  export STARSHIP_CONFIG="$ZDOTDIR/config/starship.toml"
+if [[ -f "$ZSH_CONFIG_DIR/starship.toml" ]]; then
+  export STARSHIP_CONFIG="$ZSH_CONFIG_DIR/starship.toml"
 fi
 
 if command -v starship >/dev/null 2>&1; then

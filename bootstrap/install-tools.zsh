@@ -13,7 +13,7 @@
 #               Only summary messages will be shown.
 #
 # Description:
-#   This script checks for required CLI tools defined in $ZDOTDIR/config/tools.list.
+#   This script checks for required CLI tools defined in $ZSH_CONFIG_DIR/tools.list.
 #   It prompts for confirmation before proceeding, unless --dry-run is used.
 #
 #   Homebrew runs on both macOS and Linux; if brew is missing, run ./install-tools.zsh to bootstrap it.
@@ -24,7 +24,8 @@
 #   DRY_RUN=true ./install-tools.zsh      # Alternate dry-run using env var
 #   ./install-tools.zsh --quiet           # Quiet mode install
 
-TOOLS_LIST="$ZDOTDIR/config/tools.list"
+ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-$ZDOTDIR/config}"
+TOOLS_LIST="$ZSH_CONFIG_DIR/tools.list"
 DRY_RUN=false
 QUIET=false
 

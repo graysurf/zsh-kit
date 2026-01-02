@@ -48,7 +48,7 @@ fi
 If `config/starship.toml` is found, it will be loaded as the custom Starship configuration:
 
 ```zsh
-export STARSHIP_CONFIG="$ZDOTDIR/config/starship.toml"
+export STARSHIP_CONFIG="$ZSH_CONFIG_DIR/starship.toml"
 eval "$(starship init zsh)"
 ```
 

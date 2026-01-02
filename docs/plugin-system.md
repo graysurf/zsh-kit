@@ -21,7 +21,7 @@ $ZDOTDIR/plugins/<plugin-id>/
 Each plugin is declared in a standalone file:
 
 ```zsh
-$ZDOTDIR/config/plugins.list
+$ZSH_CONFIG_DIR/plugins.list
 ```
 
 ---
