@@ -13,7 +13,7 @@
 #               Only summary messages will be shown.
 #
 # Description:
-#   This script checks for required CLI tools defined in ./config/tools.list.
+#   This script checks for required CLI tools defined in $ZDOTDIR/config/tools.list.
 #   It prompts for confirmation before proceeding, unless --dry-run is used.
 #
 #   If all tools are already installed, it exits cleanly with a success message.
@@ -22,8 +22,7 @@
 #   DRY_RUN=true ./install-tools.zsh      # Alternate dry-run using env var
 #   ./install-tools.zsh --quiet           # Quiet mode install
 
-REPO_ROOT="${0:A:h:h}"
-TOOLS_LIST="$REPO_ROOT/config/tools.list"
+TOOLS_LIST="$ZDOTDIR/config/tools.list"
 DRY_RUN=false
 QUIET=false
 
