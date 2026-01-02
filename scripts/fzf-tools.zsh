@@ -26,9 +26,9 @@ alias fgc='fzf-git-commit'
 alias ff='fzf-file'
 
 # fv
-# Alias of `fzf-vscode`.
+# Alias of `fzf-file --vscode`.
 # Usage: fv
-alias fv='fzf-vscode'
+alias fv='fzf-file --vscode'
 
 # fp
 # Alias of `fzf-port`.
@@ -442,7 +442,7 @@ fzf-history() {
 # File selector with bat preview.
 # Usage: _fzf_file_select [query]
 # Notes:
-# - Helper used by fzf-file and fzf-vscode.
+# - Helper used by fzf-file.
 _fzf_file_select() {
   typeset default_query="${1-}"
   fd --type f --hidden --follow --hidden --exclude .git --max-depth=${FZF_FILE_MAX_DEPTH:-5} 2>/dev/null |
@@ -517,34 +517,103 @@ _fzf_open_in_vscode() {
   code "${code_args[@]}"
 }
 
-# fzf-file
-# Pick a file and open it in an editor.
-# Usage: fzf-file [query]
-# Env:
-# - FZF_FILE_OPEN_WITH: file opener: `vi` (default) or `vscode`.
-fzf-file() {
-  typeset file open_with="${FZF_FILE_OPEN_WITH:-vi}"
-  file=$(_fzf_file_select "$*")
-  [[ -z "$file" ]] && return 0
+# _fzf_parse_open_with_flags [args...]
+# Parse --vi / --vscode and return remaining args (query parts).
+# Usage: _fzf_parse_open_with_flags [--vi|--vscode] [--] [query...]
+# Output:
+# - Sets `REPLY` to `vi` or `vscode` (default: `${FZF_FILE_OPEN_WITH:-vi}`).
+# - Sets `reply` (array) to the remaining args after option parsing.
+# Notes:
+# - `--vi` and `--vscode` are mutually exclusive; flags override `FZF_FILE_OPEN_WITH`.
+# - Unknown `--...` flags return status 2.
+_fzf_parse_open_with_flags() {
+  emulate -L zsh
+  setopt err_return
+
+  REPLY="${FZF_FILE_OPEN_WITH:-vi}"
+  reply=()
+
+  typeset seen_vi=false seen_vscode=false
+
+  while (( $# > 0 )); do
+    case "$1" in
+      --vi)
+        seen_vi=true
+        REPLY="vi"
+        ;;
+      --vscode)
+        seen_vscode=true
+        REPLY="vscode"
+        ;;
+      --)
+        shift
+        reply=("$@")
+        break
+        ;;
+      --*)
+        print -u2 -r -- "❌ Unknown flag: $1"
+        return 2
+        ;;
+      *)
+        reply=("$@")
+        break
+        ;;
+    esac
+    shift
+  done
+
+  if $seen_vi && $seen_vscode; then
+    print -u2 -r -- "❌ Flags are mutually exclusive: --vi and --vscode"
+    return 2
+  fi
+
+  return 0
+}
+
+# _fzf_open_file <open_with> <file>
+# Open a file with the chosen opener.
+# Usage: _fzf_open_file <open_with> <file>
+# Notes:
+# - When `<open_with>` is `vscode`, uses `_fzf_open_in_vscode` and falls back to `vi` on failure.
+_fzf_open_file() {
+  emulate -L zsh
+  setopt err_return
+
+  typeset open_with="${1-}"
+  typeset file="${2-}"
+
+  [[ -z "$file" ]] && return 1
 
   if [[ "$open_with" == "vscode" ]]; then
     if ! _fzf_open_in_vscode "$file"; then
       print -u2 -r -- "❌ Failed to open in VSCode; falling back to vi"
       vi -- "$file"
     fi
-  else
-    vi -- "$file"
+    return 0
   fi
+
+  vi -- "$file"
 }
 
-# fzf-vscode
-# Pick a file and open it in VSCode.
-# Usage: fzf-vscode [query]
-fzf-vscode() {
+# fzf-file
+# Pick a file and open it in an editor.
+# Usage: fzf-file [--vi|--vscode] [query]
+# Env:
+# - FZF_FILE_OPEN_WITH: file opener: `vi` (default) or `vscode`.
+# Notes:
+# - `--vi` / `--vscode` override `FZF_FILE_OPEN_WITH`.
+fzf-file() {
+  typeset open_with=""
+  typeset -a query_parts=()
+  _fzf_parse_open_with_flags "$@" || return $?
+  open_with="$REPLY"
+  query_parts=("${reply[@]}")
+
   typeset file
-  file=$(_fzf_file_select "$*")
+  file=$(_fzf_file_select "${query_parts[*]}")
   [[ -z "$file" ]] && return 0
-  _fzf_open_in_vscode "$file"
+
+  _fzf_open_file "$open_with" "$file"
 }
 
 # fzf-git-status
@@ -1242,11 +1311,12 @@ fzf-def() {
 
 # fzf-directory
 # Pick a directory, then browse files with preview.
-# Usage: fzf-directory [query]
+# Usage: fzf-directory [--vi|--vscode] [query]
 # Env:
 # - FZF_FILE_MAX_DEPTH: max depth for file listing (default: 5).
 # - FZF_FILE_OPEN_WITH: file opener for Step2: `vi` (default) or `vscode`.
 # Notes:
+# - `--vi` / `--vscode` override `FZF_FILE_OPEN_WITH`.
 # - Step1 preserves directory query only.
 # - Step2 keys: enter/ctrl-f opens file and exits, ctrl-d cd to directory and exits, esc returns to Step1.
 # - Shows hidden dirs/files; follows symlinks; preview via eza/ls and bat/sed.
@@ -1257,9 +1327,14 @@ fzf-directory() {
     return 0
   fi
 
-  typeset dir_query="$*" dir_result="" dir=""
+  typeset open_with=""
+  typeset -a query_parts=()
+  _fzf_parse_open_with_flags "$@" || return $?
+  open_with="$REPLY"
+  query_parts=("${reply[@]}")
+
+  typeset dir_query="${query_parts[*]}" dir_result="" dir=""
   typeset max_depth="${FZF_FILE_MAX_DEPTH:-5}"
-  typeset open_with="${FZF_FILE_OPEN_WITH:-vi}"
 
   while true; do
     dir_result=$(
@@ -1302,16 +1377,7 @@ fzf-directory() {
         enter | ctrl-f)
           [[ -z "$file" ]] && continue
           full_path="${dir%/}/${file}"
-          if [[ "$open_with" == "vscode" ]]; then
-            if command -v code >/dev/null 2>&1; then
-              code -- "$full_path"
-            else
-              print -u2 -r -- "❌ 'code' not found; falling back to vi"
-              vi -- "$full_path"
-            fi
-          else
-            vi -- "$full_path"
-          fi
+          _fzf_open_file "$open_with" "$full_path"
           return 0
           ;;
         *)
@@ -1325,7 +1391,7 @@ fzf-directory() {
 # Main dispatcher and help menu.
 # Usage: fzf-tools <command> [args...]
 # Notes:
-# - Subcommands: file, vscode, directory, git-status, git-commit, git-checkout, git-branch, git-tag,
+# - Subcommands: file, directory, git-status, git-commit, git-checkout, git-branch, git-tag,
 #   process, port, history, env, alias, function, def
 fzf-tools() {
   typeset cmd="$1"
@@ -1336,7 +1402,6 @@ fzf-tools() {
     printf "%s\n" "Commands:"
     printf "  %-16s  %s\n" \
       file         "Search and preview text files" \
-      vscode       "Search and preview text files in VSCode" \
       directory    "Search directories and cd into selection" \
       git-status   "Interactive git status viewer" \
       git-commit   "Browse commits and open changed files in editor" \
@@ -1358,7 +1423,6 @@ fzf-tools() {
 
   case "$cmd" in
     file)             fzf-file "$@" ;;
-    vscode)           fzf-vscode "$@" ;;
     directory)        fzf-directory "$@" ;;
     git-status)       fzf-git-status "$@" ;;
     git-commit)       fzf-git-commit "$@" ;;

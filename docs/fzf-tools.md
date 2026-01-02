@@ -189,7 +189,7 @@ If provided, `query` pre-fills the initial fzf search input.
 📁 Pick a directory, then browse files inside it
 
 ```bash
-fzf-tools directory [query]
+fzf-tools directory [--vi|--vscode] [query]
 ```
 
 This is a two-step flow:
@@ -212,7 +212,18 @@ This is a two-step flow:
 - `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `5`)
 - `FZF_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
 
-Example: open files in VSCode instead of `vi`:
+#### ⚙️ Options
+
+- `--vi`: open selected files in `vi` (overrides `FZF_FILE_OPEN_WITH`)
+- `--vscode`: open selected files in VSCode (overrides `FZF_FILE_OPEN_WITH`)
+
+Example: open files in VSCode for this run:
+
+```bash
+fzf-tools directory --vscode
+```
+
+Example: open files in VSCode by default (env var):
 
 ```bash
 FZF_FILE_OPEN_WITH=vscode fzf-tools directory
@@ -225,7 +236,7 @@ FZF_FILE_OPEN_WITH=vscode fzf-tools directory
 📝 Open a file using `vi` (wraps `$EDITOR`) after previewing its contents with `bat`
 
 ```bash
-fzf-tools file [query]
+fzf-tools file [--vi|--vscode] [query]
 ```
 
 Search for any file in your project, preview its contents with syntax highlighting, and open it in `vi` (which wraps `$EDITOR`) with one keystroke.
@@ -235,18 +246,16 @@ If provided, `query` pre-fills the initial fzf search input.
 
 - `FZF_FILE_OPEN_WITH`: file opener (`vi` default, or `vscode`); when `vscode`, uses the nearest Git root (up to 5 parent dirs) as the VSCode workspace root, and opens a new window when switching repos
 
----
+#### ⚙️ Options
 
-### `fzf-tools vscode`
+- `--vi`: open the selected file in `vi` (overrides `FZF_FILE_OPEN_WITH`)
+- `--vscode`: open the selected file in VSCode (overrides `FZF_FILE_OPEN_WITH`)
 
-🧠 Open a file in VSCode (instead of $EDITOR), with fuzzy selection
+Example: open in VSCode for this run:
 
 ```bash
-fzf-tools vscode [query]
+fzf-tools file --vscode
 ```
-
-Same behavior as `fzf-tools file`, but uses your GUI editor.
-If provided, `query` pre-fills the initial fzf search input.
 
 ---
 

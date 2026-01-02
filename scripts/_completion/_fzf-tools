@@ -6,10 +6,9 @@ emulate -L zsh -o extendedglob
 typeset -a commands
 commands=(
   'file:Search and preview text files'
-  'vscode:Search and preview text files in VSCode'
   'directory:Search directories and cd into selection'
   'git-status:Interactive git status viewer'
-  'git-commit:Browse commits and open changed files in VSCode'
+  'git-commit:Browse commits and open changed files in editor'
   'git-checkout:Pick and checkout a previous commit'
   'git-branch:Browse and checkout branches interactively'
   'git-tag:Browse and checkout git tags interactively'
