@@ -6,7 +6,7 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias vi
 fi
 
-export EDITOR="${EDITOR:-nvim}"
+export EDITOR="${EDITOR:-vim}"
 
 # vi: Wrapper for `$EDITOR`.
 # Usage: vi [args...]

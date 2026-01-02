@@ -98,8 +98,7 @@ function _install_tools::main() {
   emulate -L zsh
   setopt errexit nounset pipefail
 
-  local repo_root="${0:A:h}"
-  local bootstrap_script="$repo_root/bootstrap/install-tools.zsh"
+  local bootstrap_script="$ZSH_BOOTSTRAP_SCRIPT_DIR/install-tools.zsh"
 
   local dry_run=false
   local quiet=false
