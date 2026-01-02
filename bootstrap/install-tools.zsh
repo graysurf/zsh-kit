@@ -26,6 +26,9 @@ TOOLS_LIST="$ZDOTDIR/config/tools.list"
 DRY_RUN=false
 QUIET=false
 
+# _install_tools::parse_tools_list_line <line>
+# Parse one tools.list line into $reply as: (<tool> <brew_name> <comment>).
+# Usage: _install_tools::parse_tools_list_line <line>
 function _install_tools::parse_tools_list_line() {
   emulate -L zsh
   setopt errexit nounset pipefail
@@ -45,6 +48,9 @@ function _install_tools::parse_tools_list_line() {
   reply=("$tool" "$brew_name" "$comment")
 }
 
+# _install_tools::ensure_homebrew_on_path
+# Ensure brew is available on PATH; evals `brew shellenv` when needed.
+# Usage: _install_tools::ensure_homebrew_on_path
 function _install_tools::ensure_homebrew_on_path() {
   emulate -L zsh
   setopt errexit nounset pipefail
@@ -64,6 +70,9 @@ function _install_tools::ensure_homebrew_on_path() {
   return 1
 }
 
+# _install_tools::is_installed <tool> <brew_name>
+# Return success if the command or its Homebrew formula is installed.
+# Usage: _install_tools::is_installed <tool> <brew_name>
 function _install_tools::is_installed() {
   emulate -L zsh
   setopt errexit nounset pipefail
