@@ -24,7 +24,19 @@
 #   DRY_RUN=true ./install-tools.zsh      # Alternate dry-run using env var
 #   ./install-tools.zsh --quiet           # Quiet mode install
 
-ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-$ZDOTDIR/config}"
+typeset -gr SCRIPT_PATH="${0:A}"
+typeset -gr SCRIPT_DIR="${SCRIPT_PATH:h}"
+typeset -gr REPO_ROOT="${SCRIPT_DIR:h}"
+export ZDOTDIR="$REPO_ROOT"
+
+typeset -gr PATHS_FILE="$ZDOTDIR/scripts/_internal/paths.exports.zsh"
+if [[ -f "$PATHS_FILE" ]]; then
+  source "$PATHS_FILE"
+else
+  printf "❌ paths file not found: %s\n" "$PATHS_FILE"
+  exit 1
+fi
+
 TOOLS_LIST="$ZSH_CONFIG_DIR/tools.list"
 DRY_RUN=false
 QUIET=false

@@ -17,6 +17,18 @@
 #
 # Tools will only be installed if not already present on your system.
 
+typeset -gr SCRIPT_PATH="${0:A}"
+typeset -gr REPO_ROOT="${SCRIPT_PATH:h}"
+export ZDOTDIR="$REPO_ROOT"
+
+typeset -gr PATHS_FILE="$ZDOTDIR/scripts/_internal/paths.exports.zsh"
+if [[ -f "$PATHS_FILE" ]]; then
+  source "$PATHS_FILE"
+else
+  print -u2 -r -- "paths file not found: $PATHS_FILE"
+  exit 1
+fi
+
 function _install_tools::ensure_homebrew() {
   emulate -L zsh
   setopt errexit nounset pipefail
@@ -128,6 +140,10 @@ function _install_tools::main() {
   setopt errexit nounset pipefail
 
   local bootstrap_script="$ZSH_BOOTSTRAP_SCRIPT_DIR/install-tools.zsh"
+  if [[ ! -x "$bootstrap_script" ]]; then
+    print -u2 -r -- "bootstrap script not found or not executable: $bootstrap_script"
+    return 1
+  fi
 
   local dry_run=false
   local quiet=false

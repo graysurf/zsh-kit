@@ -1,37 +1,56 @@
 # ──────────────────────────────
 # Define Zsh environment paths early (must be first!)
 # ──────────────────────────────
-export ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-$ZDOTDIR/config}"
-export ZSH_BOOTSTRAP_SCRIPT_DIR="${ZSH_BOOTSTRAP_SCRIPT_DIR:-$ZDOTDIR/bootstrap}"
-export ZSH_SCRIPT_DIR="${ZSH_SCRIPT_DIR:-$ZDOTDIR/scripts}"
-export ZSH_TOOLS_DIR="${ZSH_TOOLS_DIR:-$ZDOTDIR/tools}"
-export ZSH_CACHE_DIR="${ZSH_CACHE_DIR:-$ZDOTDIR/cache}"
-export ZSH_COMPDUMP="${ZSH_COMPDUMP:-$ZSH_CACHE_DIR/.zcompdump}"
+typeset paths_exports="${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.exports.zsh"
+typeset paths_init="${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.init.zsh"
 
-# Ensure cache dir exists
-[[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
+# Normally loaded via `$ZDOTDIR/.zshenv`. Keep a fallback for `zsh -f` / manual sourcing.
+if [[ -z "${ZSH_BOOTSTRAP_SCRIPT_DIR-}" || -z "${ZSH_CACHE_DIR-}" ]]; then
+  [[ -r "$paths_exports" ]] && source "$paths_exports"
+fi
+[[ -r "$paths_init" ]] && source "$paths_init"
 
-# History config
-export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
+# ──────────────────────────────
+# Cached CLI wrappers (for subshells like fzf preview)
+# ──────────────────────────────
+typeset wrappers_zsh="$ZSH_SCRIPT_DIR/_internal/wrappers.zsh"
+typeset wrappers_bin="$ZSH_CACHE_DIR/wrappers/bin"
+typeset wrappers_check_cmd='git-scope'
+typeset wrappers_check_path="$wrappers_bin/$wrappers_check_cmd"
+if [[ -f "$wrappers_zsh" && ! -x "$wrappers_check_path" ]]; then
+  source "$wrappers_zsh"
+  [[ -o interactive ]] && _wrappers::ensure_all || _wrappers::ensure_all >/dev/null 2>&1 || true
+fi
+if [[ -x "$wrappers_check_path" ]]; then
+  path=("$wrappers_bin" $path)
+fi
+
+# ──────────────────────────────
+# History
+# ──────────────────────────────
 export HISTSIZE=10000
 export SAVEHIST=10000
 
-# Enhanced history settings
 setopt HIST_IGNORE_DUPS HIST_IGNORE_ALL_DUPS HIST_REDUCE_BLANKS
 setopt HIST_VERIFY HIST_IGNORE_SPACE INC_APPEND_HISTORY SHARE_HISTORY
 setopt EXTENDED_HISTORY HIST_FIND_NO_DUPS HIST_SAVE_NO_DUPS
 
-# Show formatted timestamps when using `history`
 export HISTTIMEFORMAT='%F %T '
 
+# ──────────────────────────────
+# Bootstrap flags
+# ──────────────────────────────
 export ZSH_DEBUG="${ZSH_DEBUG:-0}"
 export ZSH_BOOT_WEATHER="${ZSH_BOOT_WEATHER:-true}"
 export ZSH_BOOT_QUOTE="${ZSH_BOOT_QUOTE:-true}"
 
-# Display current weather if enabled
+# ──────────────────────────────
+# Login banner (optional)
+# ──────────────────────────────
 [[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.zsh"
-
-# Display quote UI if enabled
 [[ "$ZSH_BOOT_QUOTE" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.zsh"
 
+# ──────────────────────────────
+# Bootstrap
+# ──────────────────────────────
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/bootstrap.zsh"

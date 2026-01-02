@@ -69,6 +69,7 @@ check_zsh_syntax() {
   typeset -i failed=0
   typeset -a zsh_files=() sh_files=()
 
+  [[ -f "$root_dir/.zshenv" ]] && zsh_files+=("$root_dir/.zshenv")
   [[ -f "$root_dir/.zshrc" ]] && zsh_files+=("$root_dir/.zshrc")
   [[ -f "$root_dir/.zprofile" ]] && zsh_files+=("$root_dir/.zprofile")
   zsh_files+=("$root_dir"/*.zsh(.N))

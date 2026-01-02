@@ -30,6 +30,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ```text
 .
+├── .zshenv                               # Always-loaded env; defines core ZSH_* paths
 ├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.zsh
 ├── .zprofile                             # Minimal login initializer for login shells
 │
@@ -54,7 +55,11 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases
-│   ├── _internal/                        # Internal modules (not auto-loaded; wrapper generator, etc.)
+│   ├── _internal/                        # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
+│   │   ├── paths.exports.zsh             # Core ZSH_* path exports
+│   │   ├── paths.init.zsh                # Minimal init (ensure cache dir exists)
+│   │   ├── paths.zsh                     # Convenience wrapper (exports + init)
+│   │   └── wrappers.zsh                  # Cached CLI wrapper generator (for subshells)
 │   ├── git/                              # Git workflow tools and custom logic
 │   │   ├── git.zsh                       # General Git aliases and settings
 │   │   ├── git-lock.zsh                  # Lock and restore git commits with labels
@@ -147,9 +152,9 @@ In your `~/.zshenv`, define the custom config location:
 export ZDOTDIR="$HOME/.config/zsh"
 ```
 
-Zsh will now source your config from `$ZDOTDIR/.zshrc`.
+Zsh will now source your config from `$ZDOTDIR/.zshenv` and `$ZDOTDIR/.zshrc`.
 
-Make sure that `.zshrc` begins by sourcing the env and plugin setup:
+Make sure that `.zshrc` sources the bootstrap loader:
 
 ```bash
 source "$ZDOTDIR/bootstrap/bootstrap.zsh"
