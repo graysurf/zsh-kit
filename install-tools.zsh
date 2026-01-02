@@ -1,6 +1,6 @@
 #!/usr/bin/env -S zsh -f
 
-# install-tools.zsh — Homebrew CLI tool installer
+# install-tools.zsh — Homebrew CLI tool installer (macOS/Linux)
 #
 # This wrapper script runs the main installer at bootstrap/install-tools.zsh
 #
@@ -22,42 +22,70 @@ function _install_tools::ensure_homebrew() {
 
   local quiet="$1"
 
+  local home="${HOME-}"
+  local -a candidates=(
+    /opt/homebrew/bin/brew
+    /usr/local/bin/brew
+    /home/linuxbrew/.linuxbrew/bin/brew
+  )
+  [[ -n "$home" ]] && candidates+=("$home/.linuxbrew/bin/brew")
+
   if command -v brew >/dev/null 2>&1; then
     eval "$(brew shellenv)"
     return 0
   fi
 
   local candidate
-  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
       eval "$("$candidate" shellenv)"
       return 0
     fi
   done
 
-  if [[ "${OSTYPE:-}" != darwin* ]]; then
-    print -u2 -r -- "Homebrew not found; please install it first."
+  case "${OSTYPE-}" in
+    darwin*|linux*) ;;
+    *)
+      print -u2 -r -- "Homebrew not found; unsupported OSTYPE: ${OSTYPE-}"
+      return 1
+      ;;
+  esac
+
+  if ! command -v bash >/dev/null 2>&1; then
+    print -u2 -r -- "Homebrew install requires bash."
+    return 1
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    print -u2 -r -- "Homebrew install requires curl."
     return 1
   fi
 
   print -u2 -r -- "Homebrew not found; installing..."
 
+  local install_script_url='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
+  local install_script=''
+  install_script="$(curl -fsSL "$install_script_url")"
+
   if [[ "$quiet" == true ]]; then
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null 2>&1
+    NONINTERACTIVE=1 bash -c "$install_script" >/dev/null 2>&1
   else
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    NONINTERACTIVE=1 bash -c "$install_script"
   fi
 
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-  elif command -v brew >/dev/null 2>&1; then
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "$candidate" ]]; then
+      eval "$("$candidate" shellenv)"
+      return 0
+    fi
+  done
+
+  if command -v brew >/dev/null 2>&1; then
     eval "$(brew shellenv)"
-  else
-    print -u2 -r -- "Homebrew installation finished but brew is still not available."
-    return 1
+    return 0
   fi
+
+  print -u2 -r -- "Homebrew installation finished but brew is still not available."
+  return 1
 }
 
 function _install_tools::brew_update_upgrade() {

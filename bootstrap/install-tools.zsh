@@ -1,6 +1,6 @@
 #!/usr/bin/env -S zsh -f
 
-# install-tools.zsh — Install required CLI tools via Homebrew (macOS only)
+# install-tools.zsh — Install required CLI tools via Homebrew (macOS/Linux)
 #
 # Usage:
 #   ./install-tools.zsh [--dry-run] [--quiet]
@@ -15,6 +15,8 @@
 # Description:
 #   This script checks for required CLI tools defined in $ZDOTDIR/config/tools.list.
 #   It prompts for confirmation before proceeding, unless --dry-run is used.
+#
+#   Homebrew runs on both macOS and Linux; if brew is missing, run ./install-tools.zsh to bootstrap it.
 #
 #   If all tools are already installed, it exits cleanly with a success message.
 #
@@ -123,7 +125,7 @@ fi
 
 if [[ "$DRY_RUN" != true ]]; then
   if ! _install_tools::ensure_homebrew_on_path; then
-    printf "❌ Homebrew not found. Run ./install-tools.zsh to bootstrap it.\n"
+    printf "❌ Homebrew not found. Run ./install-tools.zsh to bootstrap it (or install Homebrew manually).\n"
     exit 1
   fi
 fi
