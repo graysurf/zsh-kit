@@ -9,6 +9,7 @@ fd::fd::Fast find (fzf helper)
 fzf::fzf::Fuzzy finder
 gh::gh::GitHub CLI
 git::git::Core version control
+glow::glow::Render markdown on the CLI
 mactop::mactop::Apple Silicon Monitor Top
 rg::ripgrep::Fast grep engine
 starship::starship::Customizable prompt
