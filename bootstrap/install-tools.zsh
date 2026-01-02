@@ -22,9 +22,66 @@
 #   DRY_RUN=true ./install-tools.zsh      # Alternate dry-run using env var
 #   ./install-tools.zsh --quiet           # Quiet mode install
 
-TOOLS_LIST="./config/tools.list"
+REPO_ROOT="${0:A:h:h}"
+TOOLS_LIST="$REPO_ROOT/config/tools.list"
 DRY_RUN=false
 QUIET=false
+
+function _install_tools::parse_tools_list_line() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  local line="$1"
+  local -a parts
+  parts=("${(@s/::/)line}")
+
+  local tool="${parts[1]}"
+  local brew_name="${parts[2]-}"
+  local comment=""
+  if (( ${#parts} >= 3 )); then
+    comment="${(j/::/)parts[3,-1]}"
+  fi
+
+  brew_name="${brew_name:-$tool}"
+  reply=("$tool" "$brew_name" "$comment")
+}
+
+function _install_tools::ensure_homebrew_on_path() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  if command -v brew >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local candidate
+  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [[ -x "$candidate" ]]; then
+      eval "$("$candidate" shellenv)"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+function _install_tools::is_installed() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  local tool="$1"
+  local brew_name="$2"
+
+  if command -v "$tool" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if command -v brew >/dev/null 2>&1 && brew list --versions "$brew_name" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  return 1
+}
 
 # Parse flags
 for arg in "$@"; do
@@ -56,14 +113,22 @@ if [[ "$QUIET" == true ]]; then
   printf "🔇 QUIET mode enabled — suppressing brew output\n"
 fi
 
+if [[ "$DRY_RUN" != true ]]; then
+  if ! _install_tools::ensure_homebrew_on_path; then
+    printf "❌ Homebrew not found. Run ./install-tools.zsh to bootstrap it.\n"
+    exit 1
+  fi
+fi
+
 # Scan for missing tools (only if not dry-run)
 if [[ "$DRY_RUN" != true ]]; then
   missing=()
   while IFS= read -r line; do
     [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
-    IFS="::" read -r tool brew_name comment <<< "$line"
-    brew_name="${brew_name:-$tool}"
-    if ! command -v "$tool" >/dev/null 2>&1; then
+    _install_tools::parse_tools_list_line "$line"
+    tool="$reply[1]"
+    brew_name="$reply[2]"
+    if ! _install_tools::is_installed "$tool" "$brew_name"; then
       missing+=("$tool")
     fi
   done < "$TOOLS_LIST"
@@ -97,12 +162,13 @@ failed=0
 while IFS= read -r line; do
   [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
 
-  IFS="::" read -r tool brew_name comment <<< "$line"
-  brew_name="${brew_name:-$tool}"
+  _install_tools::parse_tools_list_line "$line"
+  tool="$reply[1]"
+  brew_name="$reply[2]"
 
   printf "🔧 %-12s " "$tool"
 
-  if command -v "$tool" >/dev/null 2>&1; then
+  if _install_tools::is_installed "$tool" "$brew_name"; then
     printf "✓ Already installed\n"
     ((skipped++))
     continue
