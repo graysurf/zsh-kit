@@ -3,6 +3,7 @@
 bat::bat::Syntax highlighter
 coreutils::coreutils::GNU tools (for shuf, realpath, gseq, gdate, etc)
 curl::curl::Used for remote fetch
+delta::git-delta::A syntax-highlighting pager for git, diff, grep
 eza::eza::Modern ls replacement
 fd::fd::Fast find (fzf helper)
 fzf::fzf::Fuzzy finder
