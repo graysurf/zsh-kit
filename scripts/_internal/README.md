@@ -33,8 +33,6 @@ Generated commands:
 How it is used:
 
 - Login shells: `.zprofile` ensures the wrappers bin dir is on `PATH` and generates wrappers.
-- On-demand: `scripts/fzf-tools.zsh` calls `_wrappers::ensure_all` before running fzf flows that rely
-  on `git-scope` in `--preview`.
 
 Notes:
 

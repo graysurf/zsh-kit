@@ -119,54 +119,6 @@ _fzf_ensure_git_scope() {
   return 0
 }
 
-# _fzf_ensure_wrappers
-# Ensure cached CLI wrappers exist (for subshells like fzf preview).
-# Usage: _fzf_ensure_wrappers
-# Notes:
-# - Generates wrappers under `$ZSH_CACHE_DIR/wrappers/bin` (fallback: `$ZDOTDIR/cache/wrappers/bin`).
-_fzf_ensure_wrappers() {
-  emulate -L zsh
-  setopt pipe_fail err_return nounset
-
-  typeset script_root='' zdotdir='' cache_dir='' bin_dir='' wrappers_module=''
-  script_root="$(_fzf_script_root)"
-  zdotdir="${script_root:h}"
-  cache_dir="${ZSH_CACHE_DIR-}"
-  if [[ -z "$cache_dir" ]]; then
-    cache_dir="$zdotdir/cache"
-  fi
-  bin_dir="$cache_dir/wrappers/bin"
-  wrappers_module="$script_root/_internal/wrappers.zsh"
-
-  [[ -d "$bin_dir" ]] || mkdir -p -- "$bin_dir"
-  if (( ${path[(Ie)$bin_dir]} == 0 )); then
-    path=("$bin_dir" $path)
-  fi
-
-  if [[ -x "$bin_dir/fzf-tools" \
-    && -x "$bin_dir/git-open" \
-    && -x "$bin_dir/git-scope" \
-    && -x "$bin_dir/git-lock" \
-    && -x "$bin_dir/git-tools" \
-    && -x "$bin_dir/git-summary" ]]; then
-    return 0
-  fi
-
-  if [[ ! -f "$wrappers_module" ]]; then
-    printf "❌ wrappers module not found: %s\n" "$wrappers_module" >&2
-    return 1
-  fi
-
-  source "$wrappers_module"
-  if ! typeset -f _wrappers::ensure_all >/dev/null 2>&1; then
-    printf "❌ _wrappers::ensure_all is unavailable. Ensure wrappers are defined.\n" >&2
-    return 1
-  fi
-
-  _wrappers::ensure_all
-  return 0
-}
-
 # ────────────────────────────────────────────────────────
 # Shared helpers for kill flow across process/port
 # ────────────────────────────────────────────────────────
@@ -695,8 +647,6 @@ _fzf_select_commit() {
     export FZF_GIT_COMMIT_DEBUG_LOG_FILE="$debug_log"
     print -r -- "----- $(date -Is) _fzf_select_commit query='${query}' selected='${selected}'" >>| "$debug_log"
   fi
-
-  _fzf_ensure_wrappers || return 1
 
   if [[ -n "$selected" ]]; then
     local restore_bind="focus:unbind(focus)+clear-query"
