@@ -128,5 +128,5 @@ A sample `git-lock list` might look like:
 To clear all git-locks in current repo:
 
 ```bash
-rm ~/.config/zsh/cache/git-locks/$(basename `git rev-parse --show-toplevel`)*.lock
+rm $ZSH_CACHE_DIR$/git-locks/$(basename `git rev-parse --show-toplevel`)*.lock
 ```

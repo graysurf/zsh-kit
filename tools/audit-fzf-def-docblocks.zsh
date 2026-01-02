@@ -60,7 +60,7 @@ audit_cache_dir() {
   elif [[ -n "${ZDOTDIR-}" ]]; then
     cache_dir="$ZDOTDIR/cache"
   else
-    cache_dir="$HOME/.config/zsh/cache"
+    cache_dir=$ZSH_CACHE_DIR
   fi
   print -r -- "$cache_dir"
 }
