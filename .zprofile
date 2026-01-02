@@ -13,9 +13,14 @@ path=(
 # Cached CLI wrappers (for subshells like fzf preview)
 typeset wrappers_zsh="${ZSH_SCRIPT_DIR:-$ZDOTDIR/scripts}/_internal/wrappers.zsh"
 typeset wrappers_bin="${ZSH_CACHE_DIR:-$ZDOTDIR/cache}/wrappers/bin"
-if [[ -f "$wrappers_zsh" && ! -x "$wrappers_bin/git-scope" ]]; then
+typeset wrappers_check_cmd='git-scope'
+typeset wrappers_check_path="$wrappers_bin/$wrappers_check_cmd"
+if [[ -f "$wrappers_zsh" && ! -x "$wrappers_check_path" ]]; then
   source "$wrappers_zsh"
   [[ -o interactive ]] && _wrappers::ensure_all || _wrappers::ensure_all >/dev/null 2>&1 || true
+fi
+if [[ -x "$wrappers_check_path" ]]; then
+  path=("$wrappers_bin" $path)
 fi
 
 # Homebrew environment setup (login shell only)
