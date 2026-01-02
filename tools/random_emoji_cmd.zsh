@@ -2,7 +2,7 @@
 
 # random_emoji_cmd.zsh
 # Print a random emoji to stdout.
-# Usage: tools/random_emoji_cmd.zsh
+# Usage: $ZSH_TOOLS_DIR/random_emoji_cmd.zsh
 
 emojis=(
   ✨ 🌟 🚀 🧠 🐋 🎯 🔥 🍀 📚 💡 💬 🛠️ 🧩 🧘 🥷 🐾 🍎 🌈 🐱 🐳

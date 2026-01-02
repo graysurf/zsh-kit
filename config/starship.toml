@@ -30,7 +30,7 @@ $shell\
 $character"""
 
 [custom.emoji]
-command = "~/.config/zsh/tools/random_emoji_cmd.zsh"
+command = "$ZSH_TOOLS_DIR/random_emoji_cmd.zsh"
 when = "true"
 format = "[$output](bold #ffcb6b) "
 
@@ -42,7 +42,7 @@ disabled = false
 [character]
 success_symbol = "[✔︎](bold #addb67) "
 error_symbol = ""
-vicmd_symbol = "[←](bold #82aaff) "
+vimcmd_symbol = "[←](bold #82aaff) "
 
 [status]
 symbol = "✗ "

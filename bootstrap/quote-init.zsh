@@ -43,9 +43,9 @@ printf "\n"
 # Print a random emoji (used by the login banner).
 # Usage: emoji
 # Notes:
-# - Delegates to `$ZDOTDIR/tools/random_emoji_cmd.zsh`.
+# - Delegates to `$ZSH_TOOLS_DIR/random_emoji_cmd.zsh`.
 emoji() {
-  "$ZDOTDIR/tools/random_emoji_cmd.zsh"
+  "$ZSH_TOOLS_DIR/random_emoji_cmd.zsh"
   return 0
 }
 

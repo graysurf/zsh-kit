@@ -42,7 +42,7 @@ On every interactive login, the script:
 ```zsh
 $ZDOTDIR/assets/quotes.txt             # Stored quotes file (text, one per line)
 $ZSH_CACHE_DIR/quotes.timestamp        # Last time quote was fetched (unix timestamp)
-$ZDOTDIR/tools/random_emoji_cmd.zsh     # Emoji selector script (returns one emoji per call)
+$ZSH_TOOLS_DIR/random_emoji_cmd.zsh    # Emoji selector script (returns one emoji per call)
 $ZDOTDIR/bootstrap/weather.zsh          # Weather helper (sources wttr.in cache logic)
 $ZSH_CACHE_DIR/weather.txt             # Cached wttr.in output
 $ZSH_CACHE_DIR/weather.timestamp       # Last time weather was fetched

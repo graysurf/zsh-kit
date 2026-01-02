@@ -54,6 +54,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases
+│   ├── _internal/                        # Internal modules (not auto-loaded; wrapper generator, etc.)
 │   ├── git/                              # Git workflow tools and custom logic
 │   │   ├── git.zsh                       # General Git aliases and settings
 │   │   ├── git-lock.zsh                  # Lock and restore git commits with labels
