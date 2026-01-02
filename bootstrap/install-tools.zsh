@@ -61,8 +61,16 @@ function _install_tools::ensure_homebrew_on_path() {
     return 0
   fi
 
+  local home="${HOME-}"
+  local -a candidates=(
+    /opt/homebrew/bin/brew
+    /usr/local/bin/brew
+    /home/linuxbrew/.linuxbrew/bin/brew
+  )
+  [[ -n "$home" ]] && candidates+=("$home/.linuxbrew/bin/brew")
+
   local candidate
-  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
       eval "$("$candidate" shellenv)"
       return 0

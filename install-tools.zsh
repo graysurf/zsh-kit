@@ -2,16 +2,17 @@
 
 # install-tools.zsh — Homebrew CLI tool installer (macOS/Linux)
 #
-# This wrapper script runs the main installer at bootstrap/install-tools.zsh
+# This is the user-facing entrypoint for installing tools from config/tools.list.
+# It bootstraps Homebrew when missing, then delegates to bootstrap/install-tools.zsh.
 #
-# If you use Homebrew, this helper script installs all required tools declared in:
+# This helper script installs all required tools declared in:
 #   config/tools.list
 #
 # Usage:
 #   ./install-tools.zsh [--dry-run] [--quiet]
 #
 # Examples:
-#   ./install-tools.zsh          # Install missing tools via Homebrew
+#   ./install-tools.zsh            # Install missing tools via Homebrew
 #   ./install-tools.zsh --dry-run  # Preview what would be installed
 #
 # Tools will only be installed if not already present on your system.

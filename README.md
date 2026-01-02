@@ -84,7 +84,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │
 ├── tests/                                # Zsh test scripts (audit, regression, etc.)
 ├── tools/                                # Standalone executable scripts or compiled helpers
-└── install-tools.zsh                     # Root-level wrapper for bootstrap/install-tools.zsh
+└── install-tools.zsh                     # Entrypoint: bootstraps Homebrew, then runs bootstrap/install-tools.zsh
 ```
 
 ## 🪄 Startup Snapshot
