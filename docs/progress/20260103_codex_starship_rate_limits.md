@@ -99,6 +99,7 @@ Links:
     - [x] Implement current token identity extraction (from auth.json).
     - [x] Implement rate limits fetching + parsing (prefer machine-readable).
     - [x] Implement TTL cache read/write with token-keyed cache entries.
+    - [x] Add Starship custom module config (`config/starship.toml`).
   - Exit Criteria:
     - [x] Starship-facing output matches the contract for both default and `--no-5h`.
     - [x] Cache reuse works and refresh respects TTL.
@@ -111,6 +112,7 @@ Links:
     - `zsh -n -- .zshrc` (pass)
     - `rg -n "\\[\\[.*\\]\\]" docs/progress -S` (pass; no output)
     - `./tools/audit-fzf-def-docblocks.zsh --check --stdout` (pass)
+    - `STARSHIP_CONFIG=config/starship.toml starship prompt` (pass; shows codex line)
     - `./tools/check.zsh` (pass)
     - `./tools/check.zsh --smoke` (pass)
   - Exit Criteria:
@@ -125,6 +127,7 @@ Links:
 ## Modules
 
 - `.zshrc`: wrapper generation sentinel includes `codex-starship`.
+- `config/starship.toml`: Starship `custom` module configuration.
 - `scripts/_internal/wrappers.zsh`: add `codex-starship` wrapper generation.
 - `scripts/codex-starship.zsh`: `codex-starship` CLI + internal helpers.
 - `docs/cli/codex-starship.md`: usage + Starship integration snippet.

@@ -34,6 +34,11 @@ command = "$ZSH_TOOLS_DIR/random_emoji_cmd.zsh"
 when = "true"
 format = "[$output](bold #ffcb6b) "
 
+[custom.codex_rate_limits]
+command = "codex-starship --ttl 5m"
+when = "command -v codex-starship >/dev/null 2>&1"
+format = "[$output ](bold #637777)"
+
 [hostname]
 ssh_only = false
 format =  "on [$hostname](#c792ea) "

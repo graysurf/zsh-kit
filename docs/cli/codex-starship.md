@@ -76,19 +76,19 @@ Fields:
 
 ## ⭐ Starship Config (example)
 
-Add a custom module to `config/starship.toml` (or your own Starship config):
+This repo already ships a `custom` module configuration in `config/starship.toml`.
+If you maintain your own Starship config, add:
 
 ```toml
 [custom.codex_rate_limits]
 command = "codex-starship --ttl 5m"
-when = "command -v codex-starship >/dev/null 2>&1 && test -n \"$(codex-starship --ttl 5m)\""
-format = "[$output](bold #637777) "
+when = "command -v codex-starship >/dev/null 2>&1"
+format = "[$output ](bold #637777)"
 ```
 
 Notes:
 
-- `when` runs `codex-starship` once to decide whether to render the module; `command` runs it again to print output.
-  With caching enabled, this still results in (at most) one network fetch per TTL.
+- `codex-starship` prints nothing on failure; the `[$output ](...)` group avoids printing stray spaces when empty.
 
 ---
 
