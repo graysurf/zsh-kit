@@ -2,11 +2,12 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2026-01-03 | 2026-01-03 |
+| IN PROGRESS | 2026-01-03 | 2026-01-04 |
 
 Links:
 
 - PR: TBD
+- PR: [graysurf/zsh-kit/pull/16](https://github.com/graysurf/zsh-kit/pull/16)
 - Docs: TBD (Starship config snippet + usage)
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 

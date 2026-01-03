@@ -6,7 +6,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-03 | [codex_starship_rate_limits](20260103_codex_starship_rate_limits.md) | TBD |
+| 2026-01-03 | [codex_starship_rate_limits](20260103_codex_starship_rate_limits.md) | [graysurf/zsh-kit/pull/16](https://github.com/graysurf/zsh-kit/pull/16) |
 
 ### Archived
 
