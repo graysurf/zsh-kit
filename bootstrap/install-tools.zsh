@@ -3,7 +3,7 @@
 # install-tools.zsh — Install required CLI tools via Homebrew (macOS/Linux)
 #
 # Usage:
-#   ./install-tools.zsh [--dry-run] [--quiet]
+#   ./install-tools.zsh [--dry-run] [--quiet] [--all]
 #
 # Options:
 #   --dry-run   Simulate the installation process without installing anything.
@@ -12,8 +12,12 @@
 #   --quiet     Suppress all Homebrew output during installation.
 #               Only summary messages will be shown.
 #
+#   --all       Install both required and optional tools (tools.list + tools.optional.list).
+#
 # Description:
 #   This script checks for required CLI tools defined in $ZSH_CONFIG_DIR/tools.list.
+#   With --all, it also installs optional tools from $ZSH_CONFIG_DIR/tools.optional.list.
+#
 #   It prompts for confirmation before proceeding, unless --dry-run is used.
 #
 #   Homebrew runs on both macOS and Linux; if brew is missing, run ./install-tools.zsh to bootstrap it.
@@ -37,9 +41,11 @@ else
   exit 1
 fi
 
-TOOLS_LIST="$ZSH_CONFIG_DIR/tools.list"
+TOOLS_REQUIRED_LIST="$ZSH_CONFIG_DIR/tools.list"
+TOOLS_OPTIONAL_LIST="$ZSH_CONFIG_DIR/tools.optional.list"
 DRY_RUN=false
 QUIET=false
+INCLUDE_OPTIONAL=false
 
 # _install_tools::parse_tools_list_line <line>
 # Parse one tools.list line into $reply as: (<tool> <brew_name> <comment>).
@@ -123,16 +129,28 @@ for arg in "$@"; do
     --quiet)
       QUIET=true
       ;;
+    --all)
+      INCLUDE_OPTIONAL=true
+      ;;
     *)
       printf "❌ Unknown option: %s\n" "$arg"
-      printf "Usage: %s [--dry-run] [--quiet]\n" "$0"
+      printf "Usage: %s [--dry-run] [--quiet] [--all]\n" "$0"
       exit 1
       ;;
   esac
 done
 
-if [[ ! -f "$TOOLS_LIST" ]]; then
-  printf "❌ tools.list not found at %s\n" "$TOOLS_LIST"
+typeset -a tools_list_files=("$TOOLS_REQUIRED_LIST")
+if [[ "$INCLUDE_OPTIONAL" == true ]]; then
+  tools_list_files+=("$TOOLS_OPTIONAL_LIST")
+fi
+
+if [[ ! -f "$TOOLS_REQUIRED_LIST" ]]; then
+  printf "❌ tools.list not found at %s\n" "$TOOLS_REQUIRED_LIST"
+  exit 1
+fi
+if [[ "$INCLUDE_OPTIONAL" == true && ! -f "$TOOLS_OPTIONAL_LIST" ]]; then
+  printf "❌ tools.optional.list not found at %s\n" "$TOOLS_OPTIONAL_LIST"
   exit 1
 fi
 
@@ -142,6 +160,9 @@ fi
 
 if [[ "$QUIET" == true ]]; then
   printf "🔇 QUIET mode enabled — suppressing brew output\n"
+fi
+if [[ "$INCLUDE_OPTIONAL" == true ]]; then
+  printf "🧩 ALL mode enabled — including optional tools\n"
 fi
 
 if [[ "$DRY_RUN" != true ]]; then
@@ -153,16 +174,22 @@ fi
 
 # Scan for missing tools (only if not dry-run)
 if [[ "$DRY_RUN" != true ]]; then
+  typeset -A seen_tools=()
   missing=()
-  while IFS= read -r line; do
-    [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
-    _install_tools::parse_tools_list_line "$line"
-    tool="$reply[1]"
-    brew_name="$reply[2]"
-    if ! _install_tools::is_installed "$tool" "$brew_name"; then
-      missing+=("$tool")
-    fi
-  done < "$TOOLS_LIST"
+
+  for tools_list_file in "${tools_list_files[@]}"; do
+    while IFS= read -r line; do
+      [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+      _install_tools::parse_tools_list_line "$line"
+      tool="$reply[1]"
+      brew_name="$reply[2]"
+      [[ -n "${seen_tools[$tool]-}" ]] && continue
+      seen_tools[$tool]=1
+      if ! _install_tools::is_installed "$tool" "$brew_name"; then
+        missing+=("$tool")
+      fi
+    done < "$tools_list_file"
+  done
 
   if (( ${#missing[@]} > 0 )); then
     printf "📦 The following tools are missing and will be installed via Homebrew:\n"
@@ -190,46 +217,51 @@ installed=0
 skipped=0
 failed=0
 
-while IFS= read -r line; do
-  [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+typeset -A seen_tools=()
+for tools_list_file in "${tools_list_files[@]}"; do
+  while IFS= read -r line; do
+    [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
 
-  _install_tools::parse_tools_list_line "$line"
-  tool="$reply[1]"
-  brew_name="$reply[2]"
+    _install_tools::parse_tools_list_line "$line"
+    tool="$reply[1]"
+    brew_name="$reply[2]"
+    [[ -n "${seen_tools[$tool]-}" ]] && continue
+    seen_tools[$tool]=1
 
-  printf "🔧 %-12s " "$tool"
+    printf "🔧 %-12s " "$tool"
 
-  if _install_tools::is_installed "$tool" "$brew_name"; then
-    printf "✓ Already installed\n"
-    ((skipped++))
-    continue
-  fi
-
-  if [[ "$DRY_RUN" == true ]]; then
-    printf "💤 Skipped due to dry-run (%s)\n" "$brew_name"
-    continue
-  else
-    printf "➕ Will install (%s)...\n" "$brew_name"
-  fi
-
-  if [[ "$QUIET" == true ]]; then
-    if brew install "$brew_name" >/dev/null 2>&1; then
-      printf "✅ %s installed\n" "$tool"
-      ((installed++))
-    else
-      printf "❌ Failed to install %s\n" "$tool"
-      ((failed++))
+    if _install_tools::is_installed "$tool" "$brew_name"; then
+      printf "✓ Already installed\n"
+      ((skipped++))
+      continue
     fi
-  else
-    if brew install "$brew_name"; then
-      printf "✅ %s installed\n" "$tool"
-      ((installed++))
+
+    if [[ "$DRY_RUN" == true ]]; then
+      printf "💤 Skipped due to dry-run (%s)\n" "$brew_name"
+      continue
     else
-      printf "❌ Failed to install %s\n" "$tool"
-      ((failed++))
+      printf "➕ Will install (%s)...\n" "$brew_name"
     fi
-  fi
-done < "$TOOLS_LIST"
+
+    if [[ "$QUIET" == true ]]; then
+      if brew install "$brew_name" >/dev/null 2>&1; then
+        printf "✅ %s installed\n" "$tool"
+        ((installed++))
+      else
+        printf "❌ Failed to install %s\n" "$tool"
+        ((failed++))
+      fi
+    else
+      if brew install "$brew_name"; then
+        printf "✅ %s installed\n" "$tool"
+        ((installed++))
+      else
+        printf "❌ Failed to install %s\n" "$tool"
+        ((failed++))
+      fi
+    fi
+  done < "$tools_list_file"
+done
 
 printf "\n"
 printf "🧾 Install Summary:\n"

@@ -7,13 +7,16 @@
 #
 # This helper script installs all required tools declared in:
 #   config/tools.list
+# Optional tools can be added from:
+#   config/tools.optional.list (with --all)
 #
 # Usage:
-#   ./install-tools.zsh [--dry-run] [--quiet]
+#   ./install-tools.zsh [--dry-run] [--quiet] [--all]
 #
 # Examples:
 #   ./install-tools.zsh            # Install missing tools via Homebrew
 #   ./install-tools.zsh --dry-run  # Preview what would be installed
+#   ./install-tools.zsh --all      # Install required + optional
 #
 # Tools will only be installed if not already present on your system.
 
@@ -156,6 +159,8 @@ function _install_tools::main() {
         ;;
       --quiet)
         quiet=true
+        ;;
+      --all)
         ;;
     esac
   done

@@ -9,11 +9,7 @@ fd::fd::Fast find (fzf helper)
 fzf::fzf::Fuzzy finder
 gh::gh::GitHub CLI
 git::git::Core version control
-glow::glow::Render markdown on the CLI
-mactop::mactop::Apple Silicon Monitor Top
-repomix::repomix::Packs entire repository into a AI-friendly file
 rg::ripgrep::Fast grep engine
 starship::starship::Customizable prompt
 tree::tree::Directory structure view
-yazi::yazi::Blazing fast terminal file manager
 zoxide::zoxide::Smart cd
