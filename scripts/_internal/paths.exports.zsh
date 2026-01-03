@@ -19,10 +19,27 @@ export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 typeset -U path PATH
 
 # Prepend critical paths to PATH
-path=(
+typeset -a _zsh_path_prepend=()
+
+# GNU tools (Homebrew "gnubin" shims)
+[[ -d /opt/homebrew/opt/coreutils/libexec/gnubin ]] && _zsh_path_prepend+=(/opt/homebrew/opt/coreutils/libexec/gnubin)
+[[ -d /opt/homebrew/opt/grep/libexec/gnubin ]] && _zsh_path_prepend+=(/opt/homebrew/opt/grep/libexec/gnubin)
+[[ -d /usr/local/opt/coreutils/libexec/gnubin ]] && _zsh_path_prepend+=(/usr/local/opt/coreutils/libexec/gnubin)
+[[ -d /usr/local/opt/grep/libexec/gnubin ]] && _zsh_path_prepend+=(/usr/local/opt/grep/libexec/gnubin)
+
+# Homebrew (Apple Silicon)
+[[ -d /opt/homebrew/bin ]] && _zsh_path_prepend+=(/opt/homebrew/bin /opt/homebrew/sbin)
+
+_zsh_path_prepend+=(
   /usr/local/bin
   /usr/bin
   $HOME/bin
   $HOME/.local/bin
+)
+
+path=(
+  $_zsh_path_prepend
   $path
 )
+
+unset _zsh_path_prepend

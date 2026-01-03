@@ -1,10 +1,18 @@
 # ──────────────────────────────
 # Define Zsh environment paths early (must be first!)
 # ──────────────────────────────
+
+# `.zshrc` is loaded for interactive shells. If you need something to exist in *all* shells
+# (including `zsh -c '...'` and subshells), put it in `$ZDOTDIR/.zshenv` or
+# `scripts/_internal/paths.exports.zsh` instead.
+#
+# See `docs/startup-files.md` for the full startup file roles and load order.
+
 typeset paths_exports="${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.exports.zsh"
 typeset paths_init="${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.init.zsh"
 
-# Normally loaded via `$ZDOTDIR/.zshenv`. Keep a fallback for `zsh -f` / manual sourcing.
+# Normally loaded via `$ZDOTDIR/.zshenv`. Keep a fallback for manual sourcing
+# (including sessions started with `zsh -f`).
 if [[ -z "${ZSH_BOOTSTRAP_SCRIPT_DIR-}" || -z "${ZSH_CACHE_DIR-}" ]]; then
   [[ -r "$paths_exports" ]] && source "$paths_exports"
 fi
@@ -45,8 +53,10 @@ export ZSH_BOOT_WEATHER="${ZSH_BOOT_WEATHER:-true}"
 export ZSH_BOOT_QUOTE="${ZSH_BOOT_QUOTE:-true}"
 
 # ──────────────────────────────
-# Login banner (optional)
+# Startup banner (optional)
 # ──────────────────────────────
+# Note: This runs in interactive shells (login or not). The sourced scripts include their own
+# "run once" guards to avoid repeating the banner in nested shells.
 [[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.zsh"
 [[ "$ZSH_BOOT_QUOTE" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.zsh"
 

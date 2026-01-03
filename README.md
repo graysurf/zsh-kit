@@ -146,13 +146,27 @@ Weather report: Taipei City, Taiwan
 
 ## Setup
 
-In your `~/.zshenv`, define the custom config location:
+This repo is designed to be used as your Zsh config directory via `ZDOTDIR`.
+
+In your `~/.zshenv`, set the custom config location **and explicitly source** this repo’s `.zshenv`:
 
 ```bash
 export ZDOTDIR="$HOME/.config/zsh"
+if [[ -r "$ZDOTDIR/.zshenv" ]]; then
+  source "$ZDOTDIR/.zshenv"
+fi
 ```
 
-Zsh will now source your config from `$ZDOTDIR/.zshenv` and `$ZDOTDIR/.zshrc`.
+Why the extra `source`? `.zshenv` is the first startup file, so setting `ZDOTDIR` inside `~/.zshenv`
+does not automatically make Zsh restart and load `$ZDOTDIR/.zshenv`.
+
+Zsh will now load:
+
+- `$ZDOTDIR/.zshenv` for all shells
+- `$ZDOTDIR/.zprofile` for login shells
+- `$ZDOTDIR/.zshrc` for interactive shells
+
+For more details, see: `docs/startup-files.md`.
 
 Make sure that `.zshrc` sources the bootstrap loader:
 
