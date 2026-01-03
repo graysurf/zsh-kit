@@ -1,5 +1,9 @@
 # tool::brew-name::comment
 
+############################
+# DEFAULT (always useful)
+############################
+
 # Terminal workflow
 atuin::atuin::Magical shell history (searchable DB, optional encrypted sync)
 chezmoi::chezmoi::Dotfiles manager (templating + secrets + multi-machine)
@@ -9,23 +13,71 @@ zellij::zellij::Terminal workspace / multiplexer (tmux-like, more ergonomic defa
 # Search / text processing
 bat-extras::bat-extras::Extra utilities for bat (batgrep/batdiff/batman, etc.)
 jq::jq::Command-line JSON processor
+yq::yq::Command-line YAML/JSON/XML/CSV processor
 ripgrep-all::ripgrep-all::ripgrep for many file types (PDF/DOCX/EPUB/archives, etc.)
-yq::yq::Command-line YAML (and more) processor (YAML/JSON/XML/CSV)
 
-# Watch / benchmark / stats
+# Watch / iteration
 entr::entr::Minimal file watcher for re-running commands on changes
-hyperfine::hyperfine::Command-line benchmarking tool
-tokei::tokei::Fast code statistics (lines/files by language)
-watchexec::watchexec::Run commands on file changes (gitignore-aware watcher)
+watchexec::watchexec::Run commands on file changes (gitignore-aware)
 
-# Logs / HTTP / debugging
+# Logs / HTTP / API (daily use)
 httpie::httpie::Human-friendly HTTP client (curl alternative)
-lnav::lnav::Log file navigator (filtering/searching/analysis in a TUI)
 xh::xh::Fast HTTP client (httpie-like, Rust-based)
+lnav::lnav::Log file navigator (filtering/searching/analysis in a TUI)
+
+# Shell / repo navigation (LLM-friendly)
+fzf::fzf::Fuzzy finder (navigate logs/files/commands quickly)
+fd::fd::Friendly find replacement (fast file discovery)
+tree::tree::Show directory structure (great for sharing repo overview)
+delta::git-delta::Better git diff pager (clean diffs to paste to LLM)
+gitui::gitui::TUI for git (inspect/stage changes cleanly)
+
+# Python (default dev/debug)
+pipx::pipx::Install Python CLI tools in isolated envs
+ruff::ruff::Fast Python linter/formatter
+ipython::ipython::Better REPL for debugging experiments
+
+# Node.js (default dev)
+node::node::Node.js runtime
+pnpm::pnpm::Fast package manager (reproducible installs)
 
 # Repo / files / system utilities
 glow::glow::Render markdown on the CLI
-mactop::mactop::Apple Silicon Monitor Top
 repomix::repomix::Packs entire repository into a AI-friendly file
-ttyd::ttyd::Share your terminal over the web (web-based terminal)
 yazi::yazi::Blazing fast terminal file manager
+
+
+############################
+# HEAVY / DEBUG-ONLY
+# (install when needed)
+############################
+
+# System / performance deep dive
+btop::btop::Resource monitor (CPU/mem/disk/net) with a friendly TUI
+htop::htop::Interactive process viewer
+ncdu::ncdu::Disk usage analyzer
+bandwhich::bandwhich::Per-process network utilization
+hyperfine::hyperfine::Command-line benchmarking tool
+tokei::tokei::Code statistics (lines/files by language)
+mactop::mactop::Apple Silicon Monitor Top
+fastfetch::fastfetch::System info snapshot for bug reports
+
+# API / network debugging (power tools)
+mitmproxy::mitmproxy::Intercept and inspect HTTP(S) traffic
+grpcurl::grpcurl::Curl for gRPC services
+websocat::websocat::WebSocket client
+hey::hey::HTTP load generator
+curlie::curlie::Curl wrapper with httpie-like syntax
+
+# Log analysis / sharing
+tailspin::tailspin::Log viewer with highlighting
+logdy::logdy::Web-based real-time log viewer (shareable)
+
+# Codebase-wide refactor / analysis
+ast-grep::ast-grep::Structural search/replace using AST
+
+# Python deep profiling
+py-spy::py-spy::Sampling profiler for Python (no code changes needed)
+
+# Remote / incident support
+ttyd::ttyd::Share your terminal over the web (web-based terminal)
