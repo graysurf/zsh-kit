@@ -6,7 +6,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| - | (none) | - |
+| 2026-01-03 | [codex_starship_rate_limits](20260103_codex_starship_rate_limits.md) | TBD |
 
 ### Archived
 

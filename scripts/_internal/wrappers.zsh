@@ -162,6 +162,9 @@ _wrappers::ensure_all() {
   _wrappers::write_wrapper git-summary git-summary \
     git/git-summary.zsh
 
+  _wrappers::write_wrapper codex-starship codex-starship \
+    codex-starship.zsh
+
   _wrappers::write_wrapper git-tools git-tools \
     git/tools/git-utils.zsh \
     git/tools/git-reset.zsh \
