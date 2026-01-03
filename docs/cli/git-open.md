@@ -118,7 +118,7 @@ Completion
 
 Press `<TAB>` after `git-open commit` to browse recent commits as `"<hash>  -- <subject>"`, while inserting only the hash.
 
-![git-open commit completion (fzf-tab)](../assets/git-open-fzf-tab-commit.png)
+![git-open commit completion (fzf-tab)](../../assets/git-open-fzf-tab-commit.png)
 
 ---
 
@@ -149,7 +149,7 @@ Completion
   Press `<TAB>` after `git-open pr` to browse PR numbers as `"#<number>  -- <title>"`. Candidates are fetched via `gh` and
   cached with a short TTL to avoid repeated API calls while you iterate.
 
-  ![git-open pr completion (fzf-tab)](../assets/git-open-fzf-tab-pr.png)
+  ![git-open pr completion (fzf-tab)](../../assets/git-open-fzf-tab-pr.png)
 
 Notes:
 

@@ -7,7 +7,7 @@
 Links:
 
 - PR: [graysurf/zsh-kit/pull/13](https://github.com/graysurf/zsh-kit/pull/13)
-- Docs: `docs/git-open.md`
+- Docs: `docs/cli/git-open.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
 ## Goal
@@ -27,7 +27,7 @@ Links:
 
 - In-scope:
   - `scripts/git/git-open.zsh`: add `GIT_OPEN_COLLAB_REMOTE` support and route collab subcommands through it.
-  - `docs/git-open.md`: document `GIT_OPEN_COLLAB_REMOTE` (usage + fallback behavior).
+  - `docs/cli/git-open.md`: document `GIT_OPEN_COLLAB_REMOTE` (usage + fallback behavior).
 - Out-of-scope:
   - Adding a new CLI flag (e.g. `git-open --remote ...`) for this feature.
   - Provider-specific “collab remote” logic beyond what `git-open` already supports.
@@ -78,7 +78,7 @@ Links:
     - [x] Route `pr/pulls/issues/actions/releases` through collab context (including `pr` without number).
   - Artifacts:
     - `scripts/git/git-open.zsh`
-    - `docs/git-open.md`
+    - `docs/cli/git-open.md`
   - Exit Criteria:
     - [x] `GIT_OPEN_COLLAB_REMOTE=origin git-open pulls` opens the correct repository URL.
       - Verified in `~/Project/graysurf/context7`: opened `https://github.com/upstash/context7/pulls`
@@ -87,7 +87,7 @@ Links:
   - Work Items:
     - [x] Treat `tags` as a collab page (align with `releases`); keep `commits` following upstream.
   - Artifacts:
-    - `docs/git-open.md`
+    - `docs/cli/git-open.md`
   - Exit Criteria:
     - [x] Coverage is explicitly documented (which subcommands are collab vs content).
   - Addendum (2025-12-31)
@@ -115,4 +115,4 @@ Links:
 ## Modules
 
 - `scripts/git/git-open.zsh`: CLI entrypoint; adds collab-remote routing for selected subcommands.
-- `docs/git-open.md`: documents the env var and behavior.
+- `docs/cli/git-open.md`: documents the env var and behavior.

@@ -166,5 +166,4 @@ ZSH_BOOT_WEATHER=false ZSH_BOOT_QUOTE=false zsh -il -c 'print -r -- "login=$opti
 - `scripts/_internal/paths.exports.zsh`
 - `scripts/_internal/paths.init.zsh`
 - `bootstrap/bootstrap.zsh`
-- `docs/login-banner.md`
-
+- `docs/guides/login-banner.md`

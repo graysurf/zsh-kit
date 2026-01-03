@@ -7,7 +7,7 @@
 Links:
 
 - PR: [graysurf/zsh-kit/pull/10](https://github.com/graysurf/zsh-kit/pull/10)
-- Docs: `docs/fzf-def-docs.md`
+- Docs: `docs/guides/fzf-def-docs.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
 ## Goal
@@ -17,7 +17,7 @@ Links:
 
 ## Acceptance Criteria
 
-- Backfill docblocks according to the minimum requirements defined in `docs/fzf-def-docs.md` (A–F / L0–L3) without behavior changes.
+- Backfill docblocks according to the minimum requirements defined in `docs/guides/fzf-def-docs.md` (A–F / L0–L3) without behavior changes.
 - `./tools/check.zsh` (pass)
 - `rg -n "\\[\\[.*\\]\\]" docs/progress -S` returns no output (no unreplaced placeholders in progress files)
 - Spot-check: `fzf-tools def` previews cover representative user-facing commands, dispatchers, and high-risk aliases/functions.
@@ -40,7 +40,7 @@ Links:
 
 ### Output
 
-- updated `.zsh` files with docblocks that follow `docs/fzf-def-docs.md`
+- updated `.zsh` files with docblocks that follow `docs/guides/fzf-def-docs.md`
 
 ### Intermediate Artifacts
 
@@ -55,7 +55,7 @@ Links:
 ### Risks / Uncertainties
 
 - Risk: inserting a blank line between a docblock and its definition prevents the docblock from being attached.
-  - Mitigation: per `docs/fzf-def-docs.md`, docblocks must be directly adjacent to the definition; use `#` (empty comment lines) for separation within docblocks.
+  - Mitigation: per `docs/guides/fzf-def-docs.md`, docblocks must be directly adjacent to the definition; use `#` (empty comment lines) for separation within docblocks.
 - Risk: overly verbose internal helper docblocks increase preview noise.
   - Mitigation: internal helpers default to L1; only escalate to L2 when behavior is non-obvious or has side effects.
 
@@ -63,12 +63,12 @@ Links:
 
 - [x] Step 0: Alignment / scaffolding
   - Work Items:
-    - [x] Finalize the English guideline document: `docs/fzf-def-docs.md`
+    - [x] Finalize the English guideline document: `docs/guides/fzf-def-docs.md`
     - [x] Add progress templates: `docs/templates/PROGRESS_TEMPLATE.md`, `docs/templates/PROGRESS_GLOSSARY.md`
     - [x] Create the progress file: `docs/progress/20251228_fzf_def_docblocks.md`
     - [x] Add progress system entry point: `docs/progress/README.md`
   - Artifacts:
-    - `docs/fzf-def-docs.md`
+    - `docs/guides/fzf-def-docs.md`
     - `docs/templates/PROGRESS_TEMPLATE.md`
     - `docs/templates/PROGRESS_GLOSSARY.md`
     - `docs/progress/README.md`
@@ -172,6 +172,6 @@ Links:
 
 ## Modules
 
-- `docs/fzf-def-docs.md`: docblock guidelines (taxonomy, levels, templates)
+- `docs/guides/fzf-def-docs.md`: docblock guidelines (taxonomy, levels, templates)
 - `scripts/fzf-tools.zsh`: docblock extraction + fzf previews
 - first-party zsh sources: `.zshrc`, `.zprofile`, `bootstrap/`, `scripts/`, `tools/`

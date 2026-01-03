@@ -6,9 +6,9 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 > This Zsh environment provides a clean structure and several built-in tools.
 
-- 🌟 [Login banner](docs/login-banner.md): Emoji-powered shell intro with rotating quotes
-- 🧩 [Plugin System](docs/plugin-system.md): Git-powered declarative loader with auto-clone and update support
-- 🤖 [Codex CLI helpers](docs/codex-cli-helpers.md): Opt-in wrappers for Codex skills with safety gate
+- 🌟 [Login banner](docs/guides/login-banner.md): Emoji-powered shell intro with rotating quotes
+- 🧩 [Plugin System](docs/guides/plugin-system.md): Git-powered declarative loader with auto-clone and update support
+- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in wrappers for Codex skills with safety gate
 - 🚀 [Starship](https://starship.rs): Customized prompt with language & context awareness
 - 🧭 [Zoxide](https://github.com/ajeetdsouza/zoxide): Smart directory jumping, aliased as `z`
 - 🔧 Modular and lazy-friendly structure under `scripts/`
@@ -19,12 +19,12 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > The following tools are developed as part of this environment and tightly integrated.
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
-- 🔎 [fzf-tools](docs/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
-- 🔗 [git-open](docs/git-open.md): Open repo/branch/commit/PR pages in browser
-- 📂 [git-scope](docs/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
-- 🔐 [git-lock](docs/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
-- 🧰 [git-tools](docs/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
-- 📊 [git-summary](docs/git-summary.md): Author-based contribution stats over time ranges
+- 🔎 [fzf-tools](docs/cli/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
+- 🔗 [git-open](docs/cli/git-open.md): Open repo/branch/commit/PR pages in browser
+- 📂 [git-scope](docs/cli/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
+- 🔐 [git-lock](docs/cli/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
+- 🧰 [git-tools](docs/cli/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
+- 📊 [git-summary](docs/cli/git-summary.md): Author-based contribution stats over time ranges
 
 ## Structure
 
@@ -36,7 +36,12 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │
 ├── assets/                               # Static data files
 ├── cache/                                # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
-├── docs/                                 # Markdown documentation for key modules
+├── docs/                                 # Markdown documentation
+│   ├── README.md                         # Documentation index
+│   ├── cli/                              # User-facing commands
+│   ├── guides/                           # Concepts and system behavior
+│   ├── progress/                         # Implementation logs (active + archived)
+│   └── templates/                        # Progress templates + glossary
 │
 ├── bootstrap/                            # Script orchestrator and plugin logic
 │   ├── 00-preload.zsh                    # Early global helpers (safe_unalias, clipboard I/O, etc.)
@@ -166,7 +171,7 @@ Zsh will now load:
 - `$ZDOTDIR/.zprofile` for login shells
 - `$ZDOTDIR/.zshrc` for interactive shells
 
-For more details, see: `docs/startup-files.md`.
+For more details, see: `docs/guides/startup-files.md`.
 
 Make sure that `.zshrc` sources the bootstrap loader:
 

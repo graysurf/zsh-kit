@@ -29,7 +29,7 @@ fzf-tools env [query]
 Each environment variable is shown with its full value for quick inspection or copying.
 If provided, `query` pre-fills the initial fzf search input.
 
-![fzf-env](../assets/fzf-env.png)
+![fzf-env](../../assets/fzf-env.png)
 
 ---
 
@@ -44,7 +44,7 @@ fzf-tools alias [query]
 See your configured shortcuts in one place, with real evaluated output.
 If provided, `query` pre-fills the initial fzf search input.
 
-![fzf-alias](../assets/fzf-alias.png)
+![fzf-alias](../../assets/fzf-alias.png)
 
 ---
 
@@ -59,7 +59,7 @@ fzf-tools function [query]
 Lists all functions in your shell session and shows their implementation.
 If provided, `query` pre-fills the initial fzf search input.
 
-![fzf-function](../assets/fzf-function.png)
+![fzf-function](../../assets/fzf-function.png)
 
 ---
 
@@ -74,7 +74,7 @@ fzf-tools def [query]
 Aggregate view of your shell environment: useful for debugging or reviewing your Zsh config state.
 If provided, `query` pre-fills the initial fzf search input.
 
-![fzf-def](../assets/fzf-def.png)
+![fzf-def](../../assets/fzf-def.png)
 
 ---
 
@@ -108,11 +108,11 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 
 #### 📌 Step 1: Commit selection with scope preview
 
-![fzf-git-commit-1](../assets/fzf-git-commit-1.png)
+![fzf-git-commit-1](../../assets/fzf-git-commit-1.png)
 
 #### 📄 Step 2: File selection with diff preview
 
-![fzf-git-commit-2](../assets/fzf-git-commit-2.png)
+![fzf-git-commit-2](../../assets/fzf-git-commit-2.png)
 
 > Press `Enter` to open the selected file snapshot in your editor.  
 > Configure `FZF_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.

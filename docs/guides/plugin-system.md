@@ -102,5 +102,5 @@ Special-case logic (e.g., `abbr`) is hardcoded for known plugins needing extra s
 
 ## 🔍 See Also
 
-- [.plugins.list.example](../config/.plugins.list.example) — contains examples and format notes
-- [interactive.md](./interactive.md) — runtime behaviors like Starship, Zoxide, keybinds
+- [.plugins.list.example](../../config/.plugins.list.example) — contains examples and format notes
+- [scripts/interactive/](../../scripts/interactive) — runtime behaviors like Starship, Zoxide, keybinds
