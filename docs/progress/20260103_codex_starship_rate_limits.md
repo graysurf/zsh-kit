@@ -6,9 +6,8 @@
 
 Links:
 
-- PR: TBD
 - PR: [graysurf/zsh-kit/pull/16](https://github.com/graysurf/zsh-kit/pull/16)
-- Docs: TBD (Starship config snippet + usage)
+- Docs: `docs/cli/codex-starship.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
 ## Goal
@@ -32,8 +31,8 @@ Links:
 ## Scope
 
 - In-scope:
-  - New first-party zsh library + CLI under `scripts/` (no duplication of `.private` functions).
-  - Machine-readable helpers for: current token identity and rate limits (avoid parsing human UI output).
+  - New first-party zsh CLI under `scripts/` (does not depend on `.private`).
+  - Machine-readable parsing for: current token identity and rate limits (avoid parsing human UI output).
   - TTL cache implementation suitable for Starship prompt frequency.
   - Wrapper generation update: add `codex-starship` to `scripts/_internal/wrappers.zsh`.
 - Out-of-scope:
@@ -44,8 +43,9 @@ Links:
 
 ### Input
 
-- `~/.codex/auth.json` (or the repo’s configured auth path) to determine the active token identity.
-- Codex rate limit source used by the existing `codex-rate-limits` command.
+- `CODEX_AUTH_FILE` (default: `~/.config/codex-kit/auth.json`, fallback: `~/.codex/auth.json`) to determine the active token identity.
+- `CODEX_SECRET_DIR` (optional; default: `$ZDOTDIR/.private/codex/secrets`) for friendly name resolution via profile file hash matching.
+- Rate limits source: `https://chatgpt.com/backend-api/wham/usage` (via `curl` + bearer token from auth file).
 
 ### Output
 
@@ -55,7 +55,7 @@ Links:
 ### Intermediate Artifacts
 
 - Cache file (keyed by token identity):
-  - `~/.cache/codex/starship-rate-limits/<token_key>.txt` (exact path TBD; must not be in `/tmp`)
+  - `$ZSH_CACHE_DIR/codex/starship-rate-limits/<token_key>.kv`
 
 ## Design / Decisions
 
@@ -68,13 +68,13 @@ Links:
 ### Risks / Uncertainties
 
 - Upstream CLI output or auth file schema may change.
-  - Mitigation: add `--json/--tsv` style helpers and keep Starship-facing output format stable.
+  - Mitigation: prefer upstream JSON (`wham/usage`) and keep Starship-facing output format stable.
 - Rate limit calls may be slow or fail intermittently.
   - Mitigation: short TTL caching, bounded refresh, and reuse last-good cache when not expired.
 
 ## Steps (Checklist)
 
-- [ ] Step 0: Alignment / prerequisites
+- [x] Step 0: Alignment / prerequisites
   - Work Items:
     - [x] Confirm output format and toggles (`--no-5h`, `--ttl`).
     - [x] Confirm name source: current active token identity from `~/.codex/auth.json`.
@@ -83,39 +83,48 @@ Links:
     - `docs/progress/20260103_codex_starship_rate_limits.md` (this file)
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned.
-    - [ ] Determine final cache path + keying strategy (token key format).
-    - [ ] Identify the best machine-readable upstream data source for rate limits.
+    - [x] Determine final cache path + keying strategy (token key format).
+    - [x] Identify the best machine-readable upstream data source for rate limits.
 
-- [ ] Step 1: Minimum viable output (MVP)
+- [x] Step 1: Minimum viable output (MVP)
   - Work Items:
-    - [ ] Add `codex-starship` CLI skeleton with argument parsing and empty-safe output.
-    - [ ] Add wrapper generation entry in `scripts/_internal/wrappers.zsh`.
+    - [x] Add `codex-starship` CLI skeleton with argument parsing and empty-safe output.
+    - [x] Add wrapper generation entry in `scripts/_internal/wrappers.zsh`.
   - Exit Criteria:
-    - [ ] `codex-starship` runs successfully and prints nothing by default (until data sources are wired).
-    - [ ] Wrapper generation succeeds in interactive shell startup.
+    - [x] `codex-starship -h` shows usage and exits `0`.
+    - [x] Wrapper generation succeeds in interactive shell startup.
 
-- [ ] Step 2: Expansion / integration
+- [x] Step 2: Expansion / integration
   - Work Items:
-    - [ ] Implement current token identity extraction (from `~/.codex/auth.json`).
-    - [ ] Implement rate limits fetching + parsing (prefer machine-readable).
-    - [ ] Implement TTL cache read/write with token-keyed cache entries.
+    - [x] Implement current token identity extraction (from auth.json).
+    - [x] Implement rate limits fetching + parsing (prefer machine-readable).
+    - [x] Implement TTL cache read/write with token-keyed cache entries.
   - Exit Criteria:
-    - [ ] Starship-facing output matches the contract for both default and `--no-5h`.
-    - [ ] Cache reuse works and refresh respects TTL.
+    - [x] Starship-facing output matches the contract for both default and `--no-5h`.
+    - [x] Cache reuse works and refresh respects TTL.
 
-- [ ] Step 3: Validation / testing
+- [x] Step 3: Validation / testing
   - Work Items:
-    - [ ] Run repo checks and record results.
+    - [x] Run repo checks and record results.
+  - Artifacts:
+    - `zsh -n -- scripts/codex-starship.zsh` (pass)
+    - `zsh -n -- .zshrc` (pass)
+    - `rg -n "\\[\\[.*\\]\\]" docs/progress -S` (pass; no output)
+    - `./tools/audit-fzf-def-docblocks.zsh --check --stdout` (pass)
+    - `./tools/check.zsh` (pass)
+    - `./tools/check.zsh --smoke` (pass)
   - Exit Criteria:
-    - [ ] `./tools/check.zsh` (pass)
-    - [ ] `./tools/check.zsh --smoke` (pass) if startup/wrapper behavior changes
+    - [x] `./tools/check.zsh` (pass)
+    - [x] `./tools/check.zsh --smoke` (pass) if startup/wrapper behavior changes
 
 - [ ] Step 4: Release / wrap-up
   - Work Items:
-    - [ ] Open PR and keep this progress file updated with PR link.
+    - [x] Open PR and keep this progress file updated with PR link.
     - [ ] When merged, set Status to DONE, move to `docs/progress/archived/`, update index.
 
 ## Modules
 
+- `.zshrc`: wrapper generation sentinel includes `codex-starship`.
 - `scripts/_internal/wrappers.zsh`: add `codex-starship` wrapper generation.
-- `scripts/` (new): `codex-starship` library + CLI (design TBD; will follow repo zsh conventions).
+- `scripts/codex-starship.zsh`: `codex-starship` CLI + internal helpers.
+- `docs/cli/codex-starship.md`: usage + Starship integration snippet.

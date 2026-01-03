@@ -44,6 +44,7 @@ Output location:
 
 Generated commands:
 
+- `codex-starship`
 - `fzf-tools`
 - `git-open`
 - `git-scope`
