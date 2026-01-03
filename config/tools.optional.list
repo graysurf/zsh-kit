@@ -1,3 +1,5 @@
+# tool::brew-name::comment
+
 # Terminal workflow
 atuin::atuin::Magical shell history (searchable DB, optional encrypted sync)
 chezmoi::chezmoi::Dotfiles manager (templating + secrets + multi-machine)
