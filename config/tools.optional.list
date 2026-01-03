@@ -1,6 +1,29 @@
-# tool::brew-name::comment
+# Terminal workflow
+atuin::atuin::Magical shell history (searchable DB, optional encrypted sync)
+chezmoi::chezmoi::Dotfiles manager (templating + secrets + multi-machine)
+direnv::direnv::Per-directory environment variables (auto load/unload on cd)
+zellij::zellij::Terminal workspace / multiplexer (tmux-like, more ergonomic defaults)
 
+# Search / text processing
+bat-extras::bat-extras::Extra utilities for bat (batgrep/batdiff/batman, etc.)
+jq::jq::Command-line JSON processor
+ripgrep-all::ripgrep-all::ripgrep for many file types (PDF/DOCX/EPUB/archives, etc.)
+yq::yq::Command-line YAML (and more) processor (YAML/JSON/XML/CSV)
+
+# Watch / benchmark / stats
+entr::entr::Minimal file watcher for re-running commands on changes
+hyperfine::hyperfine::Command-line benchmarking tool
+tokei::tokei::Fast code statistics (lines/files by language)
+watchexec::watchexec::Run commands on file changes (gitignore-aware watcher)
+
+# Logs / HTTP / debugging
+httpie::httpie::Human-friendly HTTP client (curl alternative)
+lnav::lnav::Log file navigator (filtering/searching/analysis in a TUI)
+xh::xh::Fast HTTP client (httpie-like, Rust-based)
+
+# Repo / files / system utilities
 glow::glow::Render markdown on the CLI
 mactop::mactop::Apple Silicon Monitor Top
 repomix::repomix::Packs entire repository into a AI-friendly file
+ttyd::ttyd::Share your terminal over the web (web-based terminal)
 yazi::yazi::Blazing fast terminal file manager
