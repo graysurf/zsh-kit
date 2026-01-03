@@ -8,6 +8,8 @@ if command -v safe_unalias >/dev/null; then
     lxt lxt2 lxt3 lxt5
 fi
 
+export EZA_CONFIG_DIR="$HOME/.config/eza"
+
 # __eza_with_optional_depth <eza-args...> -- [depth] [args...]
 # Internal helper: run `eza` with an optional numeric depth (`-L`).
 # Usage: __eza_with_optional_depth <eza-args...> -- [depth] [args...]
