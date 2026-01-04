@@ -3,6 +3,10 @@
 # This module is intended to be sourced by cached CLI wrappers (see `scripts/_internal/wrappers.zsh`)
 # and should remain quiet at source-time.
 
+# ────────────────────────────────────────────────────────
+# CLI helpers
+# ────────────────────────────────────────────────────────
+
 # _codex_starship_usage [fd]
 # Print CLI usage to the given file descriptor (default: stdout).
 # Usage: _codex_starship_usage [fd]
@@ -35,6 +39,10 @@ _codex_starship_truthy() {
     *) return 1 ;;
   esac
 }
+
+# ────────────────────────────────────────────────────────
+# Auth & identity
+# ────────────────────────────────────────────────────────
 
 # _codex_starship_auth_file: Print the active Codex auth file path.
 # Usage: _codex_starship_auth_file
@@ -266,6 +274,10 @@ _codex_starship_current_name() {
   return 0
 }
 
+# ────────────────────────────────────────────────────────
+# Cache & TTL
+# ────────────────────────────────────────────────────────
+
 # _codex_starship_cache_key: Convert a display name into a safe cache key.
 # Usage: _codex_starship_cache_key <name>
 _codex_starship_cache_key() {
@@ -316,6 +328,10 @@ _codex_starship_ttl_seconds() {
   print -r -- $(( num * mult ))
   return 0
 }
+
+# ────────────────────────────────────────────────────────
+# Time formatting
+# ────────────────────────────────────────────────────────
 
 # _codex_starship_epoch_utc: Format an epoch seconds value as UTC ISO-8601.
 # Usage: _codex_starship_epoch_utc <epoch_seconds>
@@ -410,6 +426,10 @@ _codex_starship_iso_to_epoch_utc() {
   return 1
 }
 
+# ────────────────────────────────────────────────────────
+# Refresh & locking
+# ────────────────────────────────────────────────────────
+
 # _codex_starship_spawn_refresh: Spawn a detached refresh process to update the cache.
 # Usage: _codex_starship_spawn_refresh
 _codex_starship_spawn_refresh() {
@@ -434,8 +454,8 @@ _codex_starship_spawn_refresh() {
   nohup zsh -f -c \
     "export ZSH_SCRIPT_DIR=${(q)script_dir}; export ZSH_CACHE_DIR=${(q)cache_root}; source ${(q)script_dir}/codex-starship.zsh; codex-starship --refresh" \
     >/dev/null 2>&1 &
-	  return 0
-	}
+  return 0
+}
 
 # _codex_starship_clear_stale_refresh_lock: Remove a stale refresh lock directory/file.
 # Usage: _codex_starship_clear_stale_refresh_lock <lock_path> <now_epoch> [stale_after_seconds]
@@ -479,6 +499,67 @@ _codex_starship_clear_stale_refresh_lock() {
   return 0
 }
 
+# _codex_starship_cleanup_stale_wham_usage_files: Remove stale wham.usage.* temp files in the cache dir.
+# Usage: _codex_starship_cleanup_stale_wham_usage_files <cache_dir> <now_epoch> [stale_after_seconds]
+_codex_starship_cleanup_stale_wham_usage_files() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset nullglob
+
+  typeset cache_dir="${1-}"
+  typeset now_epoch="${2-}"
+  typeset stale_after="${3-}"
+
+  [[ -n "$cache_dir" && -d "$cache_dir" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
+  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='90'
+
+  typeset -a candidates=("$cache_dir"/wham.usage.*(N))
+  (( ${#candidates} )) || return 1
+
+  zmodload zsh/stat 2>/dev/null || return 1
+
+  typeset candidate=''
+  for candidate in "${candidates[@]}"; do
+    [[ -f "$candidate" ]] || continue
+
+    typeset -a st=()
+    zstat -A st +mtime -- "$candidate" 2>/dev/null || continue
+    typeset mtime="${st[1]-}"
+    [[ -n "$mtime" && "$mtime" == <-> ]] || continue
+
+    typeset -i age=$(( now_epoch - mtime ))
+    if (( age >= stale_after )); then
+      rm -f -- "$candidate" 2>/dev/null || true
+    fi
+  done
+
+  return 0
+}
+
+# _codex_starship_cleanup_stale_refresh_locks: Remove stale *.refresh.lock dirs/files in the cache dir.
+# Usage: _codex_starship_cleanup_stale_refresh_locks <cache_dir> <now_epoch> [stale_after_seconds]
+_codex_starship_cleanup_stale_refresh_locks() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset nullglob
+
+  typeset cache_dir="${1-}"
+  typeset now_epoch="${2-}"
+  typeset stale_after="${3-}"
+
+  [[ -n "$cache_dir" && -d "$cache_dir" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
+  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='90'
+
+  typeset -a candidates=("$cache_dir"/*.refresh.lock(N))
+  (( ${#candidates} )) || return 1
+
+  typeset candidate=''
+  for candidate in "${candidates[@]}"; do
+    [[ -e "$candidate" ]] || continue
+    _codex_starship_clear_stale_refresh_lock "$candidate" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
+  done
+
+  return 0
+}
+
 # _codex_starship_maybe_enqueue_refresh: Enqueue a background refresh if not already refreshing and not too soon.
 # Usage: _codex_starship_maybe_enqueue_refresh <cache_dir> <key> <now_epoch> <min_interval_seconds>
 _codex_starship_maybe_enqueue_refresh() {
@@ -494,8 +575,9 @@ _codex_starship_maybe_enqueue_refresh() {
   [[ -n "$min_interval" && "$min_interval" == <-> ]] || min_interval='30'
 
   typeset lock_dir="$cache_dir/$key.refresh.lock"
+  typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+
   if [[ -e "$lock_dir" ]]; then
-    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
     _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || return 0
   fi
 
@@ -562,6 +644,10 @@ _codex_starship_window_label() {
   return 0
 }
 
+# ────────────────────────────────────────────────────────
+# Network fetch
+# ────────────────────────────────────────────────────────
+
 # _codex_starship_fetch_usage_json <auth_file> <out_file>
 # Fetch the `wham/usage` JSON for the active token into out_file.
 # Usage: _codex_starship_fetch_usage_json <auth_file> <out_file>
@@ -611,6 +697,10 @@ _codex_starship_fetch_usage_json() {
   jq -e '.' "$out_file" >/dev/null 2>&1 || return 1
   return 0
 }
+
+# ────────────────────────────────────────────────────────
+# Entrypoint
+# ────────────────────────────────────────────────────────
 
 # codex-starship [--no-5h] [--ttl <duration>] [--time-format <strftime>] [--refresh]
 # Print a Starship-ready Codex rate limit line (silent failure; stale-while-revalidate cached).
@@ -739,6 +829,10 @@ codex-starship() {
   now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
   [[ -n "$now_epoch" && "$now_epoch" == <-> ]] || return 0
 
+  typeset refresh_stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+  _codex_starship_cleanup_stale_refresh_locks "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
+  _codex_starship_cleanup_stale_wham_usage_files "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
+
   typeset name_prefix=''
   if [[ -n "$name" ]]; then
     name_prefix="${name} "
@@ -798,21 +892,21 @@ codex-starship() {
     return 0
   fi
 
-	  (
-	    emulate -L zsh
-	    setopt pipe_fail nounset
+  (
+    emulate -L zsh
+    setopt pipe_fail nounset
 
-	    typeset lock_dir="$cache_dir/$key.refresh.lock"
-	    if ! mkdir "$lock_dir" >/dev/null 2>&1; then
-	      typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
-	      _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
-	      mkdir "$lock_dir" >/dev/null 2>&1 || exit 0
-	    fi
+    typeset lock_dir="$cache_dir/$key.refresh.lock"
+    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+    if ! mkdir "$lock_dir" >/dev/null 2>&1; then
+      _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
+      mkdir "$lock_dir" >/dev/null 2>&1 || exit 0
+    fi
 
-	    typeset tmp_usage=''
-	    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rmdir -- "$lock_dir" 2>/dev/null || true' EXIT
+    typeset tmp_usage=''
+    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rmdir -- "$lock_dir" 2>/dev/null || true' EXIT
 
-	    tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || exit 0
+    tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || exit 0
 
     if ! _codex_starship_fetch_usage_json "$auth_file" "$tmp_usage" >/dev/null 2>&1; then
       exit 0
