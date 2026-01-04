@@ -136,7 +136,7 @@ disabled = false
 symbol = '🐋 '
 style = "bold #82aaff"
 format = '[$symbol$context]($style) '
-disabled = false
+disabled = true
 
 [nodejs]
 symbol = " "
