@@ -36,6 +36,10 @@ fi
 # ──────────────────────────────
 # History
 # ──────────────────────────────
+# macOS ships `/etc/zshrc`, which sets `HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history`.
+# Re-assert our desired history file under `$ZSH_CACHE_DIR` after global rc files run.
+export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
+
 export HISTSIZE=10000
 export SAVEHIST=10000
 

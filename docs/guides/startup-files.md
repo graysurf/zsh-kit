@@ -129,13 +129,13 @@ What it does:
 Non-interactive shells should still see the exported paths and core tools:
 
 ```bash
-env -i HOME="$HOME" zsh -c 'print -r -- "$ZDOTDIR"; print -r -- "$ZSH_CACHE_DIR"; command -v brew; command -v shuf'
+env -i HOME="$HOME" zsh -c 'print -r -- "$ZDOTDIR"; print -r -- "$ZSH_CACHE_DIR"; print -r -- "$HISTFILE"; command -v brew; command -v shuf'
 ```
 
 Interactive non-login shells (common in GUI apps like VS Code) should still find Homebrew tools:
 
 ```bash
-env -i HOME="$HOME" ZSH_BOOT_WEATHER=false ZSH_BOOT_QUOTE=false zsh -i -c 'command -v brew; command -v shuf; exit'
+env -i HOME="$HOME" ZSH_BOOT_WEATHER=false ZSH_BOOT_QUOTE=false zsh -i -c 'print -r -- "$HISTFILE"; command -v brew; command -v shuf; exit'
 ```
 
 Login + interactive shells should load everything (including `.zprofile`):
@@ -154,6 +154,10 @@ ZSH_BOOT_WEATHER=false ZSH_BOOT_QUOTE=false zsh -il -c 'print -r -- "login=$opti
 - **“Why is `brew` missing?”**  
   `brew shellenv` runs only in login shells here. The fallback path is handled in
   `scripts/_internal/paths.exports.zsh` (make sure `/opt/homebrew/bin` exists on your machine).
+
+- **“Why is history writing to `$ZDOTDIR/.zsh_history`?”**  
+  On macOS, `/etc/zshrc` sets `HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history` for interactive shells.
+  This repo re-asserts `HISTFILE` under `$ZSH_CACHE_DIR` in `$ZDOTDIR/.zshrc`.
 
 - **“Why keep `.zshenv` so minimal?”**  
   Because it runs in non-interactive contexts and must not produce output or introduce slow startup.
