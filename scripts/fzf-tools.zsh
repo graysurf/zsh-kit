@@ -413,11 +413,18 @@ fzf-history-select() {
     }
   ' | tac | fzf --ansi --reverse --height=50% \
          --query="$default_query" \
-         --preview-window='right:40%:wrap' \
-         --preview='ts=$(cut -d"|" -f1 <<< {} | sed "s/[[:space:]]*$//"); \
-fts=$(date -r "$ts" "+%Y-%m-%d %H:%M:%S"); \
-cmd=$(cut -d"|" -f3- <<< {} | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); \
-printf "%s\n\n%s" "$fts" "$cmd"' \
+         --preview-window='right:50%:wrap' \
+         --preview='ts=$(printf "%s\n" {} | cut -d"|" -f1 | sed -E "s/^[[:space:]]+//; s/[[:space:]]+$//"); \
+fts=""; \
+case "$ts" in (""|*[!0-9]*)) ;; (*) \
+  if date -r "$ts" "+%Y-%m-%d %H:%M:%S" >/dev/null 2>&1; then \
+    fts=$(date -r "$ts" "+%Y-%m-%d %H:%M:%S"); \
+  elif date -d "@$ts" "+%Y-%m-%d %H:%M:%S" >/dev/null 2>&1; then \
+    fts=$(date -d "@$ts" "+%Y-%m-%d %H:%M:%S"); \
+  fi ;; \
+esac; \
+cmd=$(printf "%s\n" {} | cut -d"|" -f3- | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); \
+printf "🕒 %s\n\n%s" "$fts" "$cmd"' \
          --expect=enter
 }
 
