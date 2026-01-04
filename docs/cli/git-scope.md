@@ -21,11 +21,6 @@ The following is a sample output from `git-scope`, illustrating how changed file
 across most subcommands, providing a consistent, readable view of file status and structure.
 
 ```text
-🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
-12:00:42.133 ✔︎ git-scope
-
-📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)
-
 📄 Changed files:
   ➤ [-] .gitignore
   ➤ [-] .zprofile
@@ -55,12 +50,12 @@ across most subcommands, providing a consistent, readable view of file status an
 
 ## 🛠 Commands
 
-### `git-scope`
+### `git-scope tracked`
 
 📂 Show full directory tree of all files tracked by Git (excluding ignored/untracked)
 
 ```bash
-git-scope
+git-scope tracked
 ```
 
 Displays a full tree of files currently under version control. You can pass optional path prefixes or use `-p` to print file contents.
