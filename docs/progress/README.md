@@ -6,12 +6,12 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-03 | [codex_starship_rate_limits](20260103_codex_starship_rate_limits.md) | [graysurf/zsh-kit/pull/16](https://github.com/graysurf/zsh-kit/pull/16) |
 
 ### Archived
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2026-01-03 | [codex_starship_rate_limits](archived/20260103_codex_starship_rate_limits.md) | [graysurf/zsh-kit/pull/16](https://github.com/graysurf/zsh-kit/pull/16) |
 | 2025-12-31 | [git_open_collab_remote](archived/20251231_git_open_collab_remote.md) | [graysurf/zsh-kit/pull/13](https://github.com/graysurf/zsh-kit/pull/13) |
 | 2025-12-30 | [git_open_pr_completion_cache](archived/20251230_git_open_pr_completion_cache.md) | [graysurf/zsh-kit/pull/12](https://github.com/graysurf/zsh-kit/pull/12) |
 | 2025-12-29 | [git_open_cli](archived/20251229_git_open_cli.md) | [graysurf/zsh-kit/pull/11](https://github.com/graysurf/zsh-kit/pull/11) |

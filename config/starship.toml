@@ -2,7 +2,7 @@ add_newline = true
 command_timeout = 1000
 
 format = """
-$custom\
+${custom.emoji}\
 $username\
 $hostname\
 $directory\
@@ -19,6 +19,7 @@ $java\
 $package\
 $kubernetes\
 $docker_context\
+${custom.codex_rate_limits}\
 $cmd_duration\
 $line_break\
 $jobs\
@@ -35,9 +36,10 @@ when = "true"
 format = "[$output](bold #ffcb6b) "
 
 [custom.codex_rate_limits]
-command = "codex-starship --ttl 5m"
-when = "command -v codex-starship >/dev/null 2>&1"
-format = "[$output ](bold #637777)"
+symbol = "🌟 "
+command = "codex-starship --time-format '%m-%d %H:%M'"
+when = "command -v codex-starship >/dev/null 2>&1 && case \"${CODEX_STARSHIP_ENABLED:-}\" in 1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]|[Oo][Nn]) : ;; *) exit 1 ;; esac"
+format = "[$symbol$output ](bold #637777)"
 
 [hostname]
 ssh_only = false

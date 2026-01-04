@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2026-01-03 | 2026-01-04 |
+| DONE | 2026-01-03 | 2026-01-04 |
 
 Links:
 
@@ -17,14 +17,25 @@ Links:
 ## Acceptance Criteria
 
 - `codex-starship` prints a single line suitable for Starship prompt rendering and exits `0`.
-- Default output includes both windows: `<name> 5h:<pct> W:<pct> <weekly_expire_time>`.
-- `codex-starship --no-5h` omits the 5h window output: `<name> W:<pct> <weekly_expire_time>`.
+- Default output includes both windows: `<name> 5h:<pct> W:<pct> <weekly_reset_time>`.
+- `codex-starship --no-5h` omits the 5h window output: `<name> W:<pct> <weekly_reset_time>`.
 - TTL caching is enabled:
   - Default TTL: 5 minutes.
   - Configurable TTL: `--ttl 1m` and `--ttl 5m`.
-- Failure behavior:
+  - Configurable via env: `CODEX_STARSHIP_TTL` (default: `5m`).
+- Time formatting is supported:
+  - Default: `MM-DD HH:MM` (UTC).
+  - Configurable: `--time-format '<strftime>'`.
+- Module enablement is supported:
+  - Default disabled: `CODEX_STARSHIP_ENABLED=false`
+  - When disabled: prints nothing and does not refresh.
+- 5h visibility is supported:
+  - Configurable via env: `CODEX_STARSHIP_SHOW_5H` (default: `true`).
+- Failure / cache behavior (stale-while-revalidate):
   - If inputs are missing, parsing fails, or rate limits cannot be fetched: print nothing and exit `0` (module hidden).
-  - If a non-expired cache exists: reuse cached output.
+  - If a cache exists: print it immediately (even if stale).
+  - If cache is stale or missing: enqueue a background refresh (best effort).
+  - `--refresh` forces a blocking refresh (updates cache).
 - A cached CLI wrapper exists:
   - `scripts/_internal/wrappers.zsh` generates a `codex-starship` wrapper command for subshell contexts.
 
@@ -50,7 +61,7 @@ Links:
 ### Output
 
 - Single-line prompt text (no header), default:
-  - `terry 5h:68% W:20% 2026-01-08T10:38:46Z`
+  - `terry 5h:68% W:20% 01-08 10:38`
 
 ### Intermediate Artifacts
 
@@ -70,7 +81,7 @@ Links:
 - Upstream CLI output or auth file schema may change.
   - Mitigation: prefer upstream JSON (`wham/usage`) and keep Starship-facing output format stable.
 - Rate limit calls may be slow or fail intermittently.
-  - Mitigation: short TTL caching, bounded refresh, and reuse last-good cache when not expired.
+  - Mitigation: short TTL caching, bounded refresh, and reuse last-good cache while refreshing in the background.
 
 ## Steps (Checklist)
 
@@ -99,10 +110,14 @@ Links:
     - [x] Implement current token identity extraction (from auth.json).
     - [x] Implement rate limits fetching + parsing (prefer machine-readable).
     - [x] Implement TTL cache read/write with token-keyed cache entries.
+    - [x] Implement stale-while-revalidate behavior (print cached output immediately; refresh in background).
+    - [x] Add `--time-format` for weekly reset time formatting.
+    - [x] Add `--refresh` for a blocking refresh (debug / warm cache).
+    - [x] Add env toggles (`CODEX_STARSHIP_ENABLED`, `CODEX_STARSHIP_TTL`, `CODEX_STARSHIP_SHOW_5H`).
     - [x] Add Starship custom module config (`config/starship.toml`).
   - Exit Criteria:
     - [x] Starship-facing output matches the contract for both default and `--no-5h`.
-    - [x] Cache reuse works and refresh respects TTL.
+    - [x] Cache reuse works and refresh respects TTL (SWR).
 
 - [x] Step 3: Validation / testing
   - Work Items:
@@ -112,6 +127,8 @@ Links:
     - `zsh -n -- .zshrc` (pass)
     - `rg -n "\\[\\[.*\\]\\]" docs/progress -S` (pass; no output)
     - `./tools/audit-fzf-def-docblocks.zsh --check --stdout` (pass)
+    - `codex-starship --ttl 5m` (pass; SWR output)
+    - `codex-starship --refresh` (pass; updates cache)
     - `STARSHIP_CONFIG=config/starship.toml starship prompt` (pass; shows codex line)
     - `./tools/check.zsh` (pass)
     - `./tools/check.zsh --smoke` (pass)
@@ -119,10 +136,10 @@ Links:
     - [x] `./tools/check.zsh` (pass)
     - [x] `./tools/check.zsh --smoke` (pass) if startup/wrapper behavior changes
 
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
     - [x] Open PR and keep this progress file updated with PR link.
-    - [ ] When merged, set Status to DONE, move to `docs/progress/archived/`, update index.
+    - [x] Set Status to DONE, move to `docs/progress/archived/`, update index.
 
 ## Modules
 

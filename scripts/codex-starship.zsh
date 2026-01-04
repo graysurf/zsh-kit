@@ -11,13 +11,29 @@ _codex_starship_usage() {
   setopt pipe_fail err_return nounset
 
   typeset fd="${1-1}"
-  print -u"$fd" -r -- 'Usage: codex-starship [--no-5h] [--ttl <duration>]'
+  print -u"$fd" -r -- 'Usage: codex-starship [--no-5h] [--ttl <duration>] [--time-format <strftime>] [--refresh]'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Options:'
   print -u"$fd" -r -- '  --no-5h            Hide the 5h window output'
   print -u"$fd" -r -- '  --ttl <duration>   Cache TTL (e.g. 1m, 5m); default: 5m'
+  print -u"$fd" -r -- '  --time-format <f>  Reset time format (UTC; default: %m-%d %H:%M)'
+  print -u"$fd" -r -- '  --refresh          Force a blocking refresh (updates cache)'
   print -u"$fd" -r -- '  -h, --help         Show help'
   return 0
+}
+
+# _codex_starship_truthy: Return 0 if the input string is truthy (1/true/yes/on).
+# Usage: _codex_starship_truthy <value>
+_codex_starship_truthy() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset raw="${1-}"
+  raw="${raw:l}"
+  case "$raw" in
+    1|true|yes|on) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # _codex_starship_auth_file: Print the active Codex auth file path.
@@ -321,6 +337,150 @@ _codex_starship_epoch_utc() {
   return 0
 }
 
+# _codex_starship_epoch_utc_format: Format an epoch seconds value in UTC using a strftime format.
+# Usage: _codex_starship_epoch_utc_format <epoch_seconds> <format>
+_codex_starship_epoch_utc_format() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset epoch="${1-}"
+  typeset format="${2-}"
+  [[ -n "$epoch" && "$epoch" == <-> && -n "$format" ]] || return 1
+
+  if [[ "$format" != +* ]]; then
+    format="+$format"
+  fi
+
+  typeset formatted=''
+  formatted="$(date -u -r "$epoch" "$format" 2>/dev/null)" || formatted=''
+  if [[ -z "$formatted" ]]; then
+    formatted="$(date -u -d "@$epoch" "$format" 2>/dev/null)" || formatted=''
+  fi
+
+  [[ -n "$formatted" ]] || return 1
+  print -r -- "$formatted"
+  return 0
+}
+
+# _codex_starship_normalize_iso: Normalize an ISO-8601 timestamp string (trim newlines, strip fractional seconds).
+# Usage: _codex_starship_normalize_iso <iso>
+_codex_starship_normalize_iso() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset iso="${1-}"
+  [[ -n "$iso" ]] || return 1
+
+  iso="${iso%%$'\n'*}"
+  iso="${iso%%$'\r'*}"
+  if [[ "$iso" == *.*Z ]]; then
+    iso="${iso%%.*}Z"
+  fi
+
+  [[ -n "$iso" ]] || return 1
+  print -r -- "$iso"
+  return 0
+}
+
+# _codex_starship_iso_to_epoch_utc: Convert an ISO-8601 UTC timestamp (YYYY-MM-DDTHH:MM:SSZ) to epoch seconds.
+# Usage: _codex_starship_iso_to_epoch_utc <iso>
+_codex_starship_iso_to_epoch_utc() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset iso_raw="${1-}"
+  [[ -n "$iso_raw" ]] || return 1
+
+  typeset iso=''
+  iso="$(_codex_starship_normalize_iso "$iso_raw")" || return 1
+
+  typeset epoch=''
+  if epoch="$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$iso" "+%s" 2>/dev/null)"; then
+    [[ -n "$epoch" && "$epoch" == <-> ]] || return 1
+    print -r -- "$epoch"
+    return 0
+  fi
+
+  if epoch="$(date -u -d "$iso" "+%s" 2>/dev/null)"; then
+    [[ -n "$epoch" && "$epoch" == <-> ]] || return 1
+    print -r -- "$epoch"
+    return 0
+  fi
+
+  return 1
+}
+
+# _codex_starship_spawn_refresh: Spawn a detached refresh process to update the cache.
+# Usage: _codex_starship_spawn_refresh
+_codex_starship_spawn_refresh() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  command -v nohup >/dev/null 2>&1 || return 1
+
+  typeset wrapper=''
+  wrapper="$(whence -p codex-starship 2>/dev/null)" || wrapper=''
+  if [[ -n "$wrapper" && -x "$wrapper" ]]; then
+    nohup "$wrapper" --refresh >/dev/null 2>&1 &
+    return 0
+  fi
+
+  typeset script_dir="${ZSH_SCRIPT_DIR-}"
+  [[ -n "$script_dir" && -f "$script_dir/codex-starship.zsh" ]] || return 1
+
+  typeset cache_root="${ZSH_CACHE_DIR-}"
+  [[ -n "$cache_root" ]] || return 1
+
+  nohup zsh -f -c \
+    "export ZSH_SCRIPT_DIR=${(q)script_dir}; export ZSH_CACHE_DIR=${(q)cache_root}; source ${(q)script_dir}/codex-starship.zsh; codex-starship --refresh" \
+    >/dev/null 2>&1 &
+  return 0
+}
+
+# _codex_starship_maybe_enqueue_refresh: Enqueue a background refresh if not already refreshing and not too soon.
+# Usage: _codex_starship_maybe_enqueue_refresh <cache_dir> <key> <now_epoch> <min_interval_seconds>
+_codex_starship_maybe_enqueue_refresh() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset cache_dir="${1-}"
+  typeset key="${2-}"
+  typeset now_epoch="${3-}"
+  typeset min_interval="${4-}"
+
+  [[ -n "$cache_dir" && -d "$cache_dir" && -n "$key" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
+  [[ -n "$min_interval" && "$min_interval" == <-> ]] || min_interval='30'
+
+  typeset lock_dir="$cache_dir/$key.refresh.lock"
+  if [[ -d "$lock_dir" ]]; then
+    return 0
+  fi
+
+  typeset attempt_file="$cache_dir/$key.refresh.at"
+  if [[ -f "$attempt_file" ]]; then
+    typeset last_attempt=''
+    last_attempt="$(<"$attempt_file" 2>/dev/null)" || last_attempt=''
+    last_attempt="${last_attempt%%$'\n'*}"
+    last_attempt="${last_attempt%%$'\r'*}"
+    if [[ -n "$last_attempt" && "$last_attempt" == <-> ]]; then
+      typeset -i age=$(( now_epoch - last_attempt ))
+      if (( age >= 0 && age < min_interval )); then
+        return 0
+      fi
+    fi
+  fi
+
+  typeset tmp_attempt=''
+  tmp_attempt="$(mktemp "${attempt_file}.XXXXXX" 2>/dev/null)" || tmp_attempt=''
+  if [[ -n "$tmp_attempt" ]]; then
+    print -r -- "$now_epoch" >| "$tmp_attempt" 2>/dev/null || true
+    mv -f -- "$tmp_attempt" "$attempt_file" 2>/dev/null || rm -f -- "$tmp_attempt" 2>/dev/null || true
+  fi
+
+  _codex_starship_spawn_refresh >/dev/null 2>&1 || true
+  return 0
+}
+
 # _codex_starship_window_label: Convert limit window seconds into a short label (e.g. 5h, Weekly).
 # Usage: _codex_starship_window_label <seconds>
 _codex_starship_window_label() {
@@ -403,16 +563,17 @@ _codex_starship_fetch_usage_json() {
   return 0
 }
 
-# codex-starship [--no-5h] [--ttl <duration>]
-# Print a Starship-ready Codex rate limit line (silent failure; TTL cached).
-# Usage: codex-starship [--no-5h] [--ttl <duration>]
+# codex-starship [--no-5h] [--ttl <duration>] [--time-format <strftime>] [--refresh]
+# Print a Starship-ready Codex rate limit line (silent failure; stale-while-revalidate cached).
+# Usage: codex-starship [--no-5h] [--ttl <duration>] [--time-format <strftime>] [--refresh]
 # Output:
-# - Default: <name> <window>:<pct>% W:<pct>% <weekly_reset_iso>
-# - --no-5h: <name> W:<pct>% <weekly_reset_iso>
+# - Default: <name> <window>:<pct>% W:<pct>% <weekly_reset_time>
+# - --no-5h: <name> W:<pct>% <weekly_reset_time>
 # Cache:
 # - $ZSH_CACHE_DIR/codex/starship-rate-limits/<token_key>.kv
 # Notes:
 # - Prints nothing and exits 0 when auth/rate limits are unavailable.
+# - In normal mode, prints cached output immediately (even if stale) and refreshes in the background.
 codex-starship() {
   emulate -L zsh
   setopt pipe_fail nounset
@@ -420,19 +581,36 @@ codex-starship() {
   zmodload zsh/zutil 2>/dev/null || return 0
 
   typeset show_5h='true'
-  typeset ttl='5m'
+  if [[ -n "${CODEX_STARSHIP_SHOW_5H-}" ]]; then
+    if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_5H}"; then
+      show_5h='true'
+    else
+      show_5h='false'
+    fi
+  fi
+
+  typeset ttl="${CODEX_STARSHIP_TTL-}"
+  [[ -n "$ttl" ]] || ttl='5m'
+  typeset time_format='%m-%d %H:%M'
+  typeset refresh='false'
 
   typeset -A opts=()
   zparseopts -D -E -A opts -- \
     h -help \
     -no-5h \
-    -ttl: || {
+    -ttl: \
+    -time-format: \
+    -refresh || {
     _codex_starship_usage 2
     return 2
   }
 
   if (( ${+opts[-h]} || ${+opts[--help]} )); then
     _codex_starship_usage 1
+    return 0
+  fi
+
+  if ! _codex_starship_truthy "${CODEX_STARSHIP_ENABLED-}"; then
     return 0
   fi
 
@@ -444,12 +622,26 @@ codex-starship() {
     ttl="${opts[--ttl]}"
   fi
 
+  if [[ -n "${opts[--time-format]-}" ]]; then
+    time_format="${opts[--time-format]}"
+  fi
+  [[ -n "$time_format" ]] || time_format='%m-%d %H:%M'
+
+  if (( ${+opts[--refresh]} )); then
+    refresh='true'
+  fi
+
   typeset ttl_seconds=''
   ttl_seconds="$(_codex_starship_ttl_seconds "$ttl" 2>/dev/null)" || ttl_seconds=''
   if [[ -z "$ttl_seconds" || "$ttl_seconds" != <-> ]]; then
-    print -u2 -r -- "codex-starship: invalid --ttl: $ttl"
-    _codex_starship_usage 2
-    return 2
+    if [[ -n "${opts[--ttl]-}" ]]; then
+      print -u2 -r -- "codex-starship: invalid --ttl: $ttl"
+      _codex_starship_usage 2
+      return 2
+    fi
+
+    ttl='5m'
+    ttl_seconds="$(_codex_starship_ttl_seconds "$ttl" 2>/dev/null)" || ttl_seconds='300'
   fi
 
   typeset auth_file='' secret_dir='' name='' key=''
@@ -477,9 +669,10 @@ codex-starship() {
   now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
   [[ -n "$now_epoch" && "$now_epoch" == <-> ]] || return 0
 
+  typeset cached_out='' cached_is_fresh='false'
   if [[ -f "$cache_file" ]]; then
     typeset cached_fetched_at='' cached_non_weekly_label='' cached_non_weekly_remaining=''
-    typeset cached_weekly_remaining='' cached_weekly_reset_iso=''
+    typeset cached_weekly_remaining='' cached_weekly_reset_epoch='' cached_weekly_reset_iso=''
 
     typeset kv=''
     while IFS= read -r kv; do
@@ -488,6 +681,7 @@ codex-starship() {
         non_weekly_label=*) cached_non_weekly_label="${kv#non_weekly_label=}" ;;
         non_weekly_remaining=*) cached_non_weekly_remaining="${kv#non_weekly_remaining=}" ;;
         weekly_remaining=*) cached_weekly_remaining="${kv#weekly_remaining=}" ;;
+        weekly_reset_epoch=*) cached_weekly_reset_epoch="${kv#weekly_reset_epoch=}" ;;
         weekly_reset_iso=*) cached_weekly_reset_iso="${kv#weekly_reset_iso=}" ;;
       esac
     done < "$cache_file" 2>/dev/null || true
@@ -495,106 +689,137 @@ codex-starship() {
     if [[ -n "$cached_fetched_at" && "$cached_fetched_at" == <-> ]]; then
       typeset -i age=$(( now_epoch - cached_fetched_at ))
       if (( age >= 0 && age < ttl_seconds )); then
-        typeset out=''
-        if [[ -n "$cached_weekly_remaining" && -n "$cached_weekly_reset_iso" ]]; then
-          if [[ "$show_5h" == 'true' && -n "$cached_non_weekly_label" && -n "$cached_non_weekly_remaining" ]]; then
-            out="${name} ${cached_non_weekly_label}:${cached_non_weekly_remaining}% W:${cached_weekly_remaining}% ${cached_weekly_reset_iso}"
-          else
-            out="${name} W:${cached_weekly_remaining}% ${cached_weekly_reset_iso}"
-          fi
-        fi
-        if [[ -n "$out" ]]; then
-          print -r -- "$out"
-          return 0
-        fi
+        cached_is_fresh='true'
+      fi
+    fi
+
+    if [[ -z "$cached_weekly_reset_epoch" && -n "$cached_weekly_reset_iso" ]]; then
+      cached_weekly_reset_epoch="$(_codex_starship_iso_to_epoch_utc "$cached_weekly_reset_iso" 2>/dev/null)" || cached_weekly_reset_epoch=''
+    fi
+
+    typeset cached_weekly_reset=''
+    if [[ -n "$cached_weekly_reset_epoch" && "$cached_weekly_reset_epoch" == <-> ]]; then
+      cached_weekly_reset="$(_codex_starship_epoch_utc_format "$cached_weekly_reset_epoch" "$time_format" 2>/dev/null)" || cached_weekly_reset=''
+    fi
+
+    if [[ -n "$cached_weekly_remaining" && -n "$cached_weekly_reset" ]]; then
+      if [[ "$show_5h" == 'true' && -n "$cached_non_weekly_label" && -n "$cached_non_weekly_remaining" ]]; then
+        cached_out="${name} ${cached_non_weekly_label}:${cached_non_weekly_remaining}% W:${cached_weekly_remaining}% ${cached_weekly_reset}"
+      else
+        cached_out="${name} W:${cached_weekly_remaining}% ${cached_weekly_reset}"
       fi
     fi
   fi
 
-  typeset tmp_usage=''
-  tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || return 0
-  if ! _codex_starship_fetch_usage_json "$auth_file" "$tmp_usage" >/dev/null 2>&1; then
-    rm -f -- "$tmp_usage" 2>/dev/null || true
+  if [[ "$refresh" != 'true' ]]; then
+    if [[ -n "$cached_out" ]]; then
+      print -r -- "$cached_out"
+    fi
+
+    if [[ -z "$cached_out" || "$cached_is_fresh" != 'true' ]]; then
+      typeset refresh_min_interval="${CODEX_STARSHIP_REFRESH_MIN_SECONDS:-30}"
+      _codex_starship_maybe_enqueue_refresh "$cache_dir" "$key" "$now_epoch" "$refresh_min_interval" >/dev/null 2>&1 || true
+    fi
     return 0
   fi
 
-  typeset limits_tsv=''
-  limits_tsv="$(
-    jq -r '
-      [
-        (.rate_limit.primary_window.limit_window_seconds // empty),
-        (100 - (.rate_limit.primary_window.used_percent // 0) | round),
-        (.rate_limit.primary_window.reset_at // empty),
-        (.rate_limit.secondary_window.limit_window_seconds // empty),
-        (100 - (.rate_limit.secondary_window.used_percent // 0) | round),
-        (.rate_limit.secondary_window.reset_at // empty)
-      ] | @tsv
-    ' "$tmp_usage" 2>/dev/null
-  )" || limits_tsv=''
-  rm -f -- "$tmp_usage" 2>/dev/null || true
-  [[ -n "$limits_tsv" ]] || return 0
+  (
+    emulate -L zsh
+    setopt pipe_fail nounset
 
-  typeset primary_seconds='' primary_remaining='' primary_reset_epoch=''
-  typeset secondary_seconds='' secondary_remaining='' secondary_reset_epoch=''
-  IFS=$'\t' read -r primary_seconds primary_remaining primary_reset_epoch \
-    secondary_seconds secondary_remaining secondary_reset_epoch <<< "$limits_tsv"
+    typeset lock_dir="$cache_dir/$key.refresh.lock"
+    if ! mkdir "$lock_dir" >/dev/null 2>&1; then
+      exit 0
+    fi
 
-  [[ -n "$primary_seconds" && "$primary_seconds" == <-> ]] || return 0
-  [[ -n "$secondary_seconds" && "$secondary_seconds" == <-> ]] || return 0
-  [[ -n "$primary_remaining" && "$primary_remaining" == <-> ]] || return 0
-  [[ -n "$secondary_remaining" && "$secondary_remaining" == <-> ]] || return 0
+    typeset tmp_usage=''
+    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rmdir -- "$lock_dir" 2>/dev/null || true' EXIT
 
-  typeset primary_label='' secondary_label=''
-  primary_label="$(_codex_starship_window_label "$primary_seconds" 2>/dev/null)" || primary_label='Primary'
-  secondary_label="$(_codex_starship_window_label "$secondary_seconds" 2>/dev/null)" || secondary_label='Secondary'
+    tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || exit 0
 
-  typeset primary_reset_iso='' secondary_reset_iso=''
-  primary_reset_iso="$(_codex_starship_epoch_utc "$primary_reset_epoch" 2>/dev/null)" || primary_reset_iso=''
-  secondary_reset_iso="$(_codex_starship_epoch_utc "$secondary_reset_epoch" 2>/dev/null)" || secondary_reset_iso=''
+    if ! _codex_starship_fetch_usage_json "$auth_file" "$tmp_usage" >/dev/null 2>&1; then
+      exit 0
+    fi
 
-  typeset weekly_remaining='' weekly_reset_iso=''
-  typeset non_weekly_label='' non_weekly_remaining=''
-  if [[ "$primary_label" == 'Weekly' ]]; then
-    weekly_remaining="$primary_remaining"
-    weekly_reset_iso="$primary_reset_iso"
-    non_weekly_label="$secondary_label"
-    non_weekly_remaining="$secondary_remaining"
-  elif [[ "$secondary_label" == 'Weekly' ]]; then
-    weekly_remaining="$secondary_remaining"
-    weekly_reset_iso="$secondary_reset_iso"
-    non_weekly_label="$primary_label"
-    non_weekly_remaining="$primary_remaining"
-  else
-    weekly_remaining="$secondary_remaining"
-    weekly_reset_iso="$secondary_reset_iso"
-    non_weekly_label="$primary_label"
-    non_weekly_remaining="$primary_remaining"
-  fi
+    typeset limits_tsv=''
+    limits_tsv="$(
+      jq -r '
+        [
+          (.rate_limit.primary_window.limit_window_seconds // empty),
+          (100 - (.rate_limit.primary_window.used_percent // 0) | round),
+          (.rate_limit.primary_window.reset_at // empty),
+          (.rate_limit.secondary_window.limit_window_seconds // empty),
+          (100 - (.rate_limit.secondary_window.used_percent // 0) | round),
+          (.rate_limit.secondary_window.reset_at // empty)
+        ] | @tsv
+      ' "$tmp_usage" 2>/dev/null
+    )" || limits_tsv=''
+    [[ -n "$limits_tsv" ]] || exit 0
 
-  [[ -n "$weekly_remaining" && -n "$weekly_reset_iso" ]] || return 0
+    typeset primary_seconds='' primary_remaining='' primary_reset_epoch=''
+    typeset secondary_seconds='' secondary_remaining='' secondary_reset_epoch=''
+    IFS=$'\t' read -r primary_seconds primary_remaining primary_reset_epoch \
+      secondary_seconds secondary_remaining secondary_reset_epoch <<< "$limits_tsv"
 
-  typeset out=''
-  if [[ "$show_5h" == 'true' ]]; then
-    [[ -n "$non_weekly_label" && -n "$non_weekly_remaining" ]] || return 0
-    out="${name} ${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset_iso}"
-  else
-    out="${name} W:${weekly_remaining}% ${weekly_reset_iso}"
-  fi
-  [[ -n "$out" ]] || return 0
+    [[ -n "$primary_seconds" && "$primary_seconds" == <-> ]] || exit 0
+    [[ -n "$secondary_seconds" && "$secondary_seconds" == <-> ]] || exit 0
+    [[ -n "$primary_remaining" && "$primary_remaining" == <-> ]] || exit 0
+    [[ -n "$secondary_remaining" && "$secondary_remaining" == <-> ]] || exit 0
 
-  typeset tmp_cache=''
-  tmp_cache="$(mktemp "${cache_file}.XXXXXX" 2>/dev/null)" || tmp_cache=''
-  if [[ -n "$tmp_cache" ]]; then
-    {
-      print -r -- "fetched_at=$now_epoch"
-      print -r -- "non_weekly_label=$non_weekly_label"
-      print -r -- "non_weekly_remaining=$non_weekly_remaining"
-      print -r -- "weekly_remaining=$weekly_remaining"
-      print -r -- "weekly_reset_iso=$weekly_reset_iso"
-    } >| "$tmp_cache" 2>/dev/null || true
-    mv -f -- "$tmp_cache" "$cache_file" 2>/dev/null || rm -f -- "$tmp_cache" 2>/dev/null || true
-  fi
+    typeset primary_label='' secondary_label=''
+    primary_label="$(_codex_starship_window_label "$primary_seconds" 2>/dev/null)" || primary_label='Primary'
+    secondary_label="$(_codex_starship_window_label "$secondary_seconds" 2>/dev/null)" || secondary_label='Secondary'
 
-  print -r -- "$out"
+    typeset weekly_remaining='' weekly_reset_epoch=''
+    typeset non_weekly_label='' non_weekly_remaining=''
+    if [[ "$primary_label" == 'Weekly' ]]; then
+      weekly_remaining="$primary_remaining"
+      weekly_reset_epoch="$primary_reset_epoch"
+      non_weekly_label="$secondary_label"
+      non_weekly_remaining="$secondary_remaining"
+    elif [[ "$secondary_label" == 'Weekly' ]]; then
+      weekly_remaining="$secondary_remaining"
+      weekly_reset_epoch="$secondary_reset_epoch"
+      non_weekly_label="$primary_label"
+      non_weekly_remaining="$primary_remaining"
+    else
+      weekly_remaining="$secondary_remaining"
+      weekly_reset_epoch="$secondary_reset_epoch"
+      non_weekly_label="$primary_label"
+      non_weekly_remaining="$primary_remaining"
+    fi
+
+    [[ -n "$weekly_remaining" && -n "$weekly_reset_epoch" && "$weekly_reset_epoch" == <-> ]] || exit 0
+
+    typeset weekly_reset=''
+    weekly_reset="$(_codex_starship_epoch_utc_format "$weekly_reset_epoch" "$time_format" 2>/dev/null)" || weekly_reset=''
+    [[ -n "$weekly_reset" ]] || exit 0
+
+    typeset out=''
+    if [[ "$show_5h" == 'true' ]]; then
+      [[ -n "$non_weekly_label" && -n "$non_weekly_remaining" ]] || exit 0
+      out="${name} ${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset}"
+    else
+      out="${name} W:${weekly_remaining}% ${weekly_reset}"
+    fi
+    [[ -n "$out" ]] || exit 0
+
+    typeset tmp_cache=''
+    tmp_cache="$(mktemp "${cache_file}.XXXXXX" 2>/dev/null)" || tmp_cache=''
+    if [[ -n "$tmp_cache" ]]; then
+      {
+        print -r -- "fetched_at=$now_epoch"
+        print -r -- "non_weekly_label=$non_weekly_label"
+        print -r -- "non_weekly_remaining=$non_weekly_remaining"
+        print -r -- "weekly_remaining=$weekly_remaining"
+        print -r -- "weekly_reset_epoch=$weekly_reset_epoch"
+      } >| "$tmp_cache" 2>/dev/null || true
+      mv -f -- "$tmp_cache" "$cache_file" 2>/dev/null || rm -f -- "$tmp_cache" 2>/dev/null || true
+    fi
+
+    print -r -- "$out"
+    exit 0
+  ) || true
+
   return 0
 }
