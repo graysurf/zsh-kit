@@ -119,9 +119,10 @@ Weather report: Taipei City, Taiwan
 🌿  Thinking shell initialized. Expect consequences...
 
 ✅ Loaded 00-preload.zsh in 0ms
-✅ Loaded plugins.zsh in 34ms
+✅ Loaded plugins.zsh in 37ms
 ✅ Loaded builtin-overrides.zsh in 0ms
 ✅ Loaded chrome-devtools-rdp.zsh in 0ms
+✅ Loaded codex-starship.zsh in 0ms
 ✅ Loaded codex-tools.zsh in 0ms
 ✅ Loaded editor.zsh in 0ms
 ✅ Loaded eza.zsh in 0ms
@@ -130,23 +131,23 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded git-magic.zsh in 0ms
 ✅ Loaded git-open.zsh in 1ms
 ✅ Loaded git-scope.zsh in 0ms
-✅ Loaded git-summary.zsh in 2ms
+✅ Loaded git-summary.zsh in 3ms
 ✅ Loaded git.zsh in 0ms
 ✅ Loaded git-branch-cleanup.zsh in 0ms
 ✅ Loaded git-commit.zsh in 0ms
 ✅ Loaded git-reset.zsh in 0ms
 ✅ Loaded git-utils.zsh in 0ms
-✅ Loaded macos.zsh in 4ms
+✅ Loaded macos.zsh in 0ms
 ✅ Loaded shell-tools.zsh in 0ms
 ✅ Loaded git-tools.zsh in 0ms
-✅ Loaded env.zsh in 19ms
-✅ Loaded runtime.zsh in 13ms
+✅ Loaded env.zsh in 30ms
+✅ Loaded runtime.zsh in 17ms
 ✅ Loaded hotkeys.zsh in 0ms
 ✅ Loaded plugin-hooks.zsh in 0ms
 ✅ Loaded completion.zsh in 219ms
 ✅ Loaded development.zsh (delayed) in 2ms
 
-🍎 yourname on MacBook ~ 🐋 gke-dev 🐳 orbstack
+🍎 yourname on MacBook ~ 🐳 orbstack 🌟 sym 5h:65% W:90% 01-10 20:05
 08:00:00.000 ✔︎
 ```
 
