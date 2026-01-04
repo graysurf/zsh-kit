@@ -336,7 +336,7 @@ _git_scope_print_commit_metadata() {
       --pretty=format:"🔖 %h %s%n👤 %an <%ae>%n📅 %ad" "$commit"
   else
     git log -1 --date=format:'%Y-%m-%d %H:%M:%S %z' \
-      --pretty=format:"🔖 %C(bold blue)%h%Creset %s%n👤 %an <%ae>%n📅 %ad" "$commit"
+      --pretty=format:"🔖 %C(bold #82aaff)%h%C(reset) %C(#d6deeb)%s%C(reset)%n👤 %C(#7fdbca)%an%C(reset) <%C(#d6deeb)%ae%C(reset)>%n📅 %C(#ecc48d)%ad%C(reset)" "$commit"
   fi
 }
 

@@ -206,7 +206,7 @@ fzf-git-branch() {
         branch=$(printf "%s\n" {} | sed "s/^[* ]*//")
         [[ -z "$branch" ]] && exit 0
         git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
-         --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$branch"' \
+         --pretty=format:"%C(bold #82aaff)%h%C(reset) %C(#ecc48d)%ad%C(reset) %C(#7fdbca)%an%C(reset)%C(auto)%d%C(reset) %C(#d6deeb)%s%C(reset)" "$branch"' \
   )
   [[ -z "$selected" ]] && return 1
 
@@ -252,7 +252,7 @@ fzf-git-tag() {
         hash=$(git rev-parse --verify --quiet "${tag}^{commit}")
         [[ -z "$hash" ]] && printf "❌ Could not resolve tag to commit.\n" && exit 0
         git log -n 100 --graph --color=always --decorate --abbrev-commit --date=iso-local \
-          --pretty=format:"%C(auto)%h %ad %C(cyan)%an%C(reset)%d %s" "$hash"
+          --pretty=format:"%C(bold #82aaff)%h%C(reset) %C(#ecc48d)%ad%C(reset) %C(#7fdbca)%an%C(reset)%C(auto)%d%C(reset) %C(#d6deeb)%s%C(reset)" "$hash"
       ' \
   )
   [[ -z "$selected" ]] && return 1
@@ -657,7 +657,7 @@ _fzf_select_commit() {
     fi
 
     result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
-      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
+      --pretty=format:'%C(bold #82aaff)%h%C(reset) %C(#ecc48d)%cd%C(reset) %C(#7fdbca)%an%C(reset)%C(auto)%d%C(reset) %C(#d6deeb)%s%C(reset)' |
       fzf --ansi --reverse --track \
           --prompt="🌀 Commit > " \
           --preview-window="$right:50%:wrap" \
@@ -667,7 +667,7 @@ _fzf_select_commit() {
           --query="$selected")
   else
     result=$(git log --color=always --no-decorate --date='format:%m-%d %H:%M' \
-      --pretty=format:'%C(auto)%h %C(blue)%cd %C(cyan)%an%C(reset)%C(yellow)%d%C(reset) %s' |
+      --pretty=format:'%C(bold #82aaff)%h%C(reset) %C(#ecc48d)%cd%C(reset) %C(#7fdbca)%an%C(reset)%C(auto)%d%C(reset) %C(#d6deeb)%s%C(reset)' |
       fzf --ansi --reverse \
           --prompt="🌀 Commit > " \
           --preview-window="$right:50%:wrap" \
