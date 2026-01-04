@@ -8,14 +8,6 @@ plugins/
 # Zsh runtime files
 .zsh_history
 .zcompdump*
-.z
-
-# Update state files
-.zsh-update
-.zsh-custom-update
 
 # Personal / Misc
 quotes.txt
-
-# Terminal / App specific
-.iterm2
