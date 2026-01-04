@@ -23,7 +23,7 @@ fi
 # ──────────────────────────────
 typeset wrappers_zsh="$ZSH_SCRIPT_DIR/_internal/wrappers.zsh"
 typeset wrappers_bin="$ZSH_CACHE_DIR/wrappers/bin"
-typeset wrappers_check_cmd='git-scope'
+typeset wrappers_check_cmd='codex-starship'
 typeset wrappers_check_path="$wrappers_bin/$wrappers_check_cmd"
 if [[ -f "$wrappers_zsh" && ! -x "$wrappers_check_path" ]]; then
   source "$wrappers_zsh"
