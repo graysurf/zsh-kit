@@ -61,7 +61,7 @@ Links:
 ### Output
 
 - Single-line prompt text (no header), default:
-  - `terry 5h:68% W:20% 01-08 10:38`
+  - `yourname 5h:68% W:20% 01-08 10:38`
 
 ### Intermediate Artifacts
 

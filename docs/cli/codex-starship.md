@@ -11,7 +11,7 @@ Default output:
 Example:
 
 ```text
-rita 5h:50% W:15% 01-08 10:38
+yourname 5h:50% W:15% 01-08 10:38
 ```
 
 If the command cannot determine the active token identity/auth file, it prints nothing and exits `0` (so your prompt does not break).
