@@ -8,7 +8,6 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 - 🌟 [Login banner](docs/guides/login-banner.md): Emoji-powered shell intro with rotating quotes
 - 🧩 [Plugin System](docs/guides/plugin-system.md): Git-powered declarative loader with auto-clone and update support
-- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in wrappers for Codex skills with safety gate
 - 🚀 [Starship](https://starship.rs): Customized prompt with language & context awareness
 - 🧭 [Zoxide](https://github.com/ajeetdsouza/zoxide): Smart directory jumping, aliased as `z`
 - 🔧 Modular and lazy-friendly structure under `scripts/`
@@ -19,6 +18,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > The following tools are developed as part of this environment and tightly integrated.
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
+- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in wrappers for Codex skills with safety gate
 - 🔎 [fzf-tools](docs/cli/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
 - 🔗 [git-open](docs/cli/git-open.md): Open repo/branch/commit/PR pages in browser
 - 📂 [git-scope](docs/cli/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
