@@ -20,12 +20,12 @@ ripgrep-all::ripgrep-all::ripgrep for many file types (PDF/DOCX/EPUB/archives, e
 entr::entr::Minimal file watcher for re-running commands on changes
 watchexec::watchexec::Run commands on file changes (gitignore-aware)
 
-# Logs / HTTP / API (daily use)
+# Logs / HTTP / API
 httpie::httpie::Human-friendly HTTP client (curl alternative)
 xh::xh::Fast HTTP client (httpie-like, Rust-based)
 lnav::lnav::Log file navigator (filtering/searching/analysis in a TUI)
 
-# Shell / repo navigation (LLM-friendly)
+# Shell / repo navigation
 fzf::fzf::Fuzzy finder (navigate logs/files/commands quickly)
 fd::fd::Friendly find replacement (fast file discovery)
 tree::tree::Show directory structure (great for sharing repo overview)
