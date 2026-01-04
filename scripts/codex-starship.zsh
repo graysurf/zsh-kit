@@ -434,6 +434,48 @@ _codex_starship_spawn_refresh() {
   nohup zsh -f -c \
     "export ZSH_SCRIPT_DIR=${(q)script_dir}; export ZSH_CACHE_DIR=${(q)cache_root}; source ${(q)script_dir}/codex-starship.zsh; codex-starship --refresh" \
     >/dev/null 2>&1 &
+	  return 0
+	}
+
+# _codex_starship_clear_stale_refresh_lock: Remove a stale refresh lock directory/file.
+# Usage: _codex_starship_clear_stale_refresh_lock <lock_path> <now_epoch> [stale_after_seconds]
+_codex_starship_clear_stale_refresh_lock() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset lock_path="${1-}"
+  typeset now_epoch="${2-}"
+  typeset stale_after="${3-}"
+
+  [[ -n "$lock_path" && -e "$lock_path" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
+  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='90'
+
+  zmodload zsh/stat 2>/dev/null || return 1
+
+  typeset -a st=()
+  zstat -A st +mtime -- "$lock_path" 2>/dev/null || return 1
+
+  typeset mtime="${st[1]-}"
+  [[ -n "$mtime" && "$mtime" == <-> ]] || return 1
+
+  typeset -i age=$(( now_epoch - mtime ))
+  if (( age < stale_after )); then
+    return 1
+  fi
+
+  if [[ -d "$lock_path" ]]; then
+    if rmdir -- "$lock_path" 2>/dev/null; then
+      return 0
+    fi
+    if [[ "${lock_path:t}" == *.refresh.lock ]]; then
+      rm -rf -- "$lock_path" 2>/dev/null || return 1
+    else
+      return 1
+    fi
+  else
+    rm -f -- "$lock_path" 2>/dev/null || return 1
+  fi
+
   return 0
 }
 
@@ -452,8 +494,9 @@ _codex_starship_maybe_enqueue_refresh() {
   [[ -n "$min_interval" && "$min_interval" == <-> ]] || min_interval='30'
 
   typeset lock_dir="$cache_dir/$key.refresh.lock"
-  if [[ -d "$lock_dir" ]]; then
-    return 0
+  if [[ -e "$lock_dir" ]]; then
+    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+    _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || return 0
   fi
 
   typeset attempt_file="$cache_dir/$key.refresh.at"
@@ -543,10 +586,16 @@ _codex_starship_fetch_usage_json() {
   typeset url="${base_url}/wham/usage"
 
   typeset http_status=''
+  typeset connect_timeout="${CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS:-2}"
+  typeset max_time="${CODEX_STARSHIP_CURL_MAX_TIME_SECONDS:-8}"
+  [[ -n "$connect_timeout" && "$connect_timeout" == <-> ]] || connect_timeout='2'
+  [[ -n "$max_time" && "$max_time" == <-> ]] || max_time='8'
   typeset -a curl_args=(
     -s
     -o "$out_file"
     -w "%{http_code}"
+    --connect-timeout "$connect_timeout"
+    --max-time "$max_time"
     "$url"
     -H "Authorization: Bearer ${access_token}"
     -H "Accept: application/json"
@@ -749,19 +798,21 @@ codex-starship() {
     return 0
   fi
 
-  (
-    emulate -L zsh
-    setopt pipe_fail nounset
+	  (
+	    emulate -L zsh
+	    setopt pipe_fail nounset
 
-    typeset lock_dir="$cache_dir/$key.refresh.lock"
-    if ! mkdir "$lock_dir" >/dev/null 2>&1; then
-      exit 0
-    fi
+	    typeset lock_dir="$cache_dir/$key.refresh.lock"
+	    if ! mkdir "$lock_dir" >/dev/null 2>&1; then
+	      typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+	      _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
+	      mkdir "$lock_dir" >/dev/null 2>&1 || exit 0
+	    fi
 
-    typeset tmp_usage=''
-    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rmdir -- "$lock_dir" 2>/dev/null || true' EXIT
+	    typeset tmp_usage=''
+	    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rmdir -- "$lock_dir" 2>/dev/null || true' EXIT
 
-    tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || exit 0
+	    tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || exit 0
 
     if ! _codex_starship_fetch_usage_json "$auth_file" "$tmp_usage" >/dev/null 2>&1; then
       exit 0

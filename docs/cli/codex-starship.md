@@ -111,6 +111,9 @@ Notes:
 - `CODEX_STARSHIP_SHOW_5H`: show the non-weekly window (default: `true`; set `false` to hide)
 - `CODEX_STARSHIP_SHOW_FALLBACK_NAME`: show the JWT-derived identity when no profile match is found (default: `false`)
 - `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
+- `CODEX_STARSHIP_LOCK_STALE_SECONDS`: consider `<token_key>.refresh.lock` stale after this many seconds and clear it (default: `90`)
+- `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS`: `curl` connect timeout seconds for `wham/usage` fetch (default: `2`)
+- `CODEX_STARSHIP_CURL_MAX_TIME_SECONDS`: `curl` max time seconds for `wham/usage` fetch (default: `8`)
 - `CODEX_AUTH_FILE`: override the auth file path (default: `~/.config/codex-kit/auth.json`, fallback: `~/.codex/auth.json`)
 - `CODEX_SECRET_DIR`: override the secrets/profile directory used for friendly name resolution
 - `CODEX_CHATGPT_BASE_URL`: override the API base URL (default: `https://chatgpt.com/backend-api/`)
