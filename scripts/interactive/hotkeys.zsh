@@ -22,7 +22,7 @@ fzf-tools-launcher-widget() {
 🧪 process:       Browse and kill running processes
 🔌 port:          Browse listening ports and owners
 📜 history:       Search and execute command history
-🔍 git-commit:    Browse commits and open changed files in VSCode
+🔍 git-commit:    Browse commits and open changed files
 📂 git-status:    Interactive git status viewer
 🌀 git-checkout:  Pick and checkout a previous commit
 🌿 git-branch:    Browse and checkout branches interactively
@@ -33,7 +33,6 @@ fzf-tools-launcher-widget() {
 📦 def:           Browse all definitions (env, alias, functions)
 📁 directory:     Search directories and cd into selection
 📝 file:          Search and preview text files
-🧠 vscode:        Search and preview text files in VSCode
 EOF
   ) || return
 
