@@ -644,11 +644,32 @@ codex-starship() {
     ttl_seconds="$(_codex_starship_ttl_seconds "$ttl" 2>/dev/null)" || ttl_seconds='300'
   fi
 
-  typeset auth_file='' secret_dir='' name='' key=''
+  typeset auth_file='' secret_dir='' name='' key='' secret_name=''
   auth_file="$(_codex_starship_auth_file 2>/dev/null)" || return 0
   secret_dir="$(_codex_starship_secret_dir 2>/dev/null)" || secret_dir=''
-  name="$(_codex_starship_current_name "$auth_file" "$secret_dir" 2>/dev/null)" || return 0
-  key="$(_codex_starship_cache_key "$name" 2>/dev/null)" || return 0
+
+  if [[ -n "$secret_dir" && -d "$secret_dir" ]]; then
+    secret_name="$(_codex_starship_name_from_secret_dir "$auth_file" "$secret_dir" 2>/dev/null)" || secret_name=''
+  fi
+
+  if [[ -n "$secret_name" ]]; then
+    name="$secret_name"
+    key="$(_codex_starship_cache_key "$name" 2>/dev/null)" || return 0
+  else
+    typeset auth_hash=''
+    auth_hash="$(_codex_starship_sha256 "$auth_file" 2>/dev/null)" || auth_hash=''
+    auth_hash="${auth_hash:l}"
+    [[ -n "$auth_hash" ]] || return 0
+    key="auth_${auth_hash}"
+
+    if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_FALLBACK_NAME-}"; then
+      typeset identity=''
+      identity="$(_codex_starship_auth_identity "$auth_file" 2>/dev/null)" || identity=''
+      if [[ -n "$identity" ]]; then
+        name="$(_codex_starship_name_from_identity "$identity" 2>/dev/null)" || name=''
+      fi
+    fi
+  fi
 
   typeset cache_root="${ZSH_CACHE_DIR-}"
   if [[ -z "$cache_root" ]]; then
@@ -668,6 +689,11 @@ codex-starship() {
   typeset now_epoch=''
   now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
   [[ -n "$now_epoch" && "$now_epoch" == <-> ]] || return 0
+
+  typeset name_prefix=''
+  if [[ -n "$name" ]]; then
+    name_prefix="${name} "
+  fi
 
   typeset cached_out='' cached_is_fresh='false'
   if [[ -f "$cache_file" ]]; then
@@ -704,9 +730,9 @@ codex-starship() {
 
     if [[ -n "$cached_weekly_remaining" && -n "$cached_weekly_reset" ]]; then
       if [[ "$show_5h" == 'true' && -n "$cached_non_weekly_label" && -n "$cached_non_weekly_remaining" ]]; then
-        cached_out="${name} ${cached_non_weekly_label}:${cached_non_weekly_remaining}% W:${cached_weekly_remaining}% ${cached_weekly_reset}"
+        cached_out="${name_prefix}${cached_non_weekly_label}:${cached_non_weekly_remaining}% W:${cached_weekly_remaining}% ${cached_weekly_reset}"
       else
-        cached_out="${name} W:${cached_weekly_remaining}% ${cached_weekly_reset}"
+        cached_out="${name_prefix}W:${cached_weekly_remaining}% ${cached_weekly_reset}"
       fi
     fi
   fi
@@ -798,9 +824,9 @@ codex-starship() {
     typeset out=''
     if [[ "$show_5h" == 'true' ]]; then
       [[ -n "$non_weekly_label" && -n "$non_weekly_remaining" ]] || exit 0
-      out="${name} ${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset}"
+      out="${name_prefix}${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset}"
     else
-      out="${name} W:${weekly_remaining}% ${weekly_reset}"
+      out="${name_prefix}W:${weekly_remaining}% ${weekly_reset}"
     fi
     [[ -n "$out" ]] || exit 0
 

@@ -147,7 +147,7 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded completion.zsh in 219ms
 ✅ Loaded development.zsh (delayed) in 2ms
 
-🍎 yourname on MacBook ~ 🐳 orbstack 🌟 sym 5h:65% W:90% 01-10 20:05
+🍎 yourname on MacBook ~ 🐳 orbstack 🌟 5h:65% W:90% 01-10 20:05
 08:00:00.000 ✔︎
 ```
 

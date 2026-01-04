@@ -5,7 +5,7 @@
 Default output:
 
 ```text
-<name> 5h:<pct>% W:<pct>% <weekly_reset_time_utc>
+[<name> ]5h:<pct>% W:<pct>% <weekly_reset_time_utc>
 ```
 
 Example:
@@ -27,14 +27,15 @@ This command is designed for Starship prompt usage:
 ## 🧾 Output Format
 
 - Default:
-  - `<name> <window>:<remaining>% W:<remaining>% <weekly_reset_time>`
+  - `[<name> ]<window>:<remaining>% W:<remaining>% <weekly_reset_time>`
 - With `--no-5h`:
-  - `<name> W:<remaining>% <weekly_reset_time>`
+  - `[<name> ]W:<remaining>% <weekly_reset_time>`
 
 Notes:
 
-- `<name>` is resolved by hashing the active auth file and matching it to a known profile under `CODEX_SECRET_DIR`
-  (falls back to JWT identity when the secrets directory is unavailable).
+- `<name>` is resolved by hashing the active auth file and matching it to a known profile under `CODEX_SECRET_DIR`.
+  - If a friendly profile match is not found, the name is omitted by default; set `CODEX_STARSHIP_SHOW_FALLBACK_NAME=true`
+    to show the JWT-derived identity (e.g. `user-...`).
 - `<weekly_reset_time>` is the UTC reset time from the weekly window (format is configurable via `--time-format`).
 
 ---
@@ -108,6 +109,7 @@ Notes:
 - `CODEX_STARSHIP_ENABLED`: enable `codex-starship` output and refresh (default: `false`)
 - `CODEX_STARSHIP_TTL`: default cache TTL (default: `5m`)
 - `CODEX_STARSHIP_SHOW_5H`: show the non-weekly window (default: `true`; set `false` to hide)
+- `CODEX_STARSHIP_SHOW_FALLBACK_NAME`: show the JWT-derived identity when no profile match is found (default: `false`)
 - `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
 - `CODEX_AUTH_FILE`: override the auth file path (default: `~/.config/codex-kit/auth.json`, fallback: `~/.codex/auth.json`)
 - `CODEX_SECRET_DIR`: override the secrets/profile directory used for friendly name resolution
