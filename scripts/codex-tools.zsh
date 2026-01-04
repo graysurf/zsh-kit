@@ -1,6 +1,15 @@
 typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
 typeset -g CODEX_CLI_REASONING="${CODEX_CLI_REASONING:-medium}"
 
+# codex-tools: Opt-in Codex skill wrappers.
+#
+# Provides:
+# - `codex-tools` (CLI dispatcher)
+# - `codex-commit-with-scope`
+# - `codex-create-feature-pr`
+# - `codex-find-and-fix-bugs`
+# - `codex-release-workflow`
+
 # _codex_require_allow_dangerous <caller>
 # Guard to prevent running codex with dangerous sandbox bypass unless explicitly enabled.
 _codex_require_allow_dangerous() {
@@ -142,4 +151,66 @@ codex-release-workflow() {
   fi
 
   _codex_exec_dangerous "$prompt"
+}
+
+# _codex_tools_usage [fd]
+# Print top-level usage for `codex-tools`.
+# Usage: _codex_tools_usage [fd]
+_codex_tools_usage() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset fd="${1-1}"
+  print -u"$fd" -r -- 'Usage: codex-tools <command> [args...]'
+  print -u"$fd" -r --
+  print -u"$fd" -r -- 'Commands:'
+  print -u"$fd" -r -- '  commit-with-scope    Run commit-message skill (with git-scope context)'
+  print -u"$fd" -r -- '  create-feature-pr    Run create-feature-pr skill'
+  print -u"$fd" -r -- '  find-and-fix-bugs    Run find-and-fix-bugs skill'
+  print -u"$fd" -r -- '  release-workflow     Run release-workflow skill'
+  print -u"$fd" -r --
+  print -u"$fd" -r -- 'Safety: requires CODEX_ALLOW_DANGEROUS=true'
+  print -u"$fd" -r -- 'Config: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
+  return 0
+}
+
+# codex-tools <command> [args...]
+# Dispatcher for Codex skill helpers.
+# Usage: codex-tools <command> [args...]
+codex-tools() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset cmd="${1-}"
+
+  case "$cmd" in
+    ''|-h|--help|help|list)
+      _codex_tools_usage 1
+      return 0
+      ;;
+    *)
+      ;;
+  esac
+
+  shift
+
+  case "$cmd" in
+    commit-with-scope|commit)
+      codex-commit-with-scope "$@"
+      ;;
+    create-feature-pr|create)
+      codex-create-feature-pr "$@"
+      ;;
+    find-and-fix-bugs|fix-bugs)
+      codex-find-and-fix-bugs "$@"
+      ;;
+    release-workflow|release)
+      codex-release-workflow "$@"
+      ;;
+    *)
+      print -u2 -r -- "codex-tools: unknown command: $cmd"
+      _codex_tools_usage 2
+      return 2
+      ;;
+  esac
 }

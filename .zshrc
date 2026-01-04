@@ -23,13 +23,25 @@ fi
 # ──────────────────────────────
 typeset wrappers_zsh="$ZSH_SCRIPT_DIR/_internal/wrappers.zsh"
 typeset wrappers_bin="$ZSH_CACHE_DIR/wrappers/bin"
-typeset wrappers_check_cmd='codex-starship'
-typeset wrappers_check_path="$wrappers_bin/$wrappers_check_cmd"
-if [[ -f "$wrappers_zsh" && ! -x "$wrappers_check_path" ]]; then
+typeset -a wrappers_check_cmds=(
+  codex-starship
+  codex-tools
+)
+typeset wrappers_needs_update='false'
+typeset wrapper_cmd=''
+for wrapper_cmd in "${wrappers_check_cmds[@]}"; do
+  if [[ ! -x "$wrappers_bin/$wrapper_cmd" ]]; then
+    wrappers_needs_update='true'
+    break
+  fi
+done
+
+if [[ -f "$wrappers_zsh" && "$wrappers_needs_update" == 'true' ]]; then
   source "$wrappers_zsh"
   [[ -o interactive ]] && _wrappers::ensure_all || _wrappers::ensure_all >/dev/null 2>&1 || true
 fi
-if [[ -x "$wrappers_check_path" ]]; then
+
+if [[ -d "$wrappers_bin" ]] && (( ${path[(Ie)$wrappers_bin]} == 0 )); then
   path=("$wrappers_bin" $path)
 fi
 

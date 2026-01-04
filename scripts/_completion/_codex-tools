@@ -1,0 +1,42 @@
+#compdef codex-tools
+
+_codex-tools() {
+  emulate -L zsh -o extendedglob
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
+  typeset -a subcmds
+  subcmds=(
+    'commit-with-scope:Run commit-message skill (with git-scope context)'
+    'create-feature-pr:Run create-feature-pr skill'
+    'find-and-fix-bugs:Run find-and-fix-bugs skill'
+    'release-workflow:Run release-workflow skill'
+    'help:Show usage'
+  )
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:command:->subcmds' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    subcmds)
+      _describe -t commands 'codex-tools command' subcmds && return 0
+      ;;
+    args)
+      local subcmd="${line[1]-${words[2]-}}"
+      subcmd="${subcmd%%[[:space:]]#}"
+      case "$subcmd" in
+        commit-with-scope|create-feature-pr|find-and-fix-bugs|release-workflow)
+          _message 'prompt text'
+          return 0
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _codex-tools codex-tools
+

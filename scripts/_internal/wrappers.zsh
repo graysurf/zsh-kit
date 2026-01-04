@@ -165,6 +165,9 @@ _wrappers::ensure_all() {
   _wrappers::write_wrapper codex-starship codex-starship \
     codex-starship.zsh
 
+  _wrappers::write_wrapper codex-tools codex-tools \
+    codex-tools.zsh
+
   _wrappers::write_wrapper git-tools git-tools \
     git/tools/git-utils.zsh \
     git/tools/git-reset.zsh \

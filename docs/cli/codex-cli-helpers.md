@@ -1,8 +1,8 @@
 # 🤖 Codex CLI Helpers: Opt-In Codex Skill Wrappers
 
-`scripts/codex.zsh` adds four `codex-*` commands that invoke Codex skills with a consistent,
-interactive CLI interface. The helpers are intentionally opt-in and only run when you explicitly
-allow the dangerous sandbox bypass.
+`scripts/codex-tools.zsh` adds a `codex-tools` dispatcher plus four `codex-*` commands that invoke
+Codex skills with a consistent, interactive CLI interface. The helpers are intentionally opt-in
+and only run when you explicitly allow the dangerous sandbox bypass.
 
 ---
 
@@ -16,6 +16,16 @@ allow the dangerous sandbox bypass.
 ---
 
 ## 🛠 Commands
+
+### `codex-tools <command> [args...]`
+
+Dispatcher for the helpers below:
+
+```bash
+codex-tools commit-with-scope "Prefer terse subject lines"
+```
+
+---
 
 ### `codex-commit-with-scope [extra prompt...]`
 

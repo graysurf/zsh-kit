@@ -45,6 +45,7 @@ Output location:
 Generated commands:
 
 - `codex-starship`
+- `codex-tools`
 - `fzf-tools`
 - `git-open`
 - `git-scope`
@@ -54,7 +55,7 @@ Generated commands:
 
 How it is used:
 
-- Login shells: `.zprofile` ensures the wrappers bin dir is on `PATH` and generates wrappers.
+- Interactive shells: `.zshrc` generates wrappers on-demand and prepends the wrappers bin dir to `PATH`.
 
 Notes:
 

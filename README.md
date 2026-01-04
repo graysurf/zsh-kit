@@ -85,7 +85,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── runtime.zsh                   # Interactive runtime (prompt, zoxide, keybindings)
 │   │   └── plugin-hooks.zsh              # Plugin post-load hooks and overrides
 │   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
-│   ├── codex.zsh                         # Codex CLI helpers
+│   ├── codex-tools.zsh                   # Codex CLI helpers
 │   ├── editor.zsh                        # EDITOR + vi wrapper
 │   ├── env.zsh                           # Environment variable exports and init logic
 │   ├── eza.zsh                           # Aliases for eza (modern ls)
@@ -122,7 +122,7 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded plugins.zsh in 34ms
 ✅ Loaded builtin-overrides.zsh in 0ms
 ✅ Loaded chrome-devtools-rdp.zsh in 0ms
-✅ Loaded codex.zsh in 0ms
+✅ Loaded codex-tools.zsh in 0ms
 ✅ Loaded editor.zsh in 0ms
 ✅ Loaded eza.zsh in 0ms
 ✅ Loaded fzf-tools.zsh in 1ms
