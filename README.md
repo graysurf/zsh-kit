@@ -174,7 +174,7 @@ Zsh will now load:
 - `$ZDOTDIR/.zprofile` for login shells
 - `$ZDOTDIR/.zshrc` for interactive shells
 
-For more details, see: `docs/guides/startup-files.md`.
+For more details, see: [docs/guides/startup-files.md](docs/guides/startup-files.md).
 
 Make sure that `.zshrc` sources the bootstrap loader:
 
