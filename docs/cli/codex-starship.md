@@ -30,6 +30,8 @@ This command is designed for Starship prompt usage:
   - `[<name> ]<window>:<remaining>% W:<remaining>% <weekly_reset_time>`
 - With `--no-5h`:
   - `[<name> ]W:<remaining>% <weekly_reset_time>`
+- When cache is stale:
+  - `... (stale)` (suffix; configurable)
 
 Notes:
 
@@ -111,6 +113,7 @@ Notes:
 - `CODEX_STARSHIP_SHOW_5H`: show the non-weekly window (default: `true`; set `false` to hide)
 - `CODEX_STARSHIP_SHOW_FALLBACK_NAME`: show the JWT-derived identity when no profile match is found (default: `false`)
 - `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
+- `CODEX_STARSHIP_STALE_SUFFIX`: appended to cached output when the cache is stale (default: ` (stale)`; set empty to disable)
 - `CODEX_STARSHIP_LOCK_STALE_SECONDS`: consider refresh artifacts (`<token_key>.refresh.lock`, `wham.usage.*`) stale after this many seconds and clear them (default: `90`)
 - `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS`: `curl` connect timeout seconds for `wham/usage` fetch (default: `2`)
 - `CODEX_STARSHIP_CURL_MAX_TIME_SECONDS`: `curl` max time seconds for `wham/usage` fetch (default: `8`)

@@ -882,7 +882,16 @@ codex-starship() {
 
   if [[ "$refresh" != 'true' ]]; then
     if [[ -n "$cached_out" ]]; then
-      print -r -- "$cached_out"
+      typeset out="$cached_out"
+      if [[ "$cached_is_fresh" != 'true' ]]; then
+        typeset stale_suffix="${CODEX_STARSHIP_STALE_SUFFIX- (stale)}"
+        stale_suffix="${stale_suffix%%$'\n'*}"
+        stale_suffix="${stale_suffix%%$'\r'*}"
+        if [[ -n "$stale_suffix" ]]; then
+          out+="$stale_suffix"
+        fi
+      fi
+      print -r -- "$out"
     fi
 
     if [[ -z "$cached_out" || "$cached_is_fresh" != 'true' ]]; then
