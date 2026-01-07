@@ -1,13 +1,11 @@
 # Progress Files
 
-## Index
-
-### In progress
+## In progress
 
 | Date | Feature | PR |
 | --- | --- | --- |
 
-### Archived
+## Archived
 
 | Date | Feature | PR |
 | --- | --- | --- |
