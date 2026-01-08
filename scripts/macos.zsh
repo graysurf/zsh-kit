@@ -279,7 +279,7 @@ brew-cleanup() {
 }
 
 # mactop
-# Run mactop with sudo and a fixed color theme.
+# Run mactop and a fixed color theme.
 # Usage: mactop
 mactop() {
   emulate -L zsh
@@ -297,5 +297,5 @@ mactop() {
     return 127
   fi
 
-  sudo "$mactop_bin" --color cyan
+  "$mactop_bin"
 }
