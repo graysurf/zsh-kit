@@ -95,7 +95,7 @@ ZLE widgets are defined in `hotkeys.zsh`:
 - `Ctrl+B`: `fzf-tools-launcher-widget` (pick a subcommand via `fzf` and execute it)
 - `Ctrl+F`: `fzf-tools-file-widget` (run `fzf-tools file [query]`)
 - `Ctrl+T`: `fzf-tools-def-widget` (run `fzf-tools def [query]`)
-- `Ctrl+G`: `fzf-tools-git-commit-widget` (run `fzf-tools git-commit [query]`)
+- `Ctrl+G`: `fzf-tools-git-commit-widget` (run `fzf-tools git-commit [--snapshot] [query]`)
 - `Ctrl+R`: `fzf-history-widget` (fzf history insert; no execution)
 
 Note: `Ctrl+B` and `Ctrl+F` override the default Emacs-style cursor movement bindings.

@@ -83,17 +83,21 @@ If provided, `query` pre-fills the initial fzf search input.
 🔍 Browse commit history, preview files in any commit, and open in an editor
 
 ```bash
-fzf-tools git-commit [query]
+fzf-tools git-commit [--snapshot] [query]
 ```
 
 Optionally pass a query to pre-fill the initial fuzzy search. If the input also resolves to a commit ref
 (e.g. `HEAD~1`), it will be converted to its short hash to seed the search.
 
+By default, selecting a file opens the current working tree (HEAD) path in your editor. If that path no longer
+exists, you’ll be prompted to open the commit snapshot instead (or use `--snapshot`).
+For deleted files, the snapshot opens the pre-delete version from the parent commit.
+
 **Preview includes:**
 
 - `bat`-highlighted file content
 - Commit-specific snapshot
-- Automatic temp file export to open in your editor
+- Open the selected file in your editor (default: working tree; `--snapshot` exports a temp snapshot file)
 
 ### 🧭 Two-step interaction
 
@@ -104,7 +108,7 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 2. **Step 2: Pick a file**  
    After selecting a commit, choose a modified file.  
    The preview shows a colorized `git diff` via `delta`.  
-   Upon selection, the file's snapshot is extracted and opened in your editor.
+   Upon selection, the file is opened in your editor (default: the current working tree path; `--snapshot` opens the commit snapshot).
 
 #### 📌 Step 1: Commit selection with scope preview
 
@@ -114,8 +118,9 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 
 ![fzf-git-commit-2](../../assets/fzf-git-commit-2.png)
 
-> Press `Enter` to open the selected file snapshot in your editor.  
-> Configure `FZF_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.
+> Press `Enter` to open the selected file in your editor.  
+> Configure `FZF_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.  
+> Use `--snapshot` to always open the selected file snapshot (exported to a temp file).
 
 ---
 

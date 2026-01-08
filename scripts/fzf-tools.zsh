@@ -17,7 +17,7 @@ alias fgs='fzf-git-status'
 
 # fgc
 # Alias of `fzf-git-commit`.
-# Usage: fgc [ref]
+# Usage: fgc [--snapshot] [query]
 alias fgc='fzf-git-commit'
 
 # ff
@@ -488,12 +488,44 @@ _fzf_find_git_root_upwards() {
   return 1
 }
 
+# _fzf_open_in_vscode_workspace <workspace_root> <file>
+# Open a file in VSCode within a specific workspace root.
+# Usage: _fzf_open_in_vscode_workspace <workspace_root> <file>
+# Notes:
+# - If the workspace root differs from the last opened one in this shell session, forces a new window.
+_fzf_open_in_vscode_workspace() {
+  emulate -L zsh
+  setopt err_return
+
+  typeset workspace_root="${1-}"
+  typeset file="${2-}"
+  [[ -z "$workspace_root" || -z "$file" ]] && return 1
+
+  if ! command -v code >/dev/null 2>&1; then
+    print -u2 -r -- "❌ 'code' not found"
+    return 127
+  fi
+
+  typeset workspace_path="${workspace_root:A}"
+  typeset file_path="${file:A}"
+
+  typeset -a code_args
+  code_args=(--goto "$file_path")
+
+  if [[ "${_FZF_VSCODE_LAST_GIT_ROOT-}" != "$workspace_path" ]]; then
+    code_args=(--new-window "${code_args[@]}")
+  fi
+  typeset -g _FZF_VSCODE_LAST_GIT_ROOT="$workspace_path"
+  code_args+=(-- "$workspace_path")
+
+  code "${code_args[@]}"
+}
+
 # _fzf_open_in_vscode <file>
 # Open a file in VSCode, preferring a Git root folder as workspace.
 # Usage: _fzf_open_in_vscode <file>
 # Notes:
 # - Searches up to 5 parent dirs for `.git`; if found, opens that directory as the VSCode workspace root.
-# - If the resolved git root differs from the last opened one in this shell session, forces a new window.
 _fzf_open_in_vscode() {
   emulate -L zsh
   setopt err_return
@@ -501,27 +533,21 @@ _fzf_open_in_vscode() {
   typeset file="${1-}"
   [[ -z "$file" ]] && return 1
 
+  typeset file_path="${file:A}"
+  typeset git_root=''
+  git_root="$(_fzf_find_git_root_upwards "${file_path:h}" 5)" || git_root=""
+
+  if [[ -n "$git_root" ]]; then
+    _fzf_open_in_vscode_workspace "$git_root" "$file_path"
+    return $?
+  fi
+
   if ! command -v code >/dev/null 2>&1; then
     print -u2 -r -- "❌ 'code' not found"
     return 127
   fi
 
-  typeset file_path="${file:A}"
-  typeset git_root=''
-  git_root="$(_fzf_find_git_root_upwards "${file_path:h}" 5)" || git_root=""
-
-  typeset -a code_args
-  code_args=(--goto "$file_path")
-
-  if [[ -n "$git_root" ]]; then
-    if [[ "${_FZF_VSCODE_LAST_GIT_ROOT-}" != "$git_root" ]]; then
-      code_args=(--new-window "${code_args[@]}")
-    fi
-    typeset -g _FZF_VSCODE_LAST_GIT_ROOT="$git_root"
-    code_args+=(-- "$git_root")
-  fi
-
-  code "${code_args[@]}"
+  code --goto "$file_path"
 }
 
 # _fzf_parse_open_with_flags [args...]
@@ -730,11 +756,14 @@ fzf-git-checkout() {
   git checkout "$ref" && printf "✅ Checked out to %s\n" "$ref"
 }
 
-# fzf-git-commit [query]
+# fzf-git-commit [--snapshot] [query]
 # Browse commits and open changed files in an editor.
-# Usage: fzf-git-commit [query]
+# Usage: fzf-git-commit [--snapshot] [query]
+# Options:
+# - --snapshot: Open the selected file snapshot from the chosen commit (exported to a temp file).
 # Notes:
 # - Optional query pre-fills the initial fzf search. If it also resolves to a commit ref, uses its short hash.
+# - Default behavior opens the file in the current working tree (HEAD) at the same path; if missing, prompts to open snapshot.
 # - Uses `FZF_FILE_OPEN_WITH` to choose editor: `vi` (default) or `vscode`.
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
@@ -745,10 +774,24 @@ fzf-git-commit() {
   _fzf_ensure_git_utils || return 1
   _fzf_ensure_git_scope || return 1
 
+  zmodload zsh/zutil 2>/dev/null || {
+    print -u2 -r -- "❌ zsh/zutil is required for zparseopts."
+    return 1
+  }
+
+  typeset -A opts=()
+  zparseopts -D -E -A opts -- \
+    -snapshot || return 2
+
+  typeset snapshot=false
+  (( ${+opts[--snapshot]} )) && snapshot=true
+
   local input="$*"
   local full_hash='' commit='' file=''
   local tmp='' commit_query='' commit_query_restore='' selected_commit=''
   typeset open_with="${FZF_FILE_OPEN_WITH:-vi}"
+  local repo_root=''
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || repo_root=''
 
   if [[ -n "$input" ]]; then
     full_hash=$(get_commit_hash "$input" 2>/dev/null)
@@ -796,13 +839,37 @@ fzf-git-commit() {
       continue
     fi
 
+    local worktree_file="${repo_root}/${file}"
+
+    if ! $snapshot; then
+      if [[ -e "$worktree_file" ]]; then
+        if [[ "$open_with" == "vscode" ]]; then
+          if ! _fzf_open_in_vscode_workspace "$repo_root" "$worktree_file"; then
+            print -u2 -r -- "❌ Failed to open in VSCode; falling back to vi"
+            vi -- "$worktree_file"
+          fi
+        else
+          vi -- "$worktree_file"
+        fi
+        break
+      fi
+
+      print -u2 -r -- "❌ File no longer exists in working tree: $file"
+      _fzf_confirm "🧾 Open snapshot from %s instead? [y/N] " "$commit" || return 1
+    fi
+
     tmp="/tmp/git-${commit//\//_}-${file##*/}"
-    git show "${commit}:${file}" > "$tmp"
+    if ! git show "${commit}:${file}" >| "$tmp" 2>/dev/null; then
+      if ! git show "${commit}^:${file}" >| "$tmp" 2>/dev/null; then
+        command rm -f -- "$tmp" 2>/dev/null || true
+        print -u2 -r -- "❌ Failed to extract snapshot: ${commit}:${file} (or ${commit}^:${file})"
+        return 1
+      fi
+    fi
+
     if [[ "$open_with" == "vscode" ]]; then
-      if command -v code >/dev/null 2>&1; then
-        code -- "$tmp"
-      else
-        print -u2 -r -- "❌ 'code' not found; falling back to vi"
+      if ! _fzf_open_in_vscode_workspace "$repo_root" "$tmp"; then
+        print -u2 -r -- "❌ Failed to open in VSCode; falling back to vi"
         vi -- "$tmp"
       fi
     else
