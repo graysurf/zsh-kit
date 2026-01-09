@@ -57,6 +57,7 @@ Links:
 - Workspace strategy:
   - For each input file, find the nearest git root by searching up to 5 parent directories.
   - Group files by git root; files from different git roots open in different VSCode windows.
+  - Enforce window separation by invoking `code --new-window` per git root group (mirrors `scripts/fzf-tools.zsh:_fzf_open_in_vscode_workspace`).
 - Exit codes:
   - `0`: success or no-op (including VSCode CLI missing).
   - `2`: invalid flags/usage.
