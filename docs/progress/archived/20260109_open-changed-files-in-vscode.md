@@ -2,14 +2,14 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2026-01-09 | 2026-01-09 |
+| DONE | 2026-01-09 | 2026-01-09 |
 
 Links:
 
-- PR: [#18](https://github.com/graysurf/zsh-kit/pull/18)
+- PR: https://github.com/graysurf/zsh-kit/pull/18
 - Planning PR (merged): [#17](https://github.com/graysurf/zsh-kit/pull/17)
-- Docs: `docs/cli/open-changed-files.md`
-- Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
+- Docs: [docs/cli/open-changed-files.md](../../cli/open-changed-files.md)
+- Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
 ## Goal
 
