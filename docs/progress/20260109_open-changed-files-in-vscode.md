@@ -85,6 +85,7 @@ Links:
   - Auto-detect (only use `--goto` when args contain line/col suffixes)
 - Define behavior for files with no git root found within 5 parent directories (grouping + workspace argument).
 - Confirm the final input interface for file-list mode: CLI args only vs support stdin (newline-delimited).
+- Handle large file lists (argv length limits): decide whether to chunk per git root and what the chunking strategy is.
 
 ## Steps (Checklist)
 
