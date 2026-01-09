@@ -39,6 +39,7 @@ docs/
 - [`cli/git-lock.md`](cli/git-lock.md) — Commit locking checkpoints (`git-lock`)
 - [`cli/git-tools.md`](cli/git-tools.md) — Router for grouped git helpers (`git-tools`)
 - [`cli/git-summary.md`](cli/git-summary.md) — Contribution stats (`git-summary`)
+- [`cli/open-changed-files.md`](cli/open-changed-files.md) — Open changed files in VS Code (`open-changed-files`)
 
 ---
 

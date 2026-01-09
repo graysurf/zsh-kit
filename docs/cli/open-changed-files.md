@@ -6,15 +6,25 @@ This tool is intended to be used after an LLM edits files, so you can immediatel
 
 ## TL;DR
 
-- Open explicit files (default): `./tools/open-changed-files.zsh path/to/a path/to/b`
-- Open from stdin (no args): `printf "%s\\n" path/to/a path/to/b | ./tools/open-changed-files.zsh`
-- Open git changes: `./tools/open-changed-files.zsh --git`
-- Preview commands: `./tools/open-changed-files.zsh --dry-run ...`
+- Open explicit files (default): `open-changed-files path/to/a path/to/b`
+- Open from stdin (no args): `printf "%s\\n" path/to/a path/to/b | open-changed-files`
+- Open git changes: `open-changed-files --git`
+- Preview commands: `open-changed-files --dry-run ...`
 
-## Wrapper (optional)
+## Wrapper
 
-If you are using zsh-kit cached wrappers (see `scripts/_internal/wrappers.zsh`), a command named
-`open-changed-files` may be available on `PATH` and behaves like `./tools/open-changed-files.zsh`.
+zsh-kit ships a cached wrapper named `open-changed-files` (on `PATH`) that behaves like
+`./tools/open-changed-files.zsh`.
+
+Wrapper config (for reference):
+
+```zsh
+_wrappers::write_exec_wrapper open-changed-files \
+  tools/open-changed-files.zsh
+```
+
+If the wrapper isn't available in your environment, call the script directly via
+`./tools/open-changed-files.zsh ...`.
 
 ## Behavior
 
@@ -30,7 +40,8 @@ If you are using zsh-kit cached wrappers (see `scripts/_internal/wrappers.zsh`),
 ## Usage
 
 ```zsh
-./tools/open-changed-files.zsh [--list|--git] [--workspace-mode pwd|git] [--dry-run] [--verbose] [--max-files N] [--] [files...]
+open-changed-files [--list|--git] [--workspace-mode pwd|git] [--dry-run] [--verbose] [--max-files N] [--] [files...]
+# or: ./tools/open-changed-files.zsh ...
 ```
 
 ### Modes
