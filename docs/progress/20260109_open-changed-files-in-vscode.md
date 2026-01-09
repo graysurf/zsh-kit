@@ -33,6 +33,8 @@ Links:
 - Interface control:
   - Env `OPEN_CHANGED_FILES_SOURCE` defaults to `list`.
   - CLI flags override env (`--list` / `--git` are mutually exclusive).
+  - Env `OPEN_CHANGED_FILES_WORKSPACE_MODE` defaults to `pwd`.
+  - CLI flag `--workspace-mode pwd|git` overrides env.
   - Env `OPEN_CHANGED_FILES_MAX_FILES` defaults to `5`; CLI `--max-files <n>` overrides env.
 - Safety:
   - Missing/non-existent paths are ignored (or reported only under `--verbose`), and never cause a non-zero exit unless usage is invalid.
@@ -58,11 +60,10 @@ Links:
 ### Output
 
 - Side effect: open files in VSCode via `code` CLI.
-- Workspace strategy:
-  - For each input file, find the nearest git root by searching up to 5 parent directories.
-  - Group files by git root; files from different git roots open in different VSCode windows.
-  - Enforce window separation by invoking `code --new-window` per git root group (mirrors `scripts/fzf-tools.zsh:_fzf_open_in_vscode_workspace`).
-  - If no git root is found within 5 parent directories, group the file under the current working directory (`$PWD`) as its workspace.
+- Workspace strategy (configurable):
+  - Default (`OPEN_CHANGED_FILES_WORKSPACE_MODE=pwd`): open everything in a single VSCode window with workspace set to `$PWD`.
+  - `OPEN_CHANGED_FILES_WORKSPACE_MODE=git`: for each file, find the nearest git root by searching up to 5 parent directories, group by git root, and open different git roots in different VSCode windows.
+  - If no git root is found within 5 parent directories, group the file under `$PWD` as its workspace.
 - Chunking strategy:
   - Apply `--max-files` first (default: 5).
   - If `--max-files` is increased, open files per workspace in batches (default: 50) to avoid argv length limits.
@@ -87,10 +88,14 @@ Links:
 - Default to opening plain file paths (no `--goto` unless explicitly requested).
 - Default to opening at most 5 files to avoid overwhelming the editor and to reduce argv length risk.
 - Support stdin input (newline-delimited) when no file args are provided.
+- Default to a single VSCode window (`workspace=$PWD`) and allow opt-in git-root grouping via env/flag.
 
 ### Risks / Uncertainties
 
-- None.
+- Pending discussion:
+  - Default workspace mode: confirm `pwd` (single window) as the default; keep `git` as an opt-in for fzf-like behavior.
+  - VSCode CLI behavior for mixed args: validate that `code -- <workspace_dir> <file1> <file2> ...` reliably opens files in that workspace on macOS/Linux.
+  - Batch behavior: confirm that using `--reuse-window` after the first invocation keeps all batches in the same VSCode window.
 
 ## Steps (Checklist)
 

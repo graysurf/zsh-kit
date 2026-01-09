@@ -8,6 +8,7 @@ typeset -gr SCRIPT_NAME="${SCRIPT_PATH:t}"
 typeset -gi OCF_DEFAULT_MAX_FILES=5
 typeset -gi OCF_GIT_ROOT_MAX_DEPTH=5
 typeset -gi OCF_BATCH_SIZE=50
+typeset -gi OCF_VERBOSE=0
 
 print_usage() {
   emulate -L zsh
@@ -16,7 +17,7 @@ print_usage() {
   print -r -- "Open changed files in VSCode."
   print -r -- ""
   print -r -- "Usage:"
-  print -r -- "  $SCRIPT_NAME [--list|--git] [--dry-run] [--max-files N] [--] [files...]"
+  print -r -- "  $SCRIPT_NAME [--list|--git] [--workspace-mode pwd|git] [--dry-run] [--verbose] [--max-files N] [--] [files...]"
   print -r -- ""
   print -r -- "Modes:"
   print -r -- "  --list  Open explicit file paths (default; stdin fallback when no args)"
@@ -24,11 +25,14 @@ print_usage() {
   print -r -- ""
   print -r -- "Options:"
   print -r -- "  --dry-run       Print planned 'code ...' invocations (does not execute)"
+  print -r -- "  --verbose       Explain no-op behavior and ignored paths (stderr only)"
+  print -r -- "  --workspace-mode pwd|git (default: ${OPEN_CHANGED_FILES_WORKSPACE_MODE:-pwd})"
   print -r -- "  --max-files N   Max files to open (default: ${OPEN_CHANGED_FILES_MAX_FILES:-$OCF_DEFAULT_MAX_FILES})"
   print -r -- "  -h, --help      Show this help"
   print -r -- ""
   print -r -- "Env:"
   print -r -- "  OPEN_CHANGED_FILES_SOURCE=list|git (default: ${OPEN_CHANGED_FILES_SOURCE:-list})"
+  print -r -- "  OPEN_CHANGED_FILES_WORKSPACE_MODE=pwd|git (default: ${OPEN_CHANGED_FILES_WORKSPACE_MODE:-pwd})"
   print -r -- "  OPEN_CHANGED_FILES_MAX_FILES=<n>     (default: $OCF_DEFAULT_MAX_FILES)"
 }
 
@@ -41,6 +45,14 @@ _ocf::die_usage() {
   print -u2 -r -- ""
   print_usage >&2
   return 2
+}
+
+_ocf::log() {
+  emulate -L zsh
+  setopt err_return nounset
+
+  (( OCF_VERBOSE )) || return 0
+  print -u2 -r -- "$@"
 }
 
 _ocf::find_git_root_upwards() {
@@ -89,7 +101,10 @@ _ocf::collect_list_files() {
   for raw in "${input[@]}"; do
     [[ -z "$raw" ]] && continue
     abs="${raw:A}"
-    [[ -f "$abs" ]] || continue
+    if [[ ! -f "$abs" ]]; then
+      _ocf::log "skip: not a file: $abs"
+      continue
+    fi
     (( ${+seen[$abs]} )) && continue
     seen[$abs]=1
     out+=("$abs")
@@ -103,8 +118,14 @@ _ocf::collect_git_files() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  command -v git >/dev/null 2>&1 || return 0
-  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+  if ! command -v git >/dev/null 2>&1; then
+    _ocf::log "no-op: git not found"
+    return 0
+  fi
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    _ocf::log "no-op: not inside a git work tree"
+    return 0
+  fi
 
   typeset repo_root=''
   repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 0
@@ -137,14 +158,22 @@ _ocf::print_code_invocation() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
+  typeset window_mode="${1-}"
+  shift
   typeset workspace_root="$1"
   shift
   typeset -a files=("$@")
 
-  typeset -a quoted_files=("${(@q)files}")
-  typeset quoted_workspace="${(q)workspace_root}"
+  typeset -a args=()
+  args+=(code)
+  if [[ "$window_mode" == "new" ]]; then
+    args+=(--new-window)
+  elif [[ "$window_mode" == "reuse" ]]; then
+    args+=(--reuse-window)
+  fi
+  args+=(-- "$workspace_root" "${files[@]}")
 
-  print -r -- "code --new-window -- ${quoted_workspace} ${(j: :)quoted_files}"
+  print -r -- "${(j: :)${(@q)args}}"
 }
 
 _ocf::run_code_invocation() {
@@ -153,11 +182,19 @@ _ocf::run_code_invocation() {
 
   command -v code >/dev/null 2>&1 || return 0
 
+  typeset window_mode="${1-}"
+  shift
   typeset workspace_root="$1"
   shift
   typeset -a files=("$@")
 
-  code --new-window -- "$workspace_root" "${files[@]}"
+  if [[ "$window_mode" == "new" ]]; then
+    code --new-window -- "$workspace_root" "${files[@]}"
+  elif [[ "$window_mode" == "reuse" ]]; then
+    code --reuse-window -- "$workspace_root" "${files[@]}"
+  else
+    code -- "$workspace_root" "${files[@]}"
+  fi
 }
 
 main() {
@@ -170,12 +207,15 @@ main() {
   }
 
   typeset -A opts=()
-  zparseopts -D -E -A opts -- h -help -list -git -dry-run -max-files: || return 2
+  zparseopts -D -E -A opts -- h -help v -verbose -list -git -dry-run -workspace-mode: -max-files: || return 2
 
   if (( ${+opts[-h]} || ${+opts[--help]} )); then
     print_usage
     return 0
   fi
+
+  OCF_VERBOSE=0
+  (( ${+opts[-v]} || ${+opts[--verbose]} )) && OCF_VERBOSE=1
 
   if (( ${+opts[--list]} && ${+opts[--git]} )); then
     _ocf::die_usage "Flags are mutually exclusive: --list and --git"
@@ -191,10 +231,20 @@ main() {
     return $?
   fi
 
+  typeset workspace_mode="${OPEN_CHANGED_FILES_WORKSPACE_MODE:-pwd}"
+  typeset workspace_raw="${opts[--workspace-mode]-}"
+  workspace_raw="${workspace_raw#=}"
+  [[ -n "$workspace_raw" ]] && workspace_mode="$workspace_raw"
+  if [[ "$workspace_mode" != "pwd" && "$workspace_mode" != "git" ]]; then
+    _ocf::die_usage "Invalid workspace mode: $workspace_mode (expected: pwd|git)"
+    return $?
+  fi
+
   typeset -i dry_run=0
   (( ${+opts[--dry-run]} )) && dry_run=1
 
   typeset max_raw="${opts[--max-files]-}"
+  max_raw="${max_raw#=}"
   [[ -z "$max_raw" ]] && max_raw="${OPEN_CHANGED_FILES_MAX_FILES:-$OCF_DEFAULT_MAX_FILES}"
   [[ "$max_raw" != <-> ]] && { _ocf::die_usage "Invalid --max-files: $max_raw"; return $?; }
   typeset -i max_files="$max_raw"
@@ -202,7 +252,10 @@ main() {
   (( max_files == 0 )) && return 0
 
   if (( !dry_run )); then
-    command -v code >/dev/null 2>&1 || return 0
+    if ! command -v code >/dev/null 2>&1; then
+      _ocf::log "no-op: 'code' not found"
+      return 0
+    fi
   fi
 
   typeset -a files=()
@@ -213,7 +266,7 @@ main() {
   fi
 
   (( ${#files[@]} == 0 )) && return 0
-  files=("${files[@]:0:max_files}")
+  files=("${files[@]:0:$max_files}")
 
   typeset pwd_workspace="${PWD:A}"
   typeset -A groups=()
@@ -221,14 +274,19 @@ main() {
 
   typeset file='' workspace=''
   for file in "${files[@]}"; do
-    workspace="$(_ocf::find_git_root_upwards "${file:h}" "$OCF_GIT_ROOT_MAX_DEPTH" || true)"
-    [[ -z "$workspace" ]] && workspace="$pwd_workspace"
+    if [[ "$workspace_mode" == "git" ]]; then
+      workspace="$(_ocf::find_git_root_upwards "${file:h}" "$OCF_GIT_ROOT_MAX_DEPTH" || true)"
+      [[ -z "$workspace" ]] && workspace="$pwd_workspace"
+    else
+      workspace="$pwd_workspace"
+    fi
 
     if [[ -z "${groups[$workspace]-}" ]]; then
-      groups[$workspace]=''
+      groups[$workspace]="$file"
       workspace_order+=("$workspace")
+    else
+      groups[$workspace]+=$'\n'"$file"
     fi
-    groups[$workspace]+="$file"$'\n'
   done
 
   typeset -i batch_size="$OCF_BATCH_SIZE"
@@ -237,14 +295,21 @@ main() {
   for workspace in "${workspace_order[@]}"; do
     ws_files=("${(@f)${groups[$workspace]}}")
     idx=0
+    typeset -i is_first=1
     while (( idx < ${#ws_files[@]} )); do
-      batch=("${ws_files[@]:idx:batch_size}")
+      batch=("${ws_files[@]:$idx:$batch_size}")
       idx=$(( idx + batch_size ))
 
+      typeset window_mode='new'
+      if (( !is_first )); then
+        window_mode='reuse'
+      fi
+      is_first=0
+
       if (( dry_run )); then
-        _ocf::print_code_invocation "$workspace" "${batch[@]}"
+        _ocf::print_code_invocation "$window_mode" "$workspace" "${batch[@]}"
       else
-        _ocf::run_code_invocation "$workspace" "${batch[@]}"
+        _ocf::run_code_invocation "$window_mode" "$workspace" "${batch[@]}"
       fi
     done
   done
@@ -253,4 +318,3 @@ main() {
 }
 
 main "$@"
-
