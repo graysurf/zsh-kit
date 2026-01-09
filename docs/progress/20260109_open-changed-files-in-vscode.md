@@ -31,6 +31,7 @@ Links:
 - Interface control:
   - Env `OPEN_CHANGED_FILES_SOURCE` defaults to `list`.
   - CLI flags override env (`--list` / `--git` are mutually exclusive).
+  - Env `OPEN_CHANGED_FILES_MAX_FILES` defaults to `5`; CLI `--max-files <n>` overrides env.
 - Safety:
   - Missing/non-existent paths are ignored (or reported only under `--verbose`), and never cause a non-zero exit unless usage is invalid.
 
@@ -84,7 +85,6 @@ Links:
 ### Risks / Uncertainties
 
 - Confirm the final input interface for file-list mode: CLI args only vs support stdin (newline-delimited).
-- Decide how the max file limit is configured (proposed: env `OPEN_CHANGED_FILES_MAX_FILES` default `5`, and CLI `--max-files <n>` overrides env).
 - If `--max-files` is increased, decide whether to implement chunking per git root to avoid argv length limits.
 
 ## Steps (Checklist)
