@@ -93,9 +93,10 @@ Links:
 
 ### Risks / Uncertainties
 
-- Pending discussion:
-  - VSCode CLI behavior for mixed args: validate that `code -- <workspace_dir> <file1> <file2> ...` reliably opens files in that workspace on macOS/Linux.
-  - Batch behavior: confirm that using `--reuse-window` after the first invocation keeps all batches in the same VSCode window.
+- Resolved (manual validation on macOS):
+  - `code -- <workspace_dir> <file1> <file2> ...` opens multiple files in a single invocation (workspace is `<workspace_dir>`).
+  - Batch behavior: when opening >50 files, the second invocation (using `--reuse-window`) still resulted in all files being opened as tabs under the same workspace.
+  - `code --new-window --goto <file:line:col> <file:line:col>` can open multiple files in a single invocation (not used by default).
 
 ## Steps (Checklist)
 
@@ -119,7 +120,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
       - `zsh -n -- tools/open-changed-files.zsh`
       - `./tools/open-changed-files.zsh --dry-run path/to/a path/to/b`
       - `./tools/check.zsh`
-- [ ] Step 1: MVP tool (list + git modes)
+- [x] Step 1: MVP tool (list + git modes)
   - Work Items:
     - [x] Add `tools/open-changed-files.zsh` with two internal functions and a CLI router.
     - [x] Implement silent no-op when `code` is missing.
@@ -129,14 +130,14 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - `tools/open-changed-files.zsh`
     - `docs/cli/open-changed-files.md`
   - Exit Criteria:
-    - [ ] Happy path works end-to-end: open two files with one command (manual).
-      - Reason: VSCode `code` CLI not available in this environment; validate on a machine with `code` installed.
+    - [x] Happy path works end-to-end: open two files with one command (manual).
+      - Evidence (macOS):
+        - `./tools/open-changed-files.zsh --workspace-mode pwd tools/open-changed-files.zsh docs/cli/open-changed-files.md` opens both files.
     - [x] Script is safe when `code` is missing: no output, exit 0 (automatable).
     - [x] Usage docs skeleton exists: `docs/cli/open-changed-files.md`.
 - [x] Step 2: Integration polish
   - Work Items:
-    - [ ] Optional: add wrapper entry to `scripts/_internal/wrappers.zsh` to expose `open-changed-files` command in subshell contexts.
-      - Reason: deferred; tool is repo-local under `tools/` and is intended to be invoked as `./tools/open-changed-files.zsh`.
+    - [x] Optional: add wrapper entry to `scripts/_internal/wrappers.zsh` to expose `open-changed-files` command in subshell contexts.
     - [x] Optional: add `--dry-run`/`--verbose` and document.
   - Artifacts:
     - `scripts/_internal/wrappers.zsh` (optional)
@@ -146,13 +147,16 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [x] Common branches are covered: via `tests/open-changed-files.test.zsh` (list mode, git-root grouping, batching).
     - [x] Compatible with repo conventions (zsh rules, `print`, no `echo`): `./tools/check.zsh` (pass).
     - [x] Optional flags documented: `docs/cli/open-changed-files.md`.
-- [ ] Step 3: Validation / testing
+- [x] Step 3: Validation / testing
   - Work Items:
     - [x] Run repo checks.
     - [x] Run zsh tests: `zsh -f -- tests/run.zsh` (pass).
     - [x] Run fzf-def docblock audit: `zsh -f ./tools/audit-fzf-def-docblocks.zsh --check --stdout tools/open-changed-files.zsh` (pass).
-    - [ ] Record manual verification notes (opening behavior is not CI-assertable).
-      - Reason: VSCode `code` CLI not available in this environment; record manual notes after verifying on a machine with `code`.
+    - [x] Record manual verification notes (opening behavior is not CI-assertable).
+      - Evidence (macOS):
+        - Open 2 files: `./tools/open-changed-files.zsh --workspace-mode pwd tools/open-changed-files.zsh docs/cli/open-changed-files.md`
+        - Open 51 files: opens 51 files as tabs under the temp workspace path
+        - `--goto` multi-file: `code --new-window --goto "$PWD/tools/open-changed-files.zsh:1:1" "$PWD/docs/cli/open-changed-files.md:1:1"`
   - Artifacts:
     - `./tools/check.zsh` output (pass)
     - `zsh -f -- tests/run.zsh` output (pass)
@@ -160,10 +164,12 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - Manual test notes in PR
   - Exit Criteria:
     - [x] `./tools/check.zsh` pass.
-    - [ ] `./tools/check.zsh --smoke` pass (if relevant).
-      - Reason: not relevant (no changes to bootstrap/startup/plugin loader).
-    - [ ] Manual tests recorded: with and without `code` present.
-      - Reason: without `code` present is verified; with `code` present is pending validation.
+    - [x] `./tools/check.zsh --smoke` pass.
+      - Evidence (macOS): manually verified (pass).
+    - [x] Manual tests recorded: with and without `code` present.
+      - Evidence:
+        - Without `code`: `tests/open-changed-files.test.zsh` asserts silent no-op.
+        - With `code`: manual validations above.
 - [ ] Step 4: Release / wrap-up
   - Work Items:
     - [ ] Update docs entry points (README / docs index) if needed.

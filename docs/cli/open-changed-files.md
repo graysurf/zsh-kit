@@ -11,6 +11,11 @@ This tool is intended to be used after an LLM edits files, so you can immediatel
 - Open git changes: `./tools/open-changed-files.zsh --git`
 - Preview commands: `./tools/open-changed-files.zsh --dry-run ...`
 
+## Wrapper (optional)
+
+If you are using zsh-kit cached wrappers (see `scripts/_internal/wrappers.zsh`), a command named
+`open-changed-files` may be available on `PATH` and behaves like `./tools/open-changed-files.zsh`.
+
 ## Behavior
 
 - If the `code` CLI is not found:

@@ -46,6 +46,7 @@ Generated commands:
 
 - `codex-starship`
 - `codex-tools`
+- `open-changed-files`
 - `fzf-tools`
 - `git-open`
 - `git-scope`

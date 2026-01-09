@@ -138,6 +138,66 @@ _wrappers::write_wrapper() {
   return 0
 }
 
+# _wrappers::write_exec_wrapper <name> <exec_relpath>
+# Generate a zsh wrapper script under `$ZDOTDIR/cache/wrappers/bin` that execs a repo-local executable.
+# Usage: _wrappers::write_exec_wrapper <name> <exec_relpath>
+_wrappers::write_exec_wrapper() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset name="${1-}"
+  typeset exec_relpath="${2-}"
+
+  if [[ -z "$name" || -z "$exec_relpath" ]]; then
+    print -u2 -r -- "_wrappers::write_exec_wrapper: Usage: _wrappers::write_exec_wrapper <name> <exec_relpath>"
+    return 2
+  fi
+
+  typeset zdotdir_default='' bin_dir='' out=''
+  zdotdir_default="$(_wrappers::zdotdir)"
+  bin_dir="$(_wrappers::bin_dir)"
+  [[ -d "$bin_dir" ]] || mkdir -p -- "$bin_dir"
+  out="$bin_dir/$name"
+
+  {
+    print -r -- '#!/usr/bin/env -S zsh -f'
+    print -r --
+    print -r -- "typeset -r ZDOTDIR_DEFAULT='${zdotdir_default}'"
+    print -r -- 'if [[ -z "${ZDOTDIR-}" ]]; then'
+    print -r -- '  export ZDOTDIR="$ZDOTDIR_DEFAULT"'
+    print -r -- 'fi'
+    print -r --
+    print -r -- 'export ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-$ZDOTDIR/config}"'
+    print -r -- 'export ZSH_BOOTSTRAP_SCRIPT_DIR="${ZSH_BOOTSTRAP_SCRIPT_DIR:-$ZDOTDIR/bootstrap}"'
+    print -r -- 'export ZSH_SCRIPT_DIR="${ZSH_SCRIPT_DIR:-$ZDOTDIR/scripts}"'
+    print -r --
+    print -r -- 'typeset wrapper_bin="${0:A:h}"'
+    print -r -- '[[ -d "$wrapper_bin" ]] && export PATH="$wrapper_bin:$PATH"'
+    print -r -- 'typeset wrapper_cache_dir="${wrapper_bin:h:h}"'
+    print -r -- 'export ZSH_CACHE_DIR="${ZSH_CACHE_DIR:-$wrapper_cache_dir}"'
+    print -r -- 'export ZSH_COMPDUMP="${ZSH_COMPDUMP:-$ZSH_CACHE_DIR/.zcompdump}"'
+    print -r --
+    print -r -- '[[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p -- "$ZSH_CACHE_DIR"'
+    print -r --
+    print -r -- 'if [[ -f "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh" ]]; then'
+    print -r -- '  source "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"'
+    print -r -- 'fi'
+    print -r --
+    print -r -- "typeset target=\"\$ZDOTDIR/$exec_relpath\""
+    print -r -- 'if [[ -x "$target" ]]; then'
+    print -r -- '  exec "$target" "$@"'
+    print -r -- 'elif [[ -f "$target" ]]; then'
+    print -r -- '  exec zsh -f -- "$target" "$@"'
+    print -r -- 'else'
+    print -r -- '  print -u2 -r -- "❌ missing executable: $target"'
+    print -r -- '  exit 1'
+    print -r -- 'fi'
+  } >| "$out"
+
+  chmod 755 "$out"
+  return 0
+}
+
 # _wrappers::ensure_all
 # Generate all cached CLI wrapper scripts (for subshells like fzf preview).
 # Usage: _wrappers::ensure_all
@@ -167,6 +227,9 @@ _wrappers::ensure_all() {
 
   _wrappers::write_wrapper codex-tools codex-tools \
     codex-tools.zsh
+
+  _wrappers::write_exec_wrapper open-changed-files \
+    tools/open-changed-files.zsh
 
   _wrappers::write_wrapper git-tools git-tools \
     git/tools/git-utils.zsh \
