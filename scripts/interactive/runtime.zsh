@@ -30,7 +30,7 @@ if [[ -f "$ZSH_CONFIG_DIR/starship.toml" ]]; then
   export STARSHIP_CONFIG="$ZSH_CONFIG_DIR/starship.toml"
 fi
 
-if command -v starship >/dev/null 2>&1; then
+if [[ -o interactive && -t 0 && -t 1 && -n "${TERM-}" && "${TERM-}" != "dumb" ]] && command -v starship >/dev/null 2>&1; then
   eval "$(starship init zsh)"
 fi
 
