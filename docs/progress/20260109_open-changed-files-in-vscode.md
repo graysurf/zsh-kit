@@ -49,7 +49,7 @@ Links:
 ### Input
 
 - File-list mode: file paths from CLI args and/or stdin (newline-delimited) (final interface TBD).
-- Git mode: working tree changes derived from `git` (selection rules TBD: staged/unstaged/untracked).
+- Git mode: working tree changes derived from `git` (staged + unstaged + untracked; skip deleted paths).
 
 ### Output
 
@@ -107,7 +107,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [ ] Add `tools/open-changed-files.zsh` with two internal functions and a CLI router.
     - [ ] Implement silent no-op when `code` is missing.
     - [ ] Implement list mode de-dupe + ignore missing paths.
-    - [ ] Implement git mode discovery (modified + untracked) when in a git work tree.
+    - [ ] Implement git mode discovery (staged + unstaged + untracked) when in a git work tree.
   - Artifacts:
     - `tools/open-changed-files.zsh`
     - `docs/cli/open-changed-files.md`
