@@ -60,6 +60,64 @@ _ocf::log() {
   print -u2 -r -- "$@"
 }
 
+# _ocf::resolve_code_path: Resolve a usable VSCode CLI path on macOS/Linux.
+# Usage: _ocf::resolve_code_path
+# Output:
+# - Prints resolved path to stdout on success.
+_ocf::resolve_code_path() {
+  emulate -L zsh
+  setopt err_return nounset
+
+  typeset code_path=''
+  if command -v code >/dev/null 2>&1; then
+    code_path="$(command -v code)"
+    print -r -- "$code_path"
+    return 0
+  fi
+
+  typeset os="${OSTYPE-}"
+  typeset home="${HOME-}"
+  typeset -a candidates=()
+
+  if [[ "$os" == darwin* ]]; then
+    candidates+=(
+      /usr/local/bin/code
+      /opt/homebrew/bin/code
+      "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+      "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code"
+    )
+    if [[ -n "$home" ]]; then
+      candidates+=(
+        "$home/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+        "$home/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code"
+      )
+    fi
+  else
+    candidates+=(
+      /usr/bin/code
+      /usr/local/bin/code
+      /snap/bin/code
+      /var/lib/flatpak/exports/bin/com.visualstudio.code
+    )
+    if [[ -n "$home" ]]; then
+      candidates+=(
+        "$home/.local/bin/code"
+        "$home/bin/code"
+        "$home/.linuxbrew/bin/code"
+      )
+    fi
+  fi
+
+  typeset candidate=''
+  for candidate in "${candidates[@]}"; do
+    [[ -x "$candidate" ]] || continue
+    print -r -- "$candidate"
+    return 0
+  done
+
+  return 1
+}
+
 # _ocf::find_git_root_upwards: Find nearest git root within N parent levels.
 # Usage: _ocf::find_git_root_upwards <start_dir> [max_depth]
 # Output:
@@ -184,7 +242,8 @@ _ocf::print_code_invocation() {
   typeset -a files=("$@")
 
   typeset -a args=()
-  args+=(code)
+  typeset code_bin="${OCF_CODE_PATH:-code}"
+  args+=("$code_bin")
   if [[ "$window_mode" == "new" ]]; then
     args+=(--new-window)
   elif [[ "$window_mode" == "reuse" ]]; then
@@ -201,7 +260,8 @@ _ocf::run_code_invocation() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  command -v code >/dev/null 2>&1 || return 0
+  typeset code_bin="${OCF_CODE_PATH-}"
+  [[ -z "$code_bin" ]] && return 0
 
   typeset window_mode="${1-}"
   shift
@@ -210,11 +270,11 @@ _ocf::run_code_invocation() {
   typeset -a files=("$@")
 
   if [[ "$window_mode" == "new" ]]; then
-    code --new-window -- "$workspace_root" "${files[@]}"
+    "$code_bin" --new-window -- "$workspace_root" "${files[@]}"
   elif [[ "$window_mode" == "reuse" ]]; then
-    code --reuse-window -- "$workspace_root" "${files[@]}"
+    "$code_bin" --reuse-window -- "$workspace_root" "${files[@]}"
   else
-    code -- "$workspace_root" "${files[@]}"
+    "$code_bin" -- "$workspace_root" "${files[@]}"
   fi
 }
 
@@ -274,8 +334,11 @@ main() {
   (( max_files < 0 )) && { _ocf::die_usage "--max-files must be >= 0"; return $?; }
   (( max_files == 0 )) && return 0
 
-  if (( !dry_run )); then
-    if ! command -v code >/dev/null 2>&1; then
+  OCF_CODE_PATH="$(_ocf::resolve_code_path 2>/dev/null || true)"
+  if [[ -z "$OCF_CODE_PATH" ]]; then
+    if (( dry_run )); then
+      OCF_CODE_PATH='code'
+    else
       _ocf::log "no-op: 'code' not found"
       return 0
     fi
