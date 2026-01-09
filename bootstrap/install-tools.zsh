@@ -18,6 +18,10 @@
 #   This script checks for required CLI tools defined in $ZSH_CONFIG_DIR/tools.list.
 #   With --all, it also installs optional tools from $ZSH_CONFIG_DIR/tools.optional.list.
 #
+#   On macOS (darwin), it will also include tools from:
+#     - $ZSH_CONFIG_DIR/tools.macos.list
+#     - $ZSH_CONFIG_DIR/tools.optional.macos.list (with --all, if present)
+#
 #   It prompts for confirmation before proceeding, unless --dry-run is used.
 #
 #   Homebrew runs on both macOS and Linux; if brew is missing, run ./install-tools.zsh to bootstrap it.
@@ -43,6 +47,8 @@ fi
 
 TOOLS_REQUIRED_LIST="$ZSH_CONFIG_DIR/tools.list"
 TOOLS_OPTIONAL_LIST="$ZSH_CONFIG_DIR/tools.optional.list"
+TOOLS_MACOS_LIST="$ZSH_CONFIG_DIR/tools.macos.list"
+TOOLS_OPTIONAL_MACOS_LIST="$ZSH_CONFIG_DIR/tools.optional.macos.list"
 DRY_RUN=false
 QUIET=false
 INCLUDE_OPTIONAL=false
@@ -141,8 +147,22 @@ for arg in "$@"; do
 done
 
 typeset -a tools_list_files=("$TOOLS_REQUIRED_LIST")
+case "${OSTYPE-}" in
+  darwin*)
+    if [[ -f "$TOOLS_MACOS_LIST" ]]; then
+      tools_list_files+=("$TOOLS_MACOS_LIST")
+    fi
+    ;;
+esac
 if [[ "$INCLUDE_OPTIONAL" == true ]]; then
   tools_list_files+=("$TOOLS_OPTIONAL_LIST")
+  case "${OSTYPE-}" in
+    darwin*)
+      if [[ -f "$TOOLS_OPTIONAL_MACOS_LIST" ]]; then
+        tools_list_files+=("$TOOLS_OPTIONAL_MACOS_LIST")
+      fi
+      ;;
+  esac
 fi
 
 if [[ ! -f "$TOOLS_REQUIRED_LIST" ]]; then

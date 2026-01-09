@@ -58,7 +58,9 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── plugins.list                      # Active plugin list used by loader (declarative)
 │   ├── starship.toml                     # Starship prompt config (theme, modules, etc.)
 │   ├── tools.list                        # Required CLI tools declaration (tool::brew-name::comment)
-│   └── tools.optional.list               # Optional CLI tools declaration (tool::brew-name::comment)
+│   ├── tools.macos.list                  # macOS-only required tools (tool::brew-name::comment)
+│   ├── tools.optional.list               # Optional CLI tools declaration (tool::brew-name::comment)
+│   └── tools.optional.macos.list         # macOS-only optional tools (tool::brew-name::comment)
 │
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases

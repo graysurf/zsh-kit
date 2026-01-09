@@ -59,7 +59,6 @@ ncdu::ncdu::Disk usage analyzer
 bandwhich::bandwhich::Per-process network utilization
 hyperfine::hyperfine::Command-line benchmarking tool
 tokei::tokei::Code statistics (lines/files by language)
-mactop::mactop::Apple Silicon Monitor Top
 fastfetch::fastfetch::System info snapshot for bug reports
 
 # API / network debugging (power tools)

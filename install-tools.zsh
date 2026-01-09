@@ -7,8 +7,12 @@
 #
 # This helper script installs all required tools declared in:
 #   config/tools.list
+# On macOS, it also includes:
+#   config/tools.macos.list
 # Optional tools can be added from:
 #   config/tools.optional.list (with --all)
+# On macOS, optional tools can also be added from:
+#   config/tools.optional.macos.list (with --all, if present)
 #
 # Usage:
 #   ./install-tools.zsh [--dry-run] [--quiet] [--all]
