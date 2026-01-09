@@ -9,7 +9,6 @@ if command -v safe_unalias >/dev/null; then
     gl gp gpf gpff \
     gpo gpfo gpffo \
     git-zip \
-    lg lgr \
     gt gt2 gt3 gt5
 fi
 
@@ -131,34 +130,23 @@ alias gpffo='git push -f && git-open commit HEAD'
 # Usage: git-zip
 alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short HEAD).zip"'
 
-# lg
-# List files (long format) with Git status via `eza`.
-# Usage: lg [args...]
-alias lg='eza -alh --icons --group-directories-first --color=always --git --time-style=iso'
-
-# lgr
-# List directories with Git repo status indicators via `eza`.
-# Usage: lgr [args...]
-alias lgr='eza -alh --icons --group-directories-first --color=always --git --git-repos --time-style=iso'
-
 # ────────────────────────────────────────────────────────
-# Directory tree view aliases (with Git-aware listings)
+# Commit graph helpers (tree view)
 # ────────────────────────────────────────────────────────
 
-# git-tree [depth] [path...]
-# Git-aware tree view using `eza`.
-# Usage: git-tree [depth] [path...]
+# git-tree [count] [git-log-args...]
+# Show a commit graph (tree) view.
+# Usage: git-tree [count] [git-log-args...]
 # Notes:
-# - If the first argument is a number, it is treated as the depth (`eza --level`).
+# - If the first argument is a number, it is treated as `git log -n <count>`.
 git-tree() {
-  # If first argument is a number, treat it as depth (--level)
-  local level_flag=()
   local first_arg="${1-}"
+  local -a count_flag=()
   if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
-    level_flag=(--level "$first_arg")
+    count_flag=(-n "$first_arg")
     shift
   fi
-  eza -aT --git-ignore --group-directories-first --color=always --icons "${level_flag[@]}" "$@"
+  command git log --graph --decorate --oneline --all "${count_flag[@]}" "$@"
   return $?
 }
 
@@ -168,16 +156,16 @@ git-tree() {
 alias gt='git-tree'
 
 # gt2
-# Alias of `gt -L 2` (tree depth 2).
-# Usage: gt2 [args...]
-alias gt2='gt -L 2'
+# Alias of `gt 2` (limit to 2 commits).
+# Usage: gt2 [git-log-args...]
+alias gt2='gt 2'
 
 # gt3
-# Alias of `gt -L 3` (tree depth 3).
-# Usage: gt3 [args...]
-alias gt3='gt -L 3'
+# Alias of `gt 3` (limit to 3 commits).
+# Usage: gt3 [git-log-args...]
+alias gt3='gt 3'
 
 # gt5
-# Alias of `gt -L 5` (tree depth 5).
-# Usage: gt5 [args...]
-alias gt5='gt -L 5'
+# Alias of `gt 5` (limit to 5 commits).
+# Usage: gt5 [git-log-args...]
+alias gt5='gt 5'
