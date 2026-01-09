@@ -4,7 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-09 | [Open changed files in VSCode](20260109_open-changed-files-in-vscode.md) | TBD |
+| 2026-01-09 | [Open changed files in VSCode](20260109_open-changed-files-in-vscode.md) | [#17](https://github.com/graysurf/zsh-kit/pull/17) |
 
 ## Archived
 
