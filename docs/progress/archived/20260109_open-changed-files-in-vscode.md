@@ -1,4 +1,4 @@
-# zsh-kit: Open changed files in VSCode
+# Open changed files in VSCode
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -170,15 +170,19 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
       - Evidence:
         - Without `code`: `tests/open-changed-files.test.zsh` asserts silent no-op.
         - With `code`: manual validations above.
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
-    - [ ] Update docs entry points (README / docs index) if needed.
-    - [ ] Mark progress as DONE and archive when shipped.
+    - [x] Update docs entry points (README / docs index).
+      - Evidence: `README.md` now links `docs/cli/open-changed-files.md` under Built-in CLI Tools.
+    - [x] Mark progress as DONE and archive when shipped.
+      - Evidence: `docs/progress/archived/20260109_open-changed-files-in-vscode.md` + `docs/progress/README.md` archived entry.
   - Artifacts:
-    - Docs index links (TBD)
+    - Docs entry points:
+      - `README.md`
+      - `docs/cli/open-changed-files.md`
   - Exit Criteria:
-    - [ ] Documentation completed and entry points updated: README / docs links (TBD).
-    - [ ] Cleanup completed (set status to DONE, archive, update index): close-progress-pr.
+    - [x] Documentation completed and entry points updated: README / docs links.
+    - [x] Cleanup completed (set status to DONE, archive, update index): close-progress-pr.
 
 ## Modules
 
