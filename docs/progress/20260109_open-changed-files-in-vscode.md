@@ -21,12 +21,14 @@ Links:
 - Default (file-list) mode:
   - `./tools/open-changed-files.zsh path/to/a path/to/b` opens both files in a single VSCode instance when `code` exists.
   - When `code` is missing: exits `0` and prints nothing.
+  - When no file args are provided, reads newline-delimited file paths from stdin.
   - `./tools/open-changed-files.zsh --dry-run path/to/a path/to/b` prints the planned `code ...` invocations and exits `0`.
   - By default, opens at most 5 files (configurable); extra files are ignored.
 - Git mode:
-  - `./tools/open-changed-files.zsh --git` opens all changed files when in a git work tree:
+  - `./tools/open-changed-files.zsh --git` opens changed files when in a git work tree:
     - Tracked changed (staged + unstaged)
     - Untracked files
+    - Subject to `OPEN_CHANGED_FILES_MAX_FILES` / `--max-files` (default: 5)
   - When not in a git work tree: exits `0` and prints nothing (or `--verbose` explains and exits `0`).
 - Interface control:
   - Env `OPEN_CHANGED_FILES_SOURCE` defaults to `list`.
@@ -50,8 +52,8 @@ Links:
 
 ### Input
 
-- File-list mode: file paths from CLI args and/or stdin (newline-delimited) (final interface TBD).
-- Git mode: working tree changes derived from `git` (staged + unstaged + untracked; skip deleted paths).
+- File-list mode: file paths from CLI args; when no args are provided, read newline-delimited file paths from stdin.
+- Git mode: working tree changes derived from `git` (staged + unstaged + untracked; skip deleted paths), then apply `--max-files`.
 
 ### Output
 
@@ -61,6 +63,9 @@ Links:
   - Group files by git root; files from different git roots open in different VSCode windows.
   - Enforce window separation by invoking `code --new-window` per git root group (mirrors `scripts/fzf-tools.zsh:_fzf_open_in_vscode_workspace`).
   - If no git root is found within 5 parent directories, group the file under the current working directory (`$PWD`) as its workspace.
+- Chunking strategy:
+  - Apply `--max-files` first (default: 5).
+  - If `--max-files` is increased, open files per workspace in batches (default: 50) to avoid argv length limits.
 - Exit codes:
   - `0`: success or no-op (including VSCode CLI missing).
   - `2`: invalid flags/usage.
@@ -81,11 +86,11 @@ Links:
 - Provide `--dry-run`; check for `code` at script start and silently exit `0` if missing.
 - Default to opening plain file paths (no `--goto` unless explicitly requested).
 - Default to opening at most 5 files to avoid overwhelming the editor and to reduce argv length risk.
+- Support stdin input (newline-delimited) when no file args are provided.
 
 ### Risks / Uncertainties
 
-- Confirm the final input interface for file-list mode: CLI args only vs support stdin (newline-delimited).
-- If `--max-files` is increased, decide whether to implement chunking per git root to avoid argv length limits.
+- None.
 
 ## Steps (Checklist)
 
@@ -95,8 +100,9 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
   - Work Items:
     - [x] Decide the default `--goto` behavior (default: no `--goto`).
     - [x] Decide behavior for non-git-root files (group under `$PWD`).
-    - [ ] Confirm file-list input interface (args only vs args + stdin).
+    - [x] Confirm file-list input interface (CLI args; stdin fallback when no args).
     - [x] Decide default max open files (default: 5).
+    - [x] Decide chunking strategy when max-files is increased (batch per workspace).
   - Artifacts:
     - `docs/progress/20260109_open-changed-files-in-vscode.md` (this file)
     - Notes: this thread + reference: `scripts/fzf-tools.zsh:_fzf_open_in_vscode`
