@@ -21,8 +21,11 @@ Links:
 - Default (file-list) mode:
   - `./tools/open-changed-files.zsh path/to/a path/to/b` opens both files in a single VSCode instance when `code` exists.
   - When `code` is missing: exits `0` and prints nothing.
+  - `./tools/open-changed-files.zsh --dry-run path/to/a path/to/b` prints the planned `code ...` invocations and exits `0`.
 - Git mode:
-  - `./tools/open-changed-files.zsh --git` opens tracked modified + untracked files (selection rules TBD) when in a git work tree.
+  - `./tools/open-changed-files.zsh --git` opens all changed files when in a git work tree:
+    - Tracked changed (staged + unstaged)
+    - Untracked files
   - When not in a git work tree: exits `0` and prints nothing (or `--verbose` explains and exits `0`).
 - Interface control:
   - Env `OPEN_CHANGED_FILES_SOURCE` defaults to `list`.
@@ -50,7 +53,10 @@ Links:
 
 ### Output
 
-- Side effect: open files in VSCode via `code` CLI (prefer `--reuse-window` to avoid window churn).
+- Side effect: open files in VSCode via `code` CLI.
+- Workspace strategy:
+  - For each input file, find the nearest git root by searching up to 5 parent directories.
+  - Group files by git root; files from different git roots open in different VSCode windows.
 - Exit codes:
   - `0`: success or no-op (including VSCode CLI missing).
   - `2`: invalid flags/usage.
@@ -65,13 +71,19 @@ Links:
 
 - Implement as `tools/open-changed-files.zsh` so it is runnable from a clean checkout and fits existing repo tooling.
 - Do not reuse `scripts/fzf-tools.zsh:_fzf_open_in_vscode` because it emits errors and has interactive/session assumptions; implement a purpose-built, silent `code` invocation instead.
-- Open multiple files per invocation to reduce window churn; group by workspace root when appropriate (final strategy TBD).
+- Reuse the existing VSCode grouping idea from `scripts/fzf-tools.zsh`:
+  - Find git roots upwards (max depth 5)
+  - Open different git roots in different VSCode windows
+- Provide `--dry-run`; check for `code` at script start and silently exit `0` if missing.
 
 ### Risks / Uncertainties
 
-- Confirm whether `code --goto` supports multiple files consistently; may avoid `--goto` and pass plain file args unless the caller supplies `file:line[:char]` paths.
-- Workspace/root selection when input includes mixed repos or no git: choose between `cwd`, nearest git root, or "no workspace" (needs UX decision).
-- Decide how to provide a testable mode that doesn't require a real VSCode installation (e.g. `--dry-run`) without violating the "silent no-op when missing code" requirement.
+- Decide the default `--goto` behavior:
+  - Default to plain file args (no `--goto`)
+  - Always use `--goto` (treat args as `file:line[:char]`)
+  - Auto-detect (only use `--goto` when args contain line/col suffixes)
+- Define behavior for files with no git root found within 5 parent directories (grouping + workspace argument).
+- Confirm the final input interface for file-list mode: CLI args only vs support stdin (newline-delimited).
 
 ## Steps (Checklist)
 
@@ -79,8 +91,9 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
 
 - [ ] Step 0: Align CLI and behavior
   - Work Items:
-    - [ ] Decide the final CLI contract (args vs stdin, default source, env names, verbosity/dry-run).
-    - [ ] Decide git selection rules (unstaged/staged/untracked).
+    - [ ] Decide the default `--goto` behavior.
+    - [ ] Decide behavior for non-git-root files (no git root within 5 levels).
+    - [ ] Confirm file-list input interface (args only vs args + stdin).
   - Artifacts:
     - `docs/progress/20260109_open-changed-files-in-vscode.md` (this file)
     - Notes: this thread + reference: `scripts/fzf-tools.zsh:_fzf_open_in_vscode`
