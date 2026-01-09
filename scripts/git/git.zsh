@@ -138,14 +138,26 @@ alias git-zip='git archive --format zip HEAD -o "backup-$(git rev-parse --short 
 # Show a commit graph (tree) view.
 # Usage: git-tree [count] [git-log-args...]
 # Notes:
-# - If the first argument is a number, it is treated as `git log -n <count>`.
+# - By default, this tries `git tree` (expected to be defined via global/local git config
+#   alias: `alias.tree`, or via an external `git-tree` command).
+# - If `git tree` is unavailable, it falls back to a built-in `git log --graph ...` view.
+# - If the first argument is a number, it is treated as `-n <count>`.
 git-tree() {
+  emulate -L zsh
+  setopt pipe_fail err_return
+
   local first_arg="${1-}"
   local -a count_flag=()
   if [[ "$first_arg" =~ ^[0-9]+$ ]]; then
     count_flag=(-n "$first_arg")
     shift
   fi
+
+  if command git config --get alias.tree >/dev/null 2>&1 || command -v git-tree >/dev/null 2>&1; then
+    command git tree "${count_flag[@]}" "$@"
+    return $?
+  fi
+
   command git log --graph --decorate --oneline --all "${count_flag[@]}" "$@"
   return $?
 }
