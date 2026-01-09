@@ -10,6 +10,7 @@ typeset -gi OCF_GIT_ROOT_MAX_DEPTH=5
 typeset -gi OCF_BATCH_SIZE=50
 typeset -gi OCF_VERBOSE=0
 
+# print_usage: Print CLI usage/help.
 print_usage() {
   emulate -L zsh
   setopt pipe_fail
@@ -36,6 +37,8 @@ print_usage() {
   print -r -- "  OPEN_CHANGED_FILES_MAX_FILES=<n>     (default: $OCF_DEFAULT_MAX_FILES)"
 }
 
+# _ocf::die_usage: Print an error + usage to stderr and return status 2.
+# Usage: _ocf::die_usage [message]
 _ocf::die_usage() {
   emulate -L zsh
   setopt pipe_fail
@@ -47,6 +50,8 @@ _ocf::die_usage() {
   return 2
 }
 
+# _ocf::log: Print a message to stderr when `--verbose` is enabled.
+# Usage: _ocf::log <msg...>
 _ocf::log() {
   emulate -L zsh
   setopt err_return nounset
@@ -55,6 +60,10 @@ _ocf::log() {
   print -u2 -r -- "$@"
 }
 
+# _ocf::find_git_root_upwards: Find nearest git root within N parent levels.
+# Usage: _ocf::find_git_root_upwards <start_dir> [max_depth]
+# Output:
+# - Prints the git root directory to stdout on success.
 _ocf::find_git_root_upwards() {
   emulate -L zsh
   setopt err_return nounset
@@ -80,6 +89,10 @@ _ocf::find_git_root_upwards() {
   return 1
 }
 
+# _ocf::collect_list_files: Collect existing file paths from args or stdin.
+# Usage: _ocf::collect_list_files [paths...]
+# Output:
+# - Prints absolute file paths (one per line).
 _ocf::collect_list_files() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -114,6 +127,10 @@ _ocf::collect_list_files() {
   print -rl -- "${out[@]}"
 }
 
+# _ocf::collect_git_files: Collect changed files from git (staged + unstaged + untracked).
+# Usage: _ocf::collect_git_files
+# Output:
+# - Prints absolute file paths (one per line).
 _ocf::collect_git_files() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -154,6 +171,8 @@ _ocf::collect_git_files() {
   print -rl -- "${out[@]}"
 }
 
+# _ocf::print_code_invocation: Print a shell-quoted `code ...` invocation.
+# Usage: _ocf::print_code_invocation <new|reuse|none> <workspace_root> <files...>
 _ocf::print_code_invocation() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -176,6 +195,8 @@ _ocf::print_code_invocation() {
   print -r -- "${(j: :)${(@q)args}}"
 }
 
+# _ocf::run_code_invocation: Invoke VSCode CLI; silent no-op when `code` is missing.
+# Usage: _ocf::run_code_invocation <new|reuse|none> <workspace_root> <files...>
 _ocf::run_code_invocation() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -197,6 +218,8 @@ _ocf::run_code_invocation() {
   fi
 }
 
+# main: CLI entrypoint.
+# Usage: main [args...]
 main() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

@@ -150,11 +150,13 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
   - Work Items:
     - [x] Run repo checks.
     - [x] Run zsh tests: `zsh -f -- tests/run.zsh` (pass).
+    - [x] Run fzf-def docblock audit: `zsh -f ./tools/audit-fzf-def-docblocks.zsh --check --stdout tools/open-changed-files.zsh` (pass).
     - [ ] Record manual verification notes (opening behavior is not CI-assertable).
       - Reason: VSCode `code` CLI not available in this environment; record manual notes after verifying on a machine with `code`.
   - Artifacts:
     - `./tools/check.zsh` output (pass)
     - `zsh -f -- tests/run.zsh` output (pass)
+    - `zsh -f ./tools/audit-fzf-def-docblocks.zsh --check --stdout tools/open-changed-files.zsh` output (pass)
     - Manual test notes in PR
   - Exit Criteria:
     - [x] `./tools/check.zsh` pass.
