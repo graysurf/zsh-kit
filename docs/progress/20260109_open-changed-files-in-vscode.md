@@ -2,12 +2,13 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| DRAFT | 2026-01-09 | 2026-01-09 |
+| IN PROGRESS | 2026-01-09 | 2026-01-09 |
 
 Links:
 
-- PR: [#17](https://github.com/graysurf/zsh-kit/pull/17)
-- Docs: TBD
+- PR: [#18](https://github.com/graysurf/zsh-kit/pull/18)
+- Planning PR (merged): [#17](https://github.com/graysurf/zsh-kit/pull/17)
+- Docs: `docs/cli/open-changed-files.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
 ## Goal
@@ -44,7 +45,7 @@ Links:
 - In-scope:
   - New first-party tool: `tools/open-changed-files.zsh` (zsh, executable).
   - Two separate implementation functions + thin CLI router.
-  - Minimal user docs for the tool (TBD, likely `docs/cli/open-changed-files.md`).
+  - Minimal user docs for the tool: `docs/cli/open-changed-files.md`.
 - Out-of-scope:
   - Integrations into interactive hotkeys / fzf-tools UI.
   - Editor support beyond the VSCode CLI (e.g. Cursor, JetBrains).
@@ -73,7 +74,7 @@ Links:
 
 ### Intermediate Artifacts
 
-- None (optional: `--dry-run`/`--print` for testability; TBD).
+- None (`--dry-run` prints the planned `code ...` invocations for testability).
 
 ## Design / Decisions
 
@@ -93,7 +94,6 @@ Links:
 ### Risks / Uncertainties
 
 - Pending discussion:
-  - Default workspace mode: confirm `pwd` (single window) as the default; keep `git` as an opt-in for fzf-like behavior.
   - VSCode CLI behavior for mixed args: validate that `code -- <workspace_dir> <file1> <file2> ...` reliably opens files in that workspace on macOS/Linux.
   - Batch behavior: confirm that using `--reuse-window` after the first invocation keeps all batches in the same VSCode window.
 
@@ -101,7 +101,7 @@ Links:
 
 Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason: ...` or a nested `- Reason: ...`) before close-progress-pr can complete. Step 4 is excluded (post-merge / wrap-up).
 
-- [ ] Step 0: Align CLI and behavior
+- [x] Step 0: Align CLI and behavior
   - Work Items:
     - [x] Decide the default `--goto` behavior (default: no `--goto`).
     - [x] Decide behavior for non-git-root files (group under `$PWD`).
@@ -112,45 +112,56 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - `docs/progress/20260109_open-changed-files-in-vscode.md` (this file)
     - Notes: this thread + reference: `scripts/fzf-tools.zsh:_fzf_open_in_vscode`
   - Exit Criteria:
-    - [ ] Requirements, scope, and acceptance criteria are aligned: PR review notes.
-    - [ ] Data flow and I/O contract are defined: documented in `docs/cli/open-changed-files.md` (TBD).
-    - [ ] Risks and edge cases are enumerated with decisions: see Risks / Uncertainties.
-    - [ ] Minimal verification commands are defined: `./tools/check.zsh`, `zsh -n -- tools/open-changed-files.zsh`, and a `--dry-run` example (TBD).
+    - [x] Requirements, scope, and acceptance criteria are aligned: progress PR review notes.
+    - [x] Data flow and I/O contract are defined: `docs/cli/open-changed-files.md`.
+    - [x] Risks and edge cases are enumerated with decisions: see Risks / Uncertainties.
+    - [x] Minimal verification commands are defined:
+      - `zsh -n -- tools/open-changed-files.zsh`
+      - `./tools/open-changed-files.zsh --dry-run path/to/a path/to/b`
+      - `./tools/check.zsh`
 - [ ] Step 1: MVP tool (list + git modes)
   - Work Items:
-    - [ ] Add `tools/open-changed-files.zsh` with two internal functions and a CLI router.
-    - [ ] Implement silent no-op when `code` is missing.
-    - [ ] Implement list mode de-dupe + ignore missing paths.
-    - [ ] Implement git mode discovery (staged + unstaged + untracked) when in a git work tree.
+    - [x] Add `tools/open-changed-files.zsh` with two internal functions and a CLI router.
+    - [x] Implement silent no-op when `code` is missing.
+    - [x] Implement list mode de-dupe + ignore missing paths.
+    - [x] Implement git mode discovery (staged + unstaged + untracked) when in a git work tree.
   - Artifacts:
     - `tools/open-changed-files.zsh`
     - `docs/cli/open-changed-files.md`
   - Exit Criteria:
     - [ ] Happy path works end-to-end: open two files with one command (manual).
-    - [ ] Script is safe when `code` is missing: no output, exit 0 (automatable).
-    - [ ] Usage docs skeleton exists: `docs/cli/open-changed-files.md`.
-- [ ] Step 2: Integration polish
+      - Reason: VSCode `code` CLI not available in this environment; validate on a machine with `code` installed.
+    - [x] Script is safe when `code` is missing: no output, exit 0 (automatable).
+    - [x] Usage docs skeleton exists: `docs/cli/open-changed-files.md`.
+- [x] Step 2: Integration polish
   - Work Items:
     - [ ] Optional: add wrapper entry to `scripts/_internal/wrappers.zsh` to expose `open-changed-files` command in subshell contexts.
-    - [ ] Optional: add `--dry-run`/`--verbose` and document.
+      - Reason: deferred; tool is repo-local under `tools/` and is intended to be invoked as `./tools/open-changed-files.zsh`.
+    - [x] Optional: add `--dry-run`/`--verbose` and document.
   - Artifacts:
     - `scripts/_internal/wrappers.zsh` (optional)
-    - Docs updates (TBD)
+    - `docs/cli/open-changed-files.md`
+    - `tests/open-changed-files.test.zsh`
   - Exit Criteria:
-    - [ ] Common branches are covered: empty input, mixed absolute/relative, non-git repo, and git repo.
-    - [ ] Compatible with repo conventions (zsh rules, `print`, no `echo`).
-    - [ ] Optional flags documented (if added).
+    - [x] Common branches are covered: via `tests/open-changed-files.test.zsh` (list mode, git-root grouping, batching).
+    - [x] Compatible with repo conventions (zsh rules, `print`, no `echo`): `./tools/check.zsh` (pass).
+    - [x] Optional flags documented: `docs/cli/open-changed-files.md`.
 - [ ] Step 3: Validation / testing
   - Work Items:
-    - [ ] Run repo checks.
+    - [x] Run repo checks.
+    - [x] Run zsh tests: `zsh -f -- tests/run.zsh` (pass).
     - [ ] Record manual verification notes (opening behavior is not CI-assertable).
+      - Reason: VSCode `code` CLI not available in this environment; record manual notes after verifying on a machine with `code`.
   - Artifacts:
     - `./tools/check.zsh` output (pass)
+    - `zsh -f -- tests/run.zsh` output (pass)
     - Manual test notes in PR
   - Exit Criteria:
-    - [ ] `./tools/check.zsh` pass.
+    - [x] `./tools/check.zsh` pass.
     - [ ] `./tools/check.zsh --smoke` pass (if relevant).
+      - Reason: not relevant (no changes to bootstrap/startup/plugin loader).
     - [ ] Manual tests recorded: with and without `code` present.
+      - Reason: without `code` present is verified; with `code` present is pending validation.
 - [ ] Step 4: Release / wrap-up
   - Work Items:
     - [ ] Update docs entry points (README / docs index) if needed.
