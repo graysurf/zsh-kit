@@ -1,8 +1,10 @@
 # 🤖 Codex CLI Helpers: Opt-In Codex Skill Wrappers
 
-`scripts/codex-tools.zsh` adds a `codex-tools` dispatcher plus four `codex-*` commands that invoke
-Codex skills with a consistent, interactive CLI interface. The helpers are intentionally opt-in
-and only run when you explicitly allow the dangerous sandbox bypass.
+This feature is disabled by default. Enable it by including `codex` in `ZSH_FEATURES` (e.g. in your home `~/.zshenv`).
+
+`scripts/_features/codex/codex-tools.zsh` adds a `codex-tools` dispatcher plus four `codex-*` commands that invoke
+Codex skills with a consistent, interactive CLI interface. The helpers are intentionally opt-in and only run when you
+explicitly allow the dangerous sandbox bypass.
 
 ---
 

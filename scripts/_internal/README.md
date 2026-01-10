@@ -44,8 +44,6 @@ Output location:
 
 Generated commands:
 
-- `codex-starship`
-- `codex-tools`
 - `open-changed-files`
 - `fzf-tools`
 - `git-open`
@@ -53,6 +51,7 @@ Generated commands:
 - `git-lock`
 - `git-tools`
 - `git-summary`
+- (feature: `codex`) `codex-starship`, `codex-tools` (only when `ZSH_FEATURES` includes `codex`)
 
 How it is used:
 

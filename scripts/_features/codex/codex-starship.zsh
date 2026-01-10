@@ -507,13 +507,23 @@ _codex_starship_spawn_refresh() {
   fi
 
   typeset script_dir="${ZSH_SCRIPT_DIR-}"
-  [[ -n "$script_dir" && -f "$script_dir/codex-starship.zsh" ]] || return 1
+  [[ -n "$script_dir" ]] || return 1
+
+  typeset script=''
+  for script in \
+    "$script_dir/_features/codex/codex-starship.zsh" \
+    "$script_dir/codex-starship.zsh"
+  do
+    [[ -f "$script" ]] && break
+    script=''
+  done
+  [[ -n "$script" ]] || return 1
 
   typeset cache_root="${ZSH_CACHE_DIR-}"
   [[ -n "$cache_root" ]] || return 1
 
   nohup zsh -f -c \
-    "export ZSH_SCRIPT_DIR=${(q)script_dir}; export ZSH_CACHE_DIR=${(q)cache_root}; source ${(q)script_dir}/codex-starship.zsh; codex-starship --refresh" \
+    "export ZSH_SCRIPT_DIR=${(q)script_dir}; export ZSH_CACHE_DIR=${(q)cache_root}; source ${(q)script}; codex-starship --refresh" \
     >/dev/null 2>&1 &
   return 0
 }

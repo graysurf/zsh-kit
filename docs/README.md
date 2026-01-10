@@ -31,8 +31,8 @@ docs/
 
 ## 🛠 CLI Docs
 
-- [`cli/codex-cli-helpers.md`](cli/codex-cli-helpers.md) — Opt-in wrappers for Codex CLI skills
-- [`cli/codex-starship.md`](cli/codex-starship.md) — Codex rate limits line for Starship (`codex-starship`)
+- [`cli/codex-cli-helpers.md`](cli/codex-cli-helpers.md) — Opt-in wrappers for Codex CLI skills (feature: `codex`)
+- [`cli/codex-starship.md`](cli/codex-starship.md) — Codex rate limits line for Starship (`codex-starship`; feature: `codex`)
 - [`cli/fzf-tools.md`](cli/fzf-tools.md) — FZF-based interactive launcher (`fzf-tools`)
 - [`cli/git-open.md`](cli/git-open.md) — Open repo/branch/commit/PR pages in browser (`git-open`)
 - [`cli/git-scope.md`](cli/git-scope.md) — Tree-based viewers for git status / commits (`git-scope`)

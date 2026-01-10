@@ -1,4 +1,6 @@
 #compdef codex-tools
+#
+# Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
 
 _codex-tools() {
   emulate -L zsh -o extendedglob
@@ -39,4 +41,3 @@ _codex-tools() {
 }
 
 compdef _codex-tools codex-tools
-

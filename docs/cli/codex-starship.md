@@ -2,6 +2,8 @@
 
 `codex-starship` prints a single, cacheable status line suitable for a Starship `custom` module.
 
+This command is shipped as an optional feature. Enable it by including `codex` in `ZSH_FEATURES` (e.g. in your home `~/.zshenv`).
+
 Default output:
 
 ```text
@@ -104,7 +106,7 @@ format = "[$symbol$output ](bold #637777)"
 Notes:
 
 - `codex-starship` prints nothing on cold cache/failure; the `[$output ](...)` group avoids printing stray spaces when empty.
-- `codex-starship` is disabled by default; set `CODEX_STARSHIP_ENABLED=true` to show this module.
+- `codex-starship` is disabled by default; enable feature `codex` (`ZSH_FEATURES=codex`) and set `CODEX_STARSHIP_ENABLED=true` to show this module.
 
 ---
 

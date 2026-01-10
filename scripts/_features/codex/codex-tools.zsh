@@ -1,7 +1,7 @@
 typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
 typeset -g CODEX_CLI_REASONING="${CODEX_CLI_REASONING:-medium}"
 
-# codex-tools: Opt-in Codex skill wrappers.
+# codex-tools: Opt-in Codex skill wrappers (feature: codex).
 #
 # Provides:
 # - `codex-tools` (CLI dispatcher)

@@ -18,7 +18,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > The following tools are developed as part of this environment and tightly integrated.
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
-- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in wrappers for Codex skills with safety gate
+- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in Codex wrappers (feature: `codex`) with safety gate
 - 📝 [open-changed-files](docs/cli/open-changed-files.md): Open a set of edited files in VSCode for review
 - 🔎 [fzf-tools](docs/cli/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
 - 🔗 [git-open](docs/cli/git-open.md): Open repo/branch/commit/PR pages in browser
@@ -64,6 +64,12 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │
 ├── scripts/                              # Modular Zsh behavior scripts
 │   ├── _completion/                      # Custom completions for CLI tools or aliases
+│   ├── _features/                        # Optional feature modules (opt-in via `ZSH_FEATURES`)
+│   │   └── codex/                        # Codex helpers (disabled by default)
+│   │       ├── _completion/              # Feature-gated completions
+│   │       ├── codex-starship.zsh        # Codex-driven Starship prompt helpers
+│   │       ├── codex-tools.zsh           # Codex CLI helpers
+│   │       └── init.zsh                  # Feature entrypoint
 │   ├── _internal/                        # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
 │   │   ├── paths.exports.zsh             # Core ZSH_* path exports
 │   │   ├── paths.init.zsh                # Minimal init (ensure cache dir exists)
@@ -88,8 +94,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   │   ├── runtime.zsh                   # Interactive runtime (prompt, zoxide, keybindings)
 │   │   └── plugin-hooks.zsh              # Plugin post-load hooks and overrides
 │   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
-│   ├── codex-starship.zsh                # Codex-driven Starship prompt helpers
-│   ├── codex-tools.zsh                   # Codex CLI helpers
+│   ├── features.zsh                      # Optional feature loader (`ZSH_FEATURES`)
 │   ├── editor.zsh                        # EDITOR + vi wrapper
 │   ├── env.zsh                           # Environment variable exports and init logic
 │   ├── eza.zsh                           # Aliases for eza (modern ls)
@@ -126,8 +131,6 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded plugins.zsh in 37ms
 ✅ Loaded builtin-overrides.zsh in 0ms
 ✅ Loaded chrome-devtools-rdp.zsh in 0ms
-✅ Loaded codex-starship.zsh in 0ms
-✅ Loaded codex-tools.zsh in 0ms
 ✅ Loaded editor.zsh in 0ms
 ✅ Loaded eza.zsh in 0ms
 ✅ Loaded fzf-tools.zsh in 1ms
@@ -145,13 +148,14 @@ Weather report: Taipei City, Taiwan
 ✅ Loaded shell-tools.zsh in 0ms
 ✅ Loaded git-tools.zsh in 0ms
 ✅ Loaded env.zsh in 30ms
+✅ Loaded features.zsh in 0ms
 ✅ Loaded runtime.zsh in 17ms
 ✅ Loaded hotkeys.zsh in 0ms
 ✅ Loaded plugin-hooks.zsh in 0ms
 ✅ Loaded completion.zsh in 219ms
 ✅ Loaded development.zsh (delayed) in 2ms
 
-🍎 yourname on MacBook ~ 🐳 orbstack 🌟 5h:65% W:90% 01-10 20:05
+🍎 yourname on MacBook ~ 🐳 orbstack
 08:00:00.000 ✔︎
 ```
 
@@ -167,6 +171,19 @@ if [[ -r "$ZDOTDIR/.zshenv" ]]; then
   source "$ZDOTDIR/.zshenv"
 fi
 ```
+
+### Optional Features (`ZSH_FEATURES`)
+
+Some modules are disabled by default (not sourced; no wrappers generated).
+Enable them by setting `ZSH_FEATURES` in your **home** `~/.zshenv` **before** sourcing this repo:
+
+```bash
+export ZSH_FEATURES="codex,xxx"
+```
+
+Current features:
+
+- `codex`: enables `codex-tools` and `codex-starship` (plus `codex-tools` completion)
 
 Why the extra `source`? `.zshenv` is the first startup file, so setting `ZDOTDIR` inside `~/.zshenv`
 does not automatically make Zsh restart and load `$ZDOTDIR/.zshenv`.

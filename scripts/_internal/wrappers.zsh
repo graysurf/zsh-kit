@@ -26,6 +26,47 @@ _wrappers::zdotdir() {
   return 1
 }
 
+# _wrappers::feature_enabled <name>
+# Return 0 if the given feature is enabled in `ZSH_FEATURES`.
+# Usage: _wrappers::feature_enabled <name>
+_wrappers::feature_enabled() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset name="${1-}"
+  [[ -n "$name" ]] || return 1
+  name="${name:l}"
+
+  if (( $+functions[zsh_features::enabled] )); then
+    zsh_features::enabled "$name"
+    return $?
+  fi
+
+  typeset zdotdir=''
+  zdotdir="$(_wrappers::zdotdir)" || return 1
+
+  typeset features_lib="$zdotdir/scripts/_internal/features.zsh"
+  [[ -r "$features_lib" ]] && source "$features_lib"
+
+  if (( $+functions[zsh_features::enabled] )); then
+    zsh_features::enabled "$name"
+    return $?
+  fi
+
+  typeset raw="${ZSH_FEATURES-}"
+  raw="${raw:l}"
+  [[ -n "$raw" ]] || return 1
+
+  typeset -a parts=(${(s:,:)raw})
+  typeset part=''
+  for part in "${parts[@]}"; do
+    part="${part//[[:space:]]/}"
+    [[ "$part" == "$name" ]] && return 0
+  done
+
+  return 1
+}
+
 # _wrappers::bin_dir
 # Print the wrappers bin dir path (`$ZDOTDIR/cache/wrappers/bin`).
 # Usage: _wrappers::bin_dir
@@ -198,10 +239,28 @@ _wrappers::write_exec_wrapper() {
   return 0
 }
 
-# _wrappers::ensure_all
-# Generate all cached CLI wrapper scripts (for subshells like fzf preview).
-# Usage: _wrappers::ensure_all
-_wrappers::ensure_all() {
+# _wrappers::cleanup_feature_codex
+# Remove codex-related wrappers from the wrappers bin dir.
+# Usage: _wrappers::cleanup_feature_codex
+_wrappers::cleanup_feature_codex() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset bin_dir=''
+  bin_dir="$(_wrappers::bin_dir)"
+  [[ -d "$bin_dir" ]] || return 0
+
+  command rm -f -- \
+    "$bin_dir/codex-starship" \
+    "$bin_dir/codex-tools" \
+    >/dev/null 2>&1 || true
+  return 0
+}
+
+# _wrappers::ensure_core
+# Generate cached CLI wrapper scripts for core commands.
+# Usage: _wrappers::ensure_core
+_wrappers::ensure_core() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
@@ -222,12 +281,6 @@ _wrappers::ensure_all() {
   _wrappers::write_wrapper git-summary git-summary \
     git/git-summary.zsh
 
-  _wrappers::write_wrapper codex-starship codex-starship \
-    codex-starship.zsh
-
-  _wrappers::write_wrapper codex-tools codex-tools \
-    codex-tools.zsh
-
   _wrappers::write_exec_wrapper open-changed-files \
     tools/open-changed-files.zsh
 
@@ -238,6 +291,40 @@ _wrappers::ensure_all() {
     git/tools/git-commit.zsh \
     git/git-scope.zsh \
     git/git-tools.zsh
+
+  return 0
+}
+
+# _wrappers::ensure_feature_codex
+# Generate cached CLI wrapper scripts for the `codex` feature.
+# Usage: _wrappers::ensure_feature_codex
+_wrappers::ensure_feature_codex() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  _wrappers::write_wrapper codex-starship codex-starship \
+    _features/codex/codex-starship.zsh
+
+  _wrappers::write_wrapper codex-tools codex-tools \
+    _features/codex/codex-tools.zsh
+
+  return 0
+}
+
+# _wrappers::ensure_all
+# Generate cached CLI wrapper scripts for all enabled features.
+# Usage: _wrappers::ensure_all
+_wrappers::ensure_all() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  _wrappers::ensure_core
+
+  if _wrappers::feature_enabled codex; then
+    _wrappers::ensure_feature_codex
+  else
+    _wrappers::cleanup_feature_codex
+  fi
 
   return 0
 }
