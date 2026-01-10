@@ -79,6 +79,7 @@ Options:
 The cache is stored under:
 
 - `$ZSH_CACHE_DIR/codex/starship-rate-limits/<token_key>.kv`
+- `$ZSH_CACHE_DIR/codex/starship-rate-limits/<token_key>.refresh.at` (last refresh attempt epoch seconds)
 
 Fields:
 
@@ -87,6 +88,17 @@ Fields:
 - `non_weekly_remaining=<percent>`
 - `weekly_remaining=<percent>`
 - `weekly_reset_epoch=<epoch_seconds>`
+
+Other refresh artifacts (auto-cleaned when stale):
+
+- `$ZSH_CACHE_DIR/codex/starship-rate-limits/<token_key>.refresh.lock` (lock dir)
+- `$ZSH_CACHE_DIR/codex/starship-rate-limits/wham.usage.*` (temp files)
+
+Notes:
+
+- When a friendly profile match is not found, `<token_key>` falls back to `auth_<sha256>` (derived from the auth file contents),
+  which can change across auth refreshes.
+- To avoid unbounded growth of `auth_<sha256>` cache entries, `codex-starship` keeps a bounded number (see `CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP`).
 
 ---
 
@@ -119,6 +131,7 @@ Notes:
 - `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
 - `CODEX_STARSHIP_STALE_SUFFIX`: appended to cached output when the cache is stale (default: ` (stale)`; set empty to disable)
 - `CODEX_STARSHIP_LOCK_STALE_SECONDS`: consider refresh artifacts (`<token_key>.refresh.lock`, `wham.usage.*`) stale after this many seconds and clear them (default: `90`)
+- `CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP`: max number of `auth_<sha256>` cache entries to keep (default: `5`; set `0` to disable)
 - `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS`: `curl` connect timeout seconds for `wham/usage` fetch (default: `2`)
 - `CODEX_STARSHIP_CURL_MAX_TIME_SECONDS`: `curl` max time seconds for `wham/usage` fetch (default: `8`)
 - `CODEX_AUTH_FILE`: override the auth file path (default: `~/.config/codex-kit/auth.json`, fallback: `~/.codex/auth.json`)

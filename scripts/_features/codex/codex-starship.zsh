@@ -631,6 +631,111 @@ _codex_starship_cleanup_stale_refresh_locks() {
   return 0
 }
 
+# _codex_starship_cleanup_auth_hash_cache: Limit auth_<sha256> cache artifacts to avoid unbounded growth.
+# Usage: _codex_starship_cleanup_auth_hash_cache <cache_dir> <active_key> <now_epoch> [keep]
+_codex_starship_cleanup_auth_hash_cache() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset nullglob
+
+  typeset cache_dir="${1-}"
+  typeset active_key="${2-}"
+  typeset now_epoch="${3-}"
+  typeset keep="${4-}"
+
+  [[ -n "$cache_dir" && -d "$cache_dir" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
+  [[ -n "$keep" && "$keep" == <-> ]] || keep='5'
+
+  typeset -i keep_n="$keep"
+  if (( keep_n < 1 )); then
+    return 0
+  fi
+
+  typeset -a candidates=("$cache_dir"/auth_*.kv(N) "$cache_dir"/auth_*.refresh.at(N))
+  (( ${#candidates} )) || return 1
+
+  zmodload zsh/stat 2>/dev/null || return 1
+
+  typeset -A key_mtime=()
+  typeset candidate=''
+  for candidate in "${candidates[@]}"; do
+    [[ -f "$candidate" ]] || continue
+
+    typeset base="${candidate:t}"
+    case "$base" in
+      auth_*.kv) base="${base%.kv}" ;;
+      auth_*.refresh.at) base="${base%.refresh.at}" ;;
+      *) continue ;;
+    esac
+    [[ -n "$base" ]] || continue
+
+    typeset -a st=()
+    zstat -A st +mtime -- "$candidate" 2>/dev/null || continue
+    typeset mtime="${st[1]-}"
+    [[ -n "$mtime" && "$mtime" == <-> ]] || continue
+
+    typeset prev="${key_mtime[$base]-}"
+    if [[ -z "$prev" || "$prev" != <-> ]]; then
+      key_mtime[$base]="$mtime"
+      continue
+    fi
+
+    typeset -i prev_i="$prev" mtime_i="$mtime"
+    if (( mtime_i > prev_i )); then
+      key_mtime[$base]="$mtime"
+    fi
+  done
+
+  typeset -a keys=(${(k)key_mtime})
+  (( ${#keys} > keep_n )) || return 0
+
+  typeset -a entries=()
+  typeset k=''
+  for k in "${keys[@]}"; do
+    typeset m="${key_mtime[$k]-}"
+    [[ -n "$m" && "$m" == <-> ]] || continue
+    entries+=("${m} ${k}")
+  done
+  (( ${#entries} )) || return 0
+  entries=("${(@On)entries}")
+
+  typeset -A keep_set=()
+  typeset -i kept=0
+
+  if [[ -n "$active_key" && "$active_key" == auth_* && -n "${key_mtime[$active_key]-}" ]]; then
+    keep_set[$active_key]=1
+    kept=1
+  fi
+
+  typeset entry=''
+  for entry in "${entries[@]}"; do
+    (( kept >= keep_n )) && break
+
+    k="${entry#* }"
+    [[ -n "$k" ]] || continue
+
+    [[ -n "${keep_set[$k]-}" ]] && continue
+    keep_set[$k]=1
+    (( kept++ ))
+  done
+
+  for candidate in "${candidates[@]}"; do
+    [[ -f "$candidate" ]] || continue
+
+    typeset base="${candidate:t}"
+    case "$base" in
+      auth_*.kv) base="${base%.kv}" ;;
+      auth_*.refresh.at) base="${base%.refresh.at}" ;;
+      *) continue ;;
+    esac
+    [[ -n "$base" ]] || continue
+
+    [[ -n "${keep_set[$base]-}" ]] && continue
+    rm -f -- "$candidate" 2>/dev/null || true
+  done
+
+  return 0
+}
+
 # _codex_starship_maybe_enqueue_refresh: Enqueue a background refresh if not already refreshing and not too soon.
 # Usage: _codex_starship_maybe_enqueue_refresh <cache_dir> <key> <now_epoch> <min_interval_seconds>
 _codex_starship_maybe_enqueue_refresh() {
@@ -903,6 +1008,8 @@ codex-starship() {
   typeset refresh_stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
   _codex_starship_cleanup_stale_refresh_locks "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
   _codex_starship_cleanup_stale_wham_usage_files "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
+  typeset auth_hash_keep="${CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP:-5}"
+  _codex_starship_cleanup_auth_hash_cache "$cache_dir" "$key" "$now_epoch" "$auth_hash_keep" >/dev/null 2>&1 || true
 
   typeset name_prefix=''
   if [[ -n "$name" ]]; then
