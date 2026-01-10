@@ -31,81 +31,28 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ```text
 .
-├── .zshenv                               # Always-loaded env; defines core ZSH_* paths
-├── .zshrc                                # Main Zsh entry; sources bootstrap/bootstrap.zsh
-├── .zprofile                             # Minimal login initializer for login shells
-│
-├── assets/                               # Static data files
-├── cache/                                # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
-├── docs/                                 # Markdown documentation
-│   ├── README.md                         # Documentation index
-│   ├── cli/                              # User-facing commands
-│   ├── guides/                           # Concepts and system behavior
-│   ├── progress/                         # Implementation logs (active + archived)
-│   └── templates/                        # Progress templates + glossary
-│
-├── bootstrap/                            # Script orchestrator and plugin logic
-│   ├── 00-preload.zsh                    # Early global helpers (safe_unalias, clipboard I/O, etc.)
-│   ├── define-loaders.zsh                # Base loader helpers (source_file, source_file_warn_missing, group loaders, etc.)
-│   ├── bootstrap.zsh                     # Centralized Zsh entrypoint (called from .zshrc)
-│   ├── plugin_fetcher.zsh                # Git-based plugin fetcher with auto-update, dry-run, and force
-│   ├── plugins.zsh                       # Plugin declaration + loading logic
-│   ├── quote-init.zsh                    # Show emoji + quote banner on login
-│   ├── weather.zsh                       # Cached wttr.in snapshot for login weather
-│   └── install-tools.zsh                 # Tool installer with dry-run and quiet support
-│
-├── config/                               # Configuration files for third-party tools
-│   ├── plugins.list                      # Active plugin list used by loader (declarative)
-│   ├── starship.toml                     # Starship prompt config (theme, modules, etc.)
-│   ├── tools.list                        # Required CLI tools declaration (tool::brew-name::comment)
-│   ├── tools.macos.list                  # macOS-only required tools (tool::brew-name::comment)
-│   ├── tools.optional.list               # Optional CLI tools declaration (tool::brew-name::comment)
-│   └── tools.optional.macos.list         # macOS-only optional tools (tool::brew-name::comment)
-│
-├── scripts/                              # Modular Zsh behavior scripts
-│   ├── _completion/                      # Custom completions for CLI tools or aliases
-│   ├── _features/                        # Optional feature modules (opt-in via `ZSH_FEATURES`)
-│   │   └── codex/                        # Codex helpers (disabled by default)
-│   │       ├── _completion/              # Feature-gated completions
-│   │       ├── codex-starship.zsh        # Codex-driven Starship prompt helpers
-│   │       ├── codex-tools.zsh           # Codex CLI helpers
-│   │       └── init.zsh                  # Feature entrypoint
-│   ├── _internal/                        # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
-│   │   ├── paths.exports.zsh             # Core ZSH_* path exports
-│   │   ├── paths.init.zsh                # Minimal init (ensure cache dir exists)
-│   │   ├── paths.zsh                     # Convenience wrapper (exports + init)
-│   │   └── wrappers.zsh                  # Cached CLI wrapper generator (for subshells)
-│   ├── git/                              # Git workflow tools and custom logic
-│   │   ├── git.zsh                       # General Git aliases and settings
-│   │   ├── git-lock.zsh                  # Lock and restore git commits with labels
-│   │   ├── git-magic.zsh                 # Composite git workflows (push, fixup, review)
-│   │   ├── git-open.zsh                  # Open repo/branches/commits/PRs in browser
-│   │   ├── git-scope.zsh                 # Show git changes by scope, diff, or tree
-│   │   ├── git-summary.zsh               # Git contributions by author/date
-│   │   ├── git-tools.zsh                 # Git aliases + CLI entrypoint (impls in tools/)
-│   │   └── tools/                        # Git tool implementations (autoloaded)
-│   │       ├── git-branch-cleanup.zsh    # Delete merged/squash-applied branches
-│   │       ├── git-commit.zsh            # Commit context + commit-to-stash
-│   │       ├── git-reset.zsh             # Reset/undo/back + reset-remote
-│   │       └── git-utils.zsh             # Copy staged diff + git-root + commit hash
-│   ├── interactive/                      # Interactive shell scripts (completion, plugin hooks, etc.)
-│   │   ├── completion.zsh                # Completion system bootstrap (compinit, options)
-│   │   ├── hotkeys.zsh                   # ZLE widgets and keybindings
-│   │   ├── runtime.zsh                   # Interactive runtime (prompt, zoxide, keybindings)
-│   │   └── plugin-hooks.zsh              # Plugin post-load hooks and overrides
-│   ├── chrome-devtools-rdp.zsh           # Launch Chrome with remote debugging + DevTools helpers
-│   ├── features.zsh                      # Optional feature loader (`ZSH_FEATURES`)
-│   ├── editor.zsh                        # EDITOR + vi wrapper
-│   ├── env.zsh                           # Environment variable exports and init logic
-│   ├── eza.zsh                           # Aliases for eza (modern ls)
-│   ├── fzf-tools.zsh                     # FZF-based UI helpers for git, files, processes, etc.
-│   ├── macos.zsh                         # macOS-specific system tweaks
-│   ├── builtin-overrides.zsh             # Builtin wrappers: cd/cat/history (opt-out)
-│   └── shell-tools.zsh                   # Core shell helpers: reload tools, fd/bat helpers, cheat.sh
-│
-├── tests/                                # Zsh test scripts (audit, regression, etc.)
-├── tools/                                # Standalone executable scripts or compiled helpers
-└── install-tools.zsh                     # Entrypoint: bootstraps Homebrew, then runs bootstrap/install-tools.zsh
+├── assets/                   # Static data files
+├── cache/                    # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
+├── docs/                     # Markdown documentation
+│   ├── cli/                  # User-facing commands
+│   ├── guides/               # Concepts and system behavior
+│   ├── progress/             # Implementation logs (active + archived)
+│   └── templates/            # Progress templates + glossary
+├── bootstrap/                # Script orchestrator and plugin logic
+├── config/                   # Configuration files for third-party tools
+├── plugins/                  # Vendored upstream plugins (third-party)
+├── scripts/                  # Modular Zsh behavior scripts
+│   ├── _completion/          # Custom completions for CLI tools or aliases
+│   ├── _features/            # Optional feature modules (opt-in via `ZSH_FEATURES`)
+│   │   └── codex/            # Codex helpers (disabled by default)
+│   │       └── _completion/  # Feature-gated completions
+│   ├── _internal/            # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
+│   ├── git/                  # Git workflow tools and custom logic
+│   │   └── tools/            # Git tool implementations (autoloaded)
+│   └── interactive/          # Interactive shell scripts (completion, plugin hooks, etc.)
+├── tests/                    # Zsh test scripts (audit, regression, etc.)
+├── tools/                    # Standalone executable scripts or compiled helpers
+└── .private/                 # Local state + secrets (not for sharing)
 ```
 
 ## 🪄 Startup Snapshot
