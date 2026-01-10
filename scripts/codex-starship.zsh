@@ -102,6 +102,26 @@ _codex_starship_secret_dir() {
   return 1
 }
 
+# _codex_starship_auth_account_id: Print the ChatGPT account_id from the auth file (if available).
+# Usage: _codex_starship_auth_account_id <auth_file>
+_codex_starship_auth_account_id() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset auth_file="${1-}"
+  [[ -n "$auth_file" && -f "$auth_file" ]] || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+
+  typeset account_id=''
+  account_id="$(jq -r '.tokens.account_id // .account_id // empty' "$auth_file" 2>/dev/null)" || account_id=''
+  account_id="${account_id%%$'\n'*}"
+  account_id="${account_id%%$'\r'*}"
+  [[ -n "$account_id" ]] || return 1
+
+  print -r -- "$account_id"
+  return 0
+}
+
 # _codex_starship_sha256: Print the SHA-256 digest for a file.
 # Usage: _codex_starship_sha256 <file>
 _codex_starship_sha256() {
@@ -123,6 +143,31 @@ _codex_starship_sha256() {
   return 1
 }
 
+# _codex_starship_auth_identity_key: Build a stable match key from the auth file identity + account_id (if any).
+# Usage: _codex_starship_auth_identity_key <auth_file>
+_codex_starship_auth_identity_key() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset auth_file="${1-}"
+  [[ -n "$auth_file" && -f "$auth_file" ]] || return 1
+
+  typeset identity=''
+  identity="$(_codex_starship_auth_identity "$auth_file")" || return 1
+
+  typeset account_id=''
+  account_id="$(_codex_starship_auth_account_id "$auth_file")" || account_id=''
+
+  typeset key="$identity"
+  if [[ -n "$account_id" ]]; then
+    key="${identity}::${account_id}"
+  fi
+
+  [[ -n "$key" ]] || return 1
+  print -r -- "$key"
+  return 0
+}
+
 # _codex_starship_name_from_secret_dir: Resolve a friendly name by matching auth.json hash to profiles.
 # Usage: _codex_starship_name_from_secret_dir <auth_file> <secret_dir>
 _codex_starship_name_from_secret_dir() {
@@ -133,15 +178,31 @@ _codex_starship_name_from_secret_dir() {
   typeset secret_dir="${2-}"
   [[ -n "$auth_file" && -f "$auth_file" && -n "$secret_dir" && -d "$secret_dir" ]] || return 1
 
+  typeset auth_key=''
+  auth_key="$(_codex_starship_auth_identity_key "$auth_file")" || auth_key=''
+  if [[ -n "$auth_key" ]]; then
+    typeset secret_file='' candidate_key=''
+    for secret_file in "$secret_dir"/*.json; do
+      [[ -f "$secret_file" ]] || continue
+
+      candidate_key="$(_codex_starship_auth_identity_key "$secret_file")" || continue
+      if [[ "$candidate_key" == "$auth_key" ]]; then
+        typeset name="${secret_file:t:r}"
+        [[ -n "$name" ]] || return 1
+        print -r -- "$name"
+        return 0
+      fi
+    done
+  fi
+
   typeset auth_hash=''
   auth_hash="$(_codex_starship_sha256 "$auth_file")" || return 1
   [[ -n "$auth_hash" ]] || return 1
 
-  typeset secret_file=''
+  typeset secret_file='' candidate_hash=''
   for secret_file in "$secret_dir"/*.json; do
     [[ -f "$secret_file" ]] || continue
 
-    typeset candidate_hash=''
     candidate_hash="$(_codex_starship_sha256 "$secret_file")" || continue
     if [[ "$candidate_hash" == "$auth_hash" ]]; then
       typeset name="${secret_file:t:r}"

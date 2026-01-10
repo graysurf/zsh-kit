@@ -35,7 +35,9 @@ This command is designed for Starship prompt usage:
 
 Notes:
 
-- `<name>` is resolved by hashing the active auth file and matching it to a known profile under `CODEX_SECRET_DIR`.
+- `<name>` is resolved by matching the active auth file to a known profile under `CODEX_SECRET_DIR`:
+  - Prefer: JWT identity + `account_id` (stable across token refreshes).
+  - Fallback: SHA-256 whole-file hash (requires the profile file to be byte-identical).
   - If a friendly profile match is not found, the name is omitted by default; set `CODEX_STARSHIP_SHOW_FALLBACK_NAME=true`
     to show the JWT-derived identity (e.g. `user-...`).
 - `<weekly_reset_time>` is the UTC reset time from the weekly window (format is configurable via `--time-format`).
