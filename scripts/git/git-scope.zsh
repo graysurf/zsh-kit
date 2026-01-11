@@ -110,11 +110,19 @@ _git_scope_render_with_type() {
 
   printf "\n📄 Changed files:\n"
 
-  while IFS=$'\t' read -r kind file; do
-    [[ -z "$file" ]] && continue
-    files+=("$file")
+  while IFS=$'\t' read -r kind src dest; do
+    [[ -z "$src" ]] && continue
+
+    typeset display_path="$src"
+    typeset file_path="$src"
+    if [[ ( "$kind" == R* || "$kind" == C* ) && -n "$dest" ]]; then
+      display_path="${src} -> ${dest}"
+      file_path="$dest"
+    fi
+
+    files+=("$file_path")
     typeset color="$(_git_scope_kind_color "$kind")"
-    printf "  %b➔ [%s] %s%b\n" "$color" "$kind" "$file" "$color_reset"
+    printf "  %b➔ [%s] %s%b\n" "$color" "$kind" "$display_path" "$color_reset"
   done <<< "$input"
 
   _git_scope_render_tree "${(F)files}"
@@ -386,6 +394,7 @@ _git_scope_render_commit_files() {
   typeset -a preface_lines=()
 
   typeset ns_lines='' numstat_lines=''
+  typeset -A numstat_by_path=()
   typeset -a parents=()
   typeset parent_count=0
   typeset is_merge=false
@@ -451,24 +460,60 @@ _git_scope_render_commit_files() {
     printf "  ℹ️  Merge commit with %d parents — showing diff against parent #%d (%s)\n" "$parent_count" "$selected_index" "${selected_parent_short:-$selected_parent_hash}"
   fi
 
-  while IFS=$'\t' read -r kind file; do
-    [[ -z "$file" ]] && continue
-    file_list+=("$file")
+  while IFS=$'\t' read -r add del raw_path; do
+    [[ -z "$raw_path" ]] && continue
+
+    typeset canonical_path="$raw_path"
+    if [[ "$raw_path" == *"=>"* ]]; then
+      if [[ "$raw_path" == *"{"* && "$raw_path" == *"}"* ]]; then
+        typeset prefix="${raw_path%%\{*}"
+        typeset after_open="${raw_path#*\{}"
+        typeset inside="${after_open%%\}*}"
+        typeset suffix="${after_open#*\}}"
+
+        typeset new_part="${inside##*=> }"
+        if [[ "$new_part" == "$inside" ]]; then
+          new_part="${inside##*=>}"
+          new_part="${new_part## }"
+        fi
+
+        canonical_path="${prefix}${new_part}${suffix}"
+      else
+        canonical_path="${raw_path##*=> }"
+        if [[ "$canonical_path" == "$raw_path" ]]; then
+          canonical_path="${raw_path##*=>}"
+          canonical_path="${canonical_path## }"
+        fi
+      fi
+    fi
+
+    numstat_by_path["$canonical_path"]="${add}"$'\t'"${del}"
+  done <<< "$numstat_lines"
+
+  while IFS=$'\t' read -r kind src dest; do
+    [[ -z "$src" ]] && continue
+
+    typeset display_path="$src"
+    typeset file_path="$src"
+    if [[ ( "$kind" == R* || "$kind" == C* ) && -n "$dest" ]]; then
+      display_path="${src} -> ${dest}"
+      file_path="$dest"
+    fi
+
+    file_list+=("$file_path")
 
     typeset add="-"
     typeset del="-"
-    typeset match_line=''
-    match_line=$(printf "%s\n" "$numstat_lines" | awk -v f="$file" -F'\t' '$3 == f { print $1 "\t" $2; exit }')
-
-    if [[ -n "$match_line" ]]; then
-      add=$(cut -f1 <<< "$match_line")
-      del=$(cut -f2 <<< "$match_line")
+    typeset stats="${numstat_by_path["$file_path"]-}"
+    if [[ -n "$stats" ]]; then
+      add="${stats%%$'\t'*}"
+      del="${stats#*$'\t'}"
       [[ "$add" != "-" ]] && total_add=$((total_add + add))
       [[ "$del" != "-" ]] && total_del=$((total_del + del))
     fi
 
     typeset color="$(_git_scope_kind_color "$kind")"
-    printf "  %b➤ [%s] %s  [+%s / -%s]%b\n" "$color" "$kind" "$file" "$add" "$del" "$color_reset"
+    printf "  %b➤ [%s] %s  [+%s / -%s]%b\n" "$color" "$kind" "$display_path" "$add" "$del" "$color_reset"
   done <<< "$ns_lines"
 
   printf "\n  📊 Total: +%d / -%d\n" "$total_add" "$total_del"
