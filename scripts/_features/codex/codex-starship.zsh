@@ -539,19 +539,38 @@ _codex_starship_clear_stale_refresh_lock() {
   typeset stale_after="${3-}"
 
   [[ -n "$lock_path" && -e "$lock_path" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
-  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='90'
+  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='60'
 
-  zmodload zsh/stat 2>/dev/null || return 1
+  typeset -i should_remove=0
+  if [[ -d "$lock_path" ]]; then
+    typeset pid_file="$lock_path/pid"
+    typeset pid=''
+    if [[ -f "$pid_file" ]]; then
+      pid="$(<"$pid_file" 2>/dev/null)" || pid=''
+      pid="${pid%%$'\n'*}"
+      pid="${pid%%$'\r'*}"
+    fi
 
-  typeset -a st=()
-  zstat -A st +mtime -- "$lock_path" 2>/dev/null || return 1
+    if [[ -n "$pid" && "$pid" == <-> ]]; then
+      if ! kill -0 "$pid" >/dev/null 2>&1; then
+        should_remove=1
+      fi
+    fi
+  fi
 
-  typeset mtime="${st[1]-}"
-  [[ -n "$mtime" && "$mtime" == <-> ]] || return 1
+  if (( ! should_remove )); then
+    zmodload zsh/stat 2>/dev/null || return 1
 
-  typeset -i age=$(( now_epoch - mtime ))
-  if (( age < stale_after )); then
-    return 1
+    typeset -a st=()
+    zstat -A st +mtime -- "$lock_path" 2>/dev/null || return 1
+
+    typeset mtime="${st[1]-}"
+    [[ -n "$mtime" && "$mtime" == <-> ]] || return 1
+
+    typeset -i age=$(( now_epoch - mtime ))
+    if (( age < stale_after )); then
+      return 1
+    fi
   fi
 
   if [[ -d "$lock_path" ]]; then
@@ -581,7 +600,7 @@ _codex_starship_cleanup_stale_wham_usage_files() {
   typeset stale_after="${3-}"
 
   [[ -n "$cache_dir" && -d "$cache_dir" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
-  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='90'
+  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='60'
 
   typeset -a candidates=("$cache_dir"/wham.usage.*(N))
   (( ${#candidates} )) || return 1
@@ -617,7 +636,7 @@ _codex_starship_cleanup_stale_refresh_locks() {
   typeset stale_after="${3-}"
 
   [[ -n "$cache_dir" && -d "$cache_dir" && -n "$now_epoch" && "$now_epoch" == <-> ]] || return 1
-  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='90'
+  [[ -n "$stale_after" && "$stale_after" == <-> ]] || stale_after='60'
 
   typeset -a candidates=("$cache_dir"/*.refresh.lock(N))
   (( ${#candidates} )) || return 1
@@ -751,7 +770,7 @@ _codex_starship_maybe_enqueue_refresh() {
   [[ -n "$min_interval" && "$min_interval" == <-> ]] || min_interval='30'
 
   typeset lock_dir="$cache_dir/$key.refresh.lock"
-  typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+  typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-60}"
 
   if [[ -e "$lock_dir" ]]; then
     _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || return 0
@@ -1005,7 +1024,7 @@ codex-starship() {
   now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
   [[ -n "$now_epoch" && "$now_epoch" == <-> ]] || return 0
 
-  typeset refresh_stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+  typeset refresh_stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-60}"
   _codex_starship_cleanup_stale_refresh_locks "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
   _codex_starship_cleanup_stale_wham_usage_files "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
   typeset auth_hash_keep="${CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP:-5}"
@@ -1084,14 +1103,17 @@ codex-starship() {
     setopt pipe_fail nounset
 
     typeset lock_dir="$cache_dir/$key.refresh.lock"
-    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-60}"
     if ! mkdir "$lock_dir" >/dev/null 2>&1; then
       _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
       mkdir "$lock_dir" >/dev/null 2>&1 || exit 0
     fi
 
     typeset tmp_usage=''
-    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rmdir -- "$lock_dir" 2>/dev/null || true' EXIT
+    trap 'rm -f -- "$tmp_usage" 2>/dev/null || true; rm -rf -- "$lock_dir" 2>/dev/null || true' EXIT
+
+    typeset lock_pid_file="$lock_dir/pid"
+    print -r -- "$$" >| "$lock_pid_file" 2>/dev/null || true
 
     tmp_usage="$(mktemp "$cache_dir/wham.usage.XXXXXX" 2>/dev/null)" || exit 0
 
