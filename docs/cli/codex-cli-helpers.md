@@ -29,12 +29,15 @@ codex-tools commit-with-scope "Prefer terse subject lines"
 
 ---
 
-### `codex-commit-with-scope [extra prompt...]`
+### `codex-commit-with-scope [-p] [extra prompt...]`
 
 Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
 
+Options:
+- `-p`: Push the committed changes to the remote repository.
+
 ```bash
-codex-commit-with-scope "Prefer terse subject lines"
+codex-commit-with-scope -p "Prefer terse subject lines"
 ```
 
 ---
