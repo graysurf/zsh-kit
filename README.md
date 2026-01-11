@@ -31,28 +31,27 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ```text
 .
-├── assets/                   # Static data files
-├── cache/                    # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
-├── docs/                     # Markdown documentation
-│   ├── cli/                  # User-facing commands
-│   ├── guides/               # Concepts and system behavior
-│   ├── progress/             # Implementation logs (active + archived)
-│   └── templates/            # Progress templates + glossary
-├── bootstrap/                # Script orchestrator and plugin logic
-├── config/                   # Configuration files for third-party tools
-├── plugins/                  # Vendored upstream plugins (third-party)
-├── scripts/                  # Modular Zsh behavior scripts
-│   ├── _completion/          # Custom completions for CLI tools or aliases
-│   ├── _features/            # Optional feature modules (opt-in via `ZSH_FEATURES`)
-│   │   └── codex/            # Codex helpers (disabled by default)
-│   │       └── _completion/  # Feature-gated completions
-│   ├── _internal/            # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
-│   ├── git/                  # Git workflow tools and custom logic
-│   │   └── tools/            # Git tool implementations (autoloaded)
-│   └── interactive/          # Interactive shell scripts (completion, plugin hooks, etc.)
-├── tests/                    # Zsh test scripts (audit, regression, etc.)
-├── tools/                    # Standalone executable scripts or compiled helpers
-└── .private/                 # Local state + secrets (not for sharing)
+├── assets/            # Static data files
+├── cache/             # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
+├── docs/              # Markdown documentation
+│   ├── cli/           # User-facing commands
+│   ├── guides/        # Concepts and system behavior
+│   ├── progress/      # Implementation logs (active + archived)
+│   └── templates/     # Progress templates + glossary
+├── bootstrap/         # Script orchestrator and plugin logic
+├── config/            # Configuration files for third-party tools
+├── plugins/           # Vendored upstream plugins (third-party)
+├── scripts/           # Modular Zsh behavior scripts
+│   ├── _completion/   # Custom completions for CLI tools or aliases
+│   ├── _features/     # Optional feature modules (opt-in via `ZSH_FEATURES`)
+│   │   └── codex/     # Codex helpers (disabled by default)
+│   ├── _internal/     # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
+│   ├── git/           # Git workflow tools and custom logic
+│   │   └── tools/     # Git tool implementations (autoloaded)
+│   └── interactive/   # Interactive shell scripts (completion, plugin hooks, etc.)
+├── tests/             # Zsh test scripts (audit, regression, etc.)
+├── tools/             # Standalone executable scripts or compiled helpers
+└── .private/          # Local state + secrets (not for sharing)
 ```
 
 ## 🪄 Startup Snapshot
