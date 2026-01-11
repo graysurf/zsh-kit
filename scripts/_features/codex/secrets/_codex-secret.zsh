@@ -904,7 +904,7 @@ _codex_rate_limits_print_starship_cached() {
   local cache_file=''
   cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${target_file}")" || cache_file=''
   if [[ -z "${cache_file}" || ! -f "${cache_file}" ]]; then
-    print -ru2 -r -- "codex-rate-limits: cache not found (run codex-starship to populate): ${cache_file}"
+    print -ru2 -r -- "codex-rate-limits: cache not found (run codex-rate-limits without --cached, or codex-starship, to populate): ${cache_file}"
     return 1
   fi
 
@@ -941,6 +941,55 @@ _codex_rate_limits_print_starship_cached() {
   fi
 
   print -r -- "${prefix}${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset_iso}"
+  return 0
+}
+
+# _codex_rate_limits_write_starship_cache
+# Write a codex-starship cache entry for a target file (auth/secret), based on wham/usage data.
+# Usage: _codex_rate_limits_write_starship_cache <target_file> <fetched_at_epoch> <non_weekly_label> <non_weekly_remaining> <weekly_remaining> <weekly_reset_epoch>
+_codex_rate_limits_write_starship_cache() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local target_file="${1-}"
+  local fetched_at_epoch="${2-}"
+  local non_weekly_label="${3-}"
+  local non_weekly_remaining="${4-}"
+  local weekly_remaining="${5-}"
+  local weekly_reset_epoch="${6-}"
+
+  [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
+  [[ -n "${fetched_at_epoch}" && "${fetched_at_epoch}" == <-> ]] || return 1
+  [[ -n "${non_weekly_label}" && -n "${non_weekly_remaining}" && "${non_weekly_remaining}" == <-> ]] || return 1
+  [[ -n "${weekly_remaining}" && "${weekly_remaining}" == <-> ]] || return 1
+  [[ -n "${weekly_reset_epoch}" && "${weekly_reset_epoch}" == <-> ]] || return 1
+
+  local cache_file=''
+  cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${target_file}")" || cache_file=''
+  [[ -n "${cache_file}" ]] || return 1
+
+  mkdir -p -- "${cache_file:h}" >/dev/null 2>&1 || return 1
+
+  local tmp_cache=''
+  tmp_cache="$(mktemp "${cache_file}.XXXXXX" 2>/dev/null)" || tmp_cache=''
+  [[ -n "${tmp_cache}" ]] || return 1
+
+  {
+    print -r -- "fetched_at=${fetched_at_epoch}"
+    print -r -- "non_weekly_label=${non_weekly_label}"
+    print -r -- "non_weekly_remaining=${non_weekly_remaining}"
+    print -r -- "weekly_remaining=${weekly_remaining}"
+    print -r -- "weekly_reset_epoch=${weekly_reset_epoch}"
+  } >| "${tmp_cache}" 2>/dev/null || {
+    rm -f -- "${tmp_cache}" 2>/dev/null || true
+    return 1
+  }
+
+  mv -f -- "${tmp_cache}" "${cache_file}" 2>/dev/null || {
+    rm -f -- "${tmp_cache}" 2>/dev/null || true
+    return 1
+  }
+
   return 0
 }
 
@@ -1311,6 +1360,39 @@ codex-rate-limits() {
   formatted=''
   if formatted="$(_codex_format_window_seconds "${secondary_window_seconds}")"; then
     secondary_label="${formatted}"
+  fi
+
+  local fetched_at_epoch=''
+  fetched_at_epoch="$(date +%s 2>/dev/null)" || fetched_at_epoch=''
+  if [[ -n "${fetched_at_epoch}" && "${fetched_at_epoch}" == <-> ]]; then
+    local weekly_remaining='' weekly_reset_epoch=''
+    local non_weekly_label='' non_weekly_remaining=''
+
+    if [[ "${primary_label}" == "Weekly" ]]; then
+      weekly_remaining="${primary_remaining}"
+      weekly_reset_epoch="${primary_reset_at}"
+      non_weekly_label="${secondary_label}"
+      non_weekly_remaining="${secondary_remaining}"
+    elif [[ "${secondary_label}" == "Weekly" ]]; then
+      weekly_remaining="${secondary_remaining}"
+      weekly_reset_epoch="${secondary_reset_at}"
+      non_weekly_label="${primary_label}"
+      non_weekly_remaining="${primary_remaining}"
+    else
+      weekly_remaining="${secondary_remaining}"
+      weekly_reset_epoch="${secondary_reset_at}"
+      non_weekly_label="${primary_label}"
+      non_weekly_remaining="${primary_remaining}"
+    fi
+
+    _codex_rate_limits_write_starship_cache \
+      "${target_file}" \
+      "${fetched_at_epoch}" \
+      "${non_weekly_label}" \
+      "${non_weekly_remaining}" \
+      "${weekly_remaining}" \
+      "${weekly_reset_epoch}" \
+      >/dev/null 2>&1 || true
   fi
 
   local primary_reset_time="?" secondary_reset_date="?"

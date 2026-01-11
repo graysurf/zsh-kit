@@ -61,7 +61,7 @@ _codex-tools() {
             '--json[Print raw wham/usage JSON (single account only)]' \
             '--one-line[Print a single-line summary (single account only)]' \
             '--all[Query all secrets under CODEX_SECRET_DIR]' \
-            '1::secret.json:->secrets' && return 0
+            '1::secret.json:->secrets'
 
           case "${state-}" in
             secrets)
