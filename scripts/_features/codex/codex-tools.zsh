@@ -1,5 +1,15 @@
-      typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
+typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
 typeset -g CODEX_CLI_REASONING="${CODEX_CLI_REASONING:-medium}"
+
+if command -v safe_unalias >/dev/null; then
+  safe_unalias \
+    cx
+fi
+
+# cx
+# Alias of `codex-tools`.
+# Usage: cx <command> [args...]
+alias cx='codex-tools'
 
 # codex-tools: Opt-in Codex skill wrappers (feature: codex).
 #
@@ -276,7 +286,7 @@ _codex_tools_usage() {
   print -u"$fd" -r -- '  commit-with-scope [-p] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
   print -u"$fd" -r -- '    -p                 Push to remote after commit'
   print -u"$fd" -r -- '  auto-refresh         Run codex-auto-refresh (token refresh helper)'
-  print -u"$fd" -r -- '  rate-limits          Run codex-rate-limits (wham/usage; supports -c/--all/--json)'
+  print -u"$fd" -r -- '  rate-limits          Run codex-rate-limits (wham/usage; supports -c/-d/--no-refresh-auth/--all/--json)'
   print -u"$fd" -r -- '  create-feature-pr    Run create-feature-pr skill'
   print -u"$fd" -r -- '  find-and-fix-bugs    Run find-and-fix-bugs skill'
   print -u"$fd" -r -- '  release-workflow     Run release-workflow skill'

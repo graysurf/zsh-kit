@@ -450,8 +450,16 @@ codex-refresh-auth() {
   tmp_out="$(mktemp "${auth_dir}/auth.json.XXXXXX")"
   trap "rm -f -- ${(qq)tmp_response} ${(qq)tmp_out}" EXIT
 
+  local connect_timeout="${CODEX_REFRESH_AUTH_CURL_CONNECT_TIMEOUT_SECONDS:-2}"
+  local max_time="${CODEX_REFRESH_AUTH_CURL_MAX_TIME_SECONDS:-8}"
+  [[ -n "${connect_timeout}" && "${connect_timeout}" == <-> ]] || connect_timeout="2"
+  [[ -n "${max_time}" && "${max_time}" == <-> ]] || max_time="8"
+
   if ! http_status="$(
-    curl -sS -o "${tmp_response}" -w "%{http_code}" https://auth.openai.com/oauth/token \
+    curl -sS -o "${tmp_response}" -w "%{http_code}" \
+      --connect-timeout "${connect_timeout}" \
+      --max-time "${max_time}" \
+      https://auth.openai.com/oauth/token \
       -H "Content-Type: application/x-www-form-urlencoded" \
       --data-urlencode "grant_type=refresh_token" \
       --data-urlencode "client_id=${CODEX_OAUTH_CLIENT_ID}" \
@@ -649,8 +657,42 @@ _codex_rate_limits_writeback_weekly() {
     return 1
   fi
 
+  local primary_window_seconds='' primary_reset_at=''
+  local secondary_window_seconds='' secondary_reset_at=''
+
+  primary_window_seconds="$(jq -r '.rate_limit.primary_window.limit_window_seconds // empty' "${usage_json_file}" 2>/dev/null)" || primary_window_seconds=""
+  primary_reset_at="$(jq -r '.rate_limit.primary_window.reset_at // empty' "${usage_json_file}" 2>/dev/null)" || primary_reset_at=""
+  secondary_window_seconds="$(jq -r '.rate_limit.secondary_window.limit_window_seconds // empty' "${usage_json_file}" 2>/dev/null)" || secondary_window_seconds=""
+  secondary_reset_at="$(jq -r '.rate_limit.secondary_window.reset_at // empty' "${usage_json_file}" 2>/dev/null)" || secondary_reset_at=""
+
+  primary_window_seconds="${primary_window_seconds%%$'\n'*}"
+  primary_window_seconds="${primary_window_seconds%%$'\r'*}"
+  primary_reset_at="${primary_reset_at%%$'\n'*}"
+  primary_reset_at="${primary_reset_at%%$'\r'*}"
+  secondary_window_seconds="${secondary_window_seconds%%$'\n'*}"
+  secondary_window_seconds="${secondary_window_seconds%%$'\r'*}"
+  secondary_reset_at="${secondary_reset_at%%$'\n'*}"
+  secondary_reset_at="${secondary_reset_at%%$'\r'*}"
+
+  local primary_label='Primary' secondary_label='Secondary'
+  local formatted=''
+  if formatted="$(_codex_format_window_seconds "${primary_window_seconds}")"; then
+    primary_label="${formatted}"
+  fi
+  formatted=''
+  if formatted="$(_codex_format_window_seconds "${secondary_window_seconds}")"; then
+    secondary_label="${formatted}"
+  fi
+
   local weekly_reset_at_epoch=''
-  weekly_reset_at_epoch="$(jq -r '.rate_limit.secondary_window.reset_at // empty' "${usage_json_file}" 2>/dev/null)" || weekly_reset_at_epoch=""
+  if [[ "${primary_label}" == "Weekly" ]]; then
+    weekly_reset_at_epoch="${primary_reset_at}"
+  elif [[ "${secondary_label}" == "Weekly" ]]; then
+    weekly_reset_at_epoch="${secondary_reset_at}"
+  else
+    weekly_reset_at_epoch="${secondary_reset_at}"
+  fi
+
   weekly_reset_at_epoch="${weekly_reset_at_epoch%%$'\n'*}"
   weekly_reset_at_epoch="${weekly_reset_at_epoch%%$'\r'*}"
   if [[ -z "${weekly_reset_at_epoch}" || "${weekly_reset_at_epoch}" != <-> ]]; then
@@ -703,9 +745,20 @@ _codex_rate_limits_clear_starship_cache() {
     cache_root="$zdotdir/cache"
   fi
 
-  typeset cache_dir="$cache_root/codex/starship-rate-limits"
-  if [[ "$cache_dir" != */codex/starship-rate-limits ]]; then
-    print -u2 -r -- "codex-rate-limits: refusing to clear unexpected cache dir: $cache_dir"
+  if [[ "${cache_root}" != /* ]]; then
+    print -u2 -r -- "codex-rate-limits: refusing to clear cache with non-absolute cache root: ${cache_root}"
+    return 1
+  fi
+
+  typeset cache_root_abs="${cache_root:a}"
+  if [[ -z "${cache_root_abs}" || "${cache_root_abs}" == "/" ]]; then
+    print -u2 -r -- "codex-rate-limits: refusing to clear cache with invalid cache root: ${cache_root}"
+    return 1
+  fi
+
+  typeset cache_dir="${cache_root_abs}/codex/starship-rate-limits"
+  if [[ "${cache_dir}" != */codex/starship-rate-limits ]]; then
+    print -u2 -r -- "codex-rate-limits: refusing to clear unexpected cache dir: ${cache_dir}"
     return 1
   fi
 
@@ -725,21 +778,35 @@ codex-rate-limits() {
   local all_mode="false"
   local one_line="false"
   local clear_starship_cache="false"
+  local debug_mode="false"
+  local refresh_auth_on_401="true"
 
   while (( $# > 0 )); do
     case "${1-}" in
       -h|--help)
-        print -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [--json] [--one-line] [--all] [secret.json]"
+        print -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
         print -r -- '  -c          Clear codex-starship cache ($ZSH_CACHE_DIR/codex/starship-rate-limits) before querying'
+        print -r -- '  -d, --debug  Keep stderr and show per-account errors in --all mode (also enabled with ZSH_DEBUG>=1)'
+        print -r -- '  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)'
         print -r -- "  --json      Print raw wham/usage JSON (single account only)"
         print -r -- "  --one-line  Print a single-line summary (single account only; implied by --all)"
         print -r -- "  --all       Query all secrets under CODEX_SECRET_DIR (one line per account)"
         print -r -- "Env:"
         print -r -- "  CODEX_RATE_LIMITS_DEFAULT_ALL=true  Default to --all when no args are provided"
+        print -r -- "  CODEX_RATE_LIMITS_CURL_CONNECT_TIMEOUT_SECONDS=2  curl --connect-timeout seconds"
+        print -r -- "  CODEX_RATE_LIMITS_CURL_MAX_TIME_SECONDS=8  curl --max-time seconds"
         return 0
         ;;
       -c)
         clear_starship_cache="true"
+        shift
+        ;;
+      -d|--debug)
+        debug_mode="true"
+        shift
+        ;;
+      --no-refresh-auth)
+        refresh_auth_on_401="false"
         shift
         ;;
       --json)
@@ -760,7 +827,7 @@ codex-rate-limits() {
         ;;
       -*)
         print -ru2 -r -- "codex-rate-limits: unknown option: ${1-}"
-        print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [--json] [--one-line] [--all] [secret.json]"
+        print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
         return 64
         ;;
       *)
@@ -768,6 +835,13 @@ codex-rate-limits() {
         ;;
     esac
   done
+
+  if [[ "${debug_mode}" != "true" ]]; then
+    local zsh_debug_raw="${ZSH_DEBUG:-0}"
+    if [[ "${zsh_debug_raw}" == <-> ]] && (( zsh_debug_raw >= 1 )); then
+      debug_mode="true"
+    fi
+  fi
 
   if [[ "$clear_starship_cache" == "true" ]]; then
     _codex_rate_limits_clear_starship_cache || return 1
@@ -790,7 +864,7 @@ codex-rate-limits() {
       return 64
     fi
     if (( $# > 0 )); then
-      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [--json] [--one-line] [--all] [secret.json]"
+      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
       return 64
     fi
 
@@ -814,12 +888,28 @@ codex-rate-limits() {
     local tab=$'\t'
     local -A window_labels=()
     local -a rows=()
+    local -a per_secret_args=()
     local secret_file='' secret_name='' line=''
 
     for secret_file in "${secret_files[@]}"; do
       secret_name="${secret_file:t}"
-      if ! line="$(codex-rate-limits --one-line "${secret_name}" 2>/dev/null)"; then
-        line=''
+
+      per_secret_args=( --one-line )
+      if [[ "${refresh_auth_on_401}" != "true" ]]; then
+        per_secret_args+=( --no-refresh-auth )
+      fi
+      if [[ "${debug_mode}" == "true" ]]; then
+        per_secret_args+=( --debug )
+      fi
+
+      if [[ "${debug_mode}" == "true" ]]; then
+        if ! line="$(codex-rate-limits "${per_secret_args[@]}" "${secret_name}")"; then
+          line=''
+        fi
+      else
+        if ! line="$(codex-rate-limits "${per_secret_args[@]}" "${secret_name}" 2>/dev/null)"; then
+          line=''
+        fi
       fi
 
       if [[ -z "${line}" ]]; then
@@ -890,7 +980,7 @@ codex-rate-limits() {
     shift
 
     if (( $# > 0 )); then
-      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [--json] [--one-line] [--all] [secret.json]"
+      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
       return 64
     fi
     if [[ -z "${secret_name}" || "${secret_name}" == *'/'* || "${secret_name}" == *'..'* ]]; then
@@ -917,6 +1007,11 @@ codex-rate-limits() {
   base_url="${base_url%/}"
   local url="${base_url}/wham/usage"
 
+  local connect_timeout="${CODEX_RATE_LIMITS_CURL_CONNECT_TIMEOUT_SECONDS:-2}"
+  local max_time="${CODEX_RATE_LIMITS_CURL_MAX_TIME_SECONDS:-8}"
+  [[ -n "${connect_timeout}" && "${connect_timeout}" == <-> ]] || connect_timeout="2"
+  [[ -n "${max_time}" && "${max_time}" == <-> ]] || max_time="8"
+
   local tmp_response http_status
   tmp_response="$(mktemp "${target_file:h}/wham.usage.XXXXXX")"
   trap "rm -f -- ${(qq)tmp_response}" EXIT
@@ -926,6 +1021,8 @@ codex-rate-limits() {
     -sS
     -o "${tmp_response}"
     -w "%{http_code}"
+    --connect-timeout "${connect_timeout}"
+    --max-time "${max_time}"
     "${url}"
     -H "Authorization: Bearer ${access_token}"
     -H "Accept: application/json"
@@ -940,7 +1037,7 @@ codex-rate-limits() {
     return 3
   fi
 
-  if [[ "${http_status}" == "401" ]]; then
+  if [[ "${http_status}" == "401" && "${refresh_auth_on_401}" == "true" ]]; then
     if [[ "${target_file}" == "${CODEX_AUTH_FILE}" ]]; then
       codex-refresh-auth >/dev/null || true
     else
@@ -954,6 +1051,8 @@ codex-rate-limits() {
           -sS
           -o "${tmp_response}"
           -w "%{http_code}"
+          --connect-timeout "${connect_timeout}"
+          --max-time "${max_time}"
           "${url}"
           -H "Authorization: Bearer ${access_token}"
           -H "Accept: application/json"
@@ -998,11 +1097,13 @@ codex-rate-limits() {
   secondary_reset_at="$(jq -r '.rate_limit.secondary_window.reset_at // empty' "${tmp_response}" 2>/dev/null)" || secondary_reset_at=""
 
   local primary_label="Primary" secondary_label="Secondary"
-  if primary_label="$(_codex_format_window_seconds "${primary_window_seconds}")"; then
-    :
+  local formatted=''
+  if formatted="$(_codex_format_window_seconds "${primary_window_seconds}")"; then
+    primary_label="${formatted}"
   fi
-  if secondary_label="$(_codex_format_window_seconds "${secondary_window_seconds}")"; then
-    :
+  formatted=''
+  if formatted="$(_codex_format_window_seconds "${secondary_window_seconds}")"; then
+    secondary_label="${formatted}"
   fi
 
   local primary_reset_time="?" secondary_reset_date="?"

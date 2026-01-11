@@ -99,12 +99,6 @@ _codex_starship_secret_dir() {
     return 0
   fi
 
-  secret_dir="$zdotdir/.private/codex/secrets"
-  if [[ -d "$secret_dir" ]]; then
-    print -r -- "$secret_dir"
-    return 0
-  fi
-
   return 1
 }
 

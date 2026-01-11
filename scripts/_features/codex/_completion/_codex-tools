@@ -50,4 +50,4 @@ _codex-tools() {
   esac
 }
 
-compdef _codex-tools codex-tools
+compdef _codex-tools codex-tools cx

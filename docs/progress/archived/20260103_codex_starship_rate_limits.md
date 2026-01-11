@@ -55,7 +55,7 @@ Links:
 ### Input
 
 - `CODEX_AUTH_FILE` (default: `~/.config/codex-kit/auth.json`, fallback: `~/.codex/auth.json`) to determine the active token identity.
-- `CODEX_SECRET_DIR` (optional; default: `$ZDOTDIR/scripts/_features/codex/secrets`, fallback: `$ZDOTDIR/.private/codex/secrets`) for friendly name resolution via profile file hash matching.
+- `CODEX_SECRET_DIR` (optional; default: `$ZDOTDIR/scripts/_features/codex/secrets`) for friendly name resolution via profile file hash matching.
 - Rate limits source: `https://chatgpt.com/backend-api/wham/usage` (via `curl` + bearer token from auth file).
 
 ### Output

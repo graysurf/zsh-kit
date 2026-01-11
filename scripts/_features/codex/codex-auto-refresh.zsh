@@ -1,4 +1,4 @@
-3#!/usr/bin/env -S zsh -f
+#!/usr/bin/env -S zsh -f
 
 if [[ -z ${_codex_auto_refresh_file-} ]]; then
   typeset -gr _codex_auto_refresh_file="${${(%):-%x}:A}"
