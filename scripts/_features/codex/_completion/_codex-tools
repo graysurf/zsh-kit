@@ -18,12 +18,8 @@ _codex-tools() {
     'commit:Alias of commit-with-scope'
     'auto-refresh:Run codex-auto-refresh (token refresh helper)'
     'rate-limits:Run codex-rate-limits (wham/usage; supports --cached)'
-    'create-feature-pr:Run create-feature-pr skill'
-    'create:Alias of create-feature-pr'
-    'find-and-fix-bugs:Run find-and-fix-bugs skill'
-    'fix-bugs:Alias of find-and-fix-bugs'
-    'release-workflow:Run release-workflow skill'
-    'release:Alias of release-workflow'
+    'advice:Get actionable engineering advice'
+    'knowledge:Get clear explanation and angles for a concept'
     'help:Show usage'
     'list:Alias of help'
   )
@@ -89,16 +85,12 @@ _codex-tools() {
 
           return 0
           ;;
-        create-feature-pr|create)
-          _message 'feature request'
+        advice)
+          _message 'question'
           return 0
           ;;
-        find-and-fix-bugs|fix-bugs)
-          _message 'bug report'
-          return 0
-          ;;
-        release-workflow|release)
-          _message 'release request'
+        knowledge)
+          _message 'concept'
           return 0
           ;;
         help|list)

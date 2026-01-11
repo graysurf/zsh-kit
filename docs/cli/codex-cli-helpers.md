@@ -2,8 +2,9 @@
 
 This feature is disabled by default. Enable it by including `codex` in `ZSH_FEATURES` (e.g. in your home `~/.zshenv`).
 
-`scripts/_features/codex/codex-tools.zsh` adds a `codex-tools` dispatcher plus four `codex-*` commands that invoke
-Codex skills with a consistent, interactive CLI interface. The helpers are intentionally opt-in and only run when you
+`scripts/_features/codex/codex-tools.zsh` adds a `codex-tools` dispatcher plus several `codex-*` commands that invoke
+Codex skills or prompts with a consistent, interactive CLI interface.
+ The helpers are intentionally opt-in and only run when you
 explicitly allow the dangerous sandbox bypass.
 
 ---
@@ -11,9 +12,10 @@ explicitly allow the dangerous sandbox bypass.
 ## 📦 Use Cases
 
 - Generate a Semantic Commit message while including git-scope context
-- Create a feature branch and PR from a short request prompt
-- Triage and fix bugs using a guided skill workflow
-- Run a structured release workflow with optional constraints
+- Get explicit, actionable engineering advice based on a structured template
+- Explore complex concepts with clear explanations and multiple analytical angles
+- Refresh Codex authentication tokens manually
+- Check Codex usage and rate limits across accounts
 
 ---
 
@@ -29,52 +31,70 @@ codex-tools commit-with-scope "Prefer terse subject lines"
 
 ---
 
-### `codex-commit-with-scope [-p] [extra prompt...]`
+### `codex-tools commit-with-scope [-p] [extra prompt...]`
 
 Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
 
 Options:
+
 - `-p`: Push the committed changes to the remote repository.
 
 ```bash
-codex-commit-with-scope -p "Prefer terse subject lines"
+codex-tools commit-with-scope -p "Prefer terse subject lines"
 ```
 
 ---
 
-### `codex-create-feature-pr [feature request...]`
+### `codex-tools advice [question...]`
 
-Runs the `create-feature-pr` skill. If you omit the argument, it will prompt for a request.
+Runs the `actionable-advice` prompt template. If you omit the argument, it will prompt for a question.
 
 ```bash
-codex-create-feature-pr "Add a new git-alias for cherry-pick workflows"
+codex-tools advice "How to optimize Zsh startup time?"
 ```
 
 ---
 
-### `codex-find-and-fix-bugs [bug report...]`
+### `codex-tools knowledge [concept...]`
 
-Runs the `find-and-fix-bugs` skill. If you omit the argument, it will prompt for an optional report.
+Runs the `actionable-knowledge` prompt template. If you omit the argument, it will prompt for a concept.
 
 ```bash
-codex-find-and-fix-bugs "Investigate intermittent failure in plugin fetcher"
+codex-knowledge "What is a Closure in programming?"
 ```
 
 ---
 
-### `codex-release-workflow [release request...]`
+### `codex-tools auto-refresh`
 
-Runs the `release-workflow` skill. If you omit the argument, it will prompt for optional context.
+Runs the `codex-auto-refresh` helper to refresh authentication tokens.
 
 ```bash
-codex-release-workflow "Tag v2.3.0 and publish release notes"
+codex-tools auto-refresh
+```
+
+---
+
+### `codex-tools rate-limits [options] [secret.json]`
+
+Checks Codex usage and rate limits. Supports caching and multi-account queries.
+
+Options:
+
+- `-c`: Clear cache before querying.
+- `--cached`: Use local cache only.
+- `--all`: Query all configured accounts.
+
+```bash
+codex-tools rate-limits --all
 ```
 
 ---
 
 ## 🔐 Safety Gate
 
-All helpers require `CODEX_ALLOW_DANGEROUS=true`. If it is not set, the helpers print a disabled
+All helpers require `CODEX_ALLOW_DANGEROUS=true`.
+ If it is not set, the helpers print a disabled
 message and return non-zero.
 
 ```bash

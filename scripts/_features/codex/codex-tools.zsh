@@ -14,13 +14,12 @@ alias cx='codex-tools'
 # codex-tools: Opt-in Codex skill wrappers (feature: codex).
 #
 # Provides:
-# - `codex-tools` (CLI dispatcher)
+# - `codex-tools` (CLI dispatcher, alias `cx`)
 # - `codex-commit-with-scope`
-# - `codex-create-feature-pr`
-# - `codex-find-and-fix-bugs`
-# - `codex-release-workflow`
-# - `codex-auto-refresh` (via `codex-tools auto-refresh`)
-# - `codex-rate-limits` (via `codex-tools rate-limits`)
+# - `codex-advice`
+# - `codex-knowledge`
+# - `codex-tools auto-refresh`
+# - `codex-tools rate-limits`
 
 # _codex_require_allow_dangerous <caller>
 # Guard to prevent running codex with dangerous sandbox bypass unless explicitly enabled.
@@ -58,7 +57,7 @@ _codex_exec_dangerous() {
 
   codex exec --dangerously-bypass-approvals-and-sandbox -s workspace-write \
     -m "$CODEX_CLI_MODEL" -c "model_reasoning_effort=\"$CODEX_CLI_REASONING\"" \
-    "$prompt"
+    -- "$prompt"
 }
 
 # codex-commit-with-scope [-p] [extra prompt...]
@@ -99,85 +98,54 @@ codex-commit-with-scope() {
   _codex_exec_dangerous "$prompt"
 }
 
-# codex-create-feature-pr [feature request...]
-# Run the create-feature-pr skill; prompts for input if no request is provided.
-codex-create-feature-pr() {
+# _codex_tools_run_prompt <template_name> [question...]
+# Run codex with a prompt template and user question.
+_codex_tools_run_prompt() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  _codex_require_allow_dangerous 'codex-create-feature-pr' || return 1
+  local template_name="${1-}"
+  shift
+  local user_query="$*"
 
-  local user_prompt=''
-  if (( $# )); then
-    user_prompt="$*"
-  else
-    print -n -r -- "Feature request: "
-    IFS= read -r user_prompt || return 1
+  if [[ -z "$user_query" ]]; then
+    print -n -r -- "Question: "
+    IFS= read -r user_query || return 1
   fi
 
-  if [[ -z "$user_prompt" ]]; then
-    print -u2 -r -- "codex-create-feature-pr: missing feature request"
+  if [[ -z "$user_query" ]]; then
+    print -u2 -r -- "codex-tools: missing question"
     return 1
   fi
 
-  local prompt=''
-  prompt='Use the create-feature-pr skill.'
-  prompt+=$'\n\nFeature request:\n'
-  prompt+="$user_prompt"
+  local feature_dir=''
+  feature_dir="$(_codex_tools_feature_dir)" || return 1
+  local prompt_file="$feature_dir/prompts/${template_name}.md"
 
-  _codex_exec_dangerous "$prompt"
+  if [[ ! -f "$prompt_file" ]]; then
+    print -u2 -r -- "codex-tools: prompt template not found: $prompt_file"
+    return 1
+  fi
+
+  local prompt_content
+  prompt_content=$(cat -- "$prompt_file")
+
+  # Replace $ARGUMENTS with user query
+  local final_prompt="${prompt_content//\$ARGUMENTS/$user_query}"
+
+  _codex_exec_dangerous "$final_prompt"
 }
 
-# codex-find-and-fix-bugs [bug report...]
-# Run the find-and-fix-bugs skill; accepts an optional bug report for prioritization.
-codex-find-and-fix-bugs() {
-  emulate -L zsh
-  setopt pipe_fail err_return nounset
-
-  _codex_require_allow_dangerous 'codex-find-and-fix-bugs' || return 1
-
-  local user_prompt=''
-  if (( $# )); then
-    user_prompt="$*"
-  else
-    print -n -r -- "Bug report (optional): "
-    IFS= read -r user_prompt || return 1
-  fi
-
-  local prompt=''
-  prompt='Use the find-and-fix-bugs skill.'
-  if [[ -n "$user_prompt" ]]; then
-    prompt+=$'\n\nBug report:\n'
-    prompt+="$user_prompt"
-  fi
-
-  _codex_exec_dangerous "$prompt"
+# codex-advice [question...]
+# Run actionable-advice prompt.
+codex-advice() {
+  _codex_tools_run_prompt "actionable-advice" "$@"
 }
 
-# codex-release-workflow [release request...]
-# Run the release-workflow skill; accepts optional release context or constraints.
-codex-release-workflow() {
-  emulate -L zsh
-  setopt pipe_fail err_return nounset
-
-  _codex_require_allow_dangerous 'codex-release-workflow' || return 1
-
-  local user_prompt=''
-  if (( $# )); then
-    user_prompt="$*"
-  else
-    print -n -r -- "Release request (optional): "
-    IFS= read -r user_prompt || return 1
-  fi
-
-  local prompt=''
-  prompt='Use the release-workflow skill.'
-  if [[ -n "$user_prompt" ]]; then
-    prompt+=$'\n\nRelease request:\n'
-    prompt+="$user_prompt"
-  fi
-
-  _codex_exec_dangerous "$prompt"
+# codex-knowledge [question...]
+# Run actionable-knowledge prompt.
+codex-knowledge() {
+  _codex_tools_run_prompt "actionable-knowledge" "$@"
 }
 
 # _codex_tools_feature_dir
@@ -284,12 +252,11 @@ _codex_tools_usage() {
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
   print -u"$fd" -r -- '  commit-with-scope [-p] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
-  print -u"$fd" -r -- '    -p                 Push to remote after commit'
-  print -u"$fd" -r -- '  auto-refresh         Run codex-auto-refresh (token refresh helper)'
-  print -u"$fd" -r -- '  rate-limits          Run codex-rate-limits (wham/usage; supports -c/-d/--cached/--no-refresh-auth/--all/--json)'
-  print -u"$fd" -r -- '  create-feature-pr    Run create-feature-pr skill'
-  print -u"$fd" -r -- '  find-and-fix-bugs    Run find-and-fix-bugs skill'
-  print -u"$fd" -r -- '  release-workflow     Run release-workflow skill'
+  print -u"$fd" -r -- '    -p                                      Push to remote after commit'
+  print -u"$fd" -r -- '  auto-refresh                              Run codex-auto-refresh (token refresh helper)'
+  print -u"$fd" -r -- '  rate-limits                               Run codex-rate-limits (wham/usage; supports -c/-d/--cached/--no-refresh-auth/--all/--json)'
+  print -u"$fd" -r -- '  advice [question]                         Get actionable engineering advice'
+  print -u"$fd" -r -- '  knowledge [concept]                       Get clear explanation and angles for a concept'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Safety: some commands require CODEX_ALLOW_DANGEROUS=true'
   print -u"$fd" -r -- 'Config: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
@@ -326,14 +293,11 @@ codex-tools() {
     rate-limits)
       _codex_tools_run_rate_limits "$@"
       ;;
-    create-feature-pr|create)
-      codex-create-feature-pr "$@"
+    advice)
+      codex-advice "$@"
       ;;
-    find-and-fix-bugs|fix-bugs)
-      codex-find-and-fix-bugs "$@"
-      ;;
-    release-workflow|release)
-      codex-release-workflow "$@"
+    knowledge)
+      codex-knowledge "$@"
       ;;
     *)
       print -u2 -r -- "codex-tools: unknown command: $cmd"
