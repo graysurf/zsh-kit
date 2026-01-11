@@ -286,7 +286,7 @@ _codex_tools_usage() {
   print -u"$fd" -r -- '  commit-with-scope [-p] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
   print -u"$fd" -r -- '    -p                 Push to remote after commit'
   print -u"$fd" -r -- '  auto-refresh         Run codex-auto-refresh (token refresh helper)'
-  print -u"$fd" -r -- '  rate-limits          Run codex-rate-limits (wham/usage; supports -c/-d/--no-refresh-auth/--all/--json)'
+  print -u"$fd" -r -- '  rate-limits          Run codex-rate-limits (wham/usage; supports -c/-d/--cached/--no-refresh-auth/--all/--json)'
   print -u"$fd" -r -- '  create-feature-pr    Run create-feature-pr skill'
   print -u"$fd" -r -- '  find-and-fix-bugs    Run find-and-fix-bugs skill'
   print -u"$fd" -r -- '  release-workflow     Run release-workflow skill'

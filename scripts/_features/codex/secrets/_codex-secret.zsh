@@ -767,6 +767,183 @@ _codex_rate_limits_clear_starship_cache() {
   return 0
 }
 
+# _codex_rate_limits_starship_cache_key
+# Convert a display name into the codex-starship cache key.
+# Usage: _codex_rate_limits_starship_cache_key <name>
+_codex_rate_limits_starship_cache_key() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local name="${1-}"
+  [[ -n "${name}" ]] || return 1
+
+  local key="${name:l}"
+  key="${key//[^a-z0-9]/_}"
+  key="${key##_}"
+  key="${key%%_}"
+  [[ -n "${key}" ]] || return 1
+
+  print -r -- "${key}"
+  return 0
+}
+
+# _codex_rate_limits_starship_cache_dir
+# Print the codex-starship cache directory path (absolute).
+# Usage: _codex_rate_limits_starship_cache_dir
+_codex_rate_limits_starship_cache_dir() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local cache_root="${ZSH_CACHE_DIR-}"
+  if [[ -z "${cache_root}" ]]; then
+    local zdotdir="${ZDOTDIR-}"
+    if [[ -z "${zdotdir}" ]]; then
+      local home="${HOME-}"
+      [[ -n "${home}" ]] || return 1
+      zdotdir="${home}/.config/zsh"
+    fi
+    cache_root="${zdotdir}/cache"
+  fi
+
+  if [[ "${cache_root}" != /* ]]; then
+    return 1
+  fi
+
+  local cache_root_abs="${cache_root:a}"
+  if [[ -z "${cache_root_abs}" || "${cache_root_abs}" == "/" ]]; then
+    return 1
+  fi
+
+  local cache_dir="${cache_root_abs}/codex/starship-rate-limits"
+  if [[ "${cache_dir}" != */codex/starship-rate-limits ]]; then
+    return 1
+  fi
+
+  print -r -- "${cache_dir}"
+  return 0
+}
+
+# _codex_rate_limits_starship_secret_name_for_auth
+# Resolve a matching secret display name (basename without .json) for an auth file.
+# Usage: _codex_rate_limits_starship_secret_name_for_auth <auth_file>
+_codex_rate_limits_starship_secret_name_for_auth() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset nullglob
+
+  local auth_file="${1-}"
+  [[ -n "${auth_file}" && -f "${auth_file}" ]] || return 1
+
+  local secret_dir="${CODEX_SECRET_DIR-}"
+  [[ -n "${secret_dir}" && -d "${secret_dir}" ]] || return 1
+
+  local auth_key=''
+  auth_key="$(_codex_auth_identity_key "${auth_file}")" || auth_key=''
+  [[ -n "${auth_key}" ]] || return 1
+
+  local secret_file='' candidate_key=''
+  for secret_file in "${secret_dir}"/*.json; do
+    [[ -f "${secret_file}" ]] || continue
+    candidate_key="$(_codex_auth_identity_key "${secret_file}")" || continue
+    if [[ "${candidate_key}" == "${auth_key}" ]]; then
+      print -r -- "${secret_file:t:r}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# _codex_rate_limits_starship_cache_file_for_target
+# Print the cache file path for a target auth/secret file.
+# Usage: _codex_rate_limits_starship_cache_file_for_target <target_file>
+_codex_rate_limits_starship_cache_file_for_target() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local target_file="${1-}"
+  [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
+
+  local cache_dir=''
+  cache_dir="$(_codex_rate_limits_starship_cache_dir)" || return 1
+
+  local key=''
+  if [[ "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
+    local display_name="${target_file:t:r}"
+    key="$(_codex_rate_limits_starship_cache_key "${display_name}")" || return 1
+    print -r -- "${cache_dir}/${key}.kv"
+    return 0
+  fi
+
+  local secret_name=''
+  secret_name="$(_codex_rate_limits_starship_secret_name_for_auth "${target_file}")" || secret_name=''
+  if [[ -n "${secret_name}" ]]; then
+    key="$(_codex_rate_limits_starship_cache_key "${secret_name}")" || return 1
+    print -r -- "${cache_dir}/${key}.kv"
+    return 0
+  fi
+
+  local auth_hash=''
+  auth_hash="$(shasum -a 256 -- "${target_file}" 2>/dev/null | awk '{print $1}')" || return 1
+  auth_hash="${auth_hash:l}"
+  [[ -n "${auth_hash}" ]] || return 1
+
+  print -r -- "${cache_dir}/auth_${auth_hash}.kv"
+  return 0
+}
+
+# _codex_rate_limits_print_starship_cached
+# Print a one-line summary from the codex-starship cache (no network).
+# Usage: _codex_rate_limits_print_starship_cached <target_file>
+_codex_rate_limits_print_starship_cached() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local target_file="${1-}"
+  [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
+
+  local cache_file=''
+  cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${target_file}")" || cache_file=''
+  if [[ -z "${cache_file}" || ! -f "${cache_file}" ]]; then
+    print -ru2 -r -- "codex-rate-limits: cache not found (run codex-starship to populate): ${cache_file}"
+    return 1
+  fi
+
+  local fetched_at='' non_weekly_label='' non_weekly_remaining=''
+  local weekly_remaining='' weekly_reset_epoch=''
+
+  local kv=''
+  while IFS= read -r kv; do
+    case "${kv}" in
+      fetched_at=*) fetched_at="${kv#fetched_at=}" ;;
+      non_weekly_label=*) non_weekly_label="${kv#non_weekly_label=}" ;;
+      non_weekly_remaining=*) non_weekly_remaining="${kv#non_weekly_remaining=}" ;;
+      weekly_remaining=*) weekly_remaining="${kv#weekly_remaining=}" ;;
+      weekly_reset_epoch=*) weekly_reset_epoch="${kv#weekly_reset_epoch=}" ;;
+    esac
+  done < "${cache_file}" 2>/dev/null || true
+
+  if [[ -z "${non_weekly_label}" || -z "${non_weekly_remaining}" || "${non_weekly_remaining}" != <-> ]]; then
+    print -ru2 -r -- "codex-rate-limits: invalid cache (missing non-weekly data): ${cache_file}"
+    return 1
+  fi
+  if [[ -z "${weekly_remaining}" || "${weekly_remaining}" != <-> || -z "${weekly_reset_epoch}" || "${weekly_reset_epoch}" != <-> ]]; then
+    print -ru2 -r -- "codex-rate-limits: invalid cache (missing weekly data): ${cache_file}"
+    return 1
+  fi
+
+  local weekly_reset_iso=''
+  weekly_reset_iso="$(_codex_epoch_format_utc "${weekly_reset_epoch}" "%Y-%m-%dT%H:%M:%SZ")" || return 1
+
+  local prefix=''
+  if [[ "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
+    local display_name="${target_file:t:r}"
+    prefix="${display_name} "
+  fi
+
+  print -r -- "${prefix}${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset_iso}"
+  return 0
+}
+
 # codex-rate-limits
 # Show Codex rate limits for the active auth file (or secrets under $CODEX_SECRET_DIR).
 codex-rate-limits() {
@@ -780,13 +957,15 @@ codex-rate-limits() {
   local clear_starship_cache="false"
   local debug_mode="false"
   local refresh_auth_on_401="true"
+  local cached_mode="false"
 
   while (( $# > 0 )); do
     case "${1-}" in
       -h|--help)
-        print -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
+        print -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--cached] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
         print -r -- '  -c          Clear codex-starship cache ($ZSH_CACHE_DIR/codex/starship-rate-limits) before querying'
         print -r -- '  -d, --debug  Keep stderr and show per-account errors in --all mode (also enabled with ZSH_DEBUG>=1)'
+        print -r -- '  --cached    Print cached one-line output from codex-starship cache (no network; implies --one-line)'
         print -r -- '  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)'
         print -r -- "  --json      Print raw wham/usage JSON (single account only)"
         print -r -- "  --one-line  Print a single-line summary (single account only; implied by --all)"
@@ -803,6 +982,10 @@ codex-rate-limits() {
         ;;
       -d|--debug)
         debug_mode="true"
+        shift
+        ;;
+      --cached)
+        cached_mode="true"
         shift
         ;;
       --no-refresh-auth)
@@ -827,7 +1010,7 @@ codex-rate-limits() {
         ;;
       -*)
         print -ru2 -r -- "codex-rate-limits: unknown option: ${1-}"
-        print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
+        print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--cached] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
         return 64
         ;;
       *)
@@ -835,6 +1018,18 @@ codex-rate-limits() {
         ;;
     esac
   done
+
+  if [[ "${cached_mode}" == "true" ]]; then
+    one_line="true"
+    if [[ "${output_mode}" == "json" ]]; then
+      print -ru2 -r -- "codex-rate-limits: --json is not supported with --cached"
+      return 64
+    fi
+    if [[ "${clear_starship_cache}" == "true" ]]; then
+      print -ru2 -r -- "codex-rate-limits: -c is not compatible with --cached"
+      return 64
+    fi
+  fi
 
   if [[ "${debug_mode}" != "true" ]]; then
     local zsh_debug_raw="${ZSH_DEBUG:-0}"
@@ -864,7 +1059,7 @@ codex-rate-limits() {
       return 64
     fi
     if (( $# > 0 )); then
-      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
+      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--cached] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
       return 64
     fi
 
@@ -895,6 +1090,9 @@ codex-rate-limits() {
       secret_name="${secret_file:t}"
 
       per_secret_args=( --one-line )
+      if [[ "${cached_mode}" == "true" ]]; then
+        per_secret_args+=( --cached )
+      fi
       if [[ "${refresh_auth_on_401}" != "true" ]]; then
         per_secret_args+=( --no-refresh-auth )
       fi
@@ -980,7 +1178,7 @@ codex-rate-limits() {
     shift
 
     if (( $# > 0 )); then
-      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
+      print -ru2 -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--cached] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
       return 64
     fi
     if [[ -z "${secret_name}" || "${secret_name}" == *'/'* || "${secret_name}" == *'..'* ]]; then
@@ -993,6 +1191,11 @@ codex-rate-limits() {
   if [[ ! -f "${target_file}" ]]; then
     print -ru2 -r -- "codex-rate-limits: ${target_file} not found"
     return 1
+  fi
+
+  if [[ "${cached_mode}" == "true" ]]; then
+    _codex_rate_limits_print_starship_cached "${target_file}" || return 1
+    return 0
   fi
 
   local access_token='' account_id=''
