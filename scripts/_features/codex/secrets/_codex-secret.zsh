@@ -1163,7 +1163,7 @@ codex-rate-limits() {
         if [[ "${cached_mode}" == "true" ]]; then
           rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
         else
-          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}ERR")
+          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
           rc=1
         fi
         continue
@@ -1172,7 +1172,7 @@ codex-rate-limits() {
       local parsed_name='' window_field='' weekly_field='' reset_iso=''
       IFS=' ' read -r parsed_name window_field weekly_field reset_iso <<< "${line}"
       if [[ -z "${parsed_name}" || -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
-        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}ERR")
+        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
         rc=1
         continue
       fi
@@ -1185,7 +1185,7 @@ codex-rate-limits() {
       weekly_remaining="${weekly_field#W:}"
 
       if [[ -z "${window_label}" || -z "${non_weekly_remaining}" || -z "${weekly_remaining}" ]]; then
-        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}ERR")
+        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
         rc=1
         continue
       fi
