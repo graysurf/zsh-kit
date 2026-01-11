@@ -11,7 +11,7 @@ _codex-tools() {
 
   typeset -a subcmds
   subcmds=(
-    'commit-with-scope:Run commit-message skill (with git-scope context)'
+    'commit-with-scope:Run semantic-commit skill (with git-scope context)'
     'create-feature-pr:Run create-feature-pr skill'
     'find-and-fix-bugs:Run find-and-fix-bugs skill'
     'release-workflow:Run release-workflow skill'

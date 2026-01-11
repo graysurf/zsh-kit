@@ -50,7 +50,7 @@ _codex_exec_dangerous() {
 }
 
 # codex-commit-with-scope [extra prompt...]
-# Run the commit-message skill to create a Semantic Commit and report git-scope output.
+# Run the semantic-commit skill to create a Semantic Commit and report git-scope output.
 codex-commit-with-scope() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -63,7 +63,7 @@ codex-commit-with-scope() {
   fi
 
   local prompt=''
-  prompt='Use the commit-message skill.'
+  prompt='Use the semantic-commit skill.'
   if [[ -n "$extra_prompt" ]]; then
     prompt+=$'\n\nAdditional instructions from user:\n'
     prompt+="$extra_prompt"
@@ -164,7 +164,7 @@ _codex_tools_usage() {
   print -u"$fd" -r -- 'Usage: codex-tools <command> [args...]'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
-  print -u"$fd" -r -- '  commit-with-scope    Run commit-message skill (with git-scope context)'
+  print -u"$fd" -r -- '  commit-with-scope    Run semantic-commit skill (with git-scope context)'
   print -u"$fd" -r -- '  create-feature-pr    Run create-feature-pr skill'
   print -u"$fd" -r -- '  find-and-fix-bugs    Run find-and-fix-bugs skill'
   print -u"$fd" -r -- '  release-workflow     Run release-workflow skill'

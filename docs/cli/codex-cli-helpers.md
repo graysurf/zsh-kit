@@ -31,7 +31,7 @@ codex-tools commit-with-scope "Prefer terse subject lines"
 
 ### `codex-commit-with-scope [extra prompt...]`
 
-Runs the `commit-message` skill and attaches any optional guidance you pass in.
+Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
 
 ```bash
 codex-commit-with-scope "Prefer terse subject lines"
