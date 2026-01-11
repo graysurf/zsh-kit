@@ -963,13 +963,13 @@ codex-rate-limits() {
     case "${1-}" in
       -h|--help)
         print -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--cached] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
-        print -r -- '  -c          Clear codex-starship cache ($ZSH_CACHE_DIR/codex/starship-rate-limits) before querying'
-        print -r -- '  -d, --debug  Keep stderr and show per-account errors in --all mode (also enabled with ZSH_DEBUG>=1)'
-        print -r -- '  --cached    Print cached one-line output from codex-starship cache (no network; implies --one-line)'
+        print -r -- '  -c                 Clear codex-starship cache ($ZSH_CACHE_DIR/codex/starship-rate-limits) before querying'
+        print -r -- '  -d, --debug        Keep stderr and show per-account errors in --all mode (also enabled with ZSH_DEBUG>=1)'
+        print -r -- '  --cached           Print cached one-line output from codex-starship cache (no network; implies --one-line)'
         print -r -- '  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)'
-        print -r -- "  --json      Print raw wham/usage JSON (single account only)"
-        print -r -- "  --one-line  Print a single-line summary (single account only; implied by --all)"
-        print -r -- "  --all       Query all secrets under CODEX_SECRET_DIR (one line per account)"
+        print -r -- "  --json             Print raw wham/usage JSON (single account only)"
+        print -r -- "  --one-line         Print a single-line summary (single account only; implied by --all)"
+        print -r -- "  --all              Query all secrets under CODEX_SECRET_DIR (one line per account)"
         print -r -- "Env:"
         print -r -- "  CODEX_RATE_LIMITS_DEFAULT_ALL=true  Default to --all when no args are provided"
         print -r -- "  CODEX_RATE_LIMITS_CURL_CONNECT_TIMEOUT_SECONDS=2  curl --connect-timeout seconds"

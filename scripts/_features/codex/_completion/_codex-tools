@@ -9,15 +9,23 @@ _codex-tools() {
   local -a line
   typeset -A opt_args
 
+  local -i orig_current="$CURRENT"
+  local -a orig_words=("${words[@]}")
+
   typeset -a subcmds
   subcmds=(
     'commit-with-scope:Run semantic-commit skill (with git-scope context)'
+    'commit:Alias of commit-with-scope'
     'auto-refresh:Run codex-auto-refresh (token refresh helper)'
-    'rate-limits:Run codex-rate-limits (wham/usage)'
+    'rate-limits:Run codex-rate-limits (wham/usage; supports --cached)'
     'create-feature-pr:Run create-feature-pr skill'
+    'create:Alias of create-feature-pr'
     'find-and-fix-bugs:Run find-and-fix-bugs skill'
+    'fix-bugs:Alias of find-and-fix-bugs'
     'release-workflow:Run release-workflow skill'
+    'release:Alias of release-workflow'
     'help:Show usage'
+    'list:Alias of help'
   )
 
   _arguments -C \
@@ -30,11 +38,13 @@ _codex-tools() {
       _describe -t commands 'codex-tools command' subcmds && return 0
       ;;
     args)
-      local subcmd="${line[1]-${words[2]-}}"
+      local subcmd="${line[1]:-${orig_words[2]-}}"
       subcmd="${subcmd%%[[:space:]]#}"
       case "$subcmd" in
-        commit-with-scope|create-feature-pr|find-and-fix-bugs|release-workflow)
-          _message 'prompt text'
+        commit-with-scope|commit)
+          _arguments \
+            '(-p)'{-p}'[Push to remote after commit]' \
+            '*:prompt text:' && return 0
           return 0
           ;;
         auto-refresh)
@@ -42,7 +52,57 @@ _codex-tools() {
           return 0
           ;;
         rate-limits)
-          _message 'args passed to codex-rate-limits'
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '-c[Clear codex-starship cache before querying]' \
+            '(-d --debug)'{-d,--debug}'[Keep stderr and show per-account errors]' \
+            '--cached[Use codex-starship cache (no network)]' \
+            '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]' \
+            '--json[Print raw wham/usage JSON (single account only)]' \
+            '--one-line[Print a single-line summary (single account only)]' \
+            '--all[Query all secrets under CODEX_SECRET_DIR]' \
+            '1::secret.json:->secrets' && return 0
+
+          case "${state-}" in
+            secrets)
+              local secret_dir=''
+              secret_dir="${CODEX_SECRET_DIR-}"
+              if [[ -z "${secret_dir}" ]]; then
+                secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
+              fi
+
+              local -a secret_files=()
+              if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+                secret_files=("${secret_dir}"/*.json(N))
+              fi
+
+              local -a secret_names=()
+              local secret_file=''
+              for secret_file in "${secret_files[@]}"; do
+                secret_names+=("${secret_file:t}")
+              done
+
+              (( ${#secret_names[@]} )) && _values 'secret file' "${secret_names[@]}"
+              return 0
+              ;;
+          esac
+
+          return 0
+          ;;
+        create-feature-pr|create)
+          _message 'feature request'
+          return 0
+          ;;
+        find-and-fix-bugs|fix-bugs)
+          _message 'bug report'
+          return 0
+          ;;
+        release-workflow|release)
+          _message 'release request'
+          return 0
+          ;;
+        help|list)
+          _message 'no args'
           return 0
           ;;
       esac

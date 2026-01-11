@@ -1,0 +1,49 @@
+#compdef codex-rate-limits crl
+#
+# Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
+
+_codex-rate-limits() {
+  emulate -L zsh -o extendedglob
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '-c[Clear codex-starship cache before querying]' \
+    '(-d --debug)'{-d,--debug}'[Keep stderr and show per-account errors]' \
+    '--cached[Use codex-starship cache (no network)]' \
+    '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]' \
+    '--json[Print raw wham/usage JSON (single account only)]' \
+    '--one-line[Print a single-line summary (single account only)]' \
+    '--all[Query all secrets under CODEX_SECRET_DIR]' \
+    '1::secret.json:->secrets'
+
+  case "${state-}" in
+    secrets)
+      local secret_dir=''
+      secret_dir="${CODEX_SECRET_DIR-}"
+      if [[ -z "${secret_dir}" ]]; then
+        secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
+      fi
+
+      local -a secret_files=()
+      if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+        secret_files=("${secret_dir}"/*.json(N))
+      fi
+
+      local -a secret_names=()
+      local secret_file=''
+      for secret_file in "${secret_files[@]}"; do
+        secret_names+=("${secret_file:t}")
+      done
+
+      (( ${#secret_names[@]} )) && _values 'secret file' "${secret_names[@]}"
+      return 0
+      ;;
+  esac
+}
+
+compdef _codex-rate-limits codex-rate-limits crl
+
