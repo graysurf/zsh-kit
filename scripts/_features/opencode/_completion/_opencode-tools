@@ -1,0 +1,61 @@
+#compdef opencode-tools
+#
+# Feature-gated: loaded only when `ZSH_FEATURES` includes `opencode`.
+
+_opencode-tools() {
+  emulate -L zsh -o extendedglob
+
+  local context state state_descr
+  local -a line
+  typeset -A opt_args
+
+  local -i orig_current="$CURRENT"
+  local -a orig_words=("${words[@]}")
+
+  typeset -a subcmds
+  subcmds=(
+    'commit-with-scope:Run semantic-commit skill (with git-scope context)'
+    'commit:Alias of commit-with-scope'
+    'advice:Get actionable engineering advice'
+    'knowledge:Get clear explanation and angles for a concept'
+    'help:Show usage'
+    'list:Alias of help'
+  )
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:command:->subcmds' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    subcmds)
+      _describe -t commands 'opencode-tools command' subcmds && return 0
+      ;;
+    args)
+      local subcmd="${line[1]:-${orig_words[2]-}}"
+      subcmd="${subcmd%%[[:space:]]#}"
+      case "$subcmd" in
+        commit-with-scope|commit)
+          _arguments \
+            '(-p)'{-p}'[Push to remote after commit]' \
+            '*:prompt text:' && return 0
+          return 0
+          ;;
+        advice)
+          _message 'question'
+          return 0
+          ;;
+        knowledge)
+          _message 'concept'
+          return 0
+          ;;
+        help|list)
+          _message 'no args'
+          return 0
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _opencode-tools opencode-tools ox

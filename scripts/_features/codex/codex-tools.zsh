@@ -118,9 +118,9 @@ _codex_tools_run_prompt() {
     return 1
   fi
 
-  local feature_dir=''
-  feature_dir="$(_codex_tools_feature_dir)" || return 1
-  local prompt_file="$feature_dir/prompts/${template_name}.md"
+  local prompts_dir=''
+  prompts_dir="$(_codex_tools_prompts_dir)" || return 1
+  local prompt_file="$prompts_dir/${template_name}.md"
 
   if [[ ! -f "$prompt_file" ]]; then
     print -u2 -r -- "codex-tools: prompt template not found: $prompt_file"
@@ -170,6 +170,42 @@ _codex_tools_feature_dir() {
   [[ -d "$feature_dir" ]] || return 1
 
   print -r -- "$feature_dir"
+  return 0
+}
+
+# _codex_tools_prompts_dir
+# Print the prompts directory path.
+# Usage: _codex_tools_prompts_dir
+_codex_tools_prompts_dir() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset zdotdir="${ZDOTDIR-}"
+  if [[ -z "$zdotdir" ]]; then
+    typeset script_dir="${ZSH_SCRIPT_DIR-}"
+    if [[ -n "$script_dir" ]]; then
+      zdotdir="${script_dir:h}"
+    else
+      typeset home="${HOME-}"
+      [[ -n "$home" ]] || return 1
+      zdotdir="$home/.config/zsh"
+    fi
+  fi
+
+  typeset prompts_dir="$zdotdir/prompts"
+  if [[ -d "$prompts_dir" ]]; then
+    print -r -- "$prompts_dir"
+    return 0
+  fi
+
+  # Back-compat: older layout stored prompts inside the feature directory.
+  typeset feature_dir=''
+  feature_dir="$(_codex_tools_feature_dir)" || return 1
+
+  prompts_dir="$feature_dir/prompts"
+  [[ -d "$prompts_dir" ]] || return 1
+
+  print -r -- "$prompts_dir"
   return 0
 }
 

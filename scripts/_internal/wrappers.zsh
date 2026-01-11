@@ -446,6 +446,23 @@ _wrappers::cleanup_feature_codex() {
   return 0
 }
 
+# _wrappers::cleanup_feature_opencode
+# Remove opencode-related wrappers from the wrappers bin dir.
+# Usage: _wrappers::cleanup_feature_opencode
+_wrappers::cleanup_feature_opencode() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset bin_dir=''
+  bin_dir="$(_wrappers::bin_dir)"
+  [[ -d "$bin_dir" ]] || return 0
+
+  command rm -f -- \
+    "$bin_dir/opencode-tools" \
+    >/dev/null 2>&1 || true
+  return 0
+}
+
 # _wrappers::ensure_core
 # Generate cached CLI wrapper scripts for core commands.
 # Usage: _wrappers::ensure_core
@@ -502,6 +519,19 @@ _wrappers::ensure_feature_codex() {
   return 0
 }
 
+# _wrappers::ensure_feature_opencode
+# Generate cached CLI wrapper scripts for the `opencode` feature.
+# Usage: _wrappers::ensure_feature_opencode
+_wrappers::ensure_feature_opencode() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  _wrappers::write_wrapper opencode-tools opencode-tools \
+    _features/opencode/opencode-tools.zsh
+
+  return 0
+}
+
 # _wrappers::ensure_all
 # Generate cached CLI wrapper scripts for all enabled features.
 # Usage: _wrappers::ensure_all
@@ -515,6 +545,12 @@ _wrappers::ensure_all() {
     _wrappers::ensure_feature_codex
   else
     _wrappers::cleanup_feature_codex
+  fi
+
+  if _wrappers::feature_enabled opencode; then
+    _wrappers::ensure_feature_opencode
+  else
+    _wrappers::cleanup_feature_opencode
   fi
 
   return 0

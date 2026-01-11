@@ -7,6 +7,8 @@ Codex skills or prompts with a consistent, interactive CLI interface.
  The helpers are intentionally opt-in and only run when you
 explicitly allow the dangerous sandbox bypass.
 
+Prompt templates are shared under `$ZDOTDIR/prompts` (e.g. `prompts/actionable-advice.md`).
+
 ---
 
 ## 📦 Use Cases
@@ -60,14 +62,14 @@ codex-tools advice "How to optimize Zsh startup time?"
 Runs the `actionable-knowledge` prompt template. If you omit the argument, it will prompt for a concept.
 
 ```bash
-codex-knowledge "What is a Closure in programming?"
+codex-tools knowledge "What is a Closure in programming?"
 ```
 
 ---
 
 ### `codex-tools auto-refresh`
 
-Runs the `codex-auto-refresh` helper to refresh authentication tokens.
+Runs the `auto-refresh` helper to refresh authentication tokens.
 
 ```bash
 codex-tools auto-refresh
@@ -98,7 +100,7 @@ All helpers require `CODEX_ALLOW_DANGEROUS=true`.
 message and return non-zero.
 
 ```bash
-CODEX_ALLOW_DANGEROUS=true codex-commit-with-scope "Use conventional scopes"
+CODEX_ALLOW_DANGEROUS=true codex-tools commit-with-scope "Use conventional scopes"
 ```
 
 The helpers call:

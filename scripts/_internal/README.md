@@ -52,6 +52,7 @@ Generated commands:
 - `git-tools`
 - `git-summary`
 - (feature: `codex`) `codex-starship`, `codex-tools` (only when `ZSH_FEATURES` includes `codex`)
+- (feature: `opencode`) `opencode-tools` (only when `ZSH_FEATURES` includes `opencode`)
 
 How it is used:
 
