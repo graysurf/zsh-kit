@@ -1111,8 +1111,12 @@ codex-rate-limits() {
       fi
 
       if [[ -z "${line}" ]]; then
-        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}ERR")
-        rc=1
+        if [[ "${cached_mode}" == "true" ]]; then
+          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
+        else
+          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}ERR")
+          rc=1
+        fi
         continue
       fi
 
