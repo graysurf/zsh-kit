@@ -12,6 +12,8 @@ _codex-tools() {
   typeset -a subcmds
   subcmds=(
     'commit-with-scope:Run semantic-commit skill (with git-scope context)'
+    'auto-refresh:Run codex-auto-refresh (token refresh helper)'
+    'rate-limits:Run codex-rate-limits (wham/usage)'
     'create-feature-pr:Run create-feature-pr skill'
     'find-and-fix-bugs:Run find-and-fix-bugs skill'
     'release-workflow:Run release-workflow skill'
@@ -33,6 +35,14 @@ _codex-tools() {
       case "$subcmd" in
         commit-with-scope|create-feature-pr|find-and-fix-bugs|release-workflow)
           _message 'prompt text'
+          return 0
+          ;;
+        auto-refresh)
+          _message 'no args'
+          return 0
+          ;;
+        rate-limits)
+          _message 'args passed to codex-rate-limits'
           return 0
           ;;
       esac

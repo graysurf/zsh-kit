@@ -1,6 +1,7 @@
 # Feature: codex
 #
 # Enables:
+# - codex secrets helpers (codex-use/codex-refresh-auth/codex-auto-refresh)
 # - codex-tools (Codex skill wrappers; guarded by CODEX_ALLOW_DANGEROUS)
 # - codex-starship (Starship custom module helper; guarded by CODEX_STARSHIP_ENABLED)
 # - Completion for codex-tools (optional; feature-gated via fpath)
@@ -15,6 +16,8 @@ fi
 
 typeset script=''
 for script in \
+  "$feature_dir/secrets/_codex-secret.zsh" \
+  "$feature_dir/codex-auto-refresh.zsh" \
   "$feature_dir/codex-starship.zsh" \
   "$feature_dir/codex-tools.zsh"
 do
@@ -25,4 +28,3 @@ do
     source "$script"
   fi
 done
-

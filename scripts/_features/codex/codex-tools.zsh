@@ -1,4 +1,4 @@
-typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
+      typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
 typeset -g CODEX_CLI_REASONING="${CODEX_CLI_REASONING:-medium}"
 
 # codex-tools: Opt-in Codex skill wrappers (feature: codex).
@@ -9,6 +9,8 @@ typeset -g CODEX_CLI_REASONING="${CODEX_CLI_REASONING:-medium}"
 # - `codex-create-feature-pr`
 # - `codex-find-and-fix-bugs`
 # - `codex-release-workflow`
+# - `codex-auto-refresh` (via `codex-tools auto-refresh`)
+# - `codex-rate-limits` (via `codex-tools rate-limits`)
 
 # _codex_require_allow_dangerous <caller>
 # Guard to prevent running codex with dangerous sandbox bypass unless explicitly enabled.
@@ -168,6 +170,98 @@ codex-release-workflow() {
   _codex_exec_dangerous "$prompt"
 }
 
+# _codex_tools_feature_dir
+# Print the codex feature directory path.
+# Usage: _codex_tools_feature_dir
+_codex_tools_feature_dir() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset script_dir="${ZSH_SCRIPT_DIR-}"
+  if [[ -z "$script_dir" ]]; then
+    typeset zdotdir="${ZDOTDIR-}"
+    if [[ -z "$zdotdir" ]]; then
+      typeset home="${HOME-}"
+      [[ -n "$home" ]] || return 1
+      zdotdir="$home/.config/zsh"
+    fi
+    script_dir="$zdotdir/scripts"
+  fi
+
+  typeset feature_dir="$script_dir/_features/codex"
+  [[ -d "$feature_dir" ]] || return 1
+
+  print -r -- "$feature_dir"
+  return 0
+}
+
+# _codex_tools_run_auto_refresh [args...]
+# Run codex-auto-refresh (prefers the in-shell function; falls back to executing the script).
+_codex_tools_run_auto_refresh() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  if typeset -f codex-auto-refresh >/dev/null 2>&1; then
+    codex-auto-refresh "$@"
+    return $?
+  fi
+
+  typeset feature_dir=''
+  feature_dir="$(_codex_tools_feature_dir)" || {
+    print -u2 -r -- "codex-tools: feature dir not found (expected: \$ZSH_SCRIPT_DIR/_features/codex)"
+    return 1
+  }
+
+  typeset script="$feature_dir/codex-auto-refresh.zsh"
+  if [[ ! -f "$script" ]]; then
+    print -u2 -r -- "codex-tools: missing script: $script"
+    return 1
+  fi
+
+  zsh -f -- "$script" "$@"
+}
+
+# _codex_tools_require_secrets
+# Ensure codex secret helper functions are loaded.
+_codex_tools_require_secrets() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  if typeset -f codex-rate-limits >/dev/null 2>&1; then
+    return 0
+  fi
+
+  typeset feature_dir=''
+  feature_dir="$(_codex_tools_feature_dir)" || {
+    print -u2 -r -- "codex-tools: feature dir not found (expected: \$ZSH_SCRIPT_DIR/_features/codex)"
+    return 1
+  }
+
+  typeset secrets_file="$feature_dir/secrets/_codex-secret.zsh"
+  if [[ ! -f "$secrets_file" ]]; then
+    print -u2 -r -- "codex-tools: missing secrets helper: $secrets_file"
+    return 1
+  fi
+
+  source "$secrets_file"
+  if ! typeset -f codex-rate-limits >/dev/null 2>&1; then
+    print -u2 -r -- "codex-tools: failed to load codex-rate-limits"
+    return 1
+  fi
+
+  return 0
+}
+
+# _codex_tools_run_rate_limits [args...]
+# Run codex-rate-limits (loads secret helpers lazily when needed).
+_codex_tools_run_rate_limits() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  _codex_tools_require_secrets || return 1
+  codex-rate-limits "$@"
+}
+
 # _codex_tools_usage [fd]
 # Print top-level usage for `codex-tools`.
 # Usage: _codex_tools_usage [fd]
@@ -181,11 +275,13 @@ _codex_tools_usage() {
   print -u"$fd" -r -- 'Commands:'
   print -u"$fd" -r -- '  commit-with-scope [-p] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
   print -u"$fd" -r -- '    -p                 Push to remote after commit'
+  print -u"$fd" -r -- '  auto-refresh         Run codex-auto-refresh (token refresh helper)'
+  print -u"$fd" -r -- '  rate-limits          Run codex-rate-limits (wham/usage; supports -c/--all/--json)'
   print -u"$fd" -r -- '  create-feature-pr    Run create-feature-pr skill'
   print -u"$fd" -r -- '  find-and-fix-bugs    Run find-and-fix-bugs skill'
   print -u"$fd" -r -- '  release-workflow     Run release-workflow skill'
   print -u"$fd" -r --
-  print -u"$fd" -r -- 'Safety: requires CODEX_ALLOW_DANGEROUS=true'
+  print -u"$fd" -r -- 'Safety: some commands require CODEX_ALLOW_DANGEROUS=true'
   print -u"$fd" -r -- 'Config: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
   return 0
 }
@@ -213,6 +309,12 @@ codex-tools() {
   case "$cmd" in
     commit-with-scope|commit)
       codex-commit-with-scope "$@"
+      ;;
+    auto-refresh)
+      _codex_tools_run_auto_refresh "$@"
+      ;;
+    rate-limits)
+      _codex_tools_run_rate_limits "$@"
       ;;
     create-feature-pr|create)
       codex-create-feature-pr "$@"
