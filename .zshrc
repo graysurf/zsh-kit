@@ -23,48 +23,8 @@ fi
 # ──────────────────────────────
 typeset wrappers_zsh="$ZSH_SCRIPT_DIR/_internal/wrappers.zsh"
 typeset wrappers_bin="$ZSH_CACHE_DIR/wrappers/bin"
-typeset features_lib="$ZSH_SCRIPT_DIR/_internal/features.zsh"
-[[ -r "$features_lib" ]] && source "$features_lib"
-typeset codex_feature_enabled='false'
-(( $+functions[zsh_features::enabled] )) && zsh_features::enabled codex && codex_feature_enabled='true'
 
-# Feature-off cleanup: ensure disabled wrappers are not left on PATH after upgrades.
-if [[ "$codex_feature_enabled" != 'true' && -d "$wrappers_bin" ]]; then
-  command rm -f -- \
-    "$wrappers_bin/codex-starship" \
-    "$wrappers_bin/codex-tools" \
-    >/dev/null 2>&1 || true
-fi
-
-typeset -a wrappers_check_cmds=(
-  fzf-tools
-  git-open
-  git-scope
-  git-lock
-  git-summary
-  git-tools
-  open-changed-files
-)
-if [[ "$codex_feature_enabled" == 'true' ]]; then
-  wrappers_check_cmds+=(
-    codex-starship
-    codex-tools
-  )
-fi
-typeset wrappers_needs_update='false'
-typeset wrapper_cmd=''
-for wrapper_cmd in "${wrappers_check_cmds[@]}"; do
-  if [[ ! -x "$wrappers_bin/$wrapper_cmd" ]]; then
-    wrappers_needs_update='true'
-    break
-  fi
-  if [[ -f "$wrappers_zsh" && "$wrappers_zsh" -nt "$wrappers_bin/$wrapper_cmd" ]]; then
-    wrappers_needs_update='true'
-    break
-  fi
-done
-
-if [[ -f "$wrappers_zsh" && "$wrappers_needs_update" == 'true' ]]; then
+if [[ -f "$wrappers_zsh" ]]; then
   source "$wrappers_zsh"
   [[ -o interactive ]] && _wrappers::ensure_all || _wrappers::ensure_all >/dev/null 2>&1 || true
 fi

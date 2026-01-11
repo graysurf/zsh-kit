@@ -55,9 +55,10 @@ Generated commands:
 
 How it is used:
 
-- Interactive shells: `.zshrc` generates wrappers on-demand and prepends the wrappers bin dir to `PATH`.
+- Interactive shells: `.zshrc` ensures wrappers exist (idempotent) and prepends the wrappers bin dir to `PATH`.
 
 Notes:
 
 - The wrappers are generated under `cache/` and should remain gitignored (they are runtime artifacts).
-- Wrapper scripts source `bootstrap/00-preload.zsh` so helpers like `set_clipboard` are available.
+- Wrappers are bundled into **single-file** executables via `tools/bundle-wrapper.zsh` (inlines sources).
+- Bundled wrappers include `bootstrap/00-preload.zsh` so helpers like `set_clipboard` are available.

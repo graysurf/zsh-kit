@@ -104,6 +104,101 @@ _wrappers::ensure_path() {
   return 0
 }
 
+# _wrappers::bundle_wrapper_path
+# Print the bundle-wrapper.zsh path (if available).
+# Usage: _wrappers::bundle_wrapper_path
+_wrappers::bundle_wrapper_path() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset zdotdir=''
+  zdotdir="$(_wrappers::zdotdir)" || return 1
+
+  typeset bundler="$zdotdir/tools/bundle-wrapper.zsh"
+  [[ -f "$bundler" ]] || return 1
+  print -r -- "$bundler"
+  return 0
+
+}
+
+# _wrappers::bundle_wrapper <input> <output> [entry_fn] [zdotdir]
+# Bundle a wrapper manifest into a standalone script.
+# Usage: _wrappers::bundle_wrapper <input> <output> [entry_fn] [zdotdir]
+_wrappers::bundle_wrapper() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset input="${1-}"
+  typeset output="${2-}"
+  typeset entry_fn="${3-}"
+  typeset zdotdir="${4-}"
+
+  if [[ -z "$input" || -z "$output" ]]; then
+    print -u2 -r -- "_wrappers::bundle_wrapper: Usage: _wrappers::bundle_wrapper <input> <output> [entry_fn] [zdotdir]"
+    return 2
+  fi
+  [[ -f "$input" ]] || { print -u2 -r -- "_wrappers::bundle_wrapper: missing input: $input"; return 1; }
+
+  typeset bundler=''
+  bundler="$(_wrappers::bundle_wrapper_path 2>/dev/null)" || bundler=''
+  [[ -n "$bundler" ]] || { print -u2 -r -- "_wrappers::bundle_wrapper: bundle-wrapper.zsh not found"; return 1; }
+
+  typeset log=''
+  log="$(mktemp 2>/dev/null || true)"
+  [[ -n "$log" ]] || log="/tmp/wrappers-bundle.$$.log"
+
+  typeset -a cmd=(zsh -f -- "$bundler" --input "$input" --output "$output")
+  [[ -n "$entry_fn" ]] && cmd+=(--entry "$entry_fn")
+
+  if [[ -n "$zdotdir" ]]; then
+    if ZDOTDIR="$zdotdir" "${cmd[@]}" 2> "$log"; then
+      command rm -f -- "$log" >/dev/null 2>&1 || true
+      return 0
+    fi
+  else
+    if "${cmd[@]}" 2> "$log"; then
+      command rm -f -- "$log" >/dev/null 2>&1 || true
+      return 0
+    fi
+  fi
+  typeset -i rc=$?
+
+  if [[ -f "$log" ]]; then
+    command cat "$log" >&2
+    command rm -f -- "$log" >/dev/null 2>&1 || true
+  fi
+
+  return $rc
+}
+
+# _wrappers::needs_update <out> <dep...>
+# Return 0 when the output wrapper is missing or older than any dependency.
+# Usage: _wrappers::needs_update <out> <dep...>
+_wrappers::needs_update() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset out="${1-}"
+  shift || true
+  typeset -a deps=("$@")
+
+  if [[ -z "$out" || ${#deps[@]} -eq 0 ]]; then
+    print -u2 -r -- "_wrappers::needs_update: Usage: _wrappers::needs_update <out> <dep...>"
+    return 2
+  fi
+
+  [[ -f "$out" ]] || return 0
+
+  typeset dep=''
+  for dep in "${deps[@]}"; do
+    [[ -n "$dep" ]] || continue
+    [[ -f "$dep" ]] || continue
+    [[ "$dep" -nt "$out" ]] && return 0
+  done
+
+  return 1
+}
+
 # _wrappers::write_wrapper <name> <entry_fn> <source_relpath...>
 # Generate a zsh wrapper script under `$ZDOTDIR/cache/wrappers/bin`.
 # Usage: _wrappers::write_wrapper <name> <entry_fn> <source_relpath...>
@@ -126,6 +221,56 @@ _wrappers::write_wrapper() {
   bin_dir="$(_wrappers::bin_dir)"
   [[ -d "$bin_dir" ]] || mkdir -p -- "$bin_dir"
   out="$bin_dir/$name"
+
+  typeset bundler=''
+  bundler="$(_wrappers::bundle_wrapper_path 2>/dev/null || true)"
+  if [[ -n "$bundler" ]]; then
+    typeset script_dir="${ZSH_SCRIPT_DIR:-$zdotdir_default/scripts}"
+    typeset bootstrap_dir="${ZSH_BOOTSTRAP_SCRIPT_DIR:-$zdotdir_default/bootstrap}"
+    typeset wrappers_lib="$script_dir/_internal/wrappers.zsh"
+    typeset prelude="$script_dir/_internal/wrappers.bundle-prelude.zsh"
+    typeset preload="$bootstrap_dir/00-preload.zsh"
+
+    typeset -a deps=("$wrappers_lib" "$prelude" "$preload")
+    deps+=("$bundler")
+    typeset src=''
+    for src in "${sources[@]}"; do
+      deps+=("$script_dir/$src")
+    done
+
+    if ! _wrappers::needs_update "$out" "${deps[@]}"; then
+      return 0
+    fi
+
+    typeset input=''
+    input="$(mktemp 2>/dev/null || true)"
+    [[ -n "$input" ]] || input="/tmp/wrappers-input.$$.zsh"
+
+    {
+      print -r -- '#!/usr/bin/env -S zsh -f'
+      print -r -- '# bundle-wrapper manifest (generated)'
+      print -r -- 'source "$ZSH_SCRIPT_DIR/_internal/wrappers.bundle-prelude.zsh"'
+      print -r -- 'source "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"'
+      print -r --
+      print -r -- 'typeset -a sources=('
+      for src in "${sources[@]}"; do
+        print -r -- "  \"$src\""
+      done
+      print -r -- ')'
+    } >| "$input"
+
+    if _wrappers::bundle_wrapper "$input" "$out" "$entry_fn" "$zdotdir_default"; then
+      command rm -f -- "$input" >/dev/null 2>&1 || true
+      return 0
+    fi
+
+    command rm -f -- "$input" >/dev/null 2>&1 || true
+    print -u2 -r -- "_wrappers::write_wrapper: bundling failed; falling back to source-based wrapper ($name)"
+  fi
+
+  if ! _wrappers::needs_update "$out" "${ZSH_SCRIPT_DIR:-$zdotdir_default/scripts}/_internal/wrappers.zsh"; then
+    return 0
+  fi
 
   {
     print -r -- '#!/usr/bin/env -S zsh -f'
@@ -200,6 +345,50 @@ _wrappers::write_exec_wrapper() {
   [[ -d "$bin_dir" ]] || mkdir -p -- "$bin_dir"
   out="$bin_dir/$name"
 
+  typeset bundler=''
+  bundler="$(_wrappers::bundle_wrapper_path 2>/dev/null || true)"
+  if [[ -n "$bundler" && "$exec_relpath" == *.zsh ]]; then
+    typeset script_dir="${ZSH_SCRIPT_DIR:-$zdotdir_default/scripts}"
+    typeset bootstrap_dir="${ZSH_BOOTSTRAP_SCRIPT_DIR:-$zdotdir_default/bootstrap}"
+    typeset wrappers_lib="$script_dir/_internal/wrappers.zsh"
+    typeset prelude="$script_dir/_internal/wrappers.bundle-prelude.zsh"
+    typeset preload="$bootstrap_dir/00-preload.zsh"
+    typeset target="$zdotdir_default/$exec_relpath"
+
+    typeset -a deps=("$wrappers_lib" "$prelude" "$preload")
+    deps+=("$bundler")
+    [[ -f "$target" ]] && deps+=("$target")
+
+    if ! _wrappers::needs_update "$out" "${deps[@]}"; then
+      return 0
+    fi
+
+    typeset input=''
+    input="$(mktemp 2>/dev/null || true)"
+    [[ -n "$input" ]] || input="/tmp/wrappers-input.$$.zsh"
+
+    {
+      print -r -- '#!/usr/bin/env -S zsh -f'
+      print -r -- '# bundle-wrapper manifest (generated)'
+      print -r -- 'source "$ZSH_SCRIPT_DIR/_internal/wrappers.bundle-prelude.zsh"'
+      print -r -- 'source "$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"'
+      print -r --
+      print -r -- "source \"\$ZDOTDIR/$exec_relpath\""
+    } >| "$input"
+
+    if _wrappers::bundle_wrapper "$input" "$out" '' "$zdotdir_default"; then
+      command rm -f -- "$input" >/dev/null 2>&1 || true
+      return 0
+    fi
+
+    command rm -f -- "$input" >/dev/null 2>&1 || true
+    print -u2 -r -- "_wrappers::write_exec_wrapper: bundling failed; falling back to exec wrapper ($name)"
+  fi
+
+  if ! _wrappers::needs_update "$out" "${ZSH_SCRIPT_DIR:-$zdotdir_default/scripts}/_internal/wrappers.zsh"; then
+    return 0
+  fi
+
   {
     print -r -- '#!/usr/bin/env -S zsh -f'
     print -r --
@@ -267,6 +456,8 @@ _wrappers::ensure_core() {
   _wrappers::ensure_path
 
   _wrappers::write_wrapper fzf-tools fzf-tools \
+    git/tools/git-utils.zsh \
+    git/git-scope.zsh \
     fzf-tools.zsh
 
   _wrappers::write_wrapper git-open git-open \
