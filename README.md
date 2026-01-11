@@ -18,14 +18,14 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > The following tools are developed as part of this environment and tightly integrated.
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
-- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in Codex wrappers (feature: `codex`) with safety gate
-- 📝 [open-changed-files](docs/cli/open-changed-files.md): Open a set of edited files in VSCode for review
 - 🔎 [fzf-tools](docs/cli/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
 - 🔗 [git-open](docs/cli/git-open.md): Open repo/branch/commit/PR pages in browser
 - 📂 [git-scope](docs/cli/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 🔐 [git-lock](docs/cli/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
 - 🧰 [git-tools](docs/cli/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
 - 📊 [git-summary](docs/cli/git-summary.md): Author-based contribution stats over time ranges
+- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in Codex wrappers (feature: `codex`) with safety gate
+- 📝 [open-changed-files](docs/cli/open-changed-files.md): Open a set of edited files in VSCode for review
 
 ## Structure
 
