@@ -58,6 +58,149 @@ _opencode_tools_exec() {
   "${cmd[@]}"
 }
 
+# _opencode_tools_semantic_commit_skill_available
+# Return 0 when the semantic-commit skill exists locally.
+# Usage: _opencode_tools_semantic_commit_skill_available
+_opencode_tools_semantic_commit_skill_available() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset codex_home="${CODEX_HOME-}"
+  [[ -n "$codex_home" ]] || return 1
+
+  [[ -f "$codex_home/skills/semantic-commit/SKILL.md" ]]
+}
+
+# _opencode_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
+# Local Conventional Commit fallback for when semantic-commit skill is unavailable.
+# Usage: _opencode_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
+_opencode_tools_commit_with_scope_fallback() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset push_flag="${1-}"
+  shift || true
+  typeset extra_prompt="$*"
+
+  if ! command -v git >/dev/null; then
+    print -u2 -r -- "opencode-commit-with-scope: missing binary: git"
+    return 1
+  fi
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 -r -- "opencode-commit-with-scope: not a git repository"
+    return 1
+  fi
+
+  typeset staged=''
+  staged="$(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACMRTUXB 2>/dev/null || true)"
+  if [[ -z "$staged" ]]; then
+    print -u2 -r -- "opencode-commit-with-scope: no staged changes (stage files then retry)"
+    return 1
+  fi
+
+  typeset expected_skill_path=''
+  if [[ -n "${CODEX_HOME-}" ]]; then
+    expected_skill_path="$CODEX_HOME/skills/semantic-commit/SKILL.md"
+  fi
+  print -u2 -r -- "opencode-commit-with-scope: semantic-commit skill not found${expected_skill_path:+: $expected_skill_path}"
+
+  if [[ -n "$extra_prompt" ]]; then
+    print -u2 -r -- "opencode-commit-with-scope: note: extra prompt is ignored in fallback mode"
+  fi
+
+  if (( $+functions[git-scope] )) || command -v git-scope >/dev/null 2>&1; then
+    git-scope staged || true
+  else
+    print -r -- "Staged files:"
+    print -r -- "$staged"
+  fi
+
+  typeset -a files=("${(@f)staged}")
+  typeset -A top=()
+  typeset file='' part=''
+  for file in "${files[@]}"; do
+    [[ -n "$file" ]] || continue
+    if [[ "$file" == */* ]]; then
+      part="${file%%/*}"
+      top["$part"]=1
+    else
+      top['']=1
+    fi
+  done
+
+  typeset suggested_scope=''
+  if (( ${#top[@]} == 1 )); then
+    for part in ${(k)top}; do
+      suggested_scope="$part"
+    done
+    [[ "$suggested_scope" == '' ]] && suggested_scope=''
+  elif (( ${#top[@]} == 2 )) && (( ${+top['']} )); then
+    for part in ${(k)top}; do
+      if [[ -n "$part" ]]; then
+        suggested_scope="$part"
+      fi
+    done
+  fi
+
+  typeset commit_type=''
+  print -n -r -- "Type [chore]: "
+  IFS= read -r commit_type || return 1
+  commit_type="${commit_type:l}"
+  commit_type="${commit_type//[[:space:]]/}"
+  [[ -n "$commit_type" ]] || commit_type='chore'
+
+  typeset scope=''
+  if [[ -n "$suggested_scope" ]]; then
+    print -n -r -- "Scope (optional) [$suggested_scope]: "
+  else
+    print -n -r -- "Scope (optional): "
+  fi
+  IFS= read -r scope || return 1
+  scope="${scope//[[:space:]]/}"
+  [[ -n "$scope" ]] || scope="$suggested_scope"
+
+  typeset subject=''
+  while [[ -z "$subject" ]]; do
+    print -n -r -- "Subject: "
+    IFS= read -r subject || return 1
+    subject="${subject#"${subject%%[![:space:]]*}"}"
+    subject="${subject%"${subject##*[![:space:]]}"}"
+  done
+
+  typeset header=''
+  if [[ -n "$scope" ]]; then
+    header="${commit_type}(${scope}): ${subject}"
+  else
+    header="${commit_type}: ${subject}"
+  fi
+
+  print -r -- ""
+  print -r -- "Commit message:"
+  print -r -- "  $header"
+  print -n -r -- "Proceed? [y/N] "
+  typeset confirm=''
+  IFS= read -r confirm || return 1
+  if [[ "$confirm" != [yY] ]]; then
+    print -u2 -r -- "Aborted."
+    return 1
+  fi
+
+  git commit -m "$header" || return 1
+
+  if [[ "$push_flag" == 'true' ]]; then
+    git push || return 1
+  fi
+
+  if (( $+functions[git-scope] )) || command -v git-scope >/dev/null 2>&1; then
+    git-scope commit HEAD || true
+  else
+    git show -1 --name-status --oneline || true
+  fi
+
+  return 0
+}
+
 # opencode-commit-with-scope [-p] [extra prompt...]
 # Run the semantic-commit skill to create a Semantic Commit and report git-scope output.
 # Options:
@@ -74,15 +217,25 @@ opencode-commit-with-scope() {
   local -A opts
   zparseopts -D -E -A opts -- p || return 1
 
+  local push_flag='false'
+  if (( ${+opts[-p]} )); then
+    push_flag='true'
+  fi
+
   local extra_prompt=''
   if (( $# )); then
     extra_prompt="$*"
   fi
 
+  if ! _opencode_tools_semantic_commit_skill_available; then
+    _opencode_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
+    return $?
+  fi
+
   local prompt=''
   prompt='Use the semantic-commit skill.'
 
-  if (( ${+opts[-p]} )); then
+  if [[ "$push_flag" == 'true' ]]; then
     prompt+=$'\n\nFurthermore, please push the committed changes to the remote repository.'
   fi
 

@@ -37,6 +37,10 @@ codex-tools commit-with-scope "Prefer terse subject lines"
 
 Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
 
+Fallback:
+
+- If `semantic-commit` skill is not installed (missing `$CODEX_HOME/skills/semantic-commit/SKILL.md`), the command falls back to a local interactive Conventional Commit flow (and `-p` still pushes).
+
 Options:
 
 - `-p`: Push the committed changes to the remote repository.
