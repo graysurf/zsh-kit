@@ -765,6 +765,8 @@ fzf-git-checkout() {
 # - Optional query pre-fills the initial fzf search. If it also resolves to a commit ref, uses its short hash.
 # - Default behavior opens the file in the current working tree (HEAD) at the same path; if missing, prompts to open snapshot.
 # - Uses `FZF_FILE_OPEN_WITH` to choose editor: `vi` (default) or `vscode`.
+# - In file picker: Enter opens multiple worktree files (up to `OPEN_CHANGED_FILES_MAX_FILES`); Ctrl-F opens the selected file only.
+#   With `--snapshot`, Enter opens the selected snapshot; Ctrl-F opens the selected worktree file.
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -810,11 +812,19 @@ fzf-git-commit() {
     commit=$(sed -n '2p' <<< "$result" | awk '{print $1}')
     selected_commit="$commit"
 
-    local stats_list='' file_list=() color='' stat_line=''
+    local stats_list='' file_list=() file_paths=() color='' stat_line=''
     stats_list=$(git show --numstat --format= "$commit")
 
-    while IFS=$'\t' read -r kind filepath; do
+    local kind='' path1='' path2='' filepath=''
+    while IFS=$'\t' read -r kind path1 path2; do
+      [[ -z "$kind" ]] && continue
+
+      filepath="$path1"
+      if [[ ( "$kind" == R* || "$kind" == C* ) && -n "$path2" ]]; then
+        filepath="$path2"
+      fi
       [[ -z "$filepath" ]] && continue
+
       color="$(_git_scope_kind_color "$kind")"
       stat_line=$(print -r -- "$stats_list" | awk -v f="$filepath" '$3 == f {
         a = ($1 == "-" ? 0 : $1)
@@ -822,26 +832,86 @@ fzf-git-commit() {
         printf "  [+" a " / -" d "]"
       }')
       file_list+=("$(printf "%b[%s] %s%s%b" "$color" "$kind" "$filepath" "$stat_line" "\033[0m")")
+      file_paths+=("$filepath")
     done < <(git diff-tree --no-commit-id --name-status -r "$commit")
 
-    file=$(printf "%s\n" "${file_list[@]}" |
-      fzf --ansi --prompt="📄 Files in $commit > " \
+    local fzf_result='' mode_key='' selected_line='' selected_file=''
+    fzf_result=$(printf "%s\n" "${file_list[@]}" |
+      fzf --ansi \
+          --expect=ctrl-f \
+          --header='enter: open all (worktree) | ctrl-f: open selected' \
+          --prompt="📄 Files in $commit > " \
           --preview-window='right:50%:wrap' \
           --preview='bash -c "
-            filepath=\$(printf \"%s\\n\" {} | sed -E '\''s/^\[[A-Z]\] //; s/ *\[\+.*\]$//'\'')
+            filepath=\$(printf \"%s\\n\" {} | sed -E '\''s/^\[[^]]+\\] //; s/ *\\[\\+.*\\]$//'\'')
             git diff --color=always '"${commit}"'^! -- \$filepath |
             delta --width=100 --line-numbers |
-            awk '\''NR==1 && NF==0 {next} {print}'\''"' |
-      sed -E 's/^\[[A-Z]\] //; s/ *\[\+.*\]$//')
+            awk '\''NR==1 && NF==0 {next} {print}'\''"')
 
-    if [[ -z "$file" ]]; then
+    mode_key=$(sed -n '1p' <<< "$fzf_result")
+    selected_line=$(sed -n '2p' <<< "$fzf_result")
+    selected_file=$(printf "%s\n" "$selected_line" | sed -E 's/^\[[^]]+\] //; s/ *\[\+.*\]$//')
+
+    if [[ -z "$selected_file" ]]; then
       commit_query="$commit_query_restore"
       continue
     fi
 
-    local worktree_file="${repo_root}/${file}"
+    local open_snapshot="$snapshot"
+    [[ "$mode_key" == "ctrl-f" ]] && open_snapshot=false
 
-    if ! $snapshot; then
+    if [[ "$mode_key" != "ctrl-f" ]] && ! $open_snapshot; then
+      local -a worktree_files=()
+      local rel='' abs=''
+      for rel in "${file_paths[@]}"; do
+        [[ -z "$rel" ]] && continue
+        abs="${repo_root}/${rel}"
+        [[ -f "$abs" ]] || continue
+        worktree_files+=("$abs")
+      done
+
+      if (( ${#worktree_files[@]} == 0 )); then
+        print -u2 -r -- "❌ No files exist in working tree for commit: $commit"
+        commit_query="$commit_query_restore"
+        continue
+      fi
+
+      local max_raw='' max_files=5
+      max_raw="${OPEN_CHANGED_FILES_MAX_FILES:-5}"
+      if [[ "$max_raw" == <-> ]]; then
+        max_files="$max_raw"
+      fi
+      (( max_files > 0 )) || { commit_query="$commit_query_restore"; continue; }
+      worktree_files=("${worktree_files[@]:0:$max_files}")
+
+      if [[ "$open_with" == "vscode" ]]; then
+        local ocf_cmd=''
+        if command -v open-changed-files >/dev/null 2>&1; then
+          ocf_cmd='open-changed-files'
+        elif [[ -n "${ZDOTDIR-}" && -x "${ZDOTDIR}/tools/open-changed-files.zsh" ]]; then
+          ocf_cmd="${ZDOTDIR}/tools/open-changed-files.zsh"
+        elif [[ -x "$HOME/.config/zsh/tools/open-changed-files.zsh" ]]; then
+          ocf_cmd="$HOME/.config/zsh/tools/open-changed-files.zsh"
+        fi
+
+        if [[ -n "$ocf_cmd" ]]; then
+          "$ocf_cmd" --list --workspace-mode git --max-files "$max_files" -- "${worktree_files[@]}"
+        else
+          if ! command -v code >/dev/null 2>&1; then
+            print -u2 -r -- "❌ 'code' not found"
+            return 127
+          fi
+          code --new-window -- "$repo_root" "${worktree_files[@]}"
+        fi
+      else
+        vi -- "${worktree_files[@]}"
+      fi
+      break
+    fi
+
+    local worktree_file="${repo_root}/${selected_file}"
+
+    if ! $open_snapshot; then
       if [[ -e "$worktree_file" ]]; then
         if [[ "$open_with" == "vscode" ]]; then
           if ! _fzf_open_in_vscode_workspace "$repo_root" "$worktree_file"; then
@@ -854,15 +924,15 @@ fzf-git-commit() {
         break
       fi
 
-      print -u2 -r -- "❌ File no longer exists in working tree: $file"
+      print -u2 -r -- "❌ File no longer exists in working tree: $selected_file"
       _fzf_confirm "🧾 Open snapshot from %s instead? [y/N] " "$commit" || return 1
     fi
 
-    tmp="/tmp/git-${commit//\//_}-${file##*/}"
-    if ! git show "${commit}:${file}" >| "$tmp" 2>/dev/null; then
-      if ! git show "${commit}^:${file}" >| "$tmp" 2>/dev/null; then
+    tmp="/tmp/git-${commit//\//_}-${selected_file##*/}"
+    if ! git show "${commit}:${selected_file}" >| "$tmp" 2>/dev/null; then
+      if ! git show "${commit}^:${selected_file}" >| "$tmp" 2>/dev/null; then
         command rm -f -- "$tmp" 2>/dev/null || true
-        print -u2 -r -- "❌ Failed to extract snapshot: ${commit}:${file} (or ${commit}^:${file})"
+        print -u2 -r -- "❌ Failed to extract snapshot: ${commit}:${selected_file} (or ${commit}^:${selected_file})"
         return 1
       fi
     fi
