@@ -658,7 +658,48 @@ fzf-git-status() {
   local query="$*"
   git status -s | fzf \
     --query="$query" \
-    --preview 'git diff --color=always {2}' \
+    --preview 'bash -c '\''
+      line=$1
+      path=$(printf "%s" "$line" | cut -c4-)
+
+      case "$path" in
+        *" -> "*) path=$(printf "%s" "$path" | sed -E "s/^.* -> //") ;;
+      esac
+
+      first=$(printf "%s" "$path" | cut -c1)
+      last=$(printf "%s" "$path" | tail -c 1)
+      if [[ "$first" == "\"" && "$last" == "\"" ]]; then
+        raw=$(printf "%s" "$path" | sed -E "s/^\"//; s/\"$//")
+        path=$(printf "%b" "$raw")
+      fi
+
+      if git ls-files --others --exclude-standard -- "$path" | grep -q .; then
+        printf "%s\n" "--- UNTRACKED ---"
+        git diff --color=always --no-index /dev/null -- "$path" 2>/dev/null || true
+        exit 0
+      fi
+
+      printed=0
+
+      if ! git diff --cached --quiet -- "$path" >/dev/null 2>&1; then
+        printf "%s\n" "--- STAGED ---"
+        git diff --color=always --cached -- "$path"
+        printed=1
+      fi
+
+      if ! git diff --quiet -- "$path" >/dev/null 2>&1; then
+        if [ "$printed" -eq 1 ]; then
+          printf "\n"
+        fi
+        printf "%s\n" "--- UNSTAGED ---"
+        git diff --color=always -- "$path"
+        printed=1
+      fi
+
+      if [ "$printed" -eq 0 ]; then
+        printf "%s\n" "(no diff)"
+      fi
+    '\'' -- {}' \
     --bind=ctrl-j:preview-down \
     --bind=ctrl-k:preview-up
 }

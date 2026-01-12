@@ -137,6 +137,7 @@ fzf-tools git-status [query]
 ```
 
 Shows inline diffs and lets you quickly inspect file changes.
+Preview includes staged / unstaged diffs, and untracked files are shown as additions.
 If provided, `query` pre-fills the initial fzf search input.
 
 ---
