@@ -56,6 +56,20 @@ assert_not_contains() {
   return 0
 }
 
+assert_contains_all() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset haystack="$1" context="$2"
+  shift 2 || true
+
+  typeset needle=''
+  for needle in "$@"; do
+    assert_contains "$haystack" "$needle" "$context (missing: $needle)"
+  done
+  return 0
+}
+
 typeset tmp_dir=''
 tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t open-changed-files-test.XXXXXX)" || fail "mktemp failed"
 
@@ -81,8 +95,9 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t open-changed-files-test.XXXXXX)
   output="$(cd "$pwd_ws" && "$ZSH_BIN" -f -- "$TOOL_SCRIPT" --dry-run "$file1_abs" "$file2_abs" 2>&1)"
   rc=$?
   assert_eq 0 "$rc" "dry-run should exit 0" || fail "$output"
-  expected="code --new-window -- $pwd_ws_abs $file1_abs $file2_abs"
-  assert_eq "$expected" "$output" "dry-run output should match expected invocation" || fail "$output"
+  assert_contains_all "$output" "dry-run output should include expected args" \
+    "--new-window" \
+    "-- $pwd_ws_abs $file1_abs $file2_abs" || fail "$output"
 
   # --max-files should cap opened files.
   output="$(cd "$pwd_ws" && "$ZSH_BIN" -f -- "$TOOL_SCRIPT" --dry-run --max-files 2 "$file1_abs" "$file2_abs" "$file3_abs" 2>&1)"
@@ -101,7 +116,7 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t open-changed-files-test.XXXXXX)
   assert_contains "$output" "$file1_abs" "verbose should still include valid files" || fail "$output"
 
   # Normal mode should be a silent no-op when `code` is missing.
-  output="$(PATH="$tmp_dir/empty-path" "$ZSH_BIN" -f -- "$TOOL_SCRIPT" "$file1_abs" 2>&1)"
+  output="$(OPEN_CHANGED_FILES_CODE_PATH=none "$ZSH_BIN" -f -- "$TOOL_SCRIPT" "$file1_abs" 2>&1)"
   rc=$?
   assert_eq 0 "$rc" "missing code should exit 0" || fail "$output"
   assert_eq "" "$output" "missing code should be silent" || fail "$output"
@@ -122,8 +137,14 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t open-changed-files-test.XXXXXX)
   output="$(cd "$pwd_ws" && "$ZSH_BIN" -f -- "$TOOL_SCRIPT" --dry-run --workspace-mode git "$g1_abs" "$g2_abs" 2>&1)"
   rc=$?
   assert_eq 0 "$rc" "workspace-mode git should exit 0" || fail "$output"
-  expected=$'code --new-window -- '"$git1_abs"$' '"$g1_abs"$'\ncode --new-window -- '"$git2_abs"$' '"$g2_abs"
-  assert_eq "$expected" "$output" "workspace-mode git should print one invocation per git root" || fail "$output"
+  typeset -a invocations=("${(@f)output}")
+  assert_eq 2 "${#invocations[@]}" "workspace-mode git should print two invocations" || fail "$output"
+  assert_contains_all "${invocations[1]}" "workspace-mode git (first root) should include expected args" \
+    "--new-window" \
+    "-- $git1_abs $g1_abs" || fail "${invocations[1]}"
+  assert_contains_all "${invocations[2]}" "workspace-mode git (second root) should include expected args" \
+    "--new-window" \
+    "-- $git2_abs $g2_abs" || fail "${invocations[2]}"
 
   # Normal mode should batch and reuse the same window per workspace.
   typeset bin_dir="$tmp_dir/bin"

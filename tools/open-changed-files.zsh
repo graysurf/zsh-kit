@@ -35,6 +35,7 @@ print_usage() {
   print -r -- "  OPEN_CHANGED_FILES_SOURCE=list|git (default: ${OPEN_CHANGED_FILES_SOURCE:-list})"
   print -r -- "  OPEN_CHANGED_FILES_WORKSPACE_MODE=pwd|git (default: ${OPEN_CHANGED_FILES_WORKSPACE_MODE:-pwd})"
   print -r -- "  OPEN_CHANGED_FILES_MAX_FILES=<n>     (default: $OCF_DEFAULT_MAX_FILES)"
+  print -r -- "  OPEN_CHANGED_FILES_CODE_PATH=auto|none|<path> (default: ${OPEN_CHANGED_FILES_CODE_PATH:-auto})"
 }
 
 # _ocf::die_usage: Print an error + usage to stderr and return status 2.
@@ -334,7 +335,16 @@ main() {
   (( max_files < 0 )) && { _ocf::die_usage "--max-files must be >= 0"; return $?; }
   (( max_files == 0 )) && return 0
 
-  OCF_CODE_PATH="$(_ocf::resolve_code_path 2>/dev/null || true)"
+  typeset code_override="${OPEN_CHANGED_FILES_CODE_PATH-}"
+  if [[ -n "$code_override" && "$code_override" != "auto" ]]; then
+    if [[ "$code_override" == "none" ]]; then
+      OCF_CODE_PATH=''
+    else
+      OCF_CODE_PATH="$code_override"
+    fi
+  else
+    OCF_CODE_PATH="$(_ocf::resolve_code_path 2>/dev/null || true)"
+  fi
   if [[ -z "$OCF_CODE_PATH" ]]; then
     if (( dry_run )); then
       OCF_CODE_PATH='code'

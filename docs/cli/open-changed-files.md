@@ -63,3 +63,4 @@ open-changed-files [--list|--git] [--workspace-mode pwd|git] [--dry-run] [--verb
 - `OPEN_CHANGED_FILES_SOURCE`: `list` (default) or `git`
 - `OPEN_CHANGED_FILES_WORKSPACE_MODE`: `pwd` (default) or `git`
 - `OPEN_CHANGED_FILES_MAX_FILES`: max files to open (default: `5`)
+- `OPEN_CHANGED_FILES_CODE_PATH`: `auto` (default), `none` (force no-op), or a `code` path/name override

@@ -105,7 +105,7 @@ _wrappers::ensure_path() {
 }
 
 # _wrappers::bundle_wrapper_path
-# Print the bundle-wrapper.zsh path (if available).
+# Print the bundle wrapper tool path (if available).
 # Usage: _wrappers::bundle_wrapper_path
 _wrappers::bundle_wrapper_path() {
   emulate -L zsh
@@ -114,11 +114,12 @@ _wrappers::bundle_wrapper_path() {
   typeset zdotdir=''
   zdotdir="$(_wrappers::zdotdir)" || return 1
 
-  typeset bundler="$zdotdir/tools/bundle-wrapper.zsh"
+  typeset bundler=''
+
+  bundler="$zdotdir/tools/bundle-wrapper.zsh"
   [[ -f "$bundler" ]] || return 1
   print -r -- "$bundler"
   return 0
-
 }
 
 # _wrappers::bundle_wrapper <input> <output> [entry_fn] [zdotdir]
@@ -141,7 +142,7 @@ _wrappers::bundle_wrapper() {
 
   typeset bundler=''
   bundler="$(_wrappers::bundle_wrapper_path 2>/dev/null)" || bundler=''
-  [[ -n "$bundler" ]] || { print -u2 -r -- "_wrappers::bundle_wrapper: bundle-wrapper.zsh not found"; return 1; }
+  [[ -n "$bundler" ]] || { print -u2 -r -- "_wrappers::bundle_wrapper: bundle wrapper tool not found"; return 1; }
 
   typeset log=''
   log="$(mktemp 2>/dev/null || true)"
@@ -199,9 +200,9 @@ _wrappers::needs_update() {
   return 1
 }
 
-# _wrappers::write_wrapper <name> <entry_fn> <source_relpath...>
+# _wrappers::write_wrapper <name> <entry_fn> [--exec <tool_relpath>...] <source_relpath...>
 # Generate a zsh wrapper script under `$ZDOTDIR/cache/wrappers/bin`.
-# Usage: _wrappers::write_wrapper <name> <entry_fn> <source_relpath...>
+# Usage: _wrappers::write_wrapper <name> <entry_fn> [--exec <tool_relpath>...] <source_relpath...>
 _wrappers::write_wrapper() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -209,10 +210,31 @@ _wrappers::write_wrapper() {
   typeset name="${1-}"
   typeset entry_fn="${2-}"
   shift 2 || true
-  typeset -a sources=("$@")
+
+  typeset -a exec_sources=() sources=()
+  while (( $# > 0 )); do
+    case "${1-}" in
+      --exec|--exec-source)
+        shift || true
+        typeset exec_path="${1-}"
+        [[ -n "$exec_path" ]] || { print -u2 -r -- "_wrappers::write_wrapper: $0: missing value for --exec"; return 2; }
+        exec_sources+=("$exec_path")
+        shift || true
+        ;;
+      --)
+        shift || true
+        sources+=("$@")
+        break
+        ;;
+      *)
+        sources+=("$1")
+        shift || true
+        ;;
+    esac
+  done
 
   if [[ -z "$name" || -z "$entry_fn" || ${#sources[@]} -eq 0 ]]; then
-    print -u2 -r -- "_wrappers::write_wrapper: Usage: _wrappers::write_wrapper <name> <entry_fn> <source_relpath...>"
+    print -u2 -r -- "_wrappers::write_wrapper: Usage: _wrappers::write_wrapper <name> <entry_fn> [--exec <tool_relpath>...] <source_relpath...>"
     return 2
   fi
 
@@ -237,6 +259,14 @@ _wrappers::write_wrapper() {
     for src in "${sources[@]}"; do
       deps+=("$script_dir/$src")
     done
+    typeset tool_src='' tool_path=''
+    for tool_src in "${exec_sources[@]}"; do
+      tool_path="$tool_src"
+      if [[ "$tool_path" != /* ]]; then
+        tool_path="$zdotdir_default/$tool_path"
+      fi
+      [[ -f "$tool_path" ]] && deps+=("$tool_path")
+    done
 
     if ! _wrappers::needs_update "$out" "${deps[@]}"; then
       return 0
@@ -257,6 +287,15 @@ _wrappers::write_wrapper() {
         print -r -- "  \"$src\""
       done
       print -r -- ')'
+      if (( ${#exec_sources[@]} > 0 )); then
+        print -r --
+        print -r -- 'typeset -a exec_sources=('
+        typeset tool_src=''
+        for tool_src in "${exec_sources[@]}"; do
+          print -r -- "  \"$tool_src\""
+        done
+        print -r -- ')'
+      fi
     } >| "$input"
 
     if _wrappers::bundle_wrapper "$input" "$out" "$entry_fn" "$zdotdir_default"; then
@@ -473,6 +512,7 @@ _wrappers::ensure_core() {
   _wrappers::ensure_path
 
   _wrappers::write_wrapper fzf-tools fzf-tools \
+    --exec tools/open-changed-files.zsh \
     git/tools/git-utils.zsh \
     git/git-scope.zsh \
     fzf-tools.zsh
