@@ -93,9 +93,9 @@ Special-case logic (e.g., `abbr`) is hardcoded for known plugins needing extra s
 ├── bootstrap/
 │   ├── plugins.zsh             # Main loader
 │   └── plugin_fetcher.zsh      # Git-aware fetch logic
-├── config/
-│   ├── plugins.list            # Active plugin declarations
-│   └── .plugins.list.example   # Documented example template
+└── config/
+    ├── plugins.list            # Active plugin declarations
+    └── .plugins.list.example   # Documented example template
 ```
 
 ---
