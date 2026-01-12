@@ -172,7 +172,7 @@ If there’s something you use every day, it’s worth taking the time to make i
 
 ## 🪪 License
 
-[![License: CC0-1.0](https://img.shields.io/badge/License-CC0%201.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-This repository is dedicated to the public domain under the [CC0 1.0 Universal license](https://creativecommons.org/publicdomain/zero/1.0/).
-You are free to copy, modify, distribute, and use any part of this work, even for commercial purposes, without asking for permission or giving credit.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+Third-party plugins are fetched separately (see `config/plugins.list`) and remain under their respective upstream licenses.
