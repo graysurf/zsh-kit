@@ -1,8 +1,4 @@
 # Changelog
-
-All notable changes to this project will be documented in this file.
-
-<!-- Copy this block into CHANGELOG.md and GitHub release notes. -->
 ## v1.0.0 - 2026-01-13
 
 ### Added
