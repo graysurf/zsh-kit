@@ -1135,8 +1135,25 @@ codex-rate-limits() {
     local -a per_secret_args=()
     local secret_file='' secret_name='' line=''
 
+    local all_progress_id='' all_progress_active='false'
+    all_progress_id="codex-rate-limits:all:${$}"
+    all_progress_active='false'
+    if [[ "${debug_mode}" != "true" && -t 2 ]] && (( $+functions[progress_bar::init] )); then
+      all_progress_active='true'
+      progress_bar::init "$all_progress_id" --prefix 'codex-rate-limits' --total "${#secret_files[@]}" --fd 2 2>/dev/null || all_progress_active='false'
+      if [[ "$all_progress_active" == 'true' ]]; then
+        progress_bar::update "$all_progress_id" 0 --suffix 'fetching...' --force 2>/dev/null || true
+      fi
+    fi
+
+    local -i secret_index=0
     for secret_file in "${secret_files[@]}"; do
       secret_name="${secret_file:t}"
+
+      secret_index=$(( secret_index + 1 ))
+      if [[ "$all_progress_active" == 'true' ]]; then
+        progress_bar::update "$all_progress_id" $(( secret_index - 1 )) --suffix "fetching ${secret_name}" --force 2>/dev/null || true
+      fi
 
       per_secret_args=( --one-line )
       if [[ "${cached_mode}" == "true" ]]; then
@@ -1157,6 +1174,10 @@ codex-rate-limits() {
         if ! line="$(codex-rate-limits "${per_secret_args[@]}" "${secret_name}" 2>/dev/null)"; then
           line=''
         fi
+      fi
+
+      if [[ "$all_progress_active" == 'true' ]]; then
+        progress_bar::update "$all_progress_id" "$secret_index" --suffix "${secret_name}" --force 2>/dev/null || true
       fi
 
       if [[ -z "${line}" ]]; then
@@ -1193,6 +1214,11 @@ codex-rate-limits() {
       window_labels["${window_label}"]=1
       rows+=("${parsed_name}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${weekly_remaining}${tab}${reset_iso}")
     done
+
+    if [[ "$all_progress_active" == 'true' ]]; then
+      progress_bar::stop "$all_progress_id" 2>/dev/null || true
+      all_progress_active='false'
+    fi
 
     local non_weekly_header="Non-weekly"
     if (( ${#window_labels[@]} == 1 )); then
@@ -1284,9 +1310,10 @@ codex-rate-limits() {
   [[ -n "${connect_timeout}" && "${connect_timeout}" == <-> ]] || connect_timeout="2"
   [[ -n "${max_time}" && "${max_time}" == <-> ]] || max_time="8"
 
-  local tmp_response http_status
+  local tmp_response tmp_status http_status
   tmp_response="$(mktemp "${target_file:h}/wham.usage.XXXXXX")"
-  trap "rm -f -- ${(qq)tmp_response}" EXIT
+  tmp_status="$(mktemp "${target_file:h}/wham.status.XXXXXX")"
+  trap "rm -f -- ${(qq)tmp_response} ${(qq)tmp_status}" EXIT
 
   local -a curl_args
   curl_args=(
@@ -1304,32 +1331,38 @@ codex-rate-limits() {
     curl_args+=( -H "ChatGPT-Account-Id: ${account_id}" )
   fi
 
-  local progress_id='' progress_pid='' progress_active='false'
+  local progress_id='' progress_active='false'
   progress_id="codex-rate-limits:${$}"
-  progress_pid=''
 
   if [[ -t 2 ]] && (( $+functions[progress_bar::init_indeterminate] )); then
     progress_active='true'
     progress_bar::init_indeterminate "$progress_id" --prefix 'codex-rate-limits' --fd 2 2>/dev/null || progress_active='false'
-    if [[ "$progress_active" == 'true' ]]; then
-      {
-        emulate -L zsh
-        unsetopt nounset
-        while true; do
-          progress_bar::tick "$progress_id" --suffix 'fetching...' 2>/dev/null || true
-          sleep 0.1
-        done
-      } &
-      progress_pid="$!"
-    fi
   fi
 
-  if ! http_status="$(curl "${curl_args[@]}")"; then
+  local -i curl_rc=0
+  http_status=''
+  if [[ "$progress_active" == 'true' ]]; then
+    : >| "${tmp_status}" 2>/dev/null || true
+    curl "${curl_args[@]}" >| "${tmp_status}" &
+    local curl_pid="$!"
+    while kill -0 "$curl_pid" >/dev/null 2>&1; do
+      progress_bar::tick "$progress_id" --suffix 'fetching...' 2>/dev/null || true
+      sleep 0.1
+    done
+    wait "$curl_pid" || curl_rc=$?
+    http_status="$(<"${tmp_status}" 2>/dev/null)" || http_status=''
+  else
+    if http_status="$(curl "${curl_args[@]}")"; then
+      curl_rc=0
+    else
+      curl_rc=$?
+    fi
+  fi
+  http_status="${http_status//$'\n'/}"
+  http_status="${http_status//$'\r'/}"
+
+  if (( curl_rc != 0 )); then
     if [[ "$progress_active" == 'true' ]]; then
-      if [[ -n "$progress_pid" && "$progress_pid" == <-> ]]; then
-        kill -TERM "$progress_pid" 2>/dev/null || true
-        wait "$progress_pid" 2>/dev/null || true
-      fi
       progress_bar::stop "$progress_id" 2>/dev/null || true
       progress_active='false'
     fi
@@ -1361,15 +1394,40 @@ codex-rate-limits() {
         if [[ -n "${account_id}" ]]; then
           curl_args+=( -H "ChatGPT-Account-Id: ${account_id}" )
         fi
-        http_status="$(curl "${curl_args[@]}")" || true
+        curl_rc=0
+        http_status=''
+        if [[ "$progress_active" == 'true' ]]; then
+          : >| "${tmp_status}" 2>/dev/null || true
+          curl "${curl_args[@]}" >| "${tmp_status}" &
+          local curl_pid="$!"
+          while kill -0 "$curl_pid" >/dev/null 2>&1; do
+            progress_bar::tick "$progress_id" --suffix 'fetching...' 2>/dev/null || true
+            sleep 0.1
+          done
+          wait "$curl_pid" || curl_rc=$?
+          http_status="$(<"${tmp_status}" 2>/dev/null)" || http_status=''
+        else
+          if http_status="$(curl "${curl_args[@]}")"; then
+            curl_rc=0
+          else
+            curl_rc=$?
+          fi
+        fi
+        http_status="${http_status//$'\n'/}"
+        http_status="${http_status//$'\r'/}"
+
+        if (( curl_rc != 0 )); then
+          if [[ "$progress_active" == 'true' ]]; then
+            progress_bar::stop "$progress_id" 2>/dev/null || true
+            progress_active='false'
+          fi
+          print -ru2 -r -- "codex-rate-limits: request failed: ${url}"
+          return 3
+        fi
       fi
   fi
 
   if [[ "$progress_active" == 'true' ]]; then
-    if [[ -n "$progress_pid" && "$progress_pid" == <-> ]]; then
-      kill -TERM "$progress_pid" 2>/dev/null || true
-      wait "$progress_pid" 2>/dev/null || true
-    fi
     progress_bar::stop "$progress_id" 2>/dev/null || true
     progress_active='false'
   fi

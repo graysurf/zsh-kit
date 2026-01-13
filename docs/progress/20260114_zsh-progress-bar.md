@@ -1,5 +1,3 @@
-> Note: Before committing, replace all placeholder tokens (use `TBD` if unknown; use `None` if not applicable).
-
 # progress_bar: Zsh progress bar utilities
 
 | Status | Created | Updated |
