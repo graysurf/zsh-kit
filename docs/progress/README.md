@@ -4,12 +4,12 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-14 | [Zsh progress bar utilities](20260114_zsh-progress-bar.md) | [#19](https://github.com/graysurf/zsh-kit/pull/19) |
 
 ## Archived
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2026-01-14 | [Zsh progress bar utilities](archived/20260114_zsh-progress-bar.md) | [#20](https://github.com/graysurf/zsh-kit/pull/20) |
 | 2026-01-09 | [Open changed files in VSCode](archived/20260109_open-changed-files-in-vscode.md) | [#18](https://github.com/graysurf/zsh-kit/pull/18) |
 | 2026-01-03 | [codex_starship_rate_limits](archived/20260103_codex_starship_rate_limits.md) | [#16](https://github.com/graysurf/zsh-kit/pull/16) |
 | 2025-12-31 | [git_open_collab_remote](archived/20251231_git_open_collab_remote.md) | [#13](https://github.com/graysurf/zsh-kit/pull/13) |

@@ -1,16 +1,15 @@
-> Note: Before committing, replace all placeholder tokens (use `TBD` if unknown; use `None` if not applicable).
-
 # progress_bar: Zsh progress bar utilities
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| DRAFT | 2026-01-14 | 2026-01-14 |
+| DONE | 2026-01-14 | 2026-01-14 |
 
 Links:
 
-- PR: [graysurf/zsh-kit/pull/19](https://github.com/graysurf/zsh-kit/pull/19)
-- Docs: TBD
-- Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
+- PR: https://github.com/graysurf/zsh-kit/pull/20
+- Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
+- Docs: None
+- Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
 ## Goal
 
@@ -42,10 +41,12 @@ Links:
 - In-scope:
   - New first-party module: `scripts/progress-bar.zsh` (Zsh library functions).
   - Bootstrap preload shim (lazy-load) so cached CLI wrappers can use the progress utilities.
+  - Integrate indeterminate progress output into `codex-rate-limits` (network wait time; TTY-only; stderr-only).
+  - Add minimal tests for non-TTY silence and `--enabled` rendering.
   - Unicode block bar by default with a reasonable ASCII fallback for non-UTF-8 locales.
   - Deterministic bar width defaults to `max(10, COLUMNS/4)` when not explicitly configured.
 - Out-of-scope:
-  - Wiring progress bars into existing commands (e.g. `codex-rate-limits`) in this planning PR.
+  - Additional integrations beyond `codex-rate-limits` (e.g. plugin fetch/update flows).
   - Multi-progress (multiple concurrent bars) and interleaving-safe output for concurrent subprocess writes.
   - Rich terminal features (colors, cursor movement beyond carriage return, multi-line layouts).
 
@@ -105,7 +106,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [x] Define verification commands and expected outcomes (see Exit Criteria).
   - Artifacts:
     - `docs/progress/20260114_zsh-progress-bar.md` (this file)
-    - Implementation draft (local-only): currently in `git stash` as "WIP progress bar implementation"
+    - Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned: progress PR review notes.
     - [x] Data flow and I/O contract are defined: see I/O Contract.
@@ -123,46 +124,47 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
         - `source bootstrap/00-preload.zsh`
         - `progress_bar::init_indeterminate pb --prefix 'Job'`
         - `for i in {1..40}; do progress_bar::tick pb --suffix \"tick=$i\"; sleep 0.05; done; progress_bar::stop pb`
-- [ ] Step 1: Implement progress bar utilities (MVP) Reason: docs-only planning PR (no implementation changes)
+- [x] Step 1: Implement progress bar utilities (MVP)
   - Work Items:
-    - [ ] Add `scripts/progress-bar.zsh` with determinate + indeterminate implementations.
-    - [ ] Add preload shim in `bootstrap/00-preload.zsh` (lazy load; safe for bundled wrappers).
-    - [ ] Ensure unicode + ASCII fallback behavior is stable across common locales.
+    - [x] Add `scripts/progress-bar.zsh` with determinate + indeterminate implementations.
+    - [x] Add preload shim in `bootstrap/00-preload.zsh` (lazy load; safe for bundled wrappers).
+    - [x] Ensure unicode + ASCII fallback behavior is stable across common locales.
   - Artifacts:
     - `scripts/progress-bar.zsh`
     - `bootstrap/00-preload.zsh`
   - Exit Criteria:
-    - [ ] At least one happy path runs end-to-end (manual TTY):
+    - [x] At least one happy path runs end-to-end (manual TTY):
       - Determinate: init/update/finish shows `current/total`
       - Indeterminate: init/tick/stop shows animated bar and terminates with a clean newline
-    - [ ] Default behavior is silent in non-TTY contexts: see Step 0 commands.
-    - [ ] Repo checks pass: `./tools/check.zsh`, `./tools/audit-fzf-def-docblocks.zsh --check`.
-- [ ] Step 2: Integrate into long-running commands Reason: defer until MVP is reviewed
+    - [x] Default behavior is silent in non-TTY contexts: verified in `tests/progress-bar.test.zsh`.
+    - [x] Repo checks pass: `./tools/check.zsh`, `./tools/audit-fzf-def-docblocks.zsh --check`.
+- [x] Step 2: Integrate into long-running commands
   - Work Items:
-    - [ ] Identify first adopters (e.g. network-bound commands like `codex-rate-limits`, plugin fetch/update flows).
-    - [ ] Add indeterminate progress wrappers where latency is unpredictable.
-    - [ ] Add determinate progress where item counts are known (e.g. N files / N repos).
+    - [x] Identify first adopters (network-bound): `codex-rate-limits`.
+    - [x] Add indeterminate progress wrapper for the wham/usage network fetch (TTY-only).
   - Artifacts:
-    - `scripts/_features/codex/secrets/_codex-secret.zsh` (candidate integration point)
-    - `bootstrap/plugin_fetcher.zsh` (candidate integration point)
+    - `scripts/_features/codex/secrets/_codex-secret.zsh`
   - Exit Criteria:
-    - [ ] Integrations are gated to interactive TTY contexts and do not break piping/capture flows.
-    - [ ] User-facing commands remain stable and do not emit extra output when non-interactive.
-- [ ] Step 3: Validation / testing Reason: requires implementation PR(s)
+    - [x] Integrations are gated to interactive TTY contexts and do not break piping/capture flows.
+    - [x] User-facing commands remain stable and do not emit extra output when non-interactive.
+- [x] Step 3: Validation / testing
   - Work Items:
-    - [ ] Run repo checks and record results in the implementation PR.
-    - [ ] Add minimal targeted tests if/where this repo’s test patterns support it.
-    - [ ] Record manual TTY verification notes (progress rendering is hard to CI-assert).
+    - [x] Run repo checks and record results in the implementation PR.
+    - [x] Add minimal targeted tests (`tests/progress-bar.test.zsh`).
+    - [x] Record manual TTY verification notes (progress rendering is hard to CI-assert).
   - Artifacts:
-    - `./tools/check.zsh` output (pass/failed)
-    - `./tools/audit-fzf-def-docblocks.zsh --check` output (pass/failed)
-    - Manual evidence in PR (terminal recordings or notes)
+    - `./tools/check.zsh` output (pass)
+    - `./tools/check.zsh --smoke` output (pass)
+    - `zsh -f -- tests/run.zsh` output (pass)
+    - `./tools/audit-fzf-def-docblocks.zsh --check` output (pass)
+    - Manual evidence in PR notes
   - Exit Criteria:
-    - [ ] Validation commands executed with results recorded:
+    - [x] Validation commands executed with results recorded:
       - `./tools/check.zsh` (pass)
+      - `./tools/check.zsh --smoke` (pass)
+      - `zsh -f -- tests/run.zsh` (pass)
       - `./tools/audit-fzf-def-docblocks.zsh --check` (pass)
-      - Any added tests (pass)
-    - [ ] Real usage sampled (interactive terminals; at least one non-UTF8 locale test or forced ASCII mode).
+    - [x] Real usage sampled (interactive terminals; forced ASCII mode tested via `LC_ALL=C` in tests).
 - [ ] Step 4: Release / wrap-up
   - Work Items:
     - [ ] Add or update user docs for progress bar usage and integration patterns.
@@ -179,5 +181,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
 
 ## Modules
 
-- `scripts/progress-bar.zsh`: determinate and indeterminate progress bar utilities (planned).
-- `bootstrap/00-preload.zsh`: lazy-load shim for cached CLI wrappers (planned).
+- `scripts/progress-bar.zsh`: determinate and indeterminate progress bar utilities.
+- `bootstrap/00-preload.zsh`: lazy-load shim for cached CLI wrappers.
+- `scripts/_features/codex/secrets/_codex-secret.zsh`: indeterminate progress around wham/usage fetch in `codex-rate-limits`.
+- `tests/progress-bar.test.zsh`: verification for default silence and `--enabled` rendering.
