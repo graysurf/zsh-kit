@@ -4,6 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2026-01-14 | [Zsh progress bar utilities](20260114_zsh-progress-bar.md) | TBD |
 
 ## Archived
 
