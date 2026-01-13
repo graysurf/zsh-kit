@@ -8,7 +8,7 @@ Links:
 
 - PR: https://github.com/graysurf/zsh-kit/pull/20
 - Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
-- Docs: None
+- Docs: [docs/guides/progress-bar.md](../../guides/progress-bar.md)
 - Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
 ## Goal
@@ -105,7 +105,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [x] Decide two modes (determinate + indeterminate) and the minimal public API.
     - [x] Define verification commands and expected outcomes (see Exit Criteria).
   - Artifacts:
-    - `docs/progress/20260114_zsh-progress-bar.md` (this file)
+    - `docs/progress/archived/20260114_zsh-progress-bar.md` (this file)
     - Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned: progress PR review notes.
@@ -165,19 +165,19 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
       - `zsh -f -- tests/run.zsh` (pass)
       - `./tools/audit-fzf-def-docblocks.zsh --check` (pass)
     - [x] Real usage sampled (interactive terminals; forced ASCII mode tested via `LC_ALL=C` in tests).
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
-    - [ ] Add or update user docs for progress bar usage and integration patterns.
-    - [ ] Update `CHANGELOG.md` for the feature release.
-    - [ ] Mark this progress file DONE and archive it after the implementation PR is merged.
+    - [x] Add or update user docs for progress bar usage and integration patterns.
+    - [x] Update `CHANGELOG.md` for the feature release.
+    - [x] Mark this progress file DONE and archive it after the implementation PR is merged.
   - Artifacts:
-    - `docs/cli/<tbd>.md` (if documentation is added)
+    - `docs/guides/progress-bar.md`
     - `CHANGELOG.md`
     - `docs/progress/archived/20260114_zsh-progress-bar.md`
   - Exit Criteria:
-    - [ ] Versioning and changes recorded: `CHANGELOG.md` (new content at the top).
-    - [ ] Documentation completed and entry points updated (README / docs links).
-    - [ ] Cleanup completed (set status to DONE, archive, update index).
+    - [x] Versioning and changes recorded: `CHANGELOG.md` (new content at the top).
+    - [x] Documentation completed and entry points updated (README / docs links).
+    - [x] Cleanup completed (set status to DONE, archive, update index).
 
 ## Modules
 

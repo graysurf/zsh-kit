@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.0.2 - 2026-01-14
+
+### Added
+- Zsh progress bar utilities (`progress_bar::*`) for long-running commands.
+- Progress bar documentation (`docs/guides/progress-bar.md`).
+- Progress bar tests to assert non-TTY silence and `--enabled` rendering.
+
+### Changed
+- Show progress output while fetching Codex rate limit usage (TTY-only; stderr).
+- Sort `codex-rate-limits --all` output by `Reset (UTC)` (soonest first).
+
+### Fixed
+- Resolve progress bar module path when `ZDOTDIR` is unset (bootstrap preload).
+
 ## v1.0.1 - 2026-01-14
 
 ### Added

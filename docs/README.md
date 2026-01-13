@@ -26,6 +26,7 @@ docs/
 - [`guides/plugin-system.md`](guides/plugin-system.md) — Declarative plugin loader + Git-based fetcher
 - [`guides/login-banner.md`](guides/login-banner.md) — Quote + emoji + optional weather banner
 - [`guides/fzf-def-docs.md`](guides/fzf-def-docs.md) — Docblock guidelines for `fzf-tools def` / `fzf-tools function` / `fzf-tools alias`
+- [`guides/progress-bar.md`](guides/progress-bar.md) — Progress bar utilities for long-running commands (`progress_bar::*`)
 
 ---
 

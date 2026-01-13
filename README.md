@@ -8,6 +8,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 - 🌟 [Login banner](docs/guides/login-banner.md): Emoji-powered shell intro with rotating quotes
 - 🧩 [Plugin System](docs/guides/plugin-system.md): Git-powered declarative loader with auto-clone and update support
+- ⏳ [Progress bar utilities](docs/guides/progress-bar.md): TTY-friendly progress output for long-running commands
 - 🚀 [Starship](https://starship.rs): Customized prompt with language & context awareness
 - 🧭 [Zoxide](https://github.com/ajeetdsouza/zoxide): Smart directory jumping, aliased as `z`
 - 🔧 Modular and lazy-friendly structure under `scripts/`
