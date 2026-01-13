@@ -68,7 +68,7 @@ _opencode_tools_semantic_commit_skill_available() {
   typeset codex_home="${CODEX_HOME-}"
   [[ -n "$codex_home" ]] || return 1
 
-  [[ -f "$codex_home/skills/semantic-commit/SKILL.md" ]]
+  [[ -f "$codex_home/skills/tools/devex/semantic-commit/SKILL.md" || -f "$codex_home/skills/semantic-commit/SKILL.md" ]]
 }
 
 # _opencode_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
@@ -101,7 +101,7 @@ _opencode_tools_commit_with_scope_fallback() {
 
   typeset expected_skill_path=''
   if [[ -n "${CODEX_HOME-}" ]]; then
-    expected_skill_path="$CODEX_HOME/skills/semantic-commit/SKILL.md"
+    expected_skill_path="$CODEX_HOME/skills/tools/devex/semantic-commit/SKILL.md"
   fi
   print -u2 -r -- "opencode-commit-with-scope: semantic-commit skill not found${expected_skill_path:+: $expected_skill_path}"
 
