@@ -1140,9 +1140,9 @@ codex-rate-limits() {
     all_progress_active='false'
     if [[ "${debug_mode}" != "true" && -t 2 ]] && (( $+functions[progress_bar::init] )); then
       all_progress_active='true'
-      progress_bar::init "$all_progress_id" --prefix 'codex-rate-limits' --total "${#secret_files[@]}" --fd 2 2>/dev/null || all_progress_active='false'
+      progress_bar::init "$all_progress_id" --prefix 'codex-rate-limits' --total "${#secret_files[@]}" --fd 2 || all_progress_active='false'
       if [[ "$all_progress_active" == 'true' ]]; then
-        progress_bar::update "$all_progress_id" 0 --suffix 'fetching...' --force 2>/dev/null || true
+        progress_bar::update "$all_progress_id" 0 --suffix 'fetching...' --force || true
       fi
     fi
 
@@ -1152,7 +1152,7 @@ codex-rate-limits() {
 
       secret_index=$(( secret_index + 1 ))
       if [[ "$all_progress_active" == 'true' ]]; then
-        progress_bar::update "$all_progress_id" $(( secret_index - 1 )) --suffix "fetching ${secret_name}" --force 2>/dev/null || true
+        progress_bar::update "$all_progress_id" $(( secret_index - 1 )) --suffix "fetching ${secret_name}" --force || true
       fi
 
       per_secret_args=( --one-line )
@@ -1177,7 +1177,7 @@ codex-rate-limits() {
       fi
 
       if [[ "$all_progress_active" == 'true' ]]; then
-        progress_bar::update "$all_progress_id" "$secret_index" --suffix "${secret_name}" --force 2>/dev/null || true
+        progress_bar::update "$all_progress_id" "$secret_index" --suffix "${secret_name}" --force || true
       fi
 
       if [[ -z "${line}" ]]; then
@@ -1216,7 +1216,7 @@ codex-rate-limits() {
     done
 
     if [[ "$all_progress_active" == 'true' ]]; then
-      progress_bar::stop "$all_progress_id" 2>/dev/null || true
+      progress_bar::stop "$all_progress_id" || true
       all_progress_active='false'
     fi
 
@@ -1336,7 +1336,7 @@ codex-rate-limits() {
 
   if [[ -t 2 ]] && (( $+functions[progress_bar::init_indeterminate] )); then
     progress_active='true'
-    progress_bar::init_indeterminate "$progress_id" --prefix 'codex-rate-limits' --fd 2 2>/dev/null || progress_active='false'
+    progress_bar::init_indeterminate "$progress_id" --prefix 'codex-rate-limits' --fd 2 || progress_active='false'
   fi
 
   local -i curl_rc=0
@@ -1346,7 +1346,7 @@ codex-rate-limits() {
     curl "${curl_args[@]}" >| "${tmp_status}" &
     local curl_pid="$!"
     while kill -0 "$curl_pid" >/dev/null 2>&1; do
-      progress_bar::tick "$progress_id" --suffix 'fetching...' 2>/dev/null || true
+      progress_bar::tick "$progress_id" --suffix 'fetching...' || true
       sleep 0.1
     done
     wait "$curl_pid" || curl_rc=$?
@@ -1363,7 +1363,7 @@ codex-rate-limits() {
 
   if (( curl_rc != 0 )); then
     if [[ "$progress_active" == 'true' ]]; then
-      progress_bar::stop "$progress_id" 2>/dev/null || true
+      progress_bar::stop "$progress_id" || true
       progress_active='false'
     fi
     print -ru2 -r -- "codex-rate-limits: request failed: ${url}"
@@ -1401,7 +1401,7 @@ codex-rate-limits() {
           curl "${curl_args[@]}" >| "${tmp_status}" &
           local curl_pid="$!"
           while kill -0 "$curl_pid" >/dev/null 2>&1; do
-            progress_bar::tick "$progress_id" --suffix 'fetching...' 2>/dev/null || true
+            progress_bar::tick "$progress_id" --suffix 'fetching...' || true
             sleep 0.1
           done
           wait "$curl_pid" || curl_rc=$?
@@ -1418,7 +1418,7 @@ codex-rate-limits() {
 
         if (( curl_rc != 0 )); then
           if [[ "$progress_active" == 'true' ]]; then
-            progress_bar::stop "$progress_id" 2>/dev/null || true
+            progress_bar::stop "$progress_id" || true
             progress_active='false'
           fi
           print -ru2 -r -- "codex-rate-limits: request failed: ${url}"
@@ -1428,7 +1428,7 @@ codex-rate-limits() {
   fi
 
   if [[ "$progress_active" == 'true' ]]; then
-    progress_bar::stop "$progress_id" 2>/dev/null || true
+    progress_bar::stop "$progress_id" || true
     progress_active='false'
   fi
 
