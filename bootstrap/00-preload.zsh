@@ -70,6 +70,8 @@ set_clipboard() {
   fi
 }
 
+typeset -gr _ZSH_BOOTSTRAP_PRELOAD_PATH="${(%):-%N}"
+
 # progress_bar::load
 # Load the progress bar implementation (scripts/progress-bar.zsh) on demand.
 # Usage: progress_bar::load
@@ -84,7 +86,16 @@ progress_bar::load() {
     return 0
   fi
 
-  typeset zdotdir="${ZDOTDIR:-$HOME/.config/zsh}"
+  typeset zdotdir="${ZDOTDIR-}"
+  if [[ -z "$zdotdir" ]]; then
+    typeset preload_path="${_ZSH_BOOTSTRAP_PRELOAD_PATH-}"
+    if [[ -n "$preload_path" ]]; then
+      preload_path="${preload_path:A}"
+      zdotdir="${preload_path:h:h}"
+    fi
+  fi
+  [[ -n "$zdotdir" ]] || zdotdir="$HOME/.config/zsh"
+
   typeset script_dir="${ZSH_SCRIPT_DIR:-$zdotdir/scripts}"
   typeset target="$script_dir/progress-bar.zsh"
 
