@@ -234,9 +234,10 @@ git-commit-to-stash() {
 
 # git-commit-context [--stdout|--both] [--no-color]
 # Generate a Markdown commit context for the current staged changes.
-# Usage: git-commit-context [--stdout|--both] [--no-color]
+# Usage: git-commit-context [--stdout|--both] [--no-color] [--include <path/glob>]
 # Notes:
 # - Includes: scope tree (`git-scope staged`), staged diff, and per-file staged contents (index version).
+# - Lockfile contents are hidden by default; use --include to show selected files.
 # - Default copies to clipboard via `set_clipboard`; use `--stdout` to print only.
 # - `--no-color` also applies when `NO_COLOR` is set.
 git-commit-context () {
@@ -246,7 +247,14 @@ git-commit-context () {
   typeset tmpfile='' diff='' scope='' contents='' mode='clipboard'
   typeset no_color=false
   typeset arg=''
+  typeset include_arg=''
+  typeset -a include_patterns=()
   typeset -a extra_args=()
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 -r -- "❌ Not a git repository."
+    return 1
+  fi
 
   while [[ $# -gt 0 ]]; do
     arg="${1-}"
@@ -260,11 +268,24 @@ git-commit-context () {
       --no-color|no-color)
         no_color=true
         ;;
+      --include)
+        shift
+        include_arg="${1-}"
+        if [[ -z "$include_arg" ]]; then
+          print -u2 -r -- "❌ Missing value for --include"
+          return 2
+        fi
+        include_patterns+=("$include_arg")
+        ;;
+      --include=*)
+        include_patterns+=("${arg#*=}")
+        ;;
       --help|-h)
-        print -r -- "Usage: git-commit-context [--stdout|--both] [--no-color]"
+        print -r -- "Usage: git-commit-context [--stdout|--both] [--no-color] [--include <path/glob>]"
         print -r -- "  --stdout   Print commit context to stdout only"
         print -r -- "  --both     Print to stdout and copy to clipboard"
         print -r -- "  --no-color Disable ANSI colors (also via NO_COLOR)"
+        print -r -- "  --include  Show full content for selected paths (repeatable)"
         return 0
         ;;
       *)
@@ -296,6 +317,11 @@ git-commit-context () {
   contents="$(
     git -c core.quotepath=false diff --cached --name-status -z | while IFS= read -r -d '' fstatus; do
       typeset file='' newfile=''
+      typeset display_path='' content_path='' numstat='' added='' deleted=''
+      typeset include_content=false
+      typeset lockfile=false
+      typeset binary_file=false
+      typeset blob_ref='' blob_size='' blob_type=''
 
       if [[ -z "$fstatus" ]]; then
         continue
@@ -319,7 +345,67 @@ git-commit-context () {
         content_path="$newfile"
       fi
 
+      for include_pattern in "${include_patterns[@]}"; do
+        if [[ -n "$include_pattern" && "$content_path" == ${~include_pattern} ]]; then
+          include_content=true
+          break
+        fi
+      done
+
+      case "${content_path:t}" in
+        yarn.lock|package-lock.json|pnpm-lock.yaml|bun.lockb|bun.lock|npm-shrinkwrap.json)
+          lockfile=true
+          ;;
+        *)
+          ;;
+      esac
+
       printf "### %s (%s)\n\n" "$display_path" "$fstatus"
+
+      if [[ "$fstatus" == "D" ]]; then
+        blob_ref="HEAD:$file"
+      else
+        blob_ref=":$content_path"
+      fi
+
+      numstat="$(git diff --cached --numstat -- "$content_path" 2>/dev/null | head -n 1)"
+      if [[ -n "$numstat" ]]; then
+        IFS=$' \t' read -r added deleted _ <<< "$numstat"
+        if [[ "$added" == "-" || "$deleted" == "-" ]]; then
+          binary_file=true
+        fi
+      fi
+
+      if [[ "$binary_file" == false && -n "$blob_ref" && -x "$(command -v file)" ]]; then
+        if git cat-file -e "$blob_ref" 2>/dev/null; then
+          blob_type="$(git cat-file -p "$blob_ref" 2>/dev/null | head -c 8192 | file -b --mime - 2>/dev/null)"
+          if [[ "$blob_type" == *"charset=binary"* ]]; then
+            binary_file=true
+          fi
+        fi
+      fi
+
+      if [[ "$binary_file" == true ]]; then
+        blob_size="$(git cat-file -s "$blob_ref" 2>/dev/null)"
+        printf "[Binary file content hidden]\n\n"
+        if [[ -n "$blob_size" ]]; then
+          printf "Size: %s bytes\n" "$blob_size"
+        fi
+        if [[ -n "$blob_type" ]]; then
+          printf "Type: %s\n" "$blob_type"
+        fi
+        printf "\n"
+        continue
+      fi
+
+      if [[ "$lockfile" == true && "$include_content" != true ]]; then
+        printf "[Lockfile content hidden]\n\n"
+        if [[ -n "$added" && -n "$deleted" && "$added" != "-" && "$deleted" != "-" ]]; then
+          printf "Summary: +%s -%s\n" "$added" "$deleted"
+        fi
+        printf "Tip: use --include %s to show full content\n\n" "$content_path"
+        continue
+      fi
 
       if [[ "$fstatus" == "D" ]]; then
         if git cat-file -e "HEAD:$file" 2>/dev/null; then
