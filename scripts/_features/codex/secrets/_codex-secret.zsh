@@ -1207,9 +1207,25 @@ codex-rate-limits() {
     printf "%-25.25s %8.8s %8.8s  %-20.20s\n" "Name" "${non_weekly_header}" "Weekly" "Reset (UTC)"
     print -r -- "-----------------------------------------------------------------------"
 
-    local row='' row_name='' row_window='' row_remain='' row_weekly='' row_reset='' display_non_weekly=''
+    local -a sortable_rows=() sorted_rows=()
+    local row='' row_name='' row_window='' row_remain='' row_weekly='' row_reset=''
+
     for row in "${rows[@]}"; do
       IFS=$'\t' read -r row_name row_window row_remain row_weekly row_reset <<< "${row}"
+
+      local valid_reset='1'
+      if [[ -n "${row_reset}" && "${row_reset}" != '-' && "${row_reset}" == [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z ]]; then
+        valid_reset='0'
+      fi
+
+      sortable_rows+=("${valid_reset}${tab}${row_reset}${tab}${row}")
+    done
+
+    sorted_rows=("${(o)sortable_rows[@]}")
+
+    local element='' sort_valid='' sort_reset='' display_non_weekly=''
+    for element in "${sorted_rows[@]}"; do
+      IFS=$'\t' read -r sort_valid sort_reset row_name row_window row_remain row_weekly row_reset <<< "${element}"
       display_non_weekly="${row_remain}"
       if (( ${#window_labels[@]} != 1 )) && [[ -n "${row_window}" && "${row_window}" != '-' && -n "${row_remain}" && "${row_remain}" != '-' ]]; then
         display_non_weekly="${row_window}:${row_remain}"
