@@ -2,14 +2,14 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2026-01-14 | 2026-01-14 |
+| DONE | 2026-01-14 | 2026-01-14 |
 
 Links:
 
-- PR: [graysurf/zsh-kit/pull/20](https://github.com/graysurf/zsh-kit/pull/20)
+- PR: https://github.com/graysurf/zsh-kit/pull/20
 - Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
-- Docs: TBD
-- Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
+- Docs: None
+- Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
 ## Goal
 
