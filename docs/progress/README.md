@@ -4,7 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-14 | [Zsh progress bar utilities](20260114_zsh-progress-bar.md) | [#19](https://github.com/graysurf/zsh-kit/pull/19) |
+| 2026-01-14 | [Zsh progress bar utilities](20260114_zsh-progress-bar.md) | [#20](https://github.com/graysurf/zsh-kit/pull/20) |
 
 ## Archived
 
