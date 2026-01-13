@@ -8,7 +8,7 @@
 
 Links:
 
-- PR: TBD
+- PR: [graysurf/zsh-kit/pull/19](https://github.com/graysurf/zsh-kit/pull/19)
 - Docs: TBD
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
