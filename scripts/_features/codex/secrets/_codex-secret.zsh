@@ -1304,7 +1304,35 @@ codex-rate-limits() {
     curl_args+=( -H "ChatGPT-Account-Id: ${account_id}" )
   fi
 
+  local progress_id='' progress_pid='' progress_active='false'
+  progress_id="codex-rate-limits:${$}"
+  progress_pid=''
+
+  if [[ -t 2 ]] && (( $+functions[progress_bar::init_indeterminate] )); then
+    progress_active='true'
+    progress_bar::init_indeterminate "$progress_id" --prefix 'codex-rate-limits' --fd 2 2>/dev/null || progress_active='false'
+    if [[ "$progress_active" == 'true' ]]; then
+      {
+        emulate -L zsh
+        unsetopt nounset
+        while true; do
+          progress_bar::tick "$progress_id" --suffix 'fetching...' 2>/dev/null || true
+          sleep 0.1
+        done
+      } &
+      progress_pid="$!"
+    fi
+  fi
+
   if ! http_status="$(curl "${curl_args[@]}")"; then
+    if [[ "$progress_active" == 'true' ]]; then
+      if [[ -n "$progress_pid" && "$progress_pid" == <-> ]]; then
+        kill -TERM "$progress_pid" 2>/dev/null || true
+        wait "$progress_pid" 2>/dev/null || true
+      fi
+      progress_bar::stop "$progress_id" 2>/dev/null || true
+      progress_active='false'
+    fi
     print -ru2 -r -- "codex-rate-limits: request failed: ${url}"
     return 3
   fi
@@ -1335,6 +1363,15 @@ codex-rate-limits() {
         fi
         http_status="$(curl "${curl_args[@]}")" || true
       fi
+  fi
+
+  if [[ "$progress_active" == 'true' ]]; then
+    if [[ -n "$progress_pid" && "$progress_pid" == <-> ]]; then
+      kill -TERM "$progress_pid" 2>/dev/null || true
+      wait "$progress_pid" 2>/dev/null || true
+    fi
+    progress_bar::stop "$progress_id" 2>/dev/null || true
+    progress_active='false'
   fi
 
   if [[ "${http_status}" != "200" ]]; then

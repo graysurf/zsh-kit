@@ -69,3 +69,58 @@ set_clipboard() {
     return 1
   fi
 }
+
+# progress_bar::load
+# Load the progress bar implementation (scripts/progress-bar.zsh) on demand.
+# Usage: progress_bar::load
+# Notes:
+# - This is a bootstrap-time shim so cached CLI wrappers (which bundle 00-preload.zsh) can use it.
+# - Returns non-zero when the module file is missing/unreadable.
+progress_bar::load() {
+  emulate -L zsh
+
+  if (( ${+functions[_progress_bar::build_bar]} )); then
+    typeset -g _ZSH_PROGRESS_BAR_LOADED=1
+    return 0
+  fi
+
+  typeset zdotdir="${ZDOTDIR:-$HOME/.config/zsh}"
+  typeset script_dir="${ZSH_SCRIPT_DIR:-$zdotdir/scripts}"
+  typeset target="$script_dir/progress-bar.zsh"
+
+  [[ -r "$target" ]] || return 1
+  source "$target" || return 1
+
+  (( ${+functions[_progress_bar::build_bar]} )) && return 0
+  return 1
+}
+
+# progress_bar::init
+# Bootstrap shim for progress_bar::init (determinate progress bar).
+# Usage: progress_bar::init <id> --prefix <text> --total <n> [--width <n>] [--head-len <n>] [--fd <n>] [--enabled|--disabled]
+progress_bar::init() { progress_bar::load || return $?; progress_bar::init "$@"; }
+
+# progress_bar::update
+# Bootstrap shim for progress_bar::update (determinate progress bar).
+# Usage: progress_bar::update <id> <current> [--suffix <text>] [--force]
+progress_bar::update() { progress_bar::load || return $?; progress_bar::update "$@"; }
+
+# progress_bar::finish
+# Bootstrap shim for progress_bar::finish (determinate progress bar).
+# Usage: progress_bar::finish <id> [--suffix <text>]
+progress_bar::finish() { progress_bar::load || return $?; progress_bar::finish "$@"; }
+
+# progress_bar::init_indeterminate
+# Bootstrap shim for progress_bar::init_indeterminate (indeterminate progress bar).
+# Usage: progress_bar::init_indeterminate <id> --prefix <text> [--width <n>] [--head-len <n>] [--fd <n>] [--enabled|--disabled]
+progress_bar::init_indeterminate() { progress_bar::load || return $?; progress_bar::init_indeterminate "$@"; }
+
+# progress_bar::tick
+# Bootstrap shim for progress_bar::tick (advance indeterminate progress bar).
+# Usage: progress_bar::tick <id> [--suffix <text>] [--force]
+progress_bar::tick() { progress_bar::load || return $?; progress_bar::tick "$@"; }
+
+# progress_bar::stop
+# Bootstrap shim for progress_bar::stop (clear indeterminate progress bar line).
+# Usage: progress_bar::stop <id>
+progress_bar::stop() { progress_bar::load || return $?; progress_bar::stop "$@"; }
