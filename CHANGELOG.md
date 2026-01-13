@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.0.1 - 2026-01-14
+
+### Added
+- CI test to fail when dotenv files are tracked by Git.
+
+### Changed
+- Ignore `.env` and `.env.*` by default (while allowing `.env.example`, `.env.sample`, `.env.template`).
+
+### Fixed
+- Prevent accidental commits of dotenv files (potential secrets) by enforcing a tracked-file guard.
+
 ## v1.0.0 - 2026-01-13
 
 ### Added
