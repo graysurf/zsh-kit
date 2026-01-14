@@ -859,7 +859,7 @@ _codex_starship_fetch_usage_json() {
 
   typeset access_token='' account_id=''
   access_token="$(jq -r '.tokens.access_token // empty' "$auth_file" 2>/dev/null)" || access_token=''
-  account_id="$(jq -r '.tokens.account_id // empty' "$auth_file" 2>/dev/null)" || account_id=''
+  account_id="$(_codex_starship_auth_account_id "$auth_file" 2>/dev/null)" || account_id=''
   [[ -n "$access_token" ]] || return 1
 
   typeset base_url="${CODEX_CHATGPT_BASE_URL:-https://chatgpt.com/backend-api/}"
