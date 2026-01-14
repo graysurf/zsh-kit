@@ -31,6 +31,9 @@ If the wrapper isn't available in your environment, call the script directly via
 - If the `code` CLI is not found:
   - Normal mode: does nothing, exits `0`, prints nothing.
   - `--dry-run`: still prints planned `code ...` invocations.
+- If `OPEN_CHANGED_FILES_CODE_PATH` is set but invalid (not found or not executable):
+  - Normal mode: does nothing, exits `0`, prints nothing.
+  - `--verbose`: prints a no-op reason to stderr.
 - Default maximum opened files: `5` (configurable).
 - Workspace behavior:
   - Default (`--workspace-mode pwd`): open everything in a single VSCode window with workspace set to `$PWD`.
