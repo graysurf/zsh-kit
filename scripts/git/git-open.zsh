@@ -726,6 +726,24 @@ _git_open_compare() {
   _git_open_open_url "$target_url" "🔀 Opened"
 }
 
+# _git_open_try_gh_pr_view [repo]
+# Try `gh pr view --web`, optionally scoped to a repo.
+# Usage: _git_open_try_gh_pr_view [repo]
+_git_open_try_gh_pr_view() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset repo="${1-}"
+
+  if [[ -n "$repo" ]]; then
+    gh pr view --web --repo "$repo" >/dev/null 2>&1 || return 1
+  else
+    gh pr view --web >/dev/null 2>&1 || return 1
+  fi
+
+  print -r -- "🧷 Opened PR via gh"
+}
+
 # _git_open_pr [number]
 # Open PR/MR page (or the current-branch compare/new PR page when number is omitted).
 # Usage: _git_open_pr [number]
@@ -787,23 +805,45 @@ _git_open_pr() {
   case "$collab_provider" in
     github)
       if command -v gh &>/dev/null; then
-        typeset collab_slug=''
+        typeset -a gh_repos=()
+        typeset -A gh_seen=()
+        typeset collab_slug='' base_slug='' repo=''
         if [[ "$collab_base_url" == *'github.com/'* ]]; then
           collab_slug="$(_git_open_github_repo_slug "$collab_base_url" 2>/dev/null || true)"
         fi
-        if [[ -n "$collab_slug" ]]; then
-          if gh pr view --web --repo "$collab_slug" >/dev/null 2>&1; then
-            print -r -- "🧷 Opened PR via gh"
-            return 0
-          fi
+        if [[ "$base_url" == *'github.com/'* ]]; then
+          base_slug="$(_git_open_github_repo_slug "$base_url" 2>/dev/null || true)"
         fi
 
-        if [[ -z "$collab_slug" || "$collab_base_url" != "$base_url" ]]; then
-          if gh pr view --web >/dev/null 2>&1; then
-            print -r -- "🧷 Opened PR via gh"
-            return 0
-          fi
+        if [[ -n "$collab_slug" ]]; then
+          gh_repos+=("$collab_slug")
         fi
+        if [[ -n "$base_slug" ]]; then
+          gh_repos+=("$base_slug")
+        fi
+        if (( ${#gh_repos[@]} == 0 )); then
+          gh_repos+=('')
+        fi
+
+        for repo in "${gh_repos[@]}"; do
+          if [[ -n "$repo" ]]; then
+            if [[ -n "${gh_seen[$repo]-}" ]]; then
+              continue
+            fi
+            gh_seen["$repo"]=1
+            if _git_open_try_gh_pr_view "$repo"; then
+              return 0
+            fi
+          else
+            if [[ -n "${gh_seen[default]-}" ]]; then
+              continue
+            fi
+            gh_seen[default]=1
+            if _git_open_try_gh_pr_view; then
+              return 0
+            fi
+          fi
+        done
       fi
 
       base=$(_git_open_default_branch_name "$collab_remote") || return 1
