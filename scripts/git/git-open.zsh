@@ -726,11 +726,9 @@ _git_open_compare() {
   _git_open_open_url "$target_url" "🔀 Opened"
 }
 
-# _git_open_pr [number]
-# Open PR/MR page (or the current-branch compare/new PR page when number is omitted).
-# Usage: _git_open_pr [number]
-# Notes:
-# - GitHub: prefers `gh pr view --web` when available.
+# _git_open_try_gh_pr_view [repo]
+# Try `gh pr view --web`, optionally scoped to a repo.
+# Usage: _git_open_try_gh_pr_view [repo]
 _git_open_try_gh_pr_view() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -746,6 +744,11 @@ _git_open_try_gh_pr_view() {
   print -r -- "🧷 Opened PR via gh"
 }
 
+# _git_open_pr [number]
+# Open PR/MR page (or the current-branch compare/new PR page when number is omitted).
+# Usage: _git_open_pr [number]
+# Notes:
+# - GitHub: prefers `gh pr view --web` when available.
 _git_open_pr() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
