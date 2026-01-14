@@ -73,6 +73,19 @@ _codex_tools_semantic_commit_skill_available() {
   [[ -f "$codex_home/skills/tools/devex/semantic-commit/SKILL.md" || -f "$codex_home/skills/semantic-commit/SKILL.md" ]]
 }
 
+# _codex_tools_semantic_commit_autostage_skill_available
+# Return 0 when the semantic-commit-autostage skill exists locally.
+# Usage: _codex_tools_semantic_commit_autostage_skill_available
+_codex_tools_semantic_commit_autostage_skill_available() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset codex_home="${CODEX_HOME-}"
+  [[ -n "$codex_home" ]] || return 1
+
+  [[ -f "$codex_home/skills/automation/semantic-commit-autostage/SKILL.md" || -f "$codex_home/skills/semantic-commit-autostage/SKILL.md" ]]
+}
+
 # _codex_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
 # Local Conventional Commit fallback for when semantic-commit skill is unavailable.
 # Usage: _codex_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
@@ -203,10 +216,11 @@ _codex_tools_commit_with_scope_fallback() {
   return 0
 }
 
-# codex-commit-with-scope [-p] [extra prompt...]
+# codex-commit-with-scope [-p] [-a] [extra prompt...]
 # Run the semantic-commit skill to create a Semantic Commit and report git-scope output.
 # Options:
 #   -p    Push to remote after a successful commit.
+#   -a, --auto-stage  Use semantic-commit-autostage (autostage all changes) instead of semantic-commit.
 codex-commit-with-scope() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -217,11 +231,16 @@ codex-commit-with-scope() {
   fi
 
   local -A opts
-  zparseopts -D -E -A opts -- p || return 1
+  zparseopts -D -E -A opts -- p a -auto-stage || return 1
 
   local push_flag='false'
   if (( ${+opts[-p]} )); then
     push_flag='true'
+  fi
+
+  local auto_stage_flag='false'
+  if (( ${+opts[-a]} || ${+opts[--auto-stage]} )); then
+    auto_stage_flag='true'
   fi
 
   _codex_require_allow_dangerous 'codex-commit-with-scope' || return 1
@@ -231,13 +250,26 @@ codex-commit-with-scope() {
     extra_prompt="$*"
   fi
 
-  if ! _codex_tools_semantic_commit_skill_available; then
-    _codex_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
-    return $?
+  local skill_name='semantic-commit'
+  if [[ "$auto_stage_flag" == 'true' ]]; then
+    skill_name='semantic-commit-autostage'
+    if ! _codex_tools_semantic_commit_autostage_skill_available; then
+      local expected_skill_path=''
+      if [[ -n "${CODEX_HOME-}" ]]; then
+        expected_skill_path="$CODEX_HOME/skills/automation/semantic-commit-autostage/SKILL.md"
+      fi
+      print -u2 -r -- "codex-commit-with-scope: semantic-commit-autostage skill not found${expected_skill_path:+: $expected_skill_path}"
+      return 1
+    fi
+  else
+    if ! _codex_tools_semantic_commit_skill_available; then
+      _codex_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
+      return $?
+    fi
   fi
 
   local prompt=''
-  prompt='Use the semantic-commit skill.'
+  prompt="Use the ${skill_name} skill."
 
   if [[ "$push_flag" == 'true' ]]; then
     prompt+=$'\n\nFurthermore, please push the committed changes to the remote repository.'
@@ -440,8 +472,9 @@ _codex_tools_usage() {
   print -u"$fd" -r -- 'Usage: codex-tools <command> [args...]'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
-  print -u"$fd" -r -- '  commit-with-scope [-p] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
+  print -u"$fd" -r -- '  commit-with-scope [-p] [-a] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
   print -u"$fd" -r -- '    -p                                      Push to remote after commit'
+  print -u"$fd" -r -- '    -a, --auto-stage                         Use semantic-commit-autostage (autostage all changes)'
   print -u"$fd" -r -- '  auto-refresh                              Run codex-auto-refresh (token refresh helper)'
   print -u"$fd" -r -- '  rate-limits                               Run codex-rate-limits (wham/usage; supports -c/-d/--cached/--no-refresh-auth/--all/--json)'
   print -u"$fd" -r -- '  advice [question]                         Get actionable engineering advice'
