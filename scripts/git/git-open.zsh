@@ -798,9 +798,11 @@ _git_open_pr() {
           fi
         fi
 
-        if gh pr view --web >/dev/null 2>&1; then
-          print -r -- "🧷 Opened PR via gh"
-          return 0
+        if [[ -z "$collab_slug" || "$collab_base_url" != "$base_url" ]]; then
+          if gh pr view --web >/dev/null 2>&1; then
+            print -r -- "🧷 Opened PR via gh"
+            return 0
+          fi
         fi
       fi
 
