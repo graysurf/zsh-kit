@@ -295,7 +295,7 @@ git-commit-context () {
     shift
   done
 
-  diff="$(git diff --cached --no-color)"
+  diff="$(git -c core.quotepath=false diff --cached --no-color)"
 
   if (( ${#extra_args[@]} > 0 )); then
     print -u2 -r -- "⚠️  Ignoring unknown arguments: ${extra_args[*]}"
@@ -368,7 +368,7 @@ git-commit-context () {
         blob_ref=":$content_path"
       fi
 
-      numstat="$(git diff --cached --numstat -- "$content_path" 2>/dev/null | head -n 1)"
+      numstat="$(git -c core.quotepath=false diff --cached --numstat -- "$content_path" 2>/dev/null | head -n 1)"
       if [[ -n "$numstat" ]]; then
         IFS=$' \t' read -r added deleted _ <<< "$numstat"
         if [[ "$added" == "-" || "$deleted" == "-" ]]; then

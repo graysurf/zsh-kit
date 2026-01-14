@@ -21,6 +21,7 @@ alias gsc='git-scope commit'
 alias gst='git-scope tracked'
 
 _git_scope_no_color=false
+typeset -ga _git_scope_commit_file_list=()
 
 # _git_scope_kind_color <A|M|D|U|->
 # Return ANSI color code for a file change kind.
@@ -276,7 +277,7 @@ _git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untra
 #
 # Note:
 #   Internally, it isolates display output from file path data, ensuring
-#   clean separation of UI and logic. It uses a temporary file to pass
+#   clean separation of UI and logic. It uses a shared in-memory list to pass
 #   changed file paths from the rendering function back to the dispatcher.
 #
 # This command is especially useful for code review, audit trails, or
@@ -323,7 +324,7 @@ _git_scope_commit() {
   _git_scope_render_commit_files "$commit" "$parent_selector"
 
   typeset -a file_list
-  file_list=("${(@f)$(< /tmp/.git-scope-filelist)}")
+  file_list=("${_git_scope_commit_file_list[@]}")
 
   if [[ "$_git_scope_should_print" == true ]]; then
     printf "\n📦 Printing file contents:\n"
@@ -383,7 +384,7 @@ _git_scope_commit_parents() {
 # Render changed files for a commit (supports merge commits via parent selection).
 # Usage: _git_scope_render_commit_files <commit> [parent_selector]
 # Notes:
-# - Writes the file list to `/tmp/.git-scope-filelist` for optional printing.
+# - Writes the file list to `_git_scope_commit_file_list` for optional printing.
 _git_scope_render_commit_files() {
   emulate -L zsh
   setopt pipe_fail
@@ -398,6 +399,8 @@ _git_scope_render_commit_files() {
   typeset -a parents=()
   typeset parent_count=0
   typeset is_merge=false
+
+  _git_scope_commit_file_list=()
 
   _git_scope_commit_parents "$commit"
   parents=("${reply[@]}")
@@ -432,7 +435,7 @@ _git_scope_render_commit_files() {
     if [[ -z "$ns_lines" ]]; then
       printf "\n📄 Changed files:\n"
       printf "  ℹ️  Merge commit vs parent #%d (%s) has no file-level changes\n" "$selected_index" "${selected_parent_short:-$selected_parent_hash}"
-      : > /tmp/.git-scope-filelist
+      _git_scope_commit_file_list=()
       return
     fi
   else
@@ -442,7 +445,7 @@ _git_scope_render_commit_files() {
     if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
       printf "\n📄 Changed files:\n"
       printf "  ℹ️  No file-level changes recorded for this commit\n"
-      : > /tmp/.git-scope-filelist
+      _git_scope_commit_file_list=()
       return
     fi
   fi
@@ -519,7 +522,7 @@ _git_scope_render_commit_files() {
   printf "\n  📊 Total: +%d / -%d\n" "$total_add" "$total_del"
   _git_scope_render_tree "${(F)file_list}"
 
-  printf "%s\n" "${file_list[@]}" > /tmp/.git-scope-filelist
+  _git_scope_commit_file_list=("${file_list[@]}")
 }
 
 # git-scope: Working tree/commit introspection (dispatcher)
