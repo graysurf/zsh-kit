@@ -340,7 +340,23 @@ main() {
     if [[ "$code_override" == "none" ]]; then
       OCF_CODE_PATH=''
     else
-      OCF_CODE_PATH="$code_override"
+      if (( dry_run )); then
+        OCF_CODE_PATH="$code_override"
+      else
+        typeset resolved=''
+        if [[ "$code_override" == */* ]]; then
+          [[ -x "$code_override" ]] && resolved="$code_override"
+        else
+          resolved="$(command -v "$code_override" 2>/dev/null || true)"
+          [[ -n "$resolved" && -x "$resolved" ]] || resolved=''
+        fi
+
+        if [[ -z "$resolved" ]]; then
+          _ocf::log "no-op: code override not found: $code_override"
+          return 0
+        fi
+        OCF_CODE_PATH="$resolved"
+      fi
     fi
   else
     OCF_CODE_PATH="$(_ocf::resolve_code_path 2>/dev/null || true)"

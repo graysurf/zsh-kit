@@ -121,6 +121,19 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t open-changed-files-test.XXXXXX)
   assert_eq 0 "$rc" "missing code should exit 0" || fail "$output"
   assert_eq "" "$output" "missing code should be silent" || fail "$output"
 
+  # Normal mode should be a silent no-op when `OPEN_CHANGED_FILES_CODE_PATH` is invalid.
+  typeset missing_code="$tmp_dir/missing-code"
+  output="$(OPEN_CHANGED_FILES_CODE_PATH="$missing_code" "$ZSH_BIN" -f -- "$TOOL_SCRIPT" "$file1_abs" 2>&1)"
+  rc=$?
+  assert_eq 0 "$rc" "invalid code override should exit 0" || fail "$output"
+  assert_eq "" "$output" "invalid code override should be silent" || fail "$output"
+
+  # --verbose should explain invalid code override.
+  output="$(OPEN_CHANGED_FILES_CODE_PATH="$missing_code" "$ZSH_BIN" -f -- "$TOOL_SCRIPT" --verbose "$file1_abs" 2>&1)"
+  rc=$?
+  assert_eq 0 "$rc" "invalid code override (verbose) should exit 0" || fail "$output"
+  assert_contains "$output" "no-op: code override not found:" "verbose should log invalid code override" || fail "$output"
+
   # workspace-mode=git should group files by nearest `.git` root.
   typeset git1="$tmp_dir/git1"
   typeset git2="$tmp_dir/git2"
