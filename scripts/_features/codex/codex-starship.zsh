@@ -770,7 +770,7 @@ _codex_starship_maybe_enqueue_refresh() {
   [[ -n "$min_interval" && "$min_interval" == <-> ]] || min_interval='30'
 
   typeset lock_dir="$cache_dir/$key.refresh.lock"
-  typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-60}"
+  typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
 
   if [[ -e "$lock_dir" ]]; then
     _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || return 0
@@ -1024,7 +1024,7 @@ codex-starship() {
   now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
   [[ -n "$now_epoch" && "$now_epoch" == <-> ]] || return 0
 
-  typeset refresh_stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-60}"
+  typeset refresh_stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
   _codex_starship_cleanup_stale_refresh_locks "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
   _codex_starship_cleanup_stale_wham_usage_files "$cache_dir" "$now_epoch" "$refresh_stale_after" >/dev/null 2>&1 || true
   typeset auth_hash_keep="${CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP:-5}"
@@ -1103,7 +1103,7 @@ codex-starship() {
     setopt pipe_fail nounset
 
     typeset lock_dir="$cache_dir/$key.refresh.lock"
-    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-60}"
+    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
     if ! mkdir "$lock_dir" >/dev/null 2>&1; then
       _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
       mkdir "$lock_dir" >/dev/null 2>&1 || exit 0
