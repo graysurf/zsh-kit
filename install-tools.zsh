@@ -36,6 +36,48 @@ else
   exit 1
 fi
 
+function _install_tools::apply_homebrew_env() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  local brew_path="${1-}"
+  [[ -n "$brew_path" ]] || return 1
+  [[ "$brew_path" == /* && -x "$brew_path" ]] || return 1
+
+  local homebrew_prefix="${brew_path:h:h}"
+  export HOMEBREW_PREFIX="$homebrew_prefix"
+  export HOMEBREW_CELLAR="$homebrew_prefix/Cellar"
+  export HOMEBREW_REPOSITORY="$homebrew_prefix"
+
+  local hb_bin="$homebrew_prefix/bin"
+  local hb_sbin="$homebrew_prefix/sbin"
+  local -a prefix_paths=() rest_paths=()
+  [[ -d "$hb_bin" ]] && prefix_paths+=("$hb_bin")
+  [[ -d "$hb_sbin" ]] && prefix_paths+=("$hb_sbin")
+  if (( ${#prefix_paths[@]} > 0 )); then
+    rest_paths=("${path[@]}")
+    rest_paths=("${rest_paths:#$hb_bin}")
+    rest_paths=("${rest_paths:#$hb_sbin}")
+    path=("${prefix_paths[@]}" "${rest_paths[@]}")
+  fi
+
+  local hb_fpath="$homebrew_prefix/share/zsh/site-functions"
+  if [[ -d "$hb_fpath" ]] && (( ${fpath[(Ie)$hb_fpath]} == 0 )); then
+    fpath=("$hb_fpath" $fpath)
+  fi
+
+  if [[ -n "${MANPATH-}" ]]; then
+    export MANPATH=":${MANPATH#:}"
+  fi
+
+  local hb_info="$homebrew_prefix/share/info"
+  if [[ -d "$hb_info" ]]; then
+    export INFOPATH="$hb_info:${INFOPATH-}"
+  fi
+
+  return 0
+}
+
 function _install_tools::ensure_homebrew() {
   emulate -L zsh
   setopt errexit nounset pipefail
@@ -50,15 +92,17 @@ function _install_tools::ensure_homebrew() {
   )
   [[ -n "$home" ]] && candidates+=("$home/.linuxbrew/bin/brew")
 
-  if command -v brew >/dev/null 2>&1; then
-    eval "$(brew shellenv)"
+  local brew_path=''
+  brew_path="$(whence -p brew || true)"
+  if [[ -n "$brew_path" ]]; then
+    _install_tools::apply_homebrew_env "$brew_path" || return 1
     return 0
   fi
 
   local candidate
   for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
-      eval "$("$candidate" shellenv)"
+      _install_tools::apply_homebrew_env "$candidate" || return 1
       return 0
     fi
   done
@@ -94,13 +138,14 @@ function _install_tools::ensure_homebrew() {
 
   for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
-      eval "$("$candidate" shellenv)"
+      _install_tools::apply_homebrew_env "$candidate" || return 1
       return 0
     fi
   done
 
-  if command -v brew >/dev/null 2>&1; then
-    eval "$(brew shellenv)"
+  brew_path="$(whence -p brew || true)"
+  if [[ -n "$brew_path" ]]; then
+    _install_tools::apply_homebrew_env "$brew_path" || return 1
     return 0
   fi
 
