@@ -11,6 +11,7 @@
 # Cache / Generated
 cache/
 plugins/
+out/
 
 # Zsh runtime files
 .zsh_history

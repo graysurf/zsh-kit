@@ -17,7 +17,7 @@ print_usage() {
   print -r -- "  (default) zsh syntax: zsh -n on repo zsh + zsh-style *.sh (excluding plugins/)"
   print -r -- "  --smoke: load .zshrc (and .zprofile) in isolated ZDOTDIR/cache; fails if any stderr is emitted"
   print -r -- "  --bash : bash -n on bash scripts; runs ShellCheck if installed"
-  print -r -- "  --semgrep: semgrep scan (bash/zsh) with JSON output under \$CODEX_HOME/out/semgrep/ (or ./out/semgrep/)"
+  print -r -- "  --semgrep: semgrep scan (bash/zsh) with JSON output under ./out/semgrep/"
   print -r -- ""
   print -r -- "Examples:"
   print -r -- "  $SCRIPT_HINT"

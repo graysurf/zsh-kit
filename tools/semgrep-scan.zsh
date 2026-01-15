@@ -15,7 +15,7 @@ print_usage() {
   print -r -- "  $SCRIPT_HINT [--profile <local|shell>] [--target <path>] [--] [semgrep args...]"
   print -r -- ""
   print -r -- "Runs Semgrep with repo-local rules plus selected Semgrep Registry packs."
-  print -r -- "Writes JSON output to \$CODEX_HOME/out/semgrep/ (or ./out/semgrep/) and prints the JSON path to stdout."
+  print -r -- "Writes JSON output to ./out/semgrep/ and prints the JSON path to stdout."
   print -r -- ""
   print -r -- "Profiles:"
   print -r -- "  local: .semgrep.yaml only"
@@ -133,8 +133,7 @@ main() {
     return 1
   fi
 
-  typeset out_root="${CODEX_HOME:-$repo_root}"
-  typeset out_dir="$out_root/out/semgrep"
+  typeset out_dir="$repo_root/out/semgrep"
   command mkdir -p -- "$out_dir" || return 1
 
   typeset repo_name="${repo_root:t}"
@@ -164,4 +163,3 @@ main() {
 }
 
 main "$@"
-

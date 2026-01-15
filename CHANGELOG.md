@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.0.3 - 2026-01-16
+
+### Added
+- Semgrep integration with repo-local rules (`.semgrep.yaml`) via `tools/semgrep-scan.zsh` and `tools/check.zsh --semgrep` (writes JSON output under `out/semgrep/`).
+- Raw prompt mode for `codex-tools` and `opencode-tools` (use `--` or `prompt` to force).
+- `-a|--auto-stage` option for `codex-tools commit-with-scope` and `opencode-tools commit-with-scope` to run `semantic-commit-autostage`.
+
+### Changed
+- Hardened bootstrap/tooling by removing `eval` (wrapper bundler, plugin loader, and `install-tools.zsh`) and safely parsing `plugins.list` `KEY=VALUE` extras (including quoted values).
+- Homebrew PATH setup in `.zprofile` now avoids `eval`, preserves existing entries, and prioritizes Homebrew `bin`/`sbin`.
+- `git-open` now dedupes GitHub CLI PR view attempts to reduce redundant `gh pr view` calls.
+
+### Fixed
+- `open-changed-files` now no-ops cleanly when `OPEN_CHANGED_FILES_CODE_PATH` points to a missing/non-executable override.
+- `git-scope` file lists and commit context paths are now more stable.
+- `codex-starship` lock stale default now matches docs.
+
 ## v1.0.2 - 2026-01-14
 
 ### Added
