@@ -70,7 +70,7 @@ load_plugin_entry() {
       typeset assignment=''
       for assignment in "${extra_assignments[@]}"; do
         [[ "$assignment" =~ '^[A-Za-z_][A-Za-z0-9_]*=.*$' ]] || continue
-        typeset -g -- "$assignment"
+        typeset -g -- ${(Q)assignment}
       done
     fi
 
