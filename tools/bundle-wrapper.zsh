@@ -191,33 +191,38 @@ parse_explicit_sources() {
     [[ ${#tokens[@]} -ge 2 ]] || continue
     if [[ "${tokens[1]}" != "source" && "${tokens[1]}" != "." ]]; then
       continue
-	    fi
-	    local raw="${tokens[2]}"
-	    if [[ "$raw" == *'$('* || "$raw" == *'`'* || "$raw" == *'<('* || "$raw" == *'>('* ]]; then
-	      die "dynamic source unsupported: $raw"
-	    fi
-	    if [[ "$raw" == *'$src'* || "$raw" == *'${src}'* ]]; then
-	      continue
-	    fi
-	    raw="${(Q)raw}"
-	    local expanded="$raw"
-	    local var_name='' var_value=''
-	    while [[ "$expanded" =~ '\$\{([A-Za-z_][A-Za-z0-9_]*)\}' ]]; do
-	      var_name="${match[1]}"
-	      (( ${+parameters[$var_name]} )) || die "unbound variable in source path: $var_name"
-	      var_value="${(P)var_name}"
-	      expanded="${expanded//$MATCH/$var_value}"
-	    done
-	    while [[ "$expanded" =~ '\$([A-Za-z_][A-Za-z0-9_]*)' ]]; do
-	      var_name="${match[1]}"
-	      (( ${+parameters[$var_name]} )) || die "unbound variable in source path: $var_name"
-	      var_value="${(P)var_name}"
-	      expanded="${expanded//$MATCH/$var_value}"
-	    done
-	    expanded="${expanded/#\~/$HOME}"
-	    if [[ "$expanded" != /* ]]; then
-	      expanded="${dir%/}/${expanded}"
-	    fi
+    fi
+
+    local raw="${tokens[2]}"
+    if [[ "$raw" == *'$('* || "$raw" == *'`'* || "$raw" == *'<('* || "$raw" == *'>('* ]]; then
+      die "dynamic source unsupported: $raw"
+    fi
+    if [[ "$raw" == *'$src'* || "$raw" == *'${src}'* ]]; then
+      continue
+    fi
+
+    raw="${(Q)raw}"
+    local expanded="$raw"
+    local var_name='' var_value=''
+
+    while [[ "$expanded" =~ '\$\{([A-Za-z_][A-Za-z0-9_]*)\}' ]]; do
+      var_name="${match[1]}"
+      (( ${+parameters[$var_name]} )) || die "unbound variable in source path: $var_name"
+      var_value="${(P)var_name}"
+      expanded="${expanded//$MATCH/$var_value}"
+    done
+
+    while [[ "$expanded" =~ '\$([A-Za-z_][A-Za-z0-9_]*)' ]]; do
+      var_name="${match[1]}"
+      (( ${+parameters[$var_name]} )) || die "unbound variable in source path: $var_name"
+      var_value="${(P)var_name}"
+      expanded="${expanded//$MATCH/$var_value}"
+    done
+
+    expanded="${expanded/#\~/$HOME}"
+    if [[ "$expanded" != /* ]]; then
+      expanded="${dir%/}/${expanded}"
+    fi
     add_source "$expanded"
   done < "$file"
 }
