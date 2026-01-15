@@ -194,8 +194,75 @@ check_semgrep_scan() {
     return 1
   fi
 
-  zsh -f -- "$semgrep_scan_script" || return 1
+  typeset semgrep_json=''
+  semgrep_json="$(zsh -f -- "$semgrep_scan_script")" || return 1
+  if [[ -n "$semgrep_json" ]]; then
+    print -r -- "$semgrep_json"
+    semgrep_summary "$root_dir" "$semgrep_json"
+  fi
   return 0
+}
+
+# semgrep_summary <root_dir> <json_path>
+# Print a short Semgrep findings summary to stderr.
+semgrep_summary() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  typeset root_dir="$1"
+  typeset json_path="$2"
+  typeset limit="${SEMGREP_SUMMARY_LIMIT:-5}"
+
+  if [[ -z "$json_path" ]]; then
+    return 0
+  fi
+
+  typeset python_bin="$root_dir/.venv/bin/python"
+  if [[ ! -x "$python_bin" ]]; then
+    python_bin="$(command -v python3 || true)"
+  fi
+  if [[ -z "$python_bin" ]]; then
+    print -u2 -r -- "warning: python3 not found; skipping semgrep summary"
+    return 0
+  fi
+
+  "$python_bin" - "$json_path" "$limit" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+try:
+    limit = int(sys.argv[2])
+except Exception:
+    limit = 5
+
+try:
+    with open(path, "r", encoding="utf-8") as handle:
+        data = json.load(handle)
+except Exception as exc:
+    sys.stderr.write(f"semgrep: failed to read {path}: {exc}\n")
+    sys.exit(0)
+
+results = data.get("results") or []
+count = len(results)
+if count == 0:
+    sys.stderr.write("semgrep: 0 findings\n")
+    sys.exit(0)
+
+sys.stderr.write(f"semgrep: {count} findings (showing up to {limit})\n")
+for result in results[:limit]:
+    check_id = result.get("check_id") or "unknown"
+    path = result.get("path") or "unknown"
+    start = result.get("start") or {}
+    line = start.get("line")
+    location = f"{path}:{line}" if line else path
+    message = (result.get("extra") or {}).get("message") or ""
+    message = " ".join(message.split())
+    if message:
+        sys.stderr.write(f"- {check_id} {location} {message}\n")
+    else:
+        sys.stderr.write(f"- {check_id} {location}\n")
+PY
 }
 
 # main [args...]
