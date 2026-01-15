@@ -26,16 +26,21 @@ done < "$ZSH_PLUGIN_LIST_FILE"
 # - ZSH_PLUGIN_LIST_FILE: plugin list file (default: $ZSH_CONFIG_DIR/plugins.list)
 # Notes:
 # - Supports `abbr` for the zsh-abbr plugin (adds completions + job queue).
-# - Supports `KEY=VALUE` style extras via eval (trusted config only).
+# - Supports `KEY=VALUE` style extras (no eval).
 load_plugin_entry() {
 	typeset entry="$1"
 	typeset -a parts
-	IFS='::' read -r -A parts <<< "$entry"
+	parts=("${(@s/::/)entry}")
 
   typeset plugin_name="${parts[1]}"
   typeset main_file="${parts[2]:-${plugin_name}.plugin.zsh}"
   typeset extra="${parts[3]:-}"
   typeset git_url=''
+
+  if [[ "$extra" == git=* ]]; then
+    git_url="${extra#git=}"
+    extra=''
+  fi
 
   # look for git URL in the rest of the fields
   for part in "${parts[@]:3}"; do
@@ -60,7 +65,13 @@ load_plugin_entry() {
 
     # also handle environment variable style extra
     if [[ "$extra" == *=* ]]; then
-      eval "$extra"
+      typeset -a extra_assignments=()
+      extra_assignments=(${(z)extra})
+      typeset assignment=''
+      for assignment in "${extra_assignments[@]}"; do
+        [[ "$assignment" =~ '^[A-Za-z_][A-Za-z0-9_]*=.*$' ]] || continue
+        typeset -g -- ${(Q)assignment}
+      done
     fi
 
     source "$full_path"
