@@ -18,6 +18,7 @@ _opencode-tools() {
     'commit:Alias of commit-with-scope'
     'advice:Get actionable engineering advice'
     'knowledge:Get clear explanation and angles for a concept'
+    'prompt:Run a raw prompt'
     'help:Show usage'
     'list:Alias of help'
   )
@@ -38,6 +39,7 @@ _opencode-tools() {
         commit-with-scope|commit)
           _arguments \
             '(-p)'{-p}'[Push to remote after commit]' \
+            '(-a --auto-stage)'{-a,--auto-stage}'[Use semantic-commit-autostage (autostage all changes)]' \
             '*:prompt text:' && return 0
           return 0
           ;;
@@ -49,6 +51,10 @@ _opencode-tools() {
           _message 'concept'
           return 0
           ;;
+        prompt|--)
+          _message 'prompt'
+          return 0
+          ;;
         help|list)
           _message 'no args'
           return 0
@@ -58,4 +64,4 @@ _opencode-tools() {
   esac
 }
 
-compdef _opencode-tools opencode-tools ox
+compdef _opencode-tools opencode-tools oc

@@ -31,6 +31,29 @@ Dispatcher for the helpers below:
 codex-tools commit-with-scope "Prefer terse subject lines"
 ```
 
+Alias:
+
+```bash
+cx commit-with-scope "Prefer terse subject lines"
+```
+
+---
+
+### `codex-tools <prompt...>` (raw prompt)
+
+If the first argument is not a known command, `codex-tools` treats everything as a raw prompt:
+
+```bash
+codex-tools "advice about X"
+```
+
+To force raw prompt mode when your prompt starts with a command word, use `--` (or `prompt`):
+
+```bash
+codex-tools -- "advice about X"
+codex-tools prompt "advice about X"
+```
+
 ---
 
 ### `codex-tools commit-with-scope [-p] [-a|--auto-stage] [extra prompt...]`
@@ -101,9 +124,8 @@ codex-tools rate-limits --all
 
 ## 🔐 Safety Gate
 
-All helpers require `CODEX_ALLOW_DANGEROUS=true`.
- If it is not set, the helpers print a disabled
-message and return non-zero.
+Commands that run `codex exec --dangerously-bypass-approvals-and-sandbox` require `CODEX_ALLOW_DANGEROUS=true`.
+ If it is not set, those commands print a disabled message and return non-zero.
 
 ```bash
 CODEX_ALLOW_DANGEROUS=true codex-tools commit-with-scope "Use conventional scopes"

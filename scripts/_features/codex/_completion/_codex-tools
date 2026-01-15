@@ -20,6 +20,7 @@ _codex-tools() {
     'rate-limits:Run codex-rate-limits (wham/usage; supports --cached)'
     'advice:Get actionable engineering advice'
     'knowledge:Get clear explanation and angles for a concept'
+    'prompt:Run a raw prompt'
     'help:Show usage'
     'list:Alias of help'
   )
@@ -92,6 +93,10 @@ _codex-tools() {
           ;;
         knowledge)
           _message 'concept'
+          return 0
+          ;;
+        prompt|--)
+          _message 'prompt'
           return 0
           ;;
         help|list)

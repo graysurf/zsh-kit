@@ -19,22 +19,42 @@ opencode-tools advice "How to optimize Zsh startup time?"
 Alias:
 
 ```bash
-opencode-tools advice "How to optimize Zsh startup time?"
+oc advice "How to optimize Zsh startup time?"
 ```
 
 ---
 
-### `opencode-tools commit-with-scope [-p] [extra prompt...]`
+### `opencode-tools <prompt...>` (raw prompt)
+
+If the first argument is not a known command, `opencode-tools` treats everything as a raw prompt:
+
+```bash
+opencode-tools "advice about X"
+```
+
+To force raw prompt mode when your prompt starts with a command word, use `--` (or `prompt`):
+
+```bash
+opencode-tools -- "advice about X"
+opencode-tools prompt "advice about X"
+```
+
+---
+
+### `opencode-tools commit-with-scope [-p] [-a|--auto-stage] [extra prompt...]`
 
 Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
+ With `-a|--auto-stage`, runs `semantic-commit-autostage` instead.
 
 Fallback:
 
 - If `semantic-commit` skill is not installed (missing `$CODEX_HOME/skills/tools/devex/semantic-commit/SKILL.md`), the command falls back to a local interactive Conventional Commit flow (and `-p` still pushes).
+- If `-a|--auto-stage` is set but `semantic-commit-autostage` is not installed (missing `$CODEX_HOME/skills/automation/semantic-commit-autostage/SKILL.md`), the command errors.
 
 Options:
 
 - `-p`: Push the committed changes to the remote repository.
+- `-a`, `--auto-stage`: Use `semantic-commit-autostage` (autostage all changes) instead of `semantic-commit`.
 
 ```bash
 opencode-tools commit-with-scope -p "Prefer terse subject lines"

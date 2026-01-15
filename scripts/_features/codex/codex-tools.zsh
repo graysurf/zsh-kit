@@ -42,18 +42,21 @@ _codex_require_allow_dangerous() {
   fi
 }
 
-# _codex_exec_dangerous <prompt>
+# _codex_exec_dangerous <prompt> [caller]
 # Run codex exec with the configured model and reasoning level using full sandbox bypass.
 _codex_exec_dangerous() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  local prompt=''
-  prompt="${1-}"
+  local prompt="${1-}"
+  local caller="${2-}"
+  [[ -n "$caller" ]] || caller='codex-tools'
   if [[ -z "$prompt" ]]; then
     print -u2 -r -- "_codex_exec_dangerous: missing prompt"
     return 1
   fi
+
+  _codex_require_allow_dangerous "$caller" || return 1
 
   codex exec --dangerously-bypass-approvals-and-sandbox -s workspace-write \
     -m "$CODEX_CLI_MODEL" -c "model_reasoning_effort=\"$CODEX_CLI_REASONING\"" \
@@ -280,7 +283,7 @@ codex-commit-with-scope() {
     prompt+="$extra_prompt"
   fi
 
-  _codex_exec_dangerous "$prompt"
+  _codex_exec_dangerous "$prompt" 'codex-commit-with-scope'
 }
 
 # _codex_tools_run_prompt <template_name> [question...]
@@ -318,7 +321,7 @@ _codex_tools_run_prompt() {
   # Replace $ARGUMENTS with user query
   local final_prompt="${prompt_content//\$ARGUMENTS/$user_query}"
 
-  _codex_exec_dangerous "$final_prompt"
+  _codex_exec_dangerous "$final_prompt" "codex-tools:${template_name}"
 }
 
 # codex-advice [question...]
@@ -469,9 +472,13 @@ _codex_tools_usage() {
   setopt pipe_fail err_return nounset
 
   typeset fd="${1-1}"
-  print -u"$fd" -r -- 'Usage: codex-tools <command> [args...]'
+  print -u"$fd" -r -- 'Usage:'
+  print -u"$fd" -r -- '  codex-tools <command> [args...]'
+  print -u"$fd" -r -- '  codex-tools <prompt...>'
+  print -u"$fd" -r -- '  codex-tools -- <prompt...>   (force prompt mode)'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
+  print -u"$fd" -r -- '  prompt [prompt...]                       Run a raw prompt (useful when prompt starts with a command word)'
   print -u"$fd" -r -- '  commit-with-scope [-p] [-a] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
   print -u"$fd" -r -- '    -p                                      Push to remote after commit'
   print -u"$fd" -r -- '    -a, --auto-stage                         Use semantic-commit-autostage (autostage all changes)'
@@ -480,9 +487,30 @@ _codex_tools_usage() {
   print -u"$fd" -r -- '  advice [question]                         Get actionable engineering advice'
   print -u"$fd" -r -- '  knowledge [concept]                       Get clear explanation and angles for a concept'
   print -u"$fd" -r --
-  print -u"$fd" -r -- 'Safety: some commands require CODEX_ALLOW_DANGEROUS=true'
+  print -u"$fd" -r -- 'Safety: codex exec requires CODEX_ALLOW_DANGEROUS=true'
   print -u"$fd" -r -- 'Config: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
   return 0
+}
+
+# _codex_tools_run_raw_prompt [prompt...]
+# Run codex with a raw prompt string.
+_codex_tools_run_raw_prompt() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  local user_prompt="$*"
+
+  if [[ -z "$user_prompt" ]]; then
+    print -n -r -- "Prompt: "
+    IFS= read -r user_prompt || return 1
+  fi
+
+  if [[ -z "$user_prompt" ]]; then
+    print -u2 -r -- "codex-tools: missing prompt"
+    return 1
+  fi
+
+  _codex_exec_dangerous "$user_prompt" 'codex-tools:prompt'
 }
 
 # codex-tools <command> [args...]
@@ -506,6 +534,9 @@ codex-tools() {
   shift
 
   case "$cmd" in
+    --|prompt)
+      _codex_tools_run_raw_prompt "$@"
+      ;;
     commit-with-scope|commit)
       codex-commit-with-scope "$@"
       ;;
@@ -522,9 +553,7 @@ codex-tools() {
       codex-knowledge "$@"
       ;;
     *)
-      print -u2 -r -- "codex-tools: unknown command: $cmd"
-      _codex_tools_usage 2
-      return 2
+      _codex_tools_run_raw_prompt "$cmd" "$@"
       ;;
   esac
 }
