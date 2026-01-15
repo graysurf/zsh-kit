@@ -372,12 +372,12 @@ _opencode_tools_usage() {
   print -u"$fd" -r -- '  opencode-tools -- <prompt...>   (force prompt mode)'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
-  print -u"$fd" -r -- '  prompt [prompt...]                       Run a raw prompt (useful when prompt starts with a command word)'
+  print -u"$fd" -r -- '  prompt [prompt...]                             Run a raw prompt (useful when prompt starts with a command word)'
   print -u"$fd" -r -- '  commit-with-scope [-p] [-a] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
-  print -u"$fd" -r -- '    -p                                      Push to remote after commit'
-  print -u"$fd" -r -- '    -a, --auto-stage                         Use semantic-commit-autostage (autostage all changes)'
-  print -u"$fd" -r -- '  advice [question]                         Get actionable engineering advice'
-  print -u"$fd" -r -- '  knowledge [concept]                       Get clear explanation and angles for a concept'
+  print -u"$fd" -r -- '    -p                                           Push to remote after commit'
+  print -u"$fd" -r -- '    -a, --auto-stage                             Use semantic-commit-autostage (autostage all changes)'
+  print -u"$fd" -r -- '  advice [question]                              Get actionable engineering advice'
+  print -u"$fd" -r -- '  knowledge [concept]                            Get clear explanation and angles for a concept'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Config: OPENCODE_CLI_MODEL, OPENCODE_CLI_VARIANT'
   return 0
