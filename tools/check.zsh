@@ -11,17 +11,19 @@ print_usage() {
   emulate -L zsh
   setopt pipe_fail nounset
 
-  print -r -- "Usage: $SCRIPT_HINT [-h|--help] [-s|--smoke] [-b|--bash] [-a|--all]"
+  print -r -- "Usage: $SCRIPT_HINT [-h|--help] [-s|--smoke] [-b|--bash] [--semgrep] [-a|--all]"
   print -r -- ""
   print -r -- "Checks:"
   print -r -- "  (default) zsh syntax: zsh -n on repo zsh + zsh-style *.sh (excluding plugins/)"
   print -r -- "  --smoke: load .zshrc in isolated ZDOTDIR/cache; fails if any stderr is emitted"
   print -r -- "  --bash : bash -n on bash scripts; runs ShellCheck if installed"
+  print -r -- "  --semgrep: semgrep scan (bash/zsh) with JSON output under \$CODEX_HOME/out/semgrep/ (or ./out/semgrep/)"
   print -r -- ""
   print -r -- "Examples:"
   print -r -- "  $SCRIPT_HINT"
   print -r -- "  $SCRIPT_HINT --smoke"
   print -r -- "  $SCRIPT_HINT --bash"
+  print -r -- "  $SCRIPT_HINT --semgrep"
   print -r -- "  $SCRIPT_HINT --all"
 }
 
@@ -177,6 +179,25 @@ check_bash_scripts() {
   return "$failed"
 }
 
+# check_semgrep_scan <root_dir>
+# Run Semgrep scan via tools/semgrep-scan.zsh (writes JSON output to out/semgrep).
+# Usage: check_semgrep_scan <root_dir>
+check_semgrep_scan() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  typeset root_dir="$1"
+  typeset semgrep_scan_script="$root_dir/tools/semgrep-scan.zsh"
+
+  if [[ ! -f "$semgrep_scan_script" ]]; then
+    print -u2 -r -- "semgrep: missing scan script: $semgrep_scan_script"
+    return 1
+  fi
+
+  zsh -f -- "$semgrep_scan_script" || return 1
+  return 0
+}
+
 # main [args...]
 # CLI entrypoint for the repo check script.
 # Usage: main [args...]
@@ -186,19 +207,21 @@ main() {
 
   typeset -A opts=()
   # NOTE: In zparseopts, `-help` matches `--help` (GNU-style long options).
-  zparseopts -D -E -A opts -- h -help s -smoke b -bash a -all || return 2
+  zparseopts -D -E -A opts -- h -help s -smoke b -bash -semgrep a -all || return 2
 
   if (( ${+opts[-h]} || ${+opts[--help]} )); then
     print_usage
     return 0
   fi
 
-  typeset -i run_smoke=0 run_bash=0
+  typeset -i run_smoke=0 run_bash=0 run_semgrep=0
   (( ${+opts[-s]} || ${+opts[--smoke]} )) && run_smoke=1
   (( ${+opts[-b]} || ${+opts[--bash]} )) && run_bash=1
+  (( ${+opts[--semgrep]} )) && run_semgrep=1
   if (( ${+opts[-a]} || ${+opts[--all]} )); then
     run_smoke=1
     run_bash=1
+    run_semgrep=1
   fi
 
   typeset root_dir=''
@@ -210,6 +233,9 @@ main() {
   fi
   if (( run_bash )); then
     check_bash_scripts "$root_dir" || return 1
+  fi
+  if (( run_semgrep )); then
+    check_semgrep_scan "$root_dir" || return 1
   fi
 
   return 0
