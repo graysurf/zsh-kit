@@ -15,7 +15,7 @@ print_usage() {
   print -r -- ""
   print -r -- "Checks:"
   print -r -- "  (default) zsh syntax: zsh -n on repo zsh + zsh-style *.sh (excluding plugins/)"
-  print -r -- "  --smoke: load .zshrc in isolated ZDOTDIR/cache; fails if any stderr is emitted"
+  print -r -- "  --smoke: load .zshrc (and .zprofile) in isolated ZDOTDIR/cache; fails if any stderr is emitted"
   print -r -- "  --bash : bash -n on bash scripts; runs ShellCheck if installed"
   print -r -- "  --semgrep: semgrep scan (bash/zsh) with JSON output under \$CODEX_HOME/out/semgrep/ (or ./out/semgrep/)"
   print -r -- ""
@@ -102,7 +102,7 @@ check_zsh_syntax() {
 }
 
 # check_smoke_load <root_dir>
-# Smoke-load `.zshrc` in an isolated environment; treat any stderr as failure.
+# Smoke-load `.zshrc` (and `.zprofile`) in an isolated environment; treat any stderr as failure.
 # Usage: check_smoke_load <root_dir>
 check_smoke_load() {
   emulate -L zsh
@@ -123,8 +123,15 @@ check_smoke_load() {
       PLUGIN_FETCH_DRY_RUN=true \
       _LOGIN_WEATHER_EXECUTED=1 \
       _LOGIN_QUOTE_EXECUTED=1 \
-      zsh -f -ic 'source "$ZDOTDIR/.zshrc"; exit' 2> "$stderr_file"
+      zsh -f -ic 'source "$ZDOTDIR/.zshrc"; exit' 2>> "$stderr_file"
     smoke_exit_code=$?
+
+    ZDOTDIR="$root_dir" \
+      ZSH_CACHE_DIR="$tmp_dir" \
+      PLUGIN_FETCH_DRY_RUN=true \
+      _LOGIN_WEATHER_EXECUTED=1 \
+      _LOGIN_QUOTE_EXECUTED=1 \
+      zsh -f -ic 'source "$ZDOTDIR/.zprofile"; source "$ZDOTDIR/.zshrc"; exit' 2>> "$stderr_file" || smoke_exit_code=$?
 
     if [[ -s "$stderr_file" ]]; then
       print -u2 -r -- "smoke: stderr emitted (treated as failure)"

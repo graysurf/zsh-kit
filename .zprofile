@@ -45,8 +45,8 @@ if [[ -n "$homebrew_path" ]]; then
   [[ -d "$hb_sbin" ]] && prefix_paths+=("$hb_sbin")
   if (( ${#prefix_paths[@]} > 0 )); then
     rest_paths=("${path[@]}")
-    rest_paths=("${rest_paths:#$hb_bin}")
-    rest_paths=("${rest_paths:#$hb_sbin}")
+    rest_paths=("${(@)rest_paths:#$hb_bin}")
+    rest_paths=("${(@)rest_paths:#$hb_sbin}")
     path=("${prefix_paths[@]}" "${rest_paths[@]}")
   fi
 
