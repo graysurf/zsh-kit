@@ -80,6 +80,7 @@ plugin_update_all() {
   setopt pipe_fail err_return nounset null_glob
 
   typeset plugins_dir=''
+  typeset plugin_name='' before='' after='' short_after='' output=''
   plugins_dir="$ZSH_PLUGINS_DIR"
   [[ -d "$plugins_dir" ]] || return 0
 
@@ -143,6 +144,12 @@ plugin_maybe_auto_update() {
 # Print plugin auto-update status based on $PLUGIN_UPDATE_FILE.
 # Usage: plugin_print_status
 plugin_print_status() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  typeset now_epoch=0 last_epoch=0 days_ago=0 days_left=0
+  typeset last_date=''
+
   if [[ ! -f "$PLUGIN_UPDATE_FILE" ]]; then
     printf "📦 Plugin update status: never updated\n"
     printf "⏱  Next auto-update expected: now\n"
