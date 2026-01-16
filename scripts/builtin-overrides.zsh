@@ -43,10 +43,12 @@ cd() {
   fi
 
   if command -v eza >/dev/null 2>&1; then
-    eza -alh --icons --group-directories-first --time-style=iso
+    eza -alh --icons --group-directories-first --time-style=iso || command ls -la || true
   else
-    command ls -la
+    command ls -la || true
   fi
+
+  return 0
 }
 
 # cat <path...>
