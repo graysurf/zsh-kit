@@ -13,7 +13,7 @@ export GPG_TTY="$(tty 2>/dev/null || true)"
 export FZF_PREVIEW_WINDOW
 
 # Set max depth for fd-based searches
-: "${FZF_FILE_MAX_DEPTH:=5}"
+: "${FZF_FILE_MAX_DEPTH:=10}"
 export FZF_FILE_MAX_DEPTH
 
 # Set scroll-off (keep N lines above/below the cursor)
