@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.0.0 - 2026-01-16
+
+### Added
+- Boolean env audit tooling: `tools/audit-env-bools.zsh` and `tools/check.zsh --env-bools` (runs in `--all`).
+- Shared strict boolean parser helper: `zsh_env::is_true` (in `bootstrap/00-preload.zsh`).
+- `codex-starship --is-enabled` for Starship `when` gating.
+
+### Changed
+- Project-owned boolean env flags accept only `true|false` (case-insensitive); invalid values warn to stderr and behave as `false`.
+- Project-owned boolean env flags are standardized to `*_ENABLED` naming (no legacy aliases).
+- Builtin overrides env flag is now `SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED` (default: `true`).
+
+### Fixed
+- Avoid stderr during smoke-load when `bootstrap/00-preload.zsh` is sourced multiple times.
+
+### Removed
+- Support for legacy boolean vocab (`0/1`, `yes/no`, `on/off`) for project-owned boolean env flags.
+- Legacy env flag names listed in `docs/progress/archived/20260116_env-bool-flags.md`.
+
 ## v1.0.3 - 2026-01-16
 
 ### Added
