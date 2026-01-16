@@ -79,7 +79,7 @@ function _install_tools::parse_tools_list_line() {
 }
 
 # _install_tools::ensure_homebrew_on_path
-# Ensure brew is available on PATH; evals `brew shellenv` when needed.
+# Ensure brew is available on PATH without eval'ing `brew shellenv`.
 # Usage: _install_tools::ensure_homebrew_on_path
 function _install_tools::ensure_homebrew_on_path() {
   emulate -L zsh
@@ -100,7 +100,22 @@ function _install_tools::ensure_homebrew_on_path() {
   local candidate
   for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
-      eval "$("$candidate" shellenv)"
+      local homebrew_prefix="${candidate:h:h}"
+      export HOMEBREW_PREFIX="$homebrew_prefix"
+      export HOMEBREW_CELLAR="$homebrew_prefix/Cellar"
+      export HOMEBREW_REPOSITORY="$homebrew_prefix"
+
+      local hb_bin="$homebrew_prefix/bin"
+      local hb_sbin="$homebrew_prefix/sbin"
+      local -a prefix_paths=() rest_paths=()
+      [[ -d "$hb_bin" ]] && prefix_paths+=("$hb_bin")
+      [[ -d "$hb_sbin" ]] && prefix_paths+=("$hb_sbin")
+      if (( ${#prefix_paths[@]} > 0 )); then
+        rest_paths=("${path[@]}")
+        rest_paths=("${(@)rest_paths:#$hb_bin}")
+        rest_paths=("${(@)rest_paths:#$hb_sbin}")
+        path=("${prefix_paths[@]}" "${rest_paths[@]}")
+      fi
       return 0
     fi
   done
