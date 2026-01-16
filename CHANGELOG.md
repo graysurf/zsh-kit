@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Avoid stderr during smoke-load when `bootstrap/00-preload.zsh` is sourced multiple times.
+- Avoid env-bools audit false positives when scanning the audit script itself.
 
 ### Removed
 - Support for legacy boolean vocab (`0/1`, `yes/no`, `on/off`) for project-owned boolean env flags.

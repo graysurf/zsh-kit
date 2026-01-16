@@ -55,6 +55,7 @@ list_scan_files() {
         plugins/*) continue ;;
         out/*) continue ;;
         cache/*) continue ;;
+        tools/audit-env-bools.zsh) continue ;;
       esac
 
       files+=("$root_dir/$rel")
@@ -68,6 +69,7 @@ list_scan_files() {
       [[ "$file" == "$root_dir/plugins/"* ]] && continue
       [[ "$file" == "$root_dir/out/"* ]] && continue
       [[ "$file" == "$root_dir/cache/"* ]] && continue
+      [[ "$file" == "$root_dir/tools/audit-env-bools.zsh" ]] && continue
       files+=("$file")
     done
   fi
@@ -301,4 +303,3 @@ main() {
 }
 
 main "$@"
-
