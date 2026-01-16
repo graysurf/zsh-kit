@@ -456,12 +456,13 @@ $scope
 $diff
 \`\`\`
 
-## 📚 Staged file contents (index version):
+  ## 📚 Staged file contents (index version):
 
 $contents" > "$tmpfile"
 
   if [[ "$mode" == "stdout" ]]; then
     command cat "$tmpfile"
+    rm -f -- "$tmpfile" >/dev/null 2>&1 || true
     return 0
   fi
 
@@ -470,6 +471,7 @@ $contents" > "$tmpfile"
   fi
 
   command cat "$tmpfile" | set_clipboard
+  rm -f -- "$tmpfile" >/dev/null 2>&1 || true
 
   if [[ "$mode" == "clipboard" ]]; then
     printf "✅ Commit context copied to clipboard with:\n"

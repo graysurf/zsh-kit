@@ -302,13 +302,16 @@ y() {
   fi
 
   # Launch yazi and persist the last visited directory on exit
-  typeset tmp cwd
+  typeset tmp='' cwd=''
   tmp="$(mktemp -t 'yazi-cwd.XXXXXX')" || return 1
-  yazi "$@" --cwd-file="$tmp"
-  if cwd="$(<"$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
-    builtin cd -- "$cwd"
-  fi
-  rm -f -- "$tmp"
+  {
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(<"$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
+      builtin cd -- "$cwd"
+    fi
+  } always {
+    command rm -f -- "$tmp" >/dev/null 2>&1 || true
+  }
 }
 
 # ────────────────────────────────────────────────────────

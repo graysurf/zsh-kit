@@ -504,6 +504,7 @@ _fzf_open_in_vscode_workspace() {
 
   typeset workspace_root="${1-}"
   typeset file="${2-}"
+  typeset wait="${3-}"
   [[ -z "$workspace_root" || -z "$file" ]] && return 1
 
   if ! command -v code >/dev/null 2>&1; then
@@ -516,6 +517,9 @@ _fzf_open_in_vscode_workspace() {
 
   typeset -a code_args
   code_args=(--goto "$file_path")
+  if [[ "$wait" == "--wait" ]]; then
+    code_args=(--wait "${code_args[@]}")
+  fi
 
   if [[ "${_FZF_VSCODE_LAST_GIT_ROOT-}" != "$workspace_path" ]]; then
     code_args=(--new-window "${code_args[@]}")
@@ -974,23 +978,28 @@ fzf-git-commit() {
       _fzf_confirm "🧾 Open snapshot from %s instead? [y/N] " "$commit" || return 1
     fi
 
-    tmp="/tmp/git-${commit//\//_}-${selected_file##*/}"
-    if ! git show "${commit}:${selected_file}" >| "$tmp" 2>/dev/null; then
-      if ! git show "${commit}^:${selected_file}" >| "$tmp" 2>/dev/null; then
-        command rm -f -- "$tmp" 2>/dev/null || true
-        print -u2 -r -- "❌ Failed to extract snapshot: ${commit}:${selected_file} (or ${commit}^:${selected_file})"
-        return 1
-      fi
-    fi
+    tmp="$(mktemp 2>/dev/null || true)"
+    [[ -n "$tmp" ]] || tmp="/tmp/git-${commit//\//_}-${selected_file##*/}.$$.tmp"
 
-    if [[ "$open_with" == "vscode" ]]; then
-      if ! _fzf_open_in_vscode_workspace "$repo_root" "$tmp"; then
-        print -u2 -r -- "❌ Failed to open in VSCode; falling back to vi"
+    {
+      if ! git show "${commit}:${selected_file}" >| "$tmp" 2>/dev/null; then
+        if ! git show "${commit}^:${selected_file}" >| "$tmp" 2>/dev/null; then
+          print -u2 -r -- "❌ Failed to extract snapshot: ${commit}:${selected_file} (or ${commit}^:${selected_file})"
+          return 1
+        fi
+      fi
+
+      if [[ "$open_with" == "vscode" ]]; then
+        if ! _fzf_open_in_vscode_workspace "$repo_root" "$tmp" --wait; then
+          print -u2 -r -- "❌ Failed to open in VSCode; falling back to vi"
+          vi -- "$tmp"
+        fi
+      else
         vi -- "$tmp"
       fi
-    else
-      vi -- "$tmp"
-    fi
+    } always {
+      command rm -f -- "$tmp" >/dev/null 2>&1 || true
+    }
     break
   done
 }

@@ -249,6 +249,7 @@ all_exec_sources=("${exec_sources_explicit[@]}")
 
 tmpfile="$(mktemp 2>/dev/null || true)"
 [[ -n "$tmpfile" ]] || die "failed to create temp file"
+trap '[[ -n "${tmpfile-}" ]] && command rm -f -- "${tmpfile-}" >/dev/null 2>&1 || true' EXIT
 
 {
   local input_label="$input"
@@ -282,29 +283,28 @@ tmpfile="$(mktemp 2>/dev/null || true)"
     print -r -- ""
   done
 
-  if (( ${#all_exec_sources[@]} > 0 )); then
-    print -r -- "# --- BEGIN embedded exec tools"
-    print -r -- "_bundle_wrapper_exec_tools::run() {"
-    print -r -- "  emulate -L zsh"
-    print -r -- "  setopt pipe_fail err_return nounset"
-    print -r -- ""
-    print -r -- "  typeset writer_fn=\"\${1-}\" label=\"\${2-}\""
-    print -r -- "  shift 2 || true"
-    print -r -- "  [[ -n \"\$writer_fn\" && -n \"\$label\" ]] || return 2"
-    print -r -- "  typeset tmp='' rc=0"
-    print -r -- "  tmp=\"\$(mktemp 2>/dev/null || true)\""
-    print -r -- "  [[ -n \"\$tmp\" ]] || tmp=\"/tmp/bundle-wrapper.\${label}.\$\$.zsh\""
-    print -r -- "  if ! typeset -f \"\$writer_fn\" >/dev/null 2>&1; then"
-    print -r -- "    print -u2 -r -- \"❌ missing embedded writer: \$writer_fn\""
-    print -r -- "    return 1"
-    print -r -- "  fi"
-    print -r -- "  \"\$writer_fn\" >| \"\$tmp\""
-    print -r -- "  zsh -f -- \"\$tmp\" \"\$@\""
-    print -r -- "  rc=\$?"
-    print -r -- "  command rm -f -- \"\$tmp\" >/dev/null 2>&1 || true"
-    print -r -- "  return \$rc"
-    print -r -- "}"
-    print -r -- ""
+	if (( ${#all_exec_sources[@]} > 0 )); then
+	  print -r -- "# --- BEGIN embedded exec tools"
+	  print -r -- "_bundle_wrapper_exec_tools::run() {"
+	  print -r -- "  emulate -L zsh"
+	  print -r -- "  setopt pipe_fail err_return nounset local_traps"
+	  print -r -- ""
+	  print -r -- "  typeset writer_fn=\"\${1-}\" label=\"\${2-}\""
+	  print -r -- "  shift 2 || true"
+	  print -r -- "  [[ -n \"\$writer_fn\" && -n \"\$label\" ]] || return 2"
+	  print -r -- "  typeset tmp=''"
+	  print -r -- "  tmp=\"\$(mktemp 2>/dev/null || true)\""
+	  print -r -- "  [[ -n \"\$tmp\" ]] || tmp=\"/tmp/bundle-wrapper.\${label}.\$\$.zsh\""
+	  print -r -- "  trap '[[ -n \"\${tmp-}\" ]] && command rm -f -- \"\${tmp-}\" >/dev/null 2>&1 || true' EXIT"
+	  print -r -- "  if ! typeset -f \"\$writer_fn\" >/dev/null 2>&1; then"
+	  print -r -- "    print -u2 -r -- \"❌ missing embedded writer: \$writer_fn\""
+	  print -r -- "    return 1"
+	  print -r -- "  fi"
+	  print -r -- "  \"\$writer_fn\" >| \"\$tmp\""
+	  print -r -- "  zsh -f -- \"\$tmp\" \"\$@\""
+	  print -r -- "  return \$?"
+	  print -r -- "}"
+	  print -r -- ""
 
     local tool_path='' tool_rel='' tool_file='' tool_cmd='' tool_id='' writer_fn='' delim='' suffix=''
     local -i n=0
