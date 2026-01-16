@@ -6,7 +6,7 @@
 
 Links:
 
-- PR: TBD
+- PR: https://github.com/graysurf/zsh-kit/pull/29
 - Docs: TBD
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 

@@ -4,7 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-16 | [Boolean env flags standardization](20260116_env-bool-flags.md) | TBD |
+| 2026-01-16 | [Boolean env flags standardization](20260116_env-bool-flags.md) | [#29](https://github.com/graysurf/zsh-kit/pull/29) |
 
 ## Archived
 
