@@ -410,13 +410,15 @@ git-back-checkout() {
 
   # Find the most recent reflog checkout entry that moved *to* current_branch,
   # then extract the "from" token.
-  from_branch=$(
-    git reflog |
-      grep "checkout: moving from " |
-      grep " to $current_branch" |
-      sed -n 's/.*checkout: moving from \([^ ]*\) to '"$current_branch"'.*/\1/p' |
-      head -n 1
-  )
+  from_branch=''
+  typeset reflog_subject=''
+  while IFS=$'\n' read -r reflog_subject; do
+    [[ "$reflog_subject" == 'checkout: moving from '* ]] || continue
+    [[ "$reflog_subject" == *" to $current_branch" ]] || continue
+    from_branch="${reflog_subject#checkout: moving from }"
+    from_branch="${from_branch% to $current_branch}"
+    break
+  done < <(git reflog --format='%gs' 2>/dev/null)
 
   if [[ -z "$from_branch" ]]; then
     print "❌ Could not find a previous checkout that switched to $current_branch."
