@@ -33,11 +33,7 @@ _codex_auto_refresh_is_enabled() {
   setopt localoptions nounset
 
   typeset raw="${CODEX_AUTO_REFRESH_ENABLED-}"
-  raw="${raw:l}"
-  case "$raw" in
-    1|true|yes|on) return 0 ;;
-    *) return 1 ;;
-  esac
+  zsh_env::is_true "$raw" "CODEX_AUTO_REFRESH_ENABLED"
 }
 
 # _codex_auto_refresh_is_configured

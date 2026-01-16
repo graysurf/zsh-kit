@@ -40,7 +40,7 @@ Notes:
 - `<name>` is resolved by matching the active auth file to a known profile under `CODEX_SECRET_DIR`:
   - Prefer: JWT identity + `account_id` (stable across token refreshes).
   - Fallback: SHA-256 whole-file hash (requires the profile file to be byte-identical).
-  - If a friendly profile match is not found, the name is omitted by default; set `CODEX_STARSHIP_SHOW_FALLBACK_NAME=true`
+  - If a friendly profile match is not found, the name is omitted by default; set `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED=true`
     to show the JWT-derived identity (e.g. `user-...`).
 - `<weekly_reset_time>` is the UTC reset time from the weekly window (format is configurable via `--time-format`).
 
@@ -111,7 +111,7 @@ If you maintain your own Starship config, add:
 [custom.codex_rate_limits]
 symbol = "🌟 "
 command = "codex-starship --time-format '%m-%d %H:%M'"
-when = "command -v codex-starship >/dev/null 2>&1 && case \"${CODEX_STARSHIP_ENABLED:-}\" in 1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]|[Oo][Nn]) : ;; *) exit 1 ;; esac"
+when = "command -v codex-starship >/dev/null 2>&1 && codex-starship --is-enabled"
 format = "[$symbol$output ](bold #637777)"
 ```
 
@@ -126,8 +126,8 @@ Notes:
 
 - `CODEX_STARSHIP_ENABLED`: enable `codex-starship` output and refresh (default: `false`)
 - `CODEX_STARSHIP_TTL`: default cache TTL (default: `5m`)
-- `CODEX_STARSHIP_SHOW_5H`: show the non-weekly window (default: `true`; set `false` to hide)
-- `CODEX_STARSHIP_SHOW_FALLBACK_NAME`: show the JWT-derived identity when no profile match is found (default: `false`)
+- `CODEX_STARSHIP_SHOW_5H_ENABLED`: show the non-weekly window (default: `true`; set `false` to hide)
+- `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED`: show the JWT-derived identity when no profile match is found (default: `false`)
 - `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
 - `CODEX_STARSHIP_STALE_SUFFIX`: appended to cached output when the cache is stale (default: ` (stale)`; set empty to disable)
 - `CODEX_STARSHIP_LOCK_STALE_SECONDS`: consider refresh artifacts (`<token_key>.refresh.lock`, `wham.usage.*`) stale after this many seconds and clear them (default: `90`)

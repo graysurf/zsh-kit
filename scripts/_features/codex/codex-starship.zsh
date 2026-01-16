@@ -15,29 +15,27 @@ _codex_starship_usage() {
   setopt pipe_fail err_return nounset
 
   typeset fd="${1-1}"
-  print -u"$fd" -r -- 'Usage: codex-starship [--no-5h] [--ttl <duration>] [--time-format <strftime>] [--refresh]'
+  print -u"$fd" -r -- 'Usage: codex-starship [--no-5h] [--ttl <duration>] [--time-format <strftime>] [--refresh] [--is-enabled]'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Options:'
   print -u"$fd" -r -- '  --no-5h            Hide the 5h window output'
   print -u"$fd" -r -- '  --ttl <duration>   Cache TTL (e.g. 1m, 5m); default: 5m'
   print -u"$fd" -r -- '  --time-format <f>  Reset time format (UTC; default: %m-%d %H:%M)'
   print -u"$fd" -r -- '  --refresh          Force a blocking refresh (updates cache)'
+  print -u"$fd" -r -- '  --is-enabled       Exit 0 if CODEX_STARSHIP_ENABLED=true; otherwise exit 1'
   print -u"$fd" -r -- '  -h, --help         Show help'
   return 0
 }
 
-# _codex_starship_truthy: Return 0 if the input string is truthy (1/true/yes/on).
-# Usage: _codex_starship_truthy <value>
+# _codex_starship_truthy: Return 0 if the input string is `true` (case-insensitive).
+# Usage: _codex_starship_truthy <value> [name]
 _codex_starship_truthy() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
   typeset raw="${1-}"
-  raw="${raw:l}"
-  case "$raw" in
-    1|true|yes|on) return 0 ;;
-    *) return 1 ;;
-  esac
+  typeset name="${2-}"
+  zsh_env::is_true "$raw" "$name"
 }
 
 # ────────────────────────────────────────────────────────
@@ -915,8 +913,8 @@ codex-starship() {
   zmodload zsh/zutil 2>/dev/null || return 0
 
   typeset show_5h='true'
-  if [[ -n "${CODEX_STARSHIP_SHOW_5H-}" ]]; then
-    if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_5H}"; then
+  if (( ${+CODEX_STARSHIP_SHOW_5H_ENABLED} )); then
+    if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_5H_ENABLED-}" "CODEX_STARSHIP_SHOW_5H_ENABLED"; then
       show_5h='true'
     else
       show_5h='false'
@@ -934,7 +932,8 @@ codex-starship() {
     -no-5h \
     -ttl: \
     -time-format: \
-    -refresh || {
+    -refresh \
+    -is-enabled || {
     _codex_starship_usage 2
     return 2
   }
@@ -944,7 +943,12 @@ codex-starship() {
     return 0
   fi
 
-  if ! _codex_starship_truthy "${CODEX_STARSHIP_ENABLED-}"; then
+  if (( ${+opts[--is-enabled]} )); then
+    _codex_starship_truthy "${CODEX_STARSHIP_ENABLED-}" "CODEX_STARSHIP_ENABLED"
+    return $?
+  fi
+
+  if ! _codex_starship_truthy "${CODEX_STARSHIP_ENABLED-}" "CODEX_STARSHIP_ENABLED"; then
     return 0
   fi
 
@@ -996,7 +1000,7 @@ codex-starship() {
     [[ -n "$auth_hash" ]] || return 0
     key="auth_${auth_hash}"
 
-    if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_FALLBACK_NAME-}"; then
+    if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED-}" "CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED"; then
       typeset identity=''
       identity="$(_codex_starship_auth_identity "$auth_file" 2>/dev/null)" || identity=''
       if [[ -n "$identity" ]]; then

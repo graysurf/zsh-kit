@@ -29,7 +29,7 @@
 #   If all tools are already installed, it exits cleanly with a success message.
 #
 # Example:
-#   DRY_RUN=true ./install-tools.zsh      # Alternate dry-run using env var
+#   ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED=true ./install-tools.zsh  # Alternate dry-run using env var
 #   ./install-tools.zsh --quiet           # Quiet mode install
 
 typeset -gr SCRIPT_PATH="${0:A}"
@@ -45,13 +45,16 @@ else
   exit 1
 fi
 
+typeset -gr PRELOAD_FILE="$ZDOTDIR/bootstrap/00-preload.zsh"
+[[ -f "$PRELOAD_FILE" ]] && source "$PRELOAD_FILE"
+
 TOOLS_REQUIRED_LIST="$ZSH_CONFIG_DIR/tools.list"
 TOOLS_OPTIONAL_LIST="$ZSH_CONFIG_DIR/tools.optional.list"
 TOOLS_MACOS_LIST="$ZSH_CONFIG_DIR/tools.macos.list"
 TOOLS_OPTIONAL_MACOS_LIST="$ZSH_CONFIG_DIR/tools.optional.macos.list"
-DRY_RUN=false
-QUIET=false
-INCLUDE_OPTIONAL=false
+ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED="${ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED-false}"
+ZSH_INSTALL_TOOLS_QUIET_ENABLED="${ZSH_INSTALL_TOOLS_QUIET_ENABLED-false}"
+ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED="${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-false}"
 
 # _install_tools::parse_tools_list_line <line>
 # Parse one tools.list line into $reply as: (<tool> <brew_name> <comment>).
@@ -130,13 +133,13 @@ function _install_tools::is_installed() {
 for arg in "$@"; do
   case "$arg" in
     --dry-run)
-      DRY_RUN=true
+      ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED=true
       ;;
     --quiet)
-      QUIET=true
+      ZSH_INSTALL_TOOLS_QUIET_ENABLED=true
       ;;
     --all)
-      INCLUDE_OPTIONAL=true
+      ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED=true
       ;;
     *)
       printf "❌ Unknown option: %s\n" "$arg"
@@ -154,7 +157,7 @@ case "${OSTYPE-}" in
     fi
     ;;
 esac
-if [[ "$INCLUDE_OPTIONAL" == true ]]; then
+if zsh_env::is_true "${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-}" "ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED"; then
   tools_list_files+=("$TOOLS_OPTIONAL_LIST")
   case "${OSTYPE-}" in
     darwin*)
@@ -169,23 +172,24 @@ if [[ ! -f "$TOOLS_REQUIRED_LIST" ]]; then
   printf "❌ tools.list not found at %s\n" "$TOOLS_REQUIRED_LIST"
   exit 1
 fi
-if [[ "$INCLUDE_OPTIONAL" == true && ! -f "$TOOLS_OPTIONAL_LIST" ]]; then
+if zsh_env::is_true "${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-}" "ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED" \
+    && [[ ! -f "$TOOLS_OPTIONAL_LIST" ]]; then
   printf "❌ tools.optional.list not found at %s\n" "$TOOLS_OPTIONAL_LIST"
   exit 1
 fi
 
-if [[ "$DRY_RUN" == true ]]; then
+if zsh_env::is_true "${ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED-}" "ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED"; then
   printf "🧪 DRY RUN mode enabled — no installations will be performed\n"
 fi
 
-if [[ "$QUIET" == true ]]; then
+if zsh_env::is_true "${ZSH_INSTALL_TOOLS_QUIET_ENABLED-}" "ZSH_INSTALL_TOOLS_QUIET_ENABLED"; then
   printf "🔇 QUIET mode enabled — suppressing brew output\n"
 fi
-if [[ "$INCLUDE_OPTIONAL" == true ]]; then
+if zsh_env::is_true "${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-}" "ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED"; then
   printf "🧩 ALL mode enabled — including optional tools\n"
 fi
 
-if [[ "$DRY_RUN" != true ]]; then
+if ! zsh_env::is_true "${ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED-}" "ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED"; then
   if ! _install_tools::ensure_homebrew_on_path; then
     printf "❌ Homebrew not found. Run ./install-tools.zsh to bootstrap it (or install Homebrew manually).\n"
     exit 1
@@ -193,7 +197,7 @@ if [[ "$DRY_RUN" != true ]]; then
 fi
 
 # Scan for missing tools (only if not dry-run)
-if [[ "$DRY_RUN" != true ]]; then
+if ! zsh_env::is_true "${ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED-}" "ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED"; then
   typeset -A seen_tools=()
   missing=()
 
@@ -256,14 +260,14 @@ for tools_list_file in "${tools_list_files[@]}"; do
       continue
     fi
 
-    if [[ "$DRY_RUN" == true ]]; then
+    if zsh_env::is_true "${ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED-}" "ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED"; then
       printf "💤 Skipped due to dry-run (%s)\n" "$brew_name"
       continue
     else
       printf "➕ Will install (%s)...\n" "$brew_name"
     fi
 
-    if [[ "$QUIET" == true ]]; then
+    if zsh_env::is_true "${ZSH_INSTALL_TOOLS_QUIET_ENABLED-}" "ZSH_INSTALL_TOOLS_QUIET_ENABLED"; then
       if brew install "$brew_name" >/dev/null 2>&1; then
         printf "✅ %s installed\n" "$tool"
         ((installed++))

@@ -1,6 +1,6 @@
 # Prevent double execution
 [[ -n "$_LOGIN_WEATHER_EXECUTED" ]] && return
-export _LOGIN_WEATHER_EXECUTED=1
+export _LOGIN_WEATHER_EXECUTED=true
 
 typeset -r WEATHER_URL="${ZSH_WEATHER_URL:-https://wttr.in/?0}"
 typeset -i WEATHER_FETCH_INTERVAL=${ZSH_WEATHER_INTERVAL:-3600}

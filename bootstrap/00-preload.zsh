@@ -70,7 +70,9 @@ set_clipboard() {
   fi
 }
 
-typeset -gr _ZSH_BOOTSTRAP_PRELOAD_PATH="${(%):-%N}"
+if [[ -z ${_ZSH_BOOTSTRAP_PRELOAD_PATH+1} ]]; then
+  typeset -gr _ZSH_BOOTSTRAP_PRELOAD_PATH="${(%):-%N}"
+fi
 
 # progress_bar::load
 # Load the progress bar implementation (scripts/progress-bar.zsh) on demand.
@@ -135,3 +137,42 @@ progress_bar::tick() { progress_bar::load || return $?; progress_bar::tick "$@";
 # Bootstrap shim for progress_bar::stop (clear indeterminate progress bar line).
 # Usage: progress_bar::stop <id>
 progress_bar::stop() { progress_bar::load || return $?; progress_bar::stop "$@"; }
+
+# ────────────────────────────────────────────────────────
+# Env helpers
+# ────────────────────────────────────────────────────────
+
+if [[ -z ${_ZSH_ENV_BOOL_INVALID_WARNED+1} ]]; then
+  typeset -gA _ZSH_ENV_BOOL_INVALID_WARNED=()
+fi
+
+# zsh_env::is_true <value> [name]
+# Return 0 when the input value is `true` (case-insensitive).
+#
+# Rules:
+# - Only `true` and `false` are accepted.
+# - Empty/unset: treated as false (no warning).
+# - Invalid (non-empty, not true/false): warn once to stderr and treat as false.
+zsh_env::is_true() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  typeset raw="${1-}"
+  [[ -n "$raw" ]] || return 1
+
+  typeset name="${2-}"
+  typeset lowered="${raw:l}"
+  case "$lowered" in
+    true) return 0 ;;
+    false) return 1 ;;
+    *)
+      if [[ -n "$name" && -z "${_ZSH_ENV_BOOL_INVALID_WARNED[$name]-}" ]]; then
+        _ZSH_ENV_BOOL_INVALID_WARNED[$name]=1
+        print -u2 -r -- "warning: ${name} must be true|false (got: ${raw}); treating as false"
+      elif [[ -z "$name" ]]; then
+        print -u2 -r -- "warning: invalid boolean value (expected true|false; got: ${raw}); treating as false"
+      fi
+      return 1
+      ;;
+  esac
+}

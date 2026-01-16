@@ -124,11 +124,11 @@ codex-tools rate-limits --all
 
 ## 🔐 Safety Gate
 
-Commands that run `codex exec --dangerously-bypass-approvals-and-sandbox` require `CODEX_ALLOW_DANGEROUS=true`.
+Commands that run `codex exec --dangerously-bypass-approvals-and-sandbox` require `CODEX_ALLOW_DANGEROUS_ENABLED=true`.
  If it is not set, those commands print a disabled message and return non-zero.
 
 ```bash
-CODEX_ALLOW_DANGEROUS=true codex-tools commit-with-scope "Use conventional scopes"
+CODEX_ALLOW_DANGEROUS_ENABLED=true codex-tools commit-with-scope "Use conventional scopes"
 ```
 
 The helpers call:

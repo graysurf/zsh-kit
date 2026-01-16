@@ -1089,9 +1089,12 @@ typeset -gi _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH=0
 # Return success if persistent doc cache is enabled.
 # Usage: _fzf_def_doc_cache_enabled
 # Env:
-# - FZF_DEF_DOC_CACHE_ENABLE: when `true`, enable persistent doc cache.
+# - FZF_DEF_DOC_CACHE_ENABLED: when `true`, enable persistent doc cache.
 _fzf_def_doc_cache_enabled() {
-  [[ "${FZF_DEF_DOC_CACHE_ENABLE:-false}" == true ]]
+  emulate -L zsh
+  setopt localoptions nounset
+
+  zsh_env::is_true "${FZF_DEF_DOC_CACHE_ENABLED-}" "FZF_DEF_DOC_CACHE_ENABLED"
 }
 
 # _fzf_def_doc_cache_ttl_seconds
@@ -1244,7 +1247,7 @@ _fzf_def_index_file_docs() {
 # Load/rebuild docblock indexes for `fzf-tools def/function/alias` previews.
 # Usage: _fzf_def_rebuild_doc_cache
 # Env:
-# - FZF_DEF_DOC_CACHE_ENABLE: when `true`, enable persistent cache.
+# - FZF_DEF_DOC_CACHE_ENABLED: when `true`, enable persistent cache.
 # - FZF_DEF_DOC_CACHE_EXPIRE_MINUTES: cache TTL in minutes (default: 10).
 # Notes:
 # - When enabled, reads/writes cache files under `$ZSH_CACHE_DIR` (or fallback cache dir).
@@ -1319,7 +1322,7 @@ _fzf_def_rebuild_doc_cache() {
 # Output:
 # - Writes `$ZSH_CACHE_DIR/fzf-def-doc.cache.zsh` and `$ZSH_CACHE_DIR/fzf-def-doc.timestamp`.
 # Notes:
-# - Rebuild is forced even when `FZF_DEF_DOC_CACHE_ENABLE=false` (setting is not persisted).
+# - Rebuild is forced even when `FZF_DEF_DOC_CACHE_ENABLED=false` (setting is not persisted).
 fzf-def-doc-cache-rebuild() {
   emulate -L zsh
   setopt err_return
@@ -1331,7 +1334,7 @@ fzf-def-doc-cache-rebuild() {
   command rm -f -- "$cache_file" "$cache_ts_file" 2>/dev/null || true
   _FZF_DEF_DOC_CACHE_LAST_LOAD_EPOCH=0
 
-  FZF_DEF_DOC_CACHE_ENABLE=true _fzf_def_rebuild_doc_cache
+  FZF_DEF_DOC_CACHE_ENABLED=true _fzf_def_rebuild_doc_cache
 
   if [[ -r "$cache_file" && -r "$cache_ts_file" ]]; then
     print -r -- "Rebuilt:"

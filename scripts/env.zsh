@@ -28,8 +28,8 @@ export FZF_DEF_DELIM
 export FZF_DEF_DELIM_END
 
 # fzf-def docs cache (for fzf-tools fzf-def/fzf-function/fzf-alias)
-: "${FZF_DEF_DOC_CACHE_ENABLE:=true}"
-export FZF_DEF_DOC_CACHE_ENABLE
+: "${FZF_DEF_DOC_CACHE_ENABLED:=true}"
+export FZF_DEF_DOC_CACHE_ENABLED
 
 : "${FZF_DEF_DOC_CACHE_EXPIRE_MINUTES:=10}"
 export FZF_DEF_DOC_CACHE_EXPIRE_MINUTES

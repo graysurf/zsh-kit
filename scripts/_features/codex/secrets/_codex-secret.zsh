@@ -26,17 +26,15 @@ typeset -g CODEX_SYNC_AUTH_ON_CHANGE_ENABLED="${CODEX_SYNC_AUTH_ON_CHANGE_ENABLE
 alias crl='codex-rate-limits'
 
 # _codex_is_truthy
-# Return 0 when the value is truthy (1/true/yes/on).
+# Return 0 when the value is `true` (case-insensitive).
+# Usage: _codex_is_truthy <value> [name]
 _codex_is_truthy() {
   emulate -L zsh
   setopt localoptions nounset
 
   local raw="${1-}"
-  raw="${raw:l}"
-  case "${raw}" in
-    1|true|yes|on) return 0 ;;
-    *) return 1 ;;
-  esac
+  local name="${2-}"
+  zsh_env::is_true "${raw}" "${name}"
 }
 
 # _codex_file_sig
@@ -527,7 +525,7 @@ _codex_sync_auth_on_change() {
   emulate -L zsh
   setopt localoptions pipe_fail nounset
 
-  _codex_is_truthy "${CODEX_SYNC_AUTH_ON_CHANGE_ENABLED-}" || return 0
+  _codex_is_truthy "${CODEX_SYNC_AUTH_ON_CHANGE_ENABLED-}" "CODEX_SYNC_AUTH_ON_CHANGE_ENABLED" || return 0
 
   local sig=''
   sig="$(_codex_auth_file_sig)" || return 0
@@ -1020,7 +1018,7 @@ codex-rate-limits() {
         print -r -- "  --one-line         Print a single-line summary (single account only; implied by --all)"
         print -r -- "  --all              Query all secrets under CODEX_SECRET_DIR (one line per account)"
         print -r -- "Env:"
-        print -r -- "  CODEX_RATE_LIMITS_DEFAULT_ALL=true  Default to --all when no args are provided"
+        print -r -- "  CODEX_RATE_LIMITS_DEFAULT_ALL_ENABLED=true  Default to --all when no args are provided"
         print -r -- "  CODEX_RATE_LIMITS_CURL_CONNECT_TIMEOUT_SECONDS=2  curl --connect-timeout seconds"
         print -r -- "  CODEX_RATE_LIMITS_CURL_MAX_TIME_SECONDS=8  curl --max-time seconds"
         return 0
@@ -1092,12 +1090,10 @@ codex-rate-limits() {
   fi
 
   if [[ "${output_mode}" == "human" && "${all_mode}" != "true" && $# -eq 0 ]]; then
-    local default_all_raw="${CODEX_RATE_LIMITS_DEFAULT_ALL-}"
-    default_all_raw="${default_all_raw:l}"
-    case "${default_all_raw}" in
-      1|true|yes|on) all_mode="true" ;;
-      *) ;;
-    esac
+    local default_all_raw="${CODEX_RATE_LIMITS_DEFAULT_ALL_ENABLED-}"
+    if zsh_env::is_true "${default_all_raw}" "CODEX_RATE_LIMITS_DEFAULT_ALL_ENABLED"; then
+      all_mode="true"
+    fi
   fi
 
   if [[ "${all_mode}" == "true" ]]; then
