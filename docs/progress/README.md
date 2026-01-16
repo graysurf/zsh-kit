@@ -4,6 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2026-01-16 | [Boolean env flags standardization](20260116_env-bool-flags.md) | TBD |
 
 ## Archived
 
