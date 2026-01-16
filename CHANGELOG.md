@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.0.1 - 2026-01-17
+
+### Added
+- Async rate limits checker for all Codex secrets: `codex-rate-limits-async` (alias: `crla`).
+- Generic async worker pool utility: `scripts/async-pool.zsh` (`async_pool::map`).
+- ANSI/color helper utilities: `scripts/ansi-utils.zsh`.
+
+### Changed
+- `codex-tools rate-limits` supports `--async/--jobs` and ANSI-colored percent cells (TTY default; respects `NO_COLOR`).
+- `bundle-wrapper.zsh` detects already-bundled inputs (copy fast-path) and parses wrapper `sources` arrays more robustly.
+- Homebrew bootstrap no longer uses `eval "$(brew shellenv)"`.
+- `fzf-tools` default file search depth (`FZF_FILE_MAX_DEPTH`) is now 10.
+
+### Fixed
+- Default `ZDOTDIR` when unset to keep scripts working in minimal environments.
+- `git-back-checkout` now handles branch names with slashes when parsing reflog history.
+- `git-open pr` passes the branch selector to `gh pr view` for more reliable PR opening.
+- Builtin `cd` override now returns success even if the directory listing tool fails (and falls back to `ls`).
+- `git-commit-context` uses more portable `mktemp` handling and reliably cleans up temp files.
+
 ## v2.0.0 - 2026-01-16
 
 ### Added
