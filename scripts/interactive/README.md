@@ -24,7 +24,7 @@ successful jump (interactive TTY only).
 
 ```zsh
 if command -v zoxide >/dev/null 2>&1; then
-  eval "$(zoxide init zsh)"
+  source <(zoxide init zsh)
 
   __zoxide_cd() {
     builtin cd -- "$1" || return
@@ -61,7 +61,7 @@ If `config/starship.toml` is found, it will be loaded as the custom Starship con
 
 ```zsh
 export STARSHIP_CONFIG="$ZSH_CONFIG_DIR/starship.toml"
-eval "$(starship init zsh)"
+source <(starship init zsh)
 ```
 
 This enables a context-aware, language-sensitive prompt with Git integration, status coloring, and

@@ -3,7 +3,7 @@
 # ──────────────────────────────
 
 if command -v zoxide >/dev/null 2>&1; then
-  eval "$(zoxide init zsh)"
+  source <(zoxide init zsh)
 
   # __zoxide_cd
   # Wrapper to execute `eza -alh` after directory jump.
@@ -31,7 +31,7 @@ if [[ -f "$ZSH_CONFIG_DIR/starship.toml" ]]; then
 fi
 
 if [[ -o interactive && -t 0 && -t 1 && -n "${TERM-}" && "${TERM-}" != "dumb" ]] && command -v starship >/dev/null 2>&1; then
-  eval "$(starship init zsh)"
+  source <(starship init zsh)
 fi
 
 # ──────────────────────────────
