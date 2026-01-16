@@ -459,8 +459,94 @@ _codex_tools_run_rate_limits() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
+  typeset use_async='false'
+  typeset arg=''
+  for arg in "$@"; do
+    if [[ "$arg" == '--' ]]; then
+      break
+    fi
+    if [[ "$arg" == '--async' ]]; then
+      use_async='true'
+      break
+    fi
+  done
+
   _codex_tools_require_secrets || return 1
-  codex-rate-limits "$@"
+
+  if [[ "$use_async" != 'true' ]]; then
+    codex-rate-limits "$@"
+    return $?
+  fi
+
+  if ! typeset -f codex-rate-limits-async >/dev/null 2>&1; then
+    print -u2 -r -- "codex-tools: codex-rate-limits-async is not available (update codex secrets helpers)"
+    return 1
+  fi
+
+  typeset clear_cache='false'
+  typeset cached_mode='false'
+  typeset -a async_args=()
+
+  while (( $# > 0 )); do
+    case "${1-}" in
+      --async)
+        shift
+        ;;
+      -c)
+        clear_cache='true'
+        shift
+        ;;
+      --all)
+        # Async always queries all secrets under CODEX_SECRET_DIR.
+        shift
+        ;;
+      --cached)
+        cached_mode='true'
+        async_args+=( --cached )
+        shift
+        ;;
+      -j|--jobs)
+        if (( $# < 2 )); then
+          print -u2 -r -- "codex-tools: rate-limits --async: missing value for ${1-}"
+          return 64
+        fi
+        async_args+=( "${1-}" "${2-}" )
+        shift 2 || true
+        ;;
+      --jobs=*)
+        async_args+=( "${1-}" )
+        shift
+        ;;
+      -d|--debug|-h|--help|--no-refresh-auth|--)
+        async_args+=( "${1-}" )
+        shift
+        ;;
+      --json|--one-line)
+        print -u2 -r -- "codex-tools: rate-limits --async does not support ${1-}"
+        return 64
+        ;;
+      -*)
+        print -u2 -r -- "codex-tools: rate-limits --async: unknown option: ${1-}"
+        return 64
+        ;;
+      *)
+        print -u2 -r -- "codex-tools: rate-limits --async does not accept positional args: ${1-}"
+        print -u2 -r -- "codex-tools: hint: async always queries all secrets under CODEX_SECRET_DIR"
+        return 64
+        ;;
+    esac
+  done
+
+  if [[ "${clear_cache}" == 'true' && "${cached_mode}" == 'true' ]]; then
+    print -u2 -r -- "codex-tools: rate-limits --async: -c is not compatible with --cached"
+    return 64
+  fi
+
+  if [[ "${clear_cache}" == 'true' ]]; then
+    _codex_rate_limits_clear_starship_cache || return 1
+  fi
+
+  codex-rate-limits-async "${async_args[@]}"
 }
 
 # _codex_tools_usage [fd]
@@ -482,7 +568,7 @@ _codex_tools_usage() {
   print -u"$fd" -r -- '    -p                                           Push to remote after commit'
   print -u"$fd" -r -- '    -a, --auto-stage                             Use semantic-commit-autostage (autostage all changes)'
   print -u"$fd" -r -- '  auto-refresh                                   Run codex-auto-refresh (token refresh helper)'
-  print -u"$fd" -r -- '  rate-limits                                    Run codex-rate-limits (wham/usage; supports -c/-d/--cached/--no-refresh-auth/--all/--json)'
+  print -u"$fd" -r -- '  rate-limits                                    Run codex-rate-limits (supports --async/--jobs for concurrent all-accounts table)'
   print -u"$fd" -r -- '  advice [question]                              Get actionable engineering advice'
   print -u"$fd" -r -- '  knowledge [concept]                            Get clear explanation and angles for a concept'
   print -u"$fd" -r --

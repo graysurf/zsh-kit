@@ -2,7 +2,7 @@
 
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
-    crl
+    crl crla
 fi
 
 typeset -gr CODEX_SCRIPT_PATH="${(%):-%N}"
@@ -24,6 +24,10 @@ typeset -g CODEX_SYNC_AUTH_ON_CHANGE_ENABLED="${CODEX_SYNC_AUTH_ON_CHANGE_ENABLE
 # crl
 # Alias for codex-rate-limits.
 alias crl='codex-rate-limits'
+
+# crla
+# Alias for codex-rate-limits-async.
+alias crla='codex-rate-limits-async'
 
 # _codex_is_truthy
 # Return 0 when the value is `true` (case-insensitive).
@@ -565,6 +569,18 @@ _codex_epoch_format_local() {
   return 1
 }
 
+# _codex_epoch_format_local_datetime
+# Format epoch seconds using local timezone as `MM-DD HH:MM`.
+_codex_epoch_format_local_datetime() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local epoch="${1-}"
+  [[ -n "${epoch}" && "${epoch}" == <-> ]] || return 1
+
+  _codex_epoch_format_local "${epoch}" "%m-%d %H:%M"
+}
+
 # _codex_epoch_format_utc
 # Format epoch seconds using UTC.
 _codex_epoch_format_utc() {
@@ -589,6 +605,104 @@ _codex_epoch_format_utc() {
   fi
 
   return 1
+}
+
+# _codex_format_until_epoch_compact
+# Format the time remaining until an epoch (e.g. " 6d  5h", " 1h 13m").
+# Usage: _codex_format_until_epoch_compact <target_epoch> [now_epoch]
+_codex_format_until_epoch_compact() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local target_epoch="${1-}"
+  local now_epoch="${2-}"
+
+  [[ -n "${target_epoch}" && "${target_epoch}" == <-> ]] || return 1
+  if [[ -z "${now_epoch}" || "${now_epoch}" != <-> ]]; then
+    now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
+  fi
+  [[ -n "${now_epoch}" && "${now_epoch}" == <-> ]] || return 1
+
+  local -i remaining=$(( target_epoch - now_epoch ))
+  if (( remaining <= 0 )); then
+    printf "%2dh %2dm\n" 0 0
+    return 0
+  fi
+
+  if (( remaining >= 86400 )); then
+    local -i days=$(( remaining / 86400 ))
+    local -i hours=$(( (remaining % 86400) / 3600 ))
+    printf "%2dd %2dh\n" "${days}" "${hours}"
+    return 0
+  fi
+
+  local -i hours=$(( remaining / 3600 ))
+  local -i minutes=$(( (remaining % 3600) / 60 ))
+  printf "%2dh %2dm\n" "${hours}" "${minutes}"
+  return 0
+}
+
+# _codex_rate_limits_ensure_ansi_utils
+# Ensure ANSI helpers are available (best-effort).
+# Usage: _codex_rate_limits_ensure_ansi_utils
+_codex_rate_limits_ensure_ansi_utils() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  if (( ${+functions[ansi_theme_night_owl::format_percent_cell]} )); then
+    return 0
+  fi
+
+  local zdotdir="${ZDOTDIR-}"
+  if [[ -z "${zdotdir}" ]]; then
+    local preload_path="${_ZSH_BOOTSTRAP_PRELOAD_PATH-}"
+    if [[ -n "${preload_path}" ]]; then
+      preload_path="${preload_path:A}"
+      zdotdir="${preload_path:h:h}"
+    fi
+  fi
+  [[ -n "${zdotdir}" ]] || zdotdir="$HOME/.config/zsh"
+
+  local script_dir="${ZSH_SCRIPT_DIR:-${zdotdir}/scripts}"
+  local target="${script_dir}/ansi-utils.zsh"
+  [[ -r "${target}" ]] || return 1
+
+  source "${target}" || return 1
+
+  (( ${+functions[ansi_theme_night_owl::format_percent_cell]} )) || return 1
+  return 0
+}
+
+# _codex_rate_limits_should_color
+# Return 0 when colors should be used for table output.
+_codex_rate_limits_should_color() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  _codex_rate_limits_ensure_ansi_utils || return 1
+  ansi::should_color 1
+}
+
+# _codex_rate_limits_format_percent_cell
+# Right-align and optionally color a percent cell with a fixed width.
+# Usage: _codex_rate_limits_format_percent_cell <raw_value> [width] [color_enabled]
+_codex_rate_limits_format_percent_cell() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset
+
+  local raw="${1-}"
+  local width="${2-8}"
+  local color_enabled="${3-}"
+  if [[ -z "${width}" || "${width}" != <-> ]]; then
+    width='8'
+  fi
+
+  if ! _codex_rate_limits_ensure_ansi_utils; then
+    printf "%${width}.${width}s\n" "${raw}"
+    return 0
+  fi
+
+  ansi_theme_night_owl::format_percent_cell "${raw}" "${width}" "${color_enabled}"
 }
 
 # _codex_format_window_seconds
@@ -682,13 +796,16 @@ _codex_rate_limits_writeback_weekly() {
     secondary_label="${formatted}"
   fi
 
-  local weekly_reset_at_epoch=''
+  local weekly_reset_at_epoch='' non_weekly_reset_at_epoch=''
   if [[ "${primary_label}" == "Weekly" ]]; then
     weekly_reset_at_epoch="${primary_reset_at}"
+    non_weekly_reset_at_epoch="${secondary_reset_at}"
   elif [[ "${secondary_label}" == "Weekly" ]]; then
     weekly_reset_at_epoch="${secondary_reset_at}"
+    non_weekly_reset_at_epoch="${primary_reset_at}"
   else
     weekly_reset_at_epoch="${secondary_reset_at}"
+    non_weekly_reset_at_epoch="${primary_reset_at}"
   fi
 
   weekly_reset_at_epoch="${weekly_reset_at_epoch%%$'\n'*}"
@@ -697,8 +814,19 @@ _codex_rate_limits_writeback_weekly() {
     return 0
   fi
 
+  non_weekly_reset_at_epoch="${non_weekly_reset_at_epoch%%$'\n'*}"
+  non_weekly_reset_at_epoch="${non_weekly_reset_at_epoch%%$'\r'*}"
+  if [[ -z "${non_weekly_reset_at_epoch}" || "${non_weekly_reset_at_epoch}" != <-> ]]; then
+    non_weekly_reset_at_epoch=''
+  fi
+
   local weekly_reset_at_iso=''
   weekly_reset_at_iso="$(_codex_epoch_format_utc "${weekly_reset_at_epoch}" "%Y-%m-%dT%H:%M:%SZ")" || return 1
+
+  local non_weekly_reset_at_iso=''
+  if [[ -n "${non_weekly_reset_at_epoch}" ]]; then
+    non_weekly_reset_at_iso="$(_codex_epoch_format_utc "${non_weekly_reset_at_epoch}" "%Y-%m-%dT%H:%M:%SZ")" || non_weekly_reset_at_iso=''
+  fi
 
   local fetched_at_iso=''
   fetched_at_iso="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -707,15 +835,28 @@ _codex_rate_limits_writeback_weekly() {
   tmp_out="$(mktemp "${target_file:h}/rate-limits.writeback.XXXXXX")"
   trap "rm -f -- ${(qq)tmp_out}" EXIT
 
+  local non_weekly_reset_at_epoch_json='null'
+  if [[ -n "${non_weekly_reset_at_epoch}" ]]; then
+    non_weekly_reset_at_epoch_json="${non_weekly_reset_at_epoch}"
+  fi
+
   if ! jq \
     --arg weekly_reset_at "${weekly_reset_at_iso}" \
     --arg fetched_at "${fetched_at_iso}" \
     --argjson weekly_reset_at_epoch "${weekly_reset_at_epoch}" \
+    --arg non_weekly_reset_at "${non_weekly_reset_at_iso}" \
+    --argjson non_weekly_reset_at_epoch "${non_weekly_reset_at_epoch_json}" \
     '
       .codex_rate_limits = (.codex_rate_limits // {}) |
       .codex_rate_limits.weekly_reset_at = $weekly_reset_at |
       .codex_rate_limits.weekly_reset_at_epoch = $weekly_reset_at_epoch |
-      .codex_rate_limits.weekly_fetched_at = $fetched_at
+      .codex_rate_limits.weekly_fetched_at = $fetched_at |
+      (if $non_weekly_reset_at_epoch == null then
+         .
+       else
+         .codex_rate_limits.non_weekly_reset_at = $non_weekly_reset_at |
+         .codex_rate_limits.non_weekly_reset_at_epoch = $non_weekly_reset_at_epoch
+       end)
     ' "${target_file}" >| "${tmp_out}"; then
     print -ru2 -r -- "_codex_rate_limits_writeback_weekly: failed to update ${target_file}"
     return 1
@@ -929,8 +1070,8 @@ _codex_rate_limits_print_starship_cached() {
     return 1
   fi
 
-  local weekly_reset_iso=''
-  weekly_reset_iso="$(_codex_epoch_format_utc "${weekly_reset_epoch}" "%Y-%m-%dT%H:%M:%SZ")" || return 1
+  local weekly_reset_time=''
+  weekly_reset_time="$(_codex_epoch_format_local_datetime "${weekly_reset_epoch}")" || return 1
 
   local prefix=''
   if [[ "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
@@ -938,13 +1079,13 @@ _codex_rate_limits_print_starship_cached() {
     prefix="${display_name} "
   fi
 
-  print -r -- "${prefix}${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset_iso}"
+  print -r -- "${prefix}${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset_time}"
   return 0
 }
 
 # _codex_rate_limits_write_starship_cache
 # Write a codex-starship cache entry for a target file (auth/secret), based on wham/usage data.
-# Usage: _codex_rate_limits_write_starship_cache <target_file> <fetched_at_epoch> <non_weekly_label> <non_weekly_remaining> <weekly_remaining> <weekly_reset_epoch>
+# Usage: _codex_rate_limits_write_starship_cache <target_file> <fetched_at_epoch> <non_weekly_label> <non_weekly_remaining> <weekly_remaining> <weekly_reset_epoch> <non_weekly_reset_epoch>
 _codex_rate_limits_write_starship_cache() {
   emulate -L zsh
   setopt localoptions pipe_fail nounset
@@ -955,12 +1096,16 @@ _codex_rate_limits_write_starship_cache() {
   local non_weekly_remaining="${4-}"
   local weekly_remaining="${5-}"
   local weekly_reset_epoch="${6-}"
+  local non_weekly_reset_epoch="${7-}"
 
   [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
   [[ -n "${fetched_at_epoch}" && "${fetched_at_epoch}" == <-> ]] || return 1
   [[ -n "${non_weekly_label}" && -n "${non_weekly_remaining}" && "${non_weekly_remaining}" == <-> ]] || return 1
   [[ -n "${weekly_remaining}" && "${weekly_remaining}" == <-> ]] || return 1
   [[ -n "${weekly_reset_epoch}" && "${weekly_reset_epoch}" == <-> ]] || return 1
+  if [[ -z "${non_weekly_reset_epoch}" || "${non_weekly_reset_epoch}" != <-> ]]; then
+    non_weekly_reset_epoch=''
+  fi
 
   local cache_file=''
   cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${target_file}")" || cache_file=''
@@ -976,6 +1121,7 @@ _codex_rate_limits_write_starship_cache() {
     print -r -- "fetched_at=${fetched_at_epoch}"
     print -r -- "non_weekly_label=${non_weekly_label}"
     print -r -- "non_weekly_remaining=${non_weekly_remaining}"
+    print -r -- "non_weekly_reset_epoch=${non_weekly_reset_epoch}"
     print -r -- "weekly_remaining=${weekly_remaining}"
     print -r -- "weekly_reset_epoch=${weekly_reset_epoch}"
   } >| "${tmp_cache}" 2>/dev/null || {
@@ -1176,23 +1322,23 @@ codex-rate-limits() {
         progress_bar::update "$all_progress_id" "$secret_index" --suffix "${secret_name}" --force || true
       fi
 
-      if [[ -z "${line}" ]]; then
-        if [[ "${cached_mode}" == "true" ]]; then
-          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
-        else
-          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
-          rc=1
-        fi
-        continue
-      fi
+	      if [[ -z "${line}" ]]; then
+	        if [[ "${cached_mode}" == "true" ]]; then
+	          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	        else
+	          rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	          rc=1
+	        fi
+	        continue
+	      fi
 
-      local parsed_name='' window_field='' weekly_field='' reset_iso=''
+      local parsed_name='' window_field='' weekly_field='' reset_iso='' weekly_reset_epoch=''
       IFS=' ' read -r parsed_name window_field weekly_field reset_iso <<< "${line}"
-      if [[ -z "${parsed_name}" || -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
-        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
-        rc=1
-        continue
-      fi
+	      if [[ -z "${parsed_name}" || -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
+	        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	        rc=1
+	        continue
+	      fi
 
       local window_label='' non_weekly_remaining='' weekly_remaining=''
       window_label="${window_field%%:*}"
@@ -1201,15 +1347,40 @@ codex-rate-limits() {
       non_weekly_remaining="${window_field#*:}"
       weekly_remaining="${weekly_field#W:}"
 
-      if [[ -z "${window_label}" || -z "${non_weekly_remaining}" || -z "${weekly_remaining}" ]]; then
-        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-")
-        rc=1
-        continue
-      fi
+	      if [[ -z "${window_label}" || -z "${non_weekly_remaining}" || -z "${weekly_remaining}" ]]; then
+	        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	        rc=1
+	        continue
+	      fi
 
-      window_labels["${window_label}"]=1
-      rows+=("${parsed_name}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${weekly_remaining}${tab}${reset_iso}")
-    done
+	      local non_weekly_reset_epoch=''
+	      weekly_reset_epoch=''
+	      if [[ "${cached_mode}" == "true" ]]; then
+	        local cache_file='' kv=''
+	        cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${secret_file}")" || cache_file=''
+	        if [[ -n "${cache_file}" && -f "${cache_file}" ]]; then
+	          kv=''
+	          while IFS= read -r kv; do
+	            case "${kv}" in
+	              non_weekly_reset_epoch=*) non_weekly_reset_epoch="${kv#non_weekly_reset_epoch=}" ;;
+	              weekly_reset_epoch=*) weekly_reset_epoch="${kv#weekly_reset_epoch=}" ;;
+	            esac
+	          done < "${cache_file}" 2>/dev/null || true
+	        fi
+	      else
+	        non_weekly_reset_epoch="$(jq -r '.codex_rate_limits.non_weekly_reset_at_epoch // empty' "${secret_file}" 2>/dev/null)" || non_weekly_reset_epoch=''
+	        weekly_reset_epoch="$(jq -r '.codex_rate_limits.weekly_reset_at_epoch // empty' "${secret_file}" 2>/dev/null)" || weekly_reset_epoch=''
+	      fi
+	      if [[ -z "${non_weekly_reset_epoch}" || "${non_weekly_reset_epoch}" != <-> ]]; then
+	        non_weekly_reset_epoch='-'
+	      fi
+	      if [[ -z "${weekly_reset_epoch}" || "${weekly_reset_epoch}" != <-> ]]; then
+	        weekly_reset_epoch='-'
+	      fi
+
+	      window_labels["${window_label}"]=1
+	      rows+=("${parsed_name}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${non_weekly_reset_epoch}${tab}${weekly_remaining}${tab}${weekly_reset_epoch}")
+	    done
 
     if [[ "$all_progress_active" == 'true' ]]; then
       progress_bar::stop "$all_progress_id" || true
@@ -1226,34 +1397,59 @@ codex-rate-limits() {
     non_weekly_header="${non_weekly_header#\"}"
     non_weekly_header="${non_weekly_header%\"}"
 
-    printf "%-25.25s %8.8s %8.8s  %-20.20s\n" "Name" "${non_weekly_header}" "Weekly" "Reset (UTC)"
-    print -r -- "-----------------------------------------------------------------------"
+    local now_epoch=''
+    now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
+    [[ -n "${now_epoch}" && "${now_epoch}" == <-> ]] || now_epoch='0'
 
-    local -a sortable_rows=() sorted_rows=()
-    local row='' row_name='' row_window='' row_remain='' row_weekly='' row_reset=''
+	    printf "%-20.20s  %8.8s  %7.7s  %8.8s  %7.7s  %-11.11s\n" "Name" "${non_weekly_header}" "Left" "Weekly" "Left" "Reset"
+	    print -r -- "-----------------------------------------------------------------------"
 
-    for row in "${rows[@]}"; do
-      IFS=$'\t' read -r row_name row_window row_remain row_weekly row_reset <<< "${row}"
+	    local -a sortable_rows=() sorted_rows=()
+	    local row='' row_name='' row_window='' row_remain='' row_non_weekly_reset_epoch='' row_weekly='' row_weekly_reset_epoch=''
 
-      local valid_reset='1'
-      if [[ -n "${row_reset}" && "${row_reset}" != '-' && "${row_reset}" == [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z ]]; then
-        valid_reset='0'
-      fi
+	    for row in "${rows[@]}"; do
+	      IFS=$'\t' read -r row_name row_window row_remain row_non_weekly_reset_epoch row_weekly row_weekly_reset_epoch <<< "${row}"
 
-      sortable_rows+=("${valid_reset}${tab}${row_reset}${tab}${row}")
-    done
+	      local valid_epoch='1'
+	      local sort_epoch='99999999999999999999'
+	      if [[ -n "${row_weekly_reset_epoch}" && "${row_weekly_reset_epoch}" != '-' && "${row_weekly_reset_epoch}" == <-> ]]; then
+	        valid_epoch='0'
+	        sort_epoch="$(printf "%020d" "${row_weekly_reset_epoch}")"
+	      fi
 
-    sorted_rows=("${(o)sortable_rows[@]}")
+	      sortable_rows+=("${valid_epoch}${tab}${sort_epoch}${tab}${row}")
+	    done
 
-    local element='' sort_valid='' sort_reset='' display_non_weekly=''
-    for element in "${sorted_rows[@]}"; do
-      IFS=$'\t' read -r sort_valid sort_reset row_name row_window row_remain row_weekly row_reset <<< "${element}"
-      display_non_weekly="${row_remain}"
-      if (( ${#window_labels[@]} != 1 )) && [[ -n "${row_window}" && "${row_window}" != '-' && -n "${row_remain}" && "${row_remain}" != '-' ]]; then
-        display_non_weekly="${row_window}:${row_remain}"
-      fi
-      printf "%-25.25s %8.8s %8.8s  %-20.20s\n" "${row_name}" "${display_non_weekly}" "${row_weekly}" "${row_reset}"
-    done
+	    sorted_rows=("${(o)sortable_rows[@]}")
+
+		    local color_enabled='false'
+		    if _codex_rate_limits_should_color; then
+		      color_enabled='true'
+		    fi
+
+		    local element='' sort_valid='' sort_epoch='' display_non_weekly=''
+		    for element in "${sorted_rows[@]}"; do
+	      IFS=$'\t' read -r sort_valid sort_epoch row_name row_window row_remain row_non_weekly_reset_epoch row_weekly row_weekly_reset_epoch <<< "${element}"
+	      display_non_weekly="${row_remain}"
+	      if (( ${#window_labels[@]} != 1 )) && [[ -n "${row_window}" && "${row_window}" != '-' && -n "${row_remain}" && "${row_remain}" != '-' ]]; then
+	        display_non_weekly="${row_window}:${row_remain}"
+	      fi
+
+	      local non_weekly_left='-' weekly_left='-' reset_display='-'
+	      if [[ -n "${row_non_weekly_reset_epoch}" && "${row_non_weekly_reset_epoch}" != '-' && "${row_non_weekly_reset_epoch}" == <-> ]]; then
+	        non_weekly_left="$(_codex_format_until_epoch_compact "${row_non_weekly_reset_epoch}" "${now_epoch}")" || non_weekly_left='-'
+	      fi
+	      if [[ -n "${row_weekly_reset_epoch}" && "${row_weekly_reset_epoch}" != '-' && "${row_weekly_reset_epoch}" == <-> ]]; then
+	        weekly_left="$(_codex_format_until_epoch_compact "${row_weekly_reset_epoch}" "${now_epoch}")" || weekly_left='-'
+	        reset_display="$(_codex_epoch_format_local_datetime "${row_weekly_reset_epoch}")" || reset_display='-'
+		      fi
+
+		      local non_weekly_display='' weekly_display=''
+		      non_weekly_display="$(_codex_rate_limits_format_percent_cell "${display_non_weekly}" 8 "${color_enabled}")" || non_weekly_display="${display_non_weekly}"
+		      weekly_display="$(_codex_rate_limits_format_percent_cell "${row_weekly}" 8 "${color_enabled}")" || weekly_display="${row_weekly}"
+
+	      printf "%-20.20s  %s  %7.7s  %s  %7.7s  %-11.11s\n" "${row_name}" "${non_weekly_display}" "${non_weekly_left}" "${weekly_display}" "${weekly_left}" "${reset_display}"
+	    done
 
     return "${rc}"
   fi
@@ -1473,21 +1669,25 @@ codex-rate-limits() {
   fetched_at_epoch="$(date +%s 2>/dev/null)" || fetched_at_epoch=''
   if [[ -n "${fetched_at_epoch}" && "${fetched_at_epoch}" == <-> ]]; then
     local weekly_remaining='' weekly_reset_epoch=''
+    local non_weekly_reset_epoch=''
     local non_weekly_label='' non_weekly_remaining=''
 
     if [[ "${primary_label}" == "Weekly" ]]; then
       weekly_remaining="${primary_remaining}"
       weekly_reset_epoch="${primary_reset_at}"
+      non_weekly_reset_epoch="${secondary_reset_at}"
       non_weekly_label="${secondary_label}"
       non_weekly_remaining="${secondary_remaining}"
     elif [[ "${secondary_label}" == "Weekly" ]]; then
       weekly_remaining="${secondary_remaining}"
       weekly_reset_epoch="${secondary_reset_at}"
+      non_weekly_reset_epoch="${primary_reset_at}"
       non_weekly_label="${primary_label}"
       non_weekly_remaining="${primary_remaining}"
     else
       weekly_remaining="${secondary_remaining}"
       weekly_reset_epoch="${secondary_reset_at}"
+      non_weekly_reset_epoch="${primary_reset_at}"
       non_weekly_label="${primary_label}"
       non_weekly_remaining="${primary_remaining}"
     fi
@@ -1499,6 +1699,7 @@ codex-rate-limits() {
       "${non_weekly_remaining}" \
       "${weekly_remaining}" \
       "${weekly_reset_epoch}" \
+      "${non_weekly_reset_epoch}" \
       >/dev/null 2>&1 || true
   fi
 
@@ -1511,8 +1712,8 @@ codex-rate-limits() {
   secondary_reset_date="${secondary_reset_date# }"
 
   local primary_reset_iso="?" secondary_reset_iso="?"
-  primary_reset_iso="$(_codex_epoch_format_utc "${primary_reset_at}" "%Y-%m-%dT%H:%M:%SZ")" || primary_reset_iso="?"
-  secondary_reset_iso="$(_codex_epoch_format_utc "${secondary_reset_at}" "%Y-%m-%dT%H:%M:%SZ")" || secondary_reset_iso="?"
+  primary_reset_iso="$(_codex_epoch_format_local_datetime "${primary_reset_at}")" || primary_reset_iso="?"
+  secondary_reset_iso="$(_codex_epoch_format_local_datetime "${secondary_reset_at}")" || secondary_reset_iso="?"
 
   if [[ "${one_line}" == "true" ]]; then
     local display_name=''
@@ -1551,6 +1752,401 @@ codex-rate-limits() {
   print -r -- "Rate limits remaining"
   print -r -- "${primary_label} ${primary_remaining}% • ${primary_reset_iso}"
   print -r -- "${secondary_label} ${secondary_remaining}% • ${secondary_reset_iso}"
+}
+
+# codex-rate-limits-async
+# Query Codex rate limits for all secrets under $CODEX_SECRET_DIR concurrently.
+codex-rate-limits-async() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset SH_WORD_SPLIT
+  setopt localtraps
+  unsetopt monitor notify
+
+  local jobs_raw='10'
+  local debug_mode='false'
+  local refresh_auth_on_401='true'
+  local cached_mode='false'
+
+  while (( $# > 0 )); do
+    case "${1-}" in
+      -h|--help)
+        print -r -- "codex-rate-limits-async: usage: codex-rate-limits-async [--jobs N] [--cached] [--no-refresh-auth] [-d|--debug]"
+        print -r -- "  --jobs N           Max concurrent requests (default: 10)"
+        print -r -- "  --cached           Use codex-starship cache only (no network; one line per account)"
+        print -r -- "  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)"
+        print -r -- "  -d, --debug        Print per-account stderr after the table"
+        return 0
+        ;;
+      -j|--jobs)
+        jobs_raw="${2-}"
+        shift 2 || true
+        ;;
+      --jobs=*)
+        jobs_raw="${1#--jobs=}"
+        shift
+        ;;
+      --cached)
+        cached_mode='true'
+        shift
+        ;;
+      --no-refresh-auth)
+        refresh_auth_on_401='false'
+        shift
+        ;;
+      -d|--debug)
+        debug_mode='true'
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        print -ru2 -r -- "codex-rate-limits-async: unknown option: ${1-}"
+        print -ru2 -r -- "codex-rate-limits-async: usage: codex-rate-limits-async [--jobs N] [--cached] [--no-refresh-auth] [-d|--debug]"
+        return 64
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  if (( $# > 0 )); then
+    print -ru2 -r -- "codex-rate-limits-async: usage: codex-rate-limits-async [--jobs N] [--cached] [--no-refresh-auth] [-d|--debug]"
+    return 64
+  fi
+
+  if [[ -z "${jobs_raw}" || "${jobs_raw}" != <-> ]]; then
+    jobs_raw='10'
+  fi
+  local -i jobs="${jobs_raw}"
+  if (( jobs <= 0 )); then
+    jobs=10
+  fi
+
+  local secret_dir="${CODEX_SECRET_DIR-}"
+  if [[ -z "${secret_dir}" || ! -d "${secret_dir}" ]]; then
+    print -ru2 -r -- "codex-rate-limits-async: CODEX_SECRET_DIR not found: ${secret_dir}"
+    return 1
+  fi
+
+  local -a secret_files
+  secret_files=("${secret_dir}"/*.json(N))
+  if (( ${#secret_files} == 0 )); then
+    print -ru2 -r -- "codex-rate-limits-async: no secrets found in ${secret_dir}"
+    return 1
+  fi
+
+  local -i total="${#secret_files[@]}"
+
+  local -A secret_line=()
+  local -A secret_rc=()
+  local -A secret_err_file=()
+
+  local tmp_dir=''
+  tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/codex-rate-limits-async.XXXXXX" 2>/dev/null)" || tmp_dir=''
+  if [[ -z "${tmp_dir}" || ! -d "${tmp_dir}" ]]; then
+    print -ru2 -r -- "codex-rate-limits-async: failed to create temp dir"
+    return 1
+  fi
+
+  local fifo="${tmp_dir}/events.fifo"
+  if ! mkfifo -- "${fifo}" 2>/dev/null; then
+    print -ru2 -r -- "codex-rate-limits-async: failed to create fifo: ${fifo}"
+    command rm -rf -- "${tmp_dir}" 2>/dev/null || true
+    return 1
+  fi
+
+  exec 9<> "${fifo}" || {
+    print -ru2 -r -- "codex-rate-limits-async: failed to open fifo: ${fifo}"
+    command rm -rf -- "${tmp_dir}" 2>/dev/null || true
+    return 1
+  }
+
+  trap "exec 9>&- 2>/dev/null || true; command rm -rf -- ${(qq)tmp_dir} 2>/dev/null || true" EXIT
+
+  local progress_id='' progress_active='false'
+  progress_id="codex-rate-limits:async:${$}"
+  if [[ -t 2 ]] && (( $+functions[progress_bar::init] )); then
+    progress_active='true'
+    progress_bar::init "$progress_id" --prefix 'codex-rate-limits' --total "${total}" --fd 2 || progress_active='false'
+    if [[ "$progress_active" == 'true' ]]; then
+      progress_bar::update "$progress_id" 0 --suffix 'fetching...' --force || true
+    fi
+  fi
+
+  local -a per_secret_args
+  per_secret_args=( --one-line )
+  if [[ "${cached_mode}" == 'true' ]]; then
+    per_secret_args+=( --cached )
+  fi
+  if [[ "${refresh_auth_on_401}" != 'true' ]]; then
+    per_secret_args+=( --no-refresh-auth )
+  fi
+
+  local -i next_index=1 running=0 completed=0 rc=0
+  local secret_file='' secret_name='' err_file='' pid=''
+
+  while (( running < jobs && next_index <= total )); do
+    secret_file="${secret_files[$next_index]}"
+    secret_name="${secret_file:t}"
+    err_file="${tmp_dir}/${secret_name}.err"
+    secret_err_file[${secret_name}]="${err_file}"
+
+    () {
+      emulate -L zsh
+      setopt localoptions pipe_fail nounset SH_WORD_SPLIT
+
+      local secret_name="${1-}"
+      local err_file="${2-}"
+      shift 2 || true
+
+      local out='' child_rc=0
+      out="$(codex-rate-limits "$@" "${secret_name}" 2>"${err_file}")"
+      child_rc=$?
+
+      out="${out//$'\n'/ }"
+      out="${out//$'\r'/ }"
+      out="${out//$'\t'/ }"
+
+      local tab=$'\t'
+      print -u9 -r -- "${secret_name}${tab}${$}${tab}${child_rc}${tab}${out}"
+      return 0
+    } "${secret_name}" "${err_file}" "${per_secret_args[@]}" &
+
+    pid="$!"
+    running=$(( running + 1 ))
+    next_index=$(( next_index + 1 ))
+  done
+
+  local event_secret='' event_pid='' event_rc='' event_line=''
+  while (( completed < total )); do
+    if ! IFS=$'\t' read -r -u 9 event_secret event_pid event_rc event_line; then
+      rc=1
+      break
+    fi
+
+    completed=$(( completed + 1 ))
+    running=$(( running - 1 ))
+
+    secret_line[${event_secret}]="${event_line}"
+    secret_rc[${event_secret}]="${event_rc}"
+
+    if [[ "${cached_mode}" != 'true' ]]; then
+      if [[ -z "${event_rc}" || "${event_rc}" != <-> ]]; then
+        rc=1
+      elif (( event_rc != 0 )); then
+        rc=1
+      fi
+    fi
+
+    if [[ "$progress_active" == 'true' ]]; then
+      progress_bar::update "$progress_id" "$completed" --suffix "${event_secret}" --force || true
+    fi
+
+    if [[ -n "${event_pid}" && "${event_pid}" == <-> ]]; then
+      wait "${event_pid}" 2>/dev/null || true
+    fi
+
+    while (( running < jobs && next_index <= total )); do
+      secret_file="${secret_files[$next_index]}"
+      secret_name="${secret_file:t}"
+      err_file="${tmp_dir}/${secret_name}.err"
+      secret_err_file[${secret_name}]="${err_file}"
+
+      () {
+        emulate -L zsh
+        setopt localoptions pipe_fail nounset SH_WORD_SPLIT
+
+        local secret_name="${1-}"
+        local err_file="${2-}"
+        shift 2 || true
+
+        local out='' child_rc=0
+        out="$(codex-rate-limits "$@" "${secret_name}" 2>"${err_file}")"
+        child_rc=$?
+
+        out="${out//$'\n'/ }"
+        out="${out//$'\r'/ }"
+        out="${out//$'\t'/ }"
+
+        local tab=$'\t'
+        print -u9 -r -- "${secret_name}${tab}${$}${tab}${child_rc}${tab}${out}"
+        return 0
+      } "${secret_name}" "${err_file}" "${per_secret_args[@]}" &
+
+      pid="$!"
+      running=$(( running + 1 ))
+      next_index=$(( next_index + 1 ))
+    done
+  done
+
+  if [[ "$progress_active" == 'true' ]]; then
+    progress_bar::stop "$progress_id" || true
+    progress_active='false'
+  fi
+
+  if [[ -t 2 ]]; then
+    print -r -- "🚦 Codex rate limits for all accounts"
+  else
+    print "\n🚦 Codex rate limits for all accounts"
+  fi
+  print
+
+  local tab=$'\t'
+  local -A window_labels=()
+  local -a rows=()
+
+  for secret_file in "${secret_files[@]}"; do
+    secret_name="${secret_file:t}"
+    event_line="${secret_line[${secret_name}]-}"
+    event_rc="${secret_rc[${secret_name}]-}"
+
+    if [[ "${cached_mode}" != 'true' && -n "${event_rc}" && "${event_rc}" == <-> ]] && (( event_rc != 0 )); then
+      rc=1
+    fi
+
+	    if [[ -z "${event_line}" ]]; then
+	      rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	      if [[ "${cached_mode}" != 'true' ]]; then
+	        rc=1
+	      fi
+	      continue
+	    fi
+
+    local parsed_name='' window_field='' weekly_field='' reset_iso='' weekly_reset_epoch=''
+    IFS=' ' read -r parsed_name window_field weekly_field reset_iso <<< "${event_line}"
+	    if [[ -z "${parsed_name}" || -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
+	      rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	      rc=1
+	      continue
+	    fi
+
+    local window_label='' non_weekly_remaining='' weekly_remaining=''
+    window_label="${window_field%%:*}"
+    window_label="${window_label#\"}"
+    window_label="${window_label%\"}"
+    non_weekly_remaining="${window_field#*:}"
+    weekly_remaining="${weekly_field#W:}"
+
+	    if [[ -z "${window_label}" || -z "${non_weekly_remaining}" || -z "${weekly_remaining}" ]]; then
+	      rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
+	      rc=1
+	      continue
+	    fi
+
+	    local non_weekly_reset_epoch=''
+	    weekly_reset_epoch=''
+	    if [[ "${cached_mode}" == 'true' ]]; then
+	      local cache_file='' kv=''
+	      cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${secret_file}")" || cache_file=''
+	      if [[ -n "${cache_file}" && -f "${cache_file}" ]]; then
+	        kv=''
+	        while IFS= read -r kv; do
+	          case "${kv}" in
+	            non_weekly_reset_epoch=*) non_weekly_reset_epoch="${kv#non_weekly_reset_epoch=}" ;;
+	            weekly_reset_epoch=*) weekly_reset_epoch="${kv#weekly_reset_epoch=}" ;;
+	          esac
+	        done < "${cache_file}" 2>/dev/null || true
+	      fi
+	    else
+	      non_weekly_reset_epoch="$(jq -r '.codex_rate_limits.non_weekly_reset_at_epoch // empty' "${secret_file}" 2>/dev/null)" || non_weekly_reset_epoch=''
+	      weekly_reset_epoch="$(jq -r '.codex_rate_limits.weekly_reset_at_epoch // empty' "${secret_file}" 2>/dev/null)" || weekly_reset_epoch=''
+	    fi
+	    if [[ -z "${non_weekly_reset_epoch}" || "${non_weekly_reset_epoch}" != <-> ]]; then
+	      non_weekly_reset_epoch='-'
+	    fi
+	    if [[ -z "${weekly_reset_epoch}" || "${weekly_reset_epoch}" != <-> ]]; then
+	      weekly_reset_epoch='-'
+	    fi
+
+	    window_labels["${window_label}"]=1
+	    rows+=("${parsed_name}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${non_weekly_reset_epoch}${tab}${weekly_remaining}${tab}${weekly_reset_epoch}")
+	  done
+
+  local non_weekly_header="Non-weekly"
+  if (( ${#window_labels[@]} == 1 )); then
+    local only_label=''
+    for only_label in "${(@k)window_labels}"; do
+      non_weekly_header="${only_label}"
+    done
+  fi
+  non_weekly_header="${non_weekly_header#\"}"
+  non_weekly_header="${non_weekly_header%\"}"
+
+  local now_epoch=''
+  now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
+  [[ -n "${now_epoch}" && "${now_epoch}" == <-> ]] || now_epoch='0'
+
+	  printf "%-20.20s  %8.8s  %7.7s  %8.8s  %7.7s  %-11.11s\n" "Name" "${non_weekly_header}" "Left" "Weekly" "Left" "Reset"
+	  print -r -- "-----------------------------------------------------------------------"
+
+	  local -a sortable_rows=() sorted_rows=()
+	  local row='' row_name='' row_window='' row_remain='' row_non_weekly_reset_epoch='' row_weekly='' row_weekly_reset_epoch=''
+
+	  for row in "${rows[@]}"; do
+	    IFS=$'\t' read -r row_name row_window row_remain row_non_weekly_reset_epoch row_weekly row_weekly_reset_epoch <<< "${row}"
+
+	    local valid_epoch='1'
+	    local sort_epoch='99999999999999999999'
+	    if [[ -n "${row_weekly_reset_epoch}" && "${row_weekly_reset_epoch}" != '-' && "${row_weekly_reset_epoch}" == <-> ]]; then
+	      valid_epoch='0'
+	      sort_epoch="$(printf "%020d" "${row_weekly_reset_epoch}")"
+	    fi
+
+	    sortable_rows+=("${valid_epoch}${tab}${sort_epoch}${tab}${row}")
+	  done
+
+	  sorted_rows=("${(o)sortable_rows[@]}")
+
+		  local color_enabled='false'
+		  if _codex_rate_limits_should_color; then
+		    color_enabled='true'
+		  fi
+
+		  local element='' sort_valid='' sort_epoch='' display_non_weekly=''
+		  for element in "${sorted_rows[@]}"; do
+	    IFS=$'\t' read -r sort_valid sort_epoch row_name row_window row_remain row_non_weekly_reset_epoch row_weekly row_weekly_reset_epoch <<< "${element}"
+	    display_non_weekly="${row_remain}"
+	    if (( ${#window_labels[@]} != 1 )) && [[ -n "${row_window}" && "${row_window}" != '-' && -n "${row_remain}" && "${row_remain}" != '-' ]]; then
+	      display_non_weekly="${row_window}:${row_remain}"
+	    fi
+
+	    local non_weekly_left='-' weekly_left='-' reset_display='-'
+	    if [[ -n "${row_non_weekly_reset_epoch}" && "${row_non_weekly_reset_epoch}" != '-' && "${row_non_weekly_reset_epoch}" == <-> ]]; then
+	      non_weekly_left="$(_codex_format_until_epoch_compact "${row_non_weekly_reset_epoch}" "${now_epoch}")" || non_weekly_left='-'
+	    fi
+	    if [[ -n "${row_weekly_reset_epoch}" && "${row_weekly_reset_epoch}" != '-' && "${row_weekly_reset_epoch}" == <-> ]]; then
+	      weekly_left="$(_codex_format_until_epoch_compact "${row_weekly_reset_epoch}" "${now_epoch}")" || weekly_left='-'
+	      reset_display="$(_codex_epoch_format_local_datetime "${row_weekly_reset_epoch}")" || reset_display='-'
+	    fi
+
+		    local non_weekly_display='' weekly_display=''
+		    non_weekly_display="$(_codex_rate_limits_format_percent_cell "${display_non_weekly}" 8 "${color_enabled}")" || non_weekly_display="${display_non_weekly}"
+		    weekly_display="$(_codex_rate_limits_format_percent_cell "${row_weekly}" 8 "${color_enabled}")" || weekly_display="${row_weekly}"
+
+	    printf "%-20.20s  %s  %7.7s  %s  %7.7s  %-11.11s\n" "${row_name}" "${non_weekly_display}" "${non_weekly_left}" "${weekly_display}" "${weekly_left}" "${reset_display}"
+	  done
+
+  if [[ "${debug_mode}" == 'true' ]]; then
+    local printed='false' err_secret='' err_path=''
+    for secret_file in "${secret_files[@]}"; do
+      err_secret="${secret_file:t}"
+      err_path="${secret_err_file[${err_secret}]-}"
+      if [[ -n "${err_path}" && -s "${err_path}" ]]; then
+        if [[ "${printed}" != 'true' ]]; then
+          printed='true'
+          print -ru2 -r -- ''
+          print -ru2 -r -- 'codex-rate-limits-async: per-account stderr (captured):'
+        fi
+        print -ru2 -r -- "---- ${err_secret} ----"
+        cat -- "${err_path}" 1>&2
+      fi
+    done
+  fi
+
+  return "${rc}"
 }
 
 if [[ -o interactive ]]; then

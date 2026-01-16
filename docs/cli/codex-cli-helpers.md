@@ -4,7 +4,7 @@ This feature is disabled by default. Enable it by including `codex` in `ZSH_FEAT
 
 `scripts/_features/codex/codex-tools.zsh` adds a `codex-tools` dispatcher plus several `codex-*` commands that invoke
 Codex skills or prompts with a consistent, interactive CLI interface.
- The helpers are intentionally opt-in and only run when you
+The helpers are intentionally opt-in and only run when you
 explicitly allow the dangerous sandbox bypass.
 
 Prompt templates are shared under `$ZDOTDIR/prompts` (e.g. `prompts/actionable-advice.md`).
@@ -108,16 +108,29 @@ codex-tools auto-refresh
 
 ### `codex-tools rate-limits [options] [secret.json]`
 
-Checks Codex usage and rate limits. Supports caching and multi-account queries.
+Checks Codex usage and rate limits. Supports caching, multiple output modes, and multi-account queries (sync or async).
 
 Options:
 
-- `-c`: Clear cache before querying.
-- `--cached`: Use local cache only.
-- `--all`: Query all configured accounts.
+- `-c`: Clear codex-starship cache before querying.
+- `--cached`: Use codex-starship cache only (no network).
+- `--no-refresh-auth`: Do not refresh auth tokens on HTTP 401 (no retry).
+- `-d`, `--debug`: Keep stderr and show per-account errors (for `--all` / `--async`).
+- `--json`: Print raw wham/usage JSON (single account only).
+- `--one-line`: Print a single-line summary (single account only).
+- `--all`: Query all secrets under `CODEX_SECRET_DIR` (sync).
+- `--async`: Query all secrets under `CODEX_SECRET_DIR` concurrently (`codex-rate-limits-async`).
+- `-j`, `--jobs N`: Max concurrent requests (with `--async`).
+
+Notes:
+
+- `--async` does not accept positional `secret.json` and does not support `--json` / `--one-line`.
+- When printing to a TTY, percent cells are ANSI-colored by default; set `NO_COLOR=1` to disable colors.
 
 ```bash
 codex-tools rate-limits --all
+codex-tools rate-limits --async --jobs 10
+NO_COLOR=1 codex-tools rate-limits --async --cached
 ```
 
 ---
@@ -125,7 +138,7 @@ codex-tools rate-limits --all
 ## 🔐 Safety Gate
 
 Commands that run `codex exec --dangerously-bypass-approvals-and-sandbox` require `CODEX_ALLOW_DANGEROUS_ENABLED=true`.
- If it is not set, those commands print a disabled message and return non-zero.
+If it is not set, those commands print a disabled message and return non-zero.
 
 ```bash
 CODEX_ALLOW_DANGEROUS_ENABLED=true codex-tools commit-with-scope "Use conventional scopes"
