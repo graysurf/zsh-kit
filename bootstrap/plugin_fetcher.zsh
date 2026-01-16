@@ -6,8 +6,8 @@ typeset -f plugin_fetch_if_missing_from_entry >/dev/null && return
 # plugin_fetcher.zsh – fetch/update Zsh plugins
 
 ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-$ZDOTDIR/plugins}"
-PLUGIN_FETCH_DRY_RUN="${PLUGIN_FETCH_DRY_RUN:-false}"
-PLUGIN_FETCH_FORCE="${PLUGIN_FETCH_FORCE:-false}"
+PLUGIN_FETCH_DRY_RUN_ENABLED="${PLUGIN_FETCH_DRY_RUN_ENABLED-false}"
+PLUGIN_FETCH_FORCE_ENABLED="${PLUGIN_FETCH_FORCE_ENABLED-false}"
 PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.timestamp"
 
 # plugin_fetch_if_missing_from_entry <entry>
@@ -15,10 +15,10 @@ PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.timestamp"
 # Usage: plugin_fetch_if_missing_from_entry <entry>
 # Env:
 # - ZSH_PLUGINS_DIR: plugin base directory (default: $ZDOTDIR/plugins)
-# - PLUGIN_FETCH_DRY_RUN: when true, do not modify filesystem (default: false)
-# - PLUGIN_FETCH_FORCE: when true, delete and re-clone existing plugin dirs (default: false)
+# - PLUGIN_FETCH_DRY_RUN_ENABLED: when true, do not modify filesystem (default: false)
+# - PLUGIN_FETCH_FORCE_ENABLED: when true, delete and re-clone existing plugin dirs (default: false)
 # Safety:
-# - When PLUGIN_FETCH_FORCE=true and PLUGIN_FETCH_DRY_RUN=false, this removes the plugin directory.
+# - When PLUGIN_FETCH_FORCE_ENABLED=true and PLUGIN_FETCH_DRY_RUN_ENABLED=false, this removes the plugin directory.
 plugin_fetch_if_missing_from_entry() {
   typeset entry="$1"
   typeset -a parts
@@ -35,9 +35,13 @@ plugin_fetch_if_missing_from_entry() {
 
   typeset plugin_path="$ZSH_PLUGINS_DIR/$plugin_name"
 
-  if [[ "$PLUGIN_FETCH_FORCE" == true && -d "$plugin_path" ]]; then
+  if (( $+functions[zsh_env::is_true] )) \
+      && zsh_env::is_true "${PLUGIN_FETCH_FORCE_ENABLED-}" "PLUGIN_FETCH_FORCE_ENABLED" \
+      && [[ -d "$plugin_path" ]]; then
     printf "💥 Forcing re-clone: %s\n" "$plugin_name"
-    [[ "$PLUGIN_FETCH_DRY_RUN" == false ]] && rm -rf "$plugin_path"
+    if (( ! $+functions[zsh_env::is_true] )) || ! zsh_env::is_true "${PLUGIN_FETCH_DRY_RUN_ENABLED-}" "PLUGIN_FETCH_DRY_RUN_ENABLED"; then
+      rm -rf "$plugin_path"
+    fi
   fi
 
   if [[ -d "$plugin_path" ]]; then
@@ -46,7 +50,7 @@ plugin_fetch_if_missing_from_entry() {
 
   if [[ -n "$git_url" ]]; then
     printf "🌐 Cloning %s from %s\n" "$plugin_name" "$git_url"
-    if [[ "$PLUGIN_FETCH_DRY_RUN" == false ]]; then
+    if (( ! $+functions[zsh_env::is_true] )) || ! zsh_env::is_true "${PLUGIN_FETCH_DRY_RUN_ENABLED-}" "PLUGIN_FETCH_DRY_RUN_ENABLED"; then
       git clone "$git_url" "$plugin_path" || {
         printf "❌ Failed to clone: %s\n" "$plugin_name"
         return 1
@@ -70,7 +74,7 @@ plugin_fetch_if_missing_from_entry() {
 # Usage: plugin_update_all
 # Env:
 # - ZSH_PLUGINS_DIR: plugin base directory (default: $ZDOTDIR/plugins)
-# - PLUGIN_FETCH_DRY_RUN: when true, do not modify repos; print intended commands (default: false)
+# - PLUGIN_FETCH_DRY_RUN_ENABLED: when true, do not modify repos; print intended commands (default: false)
 plugin_update_all() {
   emulate -L zsh
   setopt pipe_fail err_return nounset null_glob
@@ -85,7 +89,7 @@ plugin_update_all() {
     plugin_name="${dir##*/}"
     printf "🔧 Updating %s ...\n" "$plugin_name"
 
-    if [[ "$PLUGIN_FETCH_DRY_RUN" == true ]]; then
+    if (( $+functions[zsh_env::is_true] )) && zsh_env::is_true "${PLUGIN_FETCH_DRY_RUN_ENABLED-}" "PLUGIN_FETCH_DRY_RUN_ENABLED"; then
       printf "    ↪ [dry-run] git -C %s pull --ff-only\n" "$dir"
       continue
     fi

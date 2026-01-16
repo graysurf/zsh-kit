@@ -26,20 +26,20 @@ typeset -x CHROME_REMOTE_DEBUG_USER_DATA_DIR_DEFAULT="${CHROME_REMOTE_DEBUG_USER
 # Prompt for confirmation; return non-zero if declined or non-interactive.
 # Usage: _confirm_or_abort <question>
 # Env:
-# - RDP_ASSUME_YES: when true, auto-confirm without prompting.
+# - RDP_ASSUME_YES_ENABLED: when true, auto-confirm without prompting.
 _confirm_or_abort() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
   typeset question="${1-}"
 
-  if [[ -n "${RDP_ASSUME_YES-}" ]] && [[ "${RDP_ASSUME_YES:l}" == (1|y|yes|true) ]]; then
+  if zsh_env::is_true "${RDP_ASSUME_YES_ENABLED-}" "RDP_ASSUME_YES_ENABLED"; then
     return 0
   fi
 
   if [[ ! -t 0 ]]; then
     print -u2 -r -- "🚫 Aborted (non-interactive): $question"
-    print -u2 -r -- "   Tip: set RDP_ASSUME_YES=1 to auto-confirm."
+    print -u2 -r -- "   Tip: set RDP_ASSUME_YES_ENABLED=true to auto-confirm."
     return 1
   fi
 
@@ -232,7 +232,7 @@ _cleanup_singleton_locks() {
 # Create/refresh a cached copy of a browser profile for remote debugging.
 # Usage: _ensure_cached_default_profile <app_name> <source_dir> <target_dir> [local_state_path]
 # Env:
-# - RDP_REFRESH_PROFILE: when true, force refresh of the cached profile.
+# - RDP_REFRESH_PROFILE_ENABLED: when true, force refresh of the cached profile.
 # Notes:
 # - Uses `rsync` when available; falls back to `cp`.
 _ensure_cached_default_profile() {
@@ -261,7 +261,7 @@ _ensure_cached_default_profile() {
   fi
 
   typeset -i refresh=0
-  if [[ -n "${RDP_REFRESH_PROFILE-}" ]] && [[ "${RDP_REFRESH_PROFILE:l}" == (1|y|yes|true) ]]; then
+  if zsh_env::is_true "${RDP_REFRESH_PROFILE_ENABLED-}" "RDP_REFRESH_PROFILE_ENABLED"; then
     refresh=1
   fi
 
@@ -323,8 +323,8 @@ _ensure_cached_default_profile() {
 # Launch a Chromium-based browser with a DevTools remote debugging endpoint.
 # Usage: _launch_rdp <app_name> <exe_path> <port> [user_data_dir]
 # Env:
-# - RDP_ASSUME_YES: when true, auto-confirm prompts.
-# - RDP_DEBUG: when true, write debug log.
+# - RDP_ASSUME_YES_ENABLED: when true, auto-confirm prompts.
+# - RDP_DEBUG_ENABLED: when true, write debug log.
 # - RDP_DEBUG_LOG: debug log path (default: ~/.codex/chrome-rdp.log).
 # Safety:
 # - May terminate browser processes and remove stale profile lock files.
@@ -338,7 +338,7 @@ _launch_rdp() {
   typeset user_data_dir="${4-}"
 
   typeset -i rdp_debug=0
-  if [[ -n "${RDP_DEBUG-}" ]] && [[ "${RDP_DEBUG:l}" == (1|y|yes|true) ]]; then
+  if zsh_env::is_true "${RDP_DEBUG_ENABLED-}" "RDP_DEBUG_ENABLED"; then
     rdp_debug=1
   fi
   typeset rdp_debug_log="${RDP_DEBUG_LOG:-${HOME}/.codex/chrome-rdp.log}"
@@ -544,10 +544,10 @@ _launch_rdp() {
 # Env:
 # - CHROME_REMOTE_DEBUG_PORT_DEFAULT: remote debugging port (default: 19222).
 # - CHROME_REMOTE_DEBUG_USER_DATA_DIR: explicit profile dir (skip auto-caching).
-# - RDP_USE_ISOLATED_PROFILE: when true, use CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT.
+# - RDP_USE_ISOLATED_PROFILE_ENABLED: when true, use CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT.
 # - CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT: isolated profile dir (default: ~/.codex/chrome-profile).
-# - RDP_ASSUME_YES: when true, auto-confirm prompts.
-# - RDP_DEBUG: when true, write debug log.
+# - RDP_ASSUME_YES_ENABLED: when true, auto-confirm prompts.
+# - RDP_DEBUG_ENABLED: when true, write debug log.
 # - RDP_DEBUG_LOG: debug log path.
 # Safety:
 # - May quit and/or kill Chrome processes to apply remote debugging flags.
@@ -557,13 +557,13 @@ chrome-rdp() {
 
   # Profile selection:
   #   1) If CHROME_REMOTE_DEBUG_USER_DATA_DIR is set, use it.
-  #   2) Else if RDP_USE_ISOLATED_PROFILE=true, use default isolated profile dir.
+  #   2) Else if RDP_USE_ISOLATED_PROFILE_ENABLED=true, use default isolated profile dir.
   #   3) Else if CHROME_REMOTE_DEBUG_USER_DATA_DIR_DEFAULT is set, use it.
   #   4) Else use a cached copy of Default profile (with Local State).
   typeset user_data_dir=''
   if [[ -n "${CHROME_REMOTE_DEBUG_USER_DATA_DIR-}" ]]; then
     user_data_dir="${CHROME_REMOTE_DEBUG_USER_DATA_DIR}"
-  elif [[ -n "${RDP_USE_ISOLATED_PROFILE-}" ]] && [[ "${RDP_USE_ISOLATED_PROFILE:l}" == (1|y|yes|true) ]]; then
+  elif zsh_env::is_true "${RDP_USE_ISOLATED_PROFILE_ENABLED-}" "RDP_USE_ISOLATED_PROFILE_ENABLED"; then
     user_data_dir="${CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT}"
   elif [[ -n "${CHROME_REMOTE_DEBUG_USER_DATA_DIR_DEFAULT-}" ]]; then
     user_data_dir="${CHROME_REMOTE_DEBUG_USER_DATA_DIR_DEFAULT}"

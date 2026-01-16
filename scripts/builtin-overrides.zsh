@@ -7,8 +7,10 @@
 # - cat: prefer bat (plain output; no pager)
 # - history: run fzf-history when called with no args
 #
-# Disable all overrides by setting:
-#   export SHELL_UTILS_NO_BUILTIN_OVERRIDES=1
+# Configure overrides:
+# - Enabled by default.
+# - Disable by setting:
+#   export SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED=false
 #
 # Notes:
 # - Wrappers are designed to be "quiet" in non-interactive contexts.
@@ -27,7 +29,16 @@ cd() {
 
   builtin cd "$@" || return
 
-  if [[ ! -o interactive || -n "${SHELL_UTILS_NO_BUILTIN_OVERRIDES-}" || ! -t 1 ]]; then
+  typeset overrides_enabled='true'
+  if (( ${+SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED} )); then
+    if zsh_env::is_true "${SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED-}" "SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED"; then
+      overrides_enabled='true'
+    else
+      overrides_enabled='false'
+    fi
+  fi
+
+  if [[ ! -o interactive || ! -t 1 || "$overrides_enabled" != true ]]; then
     return 0
   fi
 
@@ -47,7 +58,13 @@ cat() {
   emulate -L zsh
 
   # Non-interactive shell (scripts) or explicit opt-out: fall back to the real `cat`.
-  if [[ ! -o interactive || -n "${SHELL_UTILS_NO_BUILTIN_OVERRIDES-}" ]]; then
+  if [[ ! -o interactive ]]; then
+    command cat "$@"
+    return $?
+  fi
+
+  if (( ${+SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED} )) \
+      && ! zsh_env::is_true "${SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED-}" "SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED"; then
     command cat "$@"
     return $?
   fi
@@ -79,7 +96,13 @@ history() {
   emulate -L zsh
   setopt pipe_fail
 
-  if [[ ! -o interactive || -n "${SHELL_UTILS_NO_BUILTIN_OVERRIDES-}" ]]; then
+  if [[ ! -o interactive ]]; then
+    builtin history "$@"
+    return $?
+  fi
+
+  if (( ${+SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED} )) \
+      && ! zsh_env::is_true "${SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED-}" "SHELL_UTILS_BUILTIN_OVERRIDES_ENABLED"; then
     builtin history "$@"
     return $?
   fi
@@ -91,4 +114,3 @@ history() {
 
   builtin history "$@"
 }
-

@@ -53,16 +53,19 @@ export HISTTIMEFORMAT='%F %T '
 # Bootstrap flags
 # ──────────────────────────────
 export ZSH_DEBUG="${ZSH_DEBUG:-0}"
-export ZSH_BOOT_WEATHER="${ZSH_BOOT_WEATHER:-true}"
-export ZSH_BOOT_QUOTE="${ZSH_BOOT_QUOTE:-true}"
+export ZSH_BOOT_WEATHER_ENABLED="${ZSH_BOOT_WEATHER_ENABLED-true}"
+export ZSH_BOOT_QUOTE_ENABLED="${ZSH_BOOT_QUOTE_ENABLED-true}"
 
 # ──────────────────────────────
 # Startup banner (optional)
 # ──────────────────────────────
 # Note: This runs in interactive shells (login or not). The sourced scripts include their own
 # "run once" guards to avoid repeating the banner in nested shells.
-[[ "$ZSH_BOOT_WEATHER" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.zsh"
-[[ "$ZSH_BOOT_QUOTE" == true ]] && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.zsh"
+typeset preload_zsh="$ZSH_BOOTSTRAP_SCRIPT_DIR/00-preload.zsh"
+[[ -r "$preload_zsh" ]] && source "$preload_zsh"
+
+zsh_env::is_true "${ZSH_BOOT_WEATHER_ENABLED-}" "ZSH_BOOT_WEATHER_ENABLED" && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/weather.zsh"
+zsh_env::is_true "${ZSH_BOOT_QUOTE_ENABLED-}" "ZSH_BOOT_QUOTE_ENABLED" && source "$ZSH_BOOTSTRAP_SCRIPT_DIR/quote-init.zsh"
 
 # ──────────────────────────────
 # Bootstrap

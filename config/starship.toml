@@ -38,7 +38,7 @@ format = "[$output](bold #ffcb6b) "
 [custom.codex_rate_limits]
 symbol = "🌟 "
 command = "codex-starship --time-format '%m-%d %H:%M'"
-when = "command -v codex-starship >/dev/null 2>&1 && case \"${CODEX_STARSHIP_ENABLED:-}\" in 1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]|[Oo][Nn]) : ;; *) exit 1 ;; esac"
+when = "command -v codex-starship >/dev/null 2>&1 && codex-starship --is-enabled"
 format = "[$symbol$output ](bold #637777)"
 
 [hostname]

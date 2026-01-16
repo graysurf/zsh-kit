@@ -37,7 +37,7 @@ Links:
   - Default disabled: `CODEX_STARSHIP_ENABLED=false`
   - When disabled: prints nothing and does not refresh.
 - 5h visibility is supported:
-  - Configurable via env: `CODEX_STARSHIP_SHOW_5H` (default: `true`).
+  - Configurable via env: `CODEX_STARSHIP_SHOW_5H_ENABLED` (default: `true`).
 - Failure / cache behavior (stale-while-revalidate):
   - If inputs are missing, parsing fails, or rate limits cannot be fetched: print nothing and exit `0` (module hidden).
   - If a cache exists: print it immediately (even if stale).
@@ -120,7 +120,7 @@ Links:
     - [x] Implement stale-while-revalidate behavior (print cached output immediately; refresh in background).
     - [x] Add `--time-format` for weekly reset time formatting.
     - [x] Add `--refresh` for a blocking refresh (debug / warm cache).
-    - [x] Add env toggles (`CODEX_STARSHIP_ENABLED`, `CODEX_STARSHIP_TTL`, `CODEX_STARSHIP_SHOW_5H`).
+    - [x] Add env toggles (`CODEX_STARSHIP_ENABLED`, `CODEX_STARSHIP_TTL`, `CODEX_STARSHIP_SHOW_5H_ENABLED`).
     - [x] Add Starship custom module config (`config/starship.toml`).
   - Exit Criteria:
     - [x] Starship-facing output matches the contract for both default and `--no-5h`.

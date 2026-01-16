@@ -9,7 +9,7 @@ and a bit of mechanical sarcasm into each terminal startup — built entirely fr
 
 - 📜 Displays a **random inspirational quote** at login
 - 🧠 Shows a **dynamic emoji preamble** with a boot message (because shells deserve ceremony)
-- 🌦 (Optional) Prints a cached wttr.in weather snapshot (`bootstrap/weather.zsh`, 1-hour TTL) when `ZSH_BOOT_WEATHER=true`
+- 🌦 (Optional) Prints a cached wttr.in weather snapshot (`bootstrap/weather.zsh`, 1-hour TTL) when `ZSH_BOOT_WEATHER_ENABLED=true`
 - 🌐 Fetches fresh quotes from a public API (`zenquotes.io`) in the background
 - 🗂 Stores up to 100 recent quotes locally in a text file for offline fallback
 - 🔒 Prevents duplicate execution when sourced multiple times
@@ -76,7 +76,7 @@ Need weather tweaks? Set `ZSH_WEATHER_URL='https://wttr.in/Taipei?0'` or `ZSH_WE
 ...
 ```
 
-If `ZSH_BOOT_WEATHER=true`, the login banner is preceded by the cached wttr.in snapshot managed by `bootstrap/weather.zsh` (refreshes once per hour; override via `ZSH_WEATHER_INTERVAL=<seconds>`), e.g.:
+If `ZSH_BOOT_WEATHER_ENABLED=true`, the login banner is preceded by the cached wttr.in snapshot managed by `bootstrap/weather.zsh` (refreshes once per hour; override via `ZSH_WEATHER_INTERVAL=<seconds>`), e.g.:
 
 ```text
 Weather report: Taipei City, Taiwan

@@ -2,7 +2,7 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| DRAFT | 2026-01-16 | 2026-01-16 |
+| IN PROGRESS | 2026-01-16 | 2026-01-16 |
 
 Links:
 
@@ -120,55 +120,60 @@ Proposed project rules (this repo):
 
 Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason: ...` or a nested `- Reason: ...`) before close-progress-pr can complete. Step 4 is excluded (post-merge / wrap-up).
 
-- [ ] Step 0: Alignment / prerequisites
+- [x] Step 0: Alignment / prerequisites
   - Work Items:
-    - [ ] Review and confirm the Inventory table (env list + renames + touched files).
-    - [ ] Confirm explicit exclusions for upstream env vars (e.g. `SHELL_SESSIONS_DISABLE`, `NONINTERACTIVE`).
-    - [ ] Confirm whether any additional boolean env flags should be added to Inventory before implementation starts.
+    - [x] Review and confirm the Inventory table (env list + renames + touched files).
+    - [x] Confirm explicit exclusions for upstream env vars (e.g. `SHELL_SESSIONS_DISABLE`, `NONINTERACTIVE`).
+    - [x] Confirm whether any additional boolean env flags should be added to Inventory before implementation starts.
   - Artifacts:
     - `docs/progress/<YYYYMMDD>_<feature_slug>.md` (this file)
     - Inventory table (in this file)
   - Exit Criteria:
-    - [ ] Requirements, scope, and acceptance criteria are aligned.
-    - [ ] Data flow and I/O contract are defined.
-    - [ ] Risks and rollout plan are defined (including cross-repo coordination for `$CODEX_HOME`).
-    - [ ] Verification commands are defined:
+    - [x] Requirements, scope, and acceptance criteria are aligned.
+    - [x] Data flow and I/O contract are defined.
+    - [x] Risks and rollout plan are defined (including cross-repo coordination for `$CODEX_HOME`).
+    - [x] Verification commands are defined:
       - `./tools/check.zsh --all`
       - `./tools/audit-env-bools.zsh --check`
-- [ ] Step 1: Minimum viable output (MVP)
+- [x] Step 1: Minimum viable output (MVP)
   - Work Items:
-    - [ ] Introduce a shared boolean env parser helper (single source of truth).
-    - [ ] Apply env renames + strict parsing across all Inventory flags in this repo.
-    - [ ] Update `.private/priv-env.zsh` to the new names and `true|false` values.
-    - [ ] Update `$CODEX_HOME` desktop-notify scripts/docs for `CODEX_DESKTOP_NOTIFY*_ENABLED`.
+    - [x] Introduce a shared boolean env parser helper (single source of truth).
+    - [x] Apply env renames + strict parsing across all Inventory flags in this repo.
+    - [x] Update `.private/priv-env.zsh` to the new names and `true|false` values.
+    - [x] Update `$CODEX_HOME` desktop-notify scripts/docs for `CODEX_DESKTOP_NOTIFY*_ENABLED`.
   - Artifacts:
     - Updated sources under `.private/`, `bootstrap/`, `scripts/`, `tools/`, `config/`, `docs/`
-    - Updated `$CODEX_HOME/skills/tools/devex/desktop-notify/` sources (separate PR)
+    - Updated `$CODEX_HOME/skills/tools/devex/desktop-notify/` sources
   - Exit Criteria:
-    - [ ] `./tools/check.zsh --all` passes (record output in PR Testing).
-    - [ ] `.private/priv-env.zsh` uses only the new names and `true|false` for Inventory flags.
-    - [ ] Desktop notifications still work with the new env flags (smoke via `$CODEX_HOME/.../project-notify.sh`).
-- [ ] Step 2: Expansion / integration
+    - [x] `./tools/check.zsh --all` passes (record output in PR Testing).
+    - [x] `.private/priv-env.zsh` uses only the new names and `true|false` for Inventory flags.
+    - [x] Desktop notifications still work with the new env flags (smoke via `$CODEX_HOME/.../project-notify.sh`).
+- [x] Step 2: Expansion / integration
   - Work Items:
-    - [ ] Add `tools/audit-env-bools.zsh --check` and integrate into `./tools/check.zsh --all`.
-    - [ ] Remove remaining `0/1` examples for Inventory flags in docs/config.
+    - [x] Add `tools/audit-env-bools.zsh --check` and integrate into `./tools/check.zsh --all`.
+    - [x] Remove remaining `0/1` examples for Inventory flags in docs/config.
   - Artifacts:
     - `tools/audit-env-bools.zsh`
     - Updated docs under `docs/` and config under `config/`
   - Exit Criteria:
-    - [ ] `./tools/audit-env-bools.zsh --check` passes.
-    - [ ] No Inventory flags remain with legacy names or `0/1` examples in tracked docs/config.
-- [ ] Step 3: Validation / testing
+    - [x] `./tools/audit-env-bools.zsh --check` passes.
+    - [x] No Inventory flags remain with legacy names or `0/1` examples in tracked docs/config.
+- [x] Step 3: Validation / testing
   - Work Items:
-    - [ ] Run and record full repo validation (`./tools/check.zsh --all`).
-    - [ ] Add/adjust targeted smoke commands for key modules (Codex feature, plugin fetcher, chrome RDP helper).
+    - [x] Run and record full repo validation (`./tools/check.zsh --all`).
+    - [x] Add/adjust targeted smoke commands for key modules (Codex feature, plugin fetcher, chrome RDP helper).
   - Artifacts:
     - PR `Testing` notes (pass/failed/skipped per command)
     - Any logs under `out/` (when produced)
   - Exit Criteria:
-    - [ ] Validation and test commands executed with results recorded (pass/failed/skipped).
-    - [ ] Smoke run with representative configuration (including `.private/priv-env.zsh`).
-    - [ ] Evidence exists (logs/outputs/commands) in PR description or `out/`.
+    - [x] Validation and test commands executed with results recorded (pass/failed/skipped).
+    - [x] Smoke run with representative configuration (including `.private/priv-env.zsh`).
+    - [x] Evidence exists (logs/outputs/commands) in PR description or `out/`.
+    - Results:
+      - `./tools/audit-env-bools.zsh --check`: pass
+      - `./tools/check.zsh --all`: pass (Semgrep reports 4 findings; JSON: `out/semgrep/semgrep-zsh-20260116-101642.json`)
+      - `./tools/audit-fzf-def-docblocks.zsh --check`: pass (report: `cache/fzf-def-docblocks-audit.txt`)
+      - `$CODEX_HOME/scripts/check.sh --all`: pass (118 tests; Semgrep JSON: `$CODEX_HOME/out/semgrep/semgrep-codex-kit-20260116-101515.json`)
 - [ ] Step 4: Release / wrap-up
   - Work Items:
     - [ ] Update changelog and entry points if needed (`CHANGELOG.md`, `README.md`, docs index links).
@@ -183,7 +188,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
 ## Modules
 
 - `tools/audit-env-bools.zsh`: enforce boolean env conventions (`*_ENABLED`, `true|false` only).
-- `scripts/_internal/<new helper>.zsh`: shared `true|false` env parsing with warn+false on invalid.
+- `bootstrap/00-preload.zsh`: shared `true|false` env parsing with warn+false on invalid (`zsh_env::is_true`).
 - `bootstrap/`: adopt renamed `*_ENABLED` env flags (plugin fetcher, install-tools).
 - `scripts/_features/codex/`: adopt renamed `*_ENABLED` env flags and strict parsing.
 - `scripts/chrome-devtools-rdp.zsh`: adopt renamed `*_ENABLED` env flags and strict parsing.

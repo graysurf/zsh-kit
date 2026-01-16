@@ -29,14 +29,13 @@ _codex_require_allow_dangerous() {
 
   local caller=''
   caller="${1-}"
-  local allow_dangerous=''
-  allow_dangerous="${CODEX_ALLOW_DANGEROUS-}"
-  allow_dangerous="${allow_dangerous:l}"
-  if [[ "$allow_dangerous" != 'true' ]]; then
+  local allow_dangerous_raw=''
+  allow_dangerous_raw="${CODEX_ALLOW_DANGEROUS_ENABLED-}"
+  if ! zsh_env::is_true "$allow_dangerous_raw" "CODEX_ALLOW_DANGEROUS_ENABLED"; then
     if [[ -n "$caller" ]]; then
-      print -u2 -r -- "$caller: disabled (set CODEX_ALLOW_DANGEROUS=true)"
+      print -u2 -r -- "$caller: disabled (set CODEX_ALLOW_DANGEROUS_ENABLED=true)"
     else
-      print -u2 -r -- "codex: disabled (set CODEX_ALLOW_DANGEROUS=true)"
+      print -u2 -r -- "codex: disabled (set CODEX_ALLOW_DANGEROUS_ENABLED=true)"
     fi
     return 1
   fi
@@ -487,7 +486,7 @@ _codex_tools_usage() {
   print -u"$fd" -r -- '  advice [question]                              Get actionable engineering advice'
   print -u"$fd" -r -- '  knowledge [concept]                            Get clear explanation and angles for a concept'
   print -u"$fd" -r --
-  print -u"$fd" -r -- 'Safety: codex exec requires CODEX_ALLOW_DANGEROUS=true'
+  print -u"$fd" -r -- 'Safety: codex exec requires CODEX_ALLOW_DANGEROUS_ENABLED=true'
   print -u"$fd" -r -- 'Config: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
   return 0
 }

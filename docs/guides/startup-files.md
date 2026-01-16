@@ -118,7 +118,7 @@ What it does:
    (with a fallback for manual sourcing).
 2. Ensures cached CLI wrappers exist and prepends `$ZSH_CACHE_DIR/wrappers/bin` to `path` so that
    subshells can use wrapper commands without loading the whole config.
-3. Configures history behavior and a few boot flags (`ZSH_DEBUG`, `ZSH_BOOT_WEATHER`, `ZSH_BOOT_QUOTE`).
+3. Configures history behavior and a few boot flags (`ZSH_DEBUG`, `ZSH_BOOT_WEATHER_ENABLED`, `ZSH_BOOT_QUOTE_ENABLED`).
 4. Optionally shows the login banner (weather + quote).
 5. Sources `bootstrap/bootstrap.zsh`, which loads the rest of the repo modules under `scripts/`.
 
@@ -135,13 +135,13 @@ env -i HOME="$HOME" zsh -c 'print -r -- "$ZDOTDIR"; print -r -- "$ZSH_CACHE_DIR"
 Interactive non-login shells (common in GUI apps like VS Code) should still find Homebrew tools:
 
 ```bash
-env -i HOME="$HOME" ZSH_BOOT_WEATHER=false ZSH_BOOT_QUOTE=false zsh -i -c 'print -r -- "$HISTFILE"; command -v brew; command -v shuf; exit'
+env -i HOME="$HOME" ZSH_BOOT_WEATHER_ENABLED=false ZSH_BOOT_QUOTE_ENABLED=false zsh -i -c 'print -r -- "$HISTFILE"; command -v brew; command -v shuf; exit'
 ```
 
 Login + interactive shells should load everything (including `.zprofile`):
 
 ```bash
-ZSH_BOOT_WEATHER=false ZSH_BOOT_QUOTE=false zsh -il -c 'print -r -- "login=$options[login] interactive=$options[interactive]"; exit'
+ZSH_BOOT_WEATHER_ENABLED=false ZSH_BOOT_QUOTE_ENABLED=false zsh -il -c 'print -r -- "login=$options[login] interactive=$options[interactive]"; exit'
 ```
 
 ---

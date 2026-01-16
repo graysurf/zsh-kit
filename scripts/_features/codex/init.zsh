@@ -2,7 +2,7 @@
 #
 # Enables:
 # - codex secrets helpers (codex-use/codex-refresh-auth/codex-auto-refresh)
-# - codex-tools (Codex skill wrappers; guarded by CODEX_ALLOW_DANGEROUS)
+# - codex-tools (Codex skill wrappers; guarded by CODEX_ALLOW_DANGEROUS_ENABLED)
 # - codex-starship (Starship custom module helper; guarded by CODEX_STARSHIP_ENABLED)
 # - Completion for codex-tools (optional; feature-gated via fpath)
 
