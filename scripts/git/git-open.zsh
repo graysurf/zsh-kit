@@ -726,21 +726,26 @@ _git_open_compare() {
   _git_open_open_url "$target_url" "🔀 Opened"
 }
 
-# _git_open_try_gh_pr_view [repo]
-# Try `gh pr view --web`, optionally scoped to a repo.
-# Usage: _git_open_try_gh_pr_view [repo]
+# _git_open_try_gh_pr_view [repo] [selector]
+# Try `gh pr view --web`, optionally scoped to a repo and selector (number/url/branch).
+# Usage: _git_open_try_gh_pr_view [repo] [selector]
 _git_open_try_gh_pr_view() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
   typeset repo="${1-}"
+  typeset selector="${2-}"
+  typeset -a args=(pr view --web)
 
   if [[ -n "$repo" ]]; then
-    gh pr view --web --repo "$repo" >/dev/null 2>&1 || return 1
-  else
-    gh pr view --web >/dev/null 2>&1 || return 1
+    args+=(--repo "$repo")
   fi
 
+  if [[ -n "$selector" ]]; then
+    args+=("$selector")
+  fi
+
+  gh "${args[@]}" >/dev/null 2>&1 || return 1
   print -r -- "🧷 Opened PR via gh"
 }
 
@@ -831,7 +836,7 @@ _git_open_pr() {
               continue
             fi
             gh_seen["$repo"]=1
-            if _git_open_try_gh_pr_view "$repo"; then
+            if _git_open_try_gh_pr_view "$repo" "$remote_branch"; then
               return 0
             fi
           else
@@ -839,7 +844,7 @@ _git_open_pr() {
               continue
             fi
             gh_seen[default]=1
-            if _git_open_try_gh_pr_view; then
+            if _git_open_try_gh_pr_view '' "$remote_branch"; then
               return 0
             fi
           fi
