@@ -219,7 +219,7 @@ This is a two-step flow:
 
 #### ⚙️ Environment variables
 
-- `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `5`)
+- `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `10`)
 - `FZF_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
 
 #### ⚙️ Options

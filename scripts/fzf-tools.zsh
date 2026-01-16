@@ -457,7 +457,7 @@ fzf-history() {
 # - Helper used by fzf-file.
 _fzf_file_select() {
   typeset default_query="${1-}"
-  fd --type f --hidden --follow --hidden --exclude .git --max-depth=${FZF_FILE_MAX_DEPTH:-5} 2>/dev/null |
+  fd --type f --hidden --follow --hidden --exclude .git --max-depth=${FZF_FILE_MAX_DEPTH:-10} 2>/dev/null |
     fzf --ansi \
         --query="$default_query" \
         --preview 'bat --color=always --style=numbers --line-range :100 {}'
@@ -1506,7 +1506,7 @@ fzf-def() {
 # Pick a directory, then browse files with preview.
 # Usage: fzf-directory [--vi|--vscode] [query]
 # Env:
-# - FZF_FILE_MAX_DEPTH: max depth for file listing (default: 5).
+# - FZF_FILE_MAX_DEPTH: max depth for file listing (default: 10).
 # - FZF_FILE_OPEN_WITH: file opener for Step2: `vi` (default) or `vscode`.
 # Notes:
 # - `--vi` / `--vscode` override `FZF_FILE_OPEN_WITH`.
@@ -1527,7 +1527,7 @@ fzf-directory() {
   query_parts=("${reply[@]}")
 
   typeset dir_query="${query_parts[*]}" dir_result='' dir=''
-  typeset max_depth="${FZF_FILE_MAX_DEPTH:-5}"
+  typeset max_depth="${FZF_FILE_MAX_DEPTH:-10}"
 
   while true; do
     dir_result=$(
