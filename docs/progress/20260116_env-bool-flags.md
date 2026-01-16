@@ -7,6 +7,7 @@
 Links:
 
 - PR: https://github.com/graysurf/zsh-kit/pull/29
+- CODEX_HOME PR: https://github.com/graysurf/codex-kit/pull/new/refactor/desktop-notify-env-enabled
 - Docs: TBD
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
