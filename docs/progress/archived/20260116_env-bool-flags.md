@@ -2,14 +2,14 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2026-01-16 | 2026-01-16 |
+| DONE | 2026-01-16 | 2026-01-16 |
 
 Links:
 
 - PR: https://github.com/graysurf/zsh-kit/pull/29
-- CODEX_HOME PR: https://github.com/graysurf/codex-kit/pull/new/refactor/desktop-notify-env-enabled
-- Docs: TBD
-- Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
+- CODEX_HOME PR: https://github.com/graysurf/codex-kit/pull/47
+- Docs: None
+- Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
 ## Goal
 
@@ -66,7 +66,7 @@ Links:
 
 ### Intermediate Artifacts
 
-- `docs/progress/20260116_env-bool-flags.md` (this file)
+- `docs/progress/archived/20260116_env-bool-flags.md` (this file)
 - `out/` artifacts produced by validation (e.g. Semgrep JSON from `./tools/check.zsh --semgrep`) (optional)
 
 ## Design / Decisions
@@ -175,16 +175,15 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
       - `./tools/check.zsh --all`: pass (Semgrep reports 4 findings; JSON: `out/semgrep/semgrep-zsh-20260116-101642.json`)
       - `./tools/audit-fzf-def-docblocks.zsh --check`: pass (report: `cache/fzf-def-docblocks-audit.txt`)
       - `$CODEX_HOME/scripts/check.sh --all`: pass (118 tests; Semgrep JSON: `$CODEX_HOME/out/semgrep/semgrep-codex-kit-20260116-101515.json`)
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
-    - [ ] Update changelog and entry points if needed (`CHANGELOG.md`, `README.md`, docs index links).
-    - [ ] Remove any temporary migration notes; set progress Status to `DONE` and archive.
+    - [x] Open $CODEX_HOME follow-up PR: https://github.com/graysurf/codex-kit/pull/47
+    - [x] Set Status to `DONE`, archive progress file, and update index.
+    - [x] Patch PR `## Progress` link to point to the base branch (post-merge).
   - Artifacts:
-    - `CHANGELOG.md` (if updated)
     - Archived progress file under `docs/progress/archived/`
   - Exit Criteria:
-    - [ ] Changes recorded and docs entry points updated.
-    - [ ] Cleanup completed (remove temporary notes/files; set Status to `DONE`; update index).
+    - [x] Cleanup completed (set Status to `DONE`; move to `archived/`; update index; patch PR Progress link).
 
 ## Modules
 
