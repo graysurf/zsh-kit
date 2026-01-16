@@ -38,6 +38,59 @@ _codex_starship_truthy() {
   zsh_env::is_true "$raw" "$name"
 }
 
+# _codex_starship_ensure_ansi_utils
+# Ensure ANSI helpers are available (best-effort).
+# Usage: _codex_starship_ensure_ansi_utils
+_codex_starship_ensure_ansi_utils() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  if (( ${+functions[ansi_theme_night_owl::format_percent_token]} )); then
+    return 0
+  fi
+
+  typeset zdotdir="${ZDOTDIR-}"
+  if [[ -z "${zdotdir}" ]]; then
+    typeset preload_path="${_ZSH_BOOTSTRAP_PRELOAD_PATH-}"
+    if [[ -n "${preload_path}" ]]; then
+      preload_path="${preload_path:A}"
+      zdotdir="${preload_path:h:h}"
+    fi
+  fi
+  [[ -n "${zdotdir}" ]] || zdotdir="$HOME/.config/zsh"
+
+  typeset script_dir="${ZSH_SCRIPT_DIR:-${zdotdir}/scripts}"
+  typeset target="${script_dir}/ansi-utils.zsh"
+  [[ -r "${target}" ]] || return 1
+  source "${target}" || return 1
+
+  (( ${+functions[ansi_theme_night_owl::format_percent_token]} )) || return 1
+  return 0
+}
+
+# _codex_starship_color_enabled
+# Return 0 when ANSI colors should be included in output.
+# Usage: _codex_starship_color_enabled
+_codex_starship_color_enabled() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  if [[ -n "${NO_COLOR-}" ]]; then
+    return 1
+  fi
+
+  if (( ${+CODEX_STARSHIP_COLOR_ENABLED} )); then
+    _codex_starship_truthy "${CODEX_STARSHIP_COLOR_ENABLED-}" "CODEX_STARSHIP_COLOR_ENABLED" || return 1
+  else
+    # Default: enable when running in a TTY or under Starship.
+    if ! [[ -t 1 || -n "${STARSHIP_SESSION_KEY-}" || -n "${STARSHIP_SHELL-}" ]]; then
+      return 1
+    fi
+  fi
+
+  _codex_starship_ensure_ansi_utils
+}
+
 # ────────────────────────────────────────────────────────
 # Auth & identity
 # ────────────────────────────────────────────────────────
@@ -1039,6 +1092,11 @@ codex-starship() {
     name_prefix="${name} "
   fi
 
+  typeset color_enabled='false'
+  if _codex_starship_color_enabled; then
+    color_enabled='true'
+  fi
+
   typeset cached_out='' cached_is_fresh='false'
   if [[ -f "$cache_file" ]]; then
     typeset cached_fetched_at='' cached_non_weekly_label='' cached_non_weekly_remaining=''
@@ -1073,10 +1131,24 @@ codex-starship() {
     fi
 
     if [[ -n "$cached_weekly_remaining" && -n "$cached_weekly_reset" ]]; then
+      typeset cached_weekly_token='' cached_weekly_display=''
+      cached_weekly_token="W:${cached_weekly_remaining}%"
+      cached_weekly_display="${cached_weekly_token}"
+      if [[ "${color_enabled}" == 'true' ]]; then
+        cached_weekly_display="$(ansi_theme_night_owl::format_percent_token "${cached_weekly_token}" "${color_enabled}" 2>/dev/null)" || cached_weekly_display="${cached_weekly_token}"
+      fi
+
       if [[ "$show_5h" == 'true' && -n "$cached_non_weekly_label" && -n "$cached_non_weekly_remaining" ]]; then
-        cached_out="${name_prefix}${cached_non_weekly_label}:${cached_non_weekly_remaining}% W:${cached_weekly_remaining}% ${cached_weekly_reset}"
+        typeset cached_non_weekly_token='' cached_non_weekly_display=''
+        cached_non_weekly_token="${cached_non_weekly_label}:${cached_non_weekly_remaining}%"
+        cached_non_weekly_display="${cached_non_weekly_token}"
+        if [[ "${color_enabled}" == 'true' ]]; then
+          cached_non_weekly_display="$(ansi_theme_night_owl::format_percent_token "${cached_non_weekly_token}" "${color_enabled}" 2>/dev/null)" || cached_non_weekly_display="${cached_non_weekly_token}"
+        fi
+
+        cached_out="${name_prefix}${cached_non_weekly_display} ${cached_weekly_display} ${cached_weekly_reset}"
       else
-        cached_out="${name_prefix}W:${cached_weekly_remaining}% ${cached_weekly_reset}"
+        cached_out="${name_prefix}${cached_weekly_display} ${cached_weekly_reset}"
       fi
     fi
   fi
@@ -1102,12 +1174,13 @@ codex-starship() {
     return 0
   fi
 
-  (
-    emulate -L zsh
-    setopt pipe_fail nounset
-
-    typeset lock_dir="$cache_dir/$key.refresh.lock"
-    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
+	  (
+	    emulate -L zsh
+	    setopt pipe_fail nounset
+	    typeset color_enabled="${color_enabled-false}"
+	
+	    typeset lock_dir="$cache_dir/$key.refresh.lock"
+	    typeset stale_after="${CODEX_STARSHIP_LOCK_STALE_SECONDS:-90}"
     if ! mkdir "$lock_dir" >/dev/null 2>&1; then
       _codex_starship_clear_stale_refresh_lock "$lock_dir" "$now_epoch" "$stale_after" >/dev/null 2>&1 || true
       mkdir "$lock_dir" >/dev/null 2>&1 || exit 0
@@ -1179,14 +1252,35 @@ codex-starship() {
     weekly_reset="$(_codex_starship_epoch_utc_format "$weekly_reset_epoch" "$time_format" 2>/dev/null)" || weekly_reset=''
     [[ -n "$weekly_reset" ]] || exit 0
 
-    typeset out=''
-    if [[ "$show_5h" == 'true' ]]; then
-      [[ -n "$non_weekly_label" && -n "$non_weekly_remaining" ]] || exit 0
-      out="${name_prefix}${non_weekly_label}:${non_weekly_remaining}% W:${weekly_remaining}% ${weekly_reset}"
-    else
-      out="${name_prefix}W:${weekly_remaining}% ${weekly_reset}"
-    fi
-    [[ -n "$out" ]] || exit 0
+	    typeset out=''
+	    if [[ "$show_5h" == 'true' ]]; then
+	      [[ -n "$non_weekly_label" && -n "$non_weekly_remaining" ]] || exit 0
+	      typeset weekly_token='' weekly_display=''
+	      weekly_token="W:${weekly_remaining}%"
+	      weekly_display="${weekly_token}"
+	      if [[ "${color_enabled}" == 'true' ]]; then
+	        weekly_display="$(ansi_theme_night_owl::format_percent_token "${weekly_token}" "${color_enabled}" 2>/dev/null)" || weekly_display="${weekly_token}"
+	      fi
+
+	      typeset non_weekly_token='' non_weekly_display=''
+	      non_weekly_token="${non_weekly_label}:${non_weekly_remaining}%"
+	      non_weekly_display="${non_weekly_token}"
+	      if [[ "${color_enabled}" == 'true' ]]; then
+	        non_weekly_display="$(ansi_theme_night_owl::format_percent_token "${non_weekly_token}" "${color_enabled}" 2>/dev/null)" || non_weekly_display="${non_weekly_token}"
+	      fi
+
+	      out="${name_prefix}${non_weekly_display} ${weekly_display} ${weekly_reset}"
+	    else
+	      typeset weekly_token='' weekly_display=''
+	      weekly_token="W:${weekly_remaining}%"
+	      weekly_display="${weekly_token}"
+	      if [[ "${color_enabled}" == 'true' ]]; then
+	        weekly_display="$(ansi_theme_night_owl::format_percent_token "${weekly_token}" "${color_enabled}" 2>/dev/null)" || weekly_display="${weekly_token}"
+	      fi
+
+	      out="${name_prefix}${weekly_display} ${weekly_reset}"
+	    fi
+	    [[ -n "$out" ]] || exit 0
 
     typeset tmp_cache=''
     tmp_cache="$(mktemp "${cache_file}.XXXXXX" 2>/dev/null)" || tmp_cache=''
