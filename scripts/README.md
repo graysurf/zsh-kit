@@ -5,6 +5,9 @@ This document defines conventions for functions defined under `scripts/`.
 Note: `scripts/interactive/**` contains interactive entrypoints (key bindings, plugin hooks, completion init).
 These files are allowed to do work at source-time and may depend on an interactive TTY; see "Interactive scripts" below.
 
+This file is intended to be the single source of truth for `scripts/**` conventions; prefer linking here over creating
+additional parallel docs.
+
 Scope:
 
 - Zsh modules and helpers in `scripts/**/*.zsh`
@@ -91,6 +94,10 @@ Rationale:
 For wrappers that intentionally preserve user/global options (e.g. overriding a builtin like `cd`):
 
 - It can be correct to omit `emulate -L zsh` and/or `nounset` to preserve interactive semantics.
+- Avoid enabling `err_return` by default (failures in optional UX helpers like `eza`, `bat`, or `fzf` should not abort the
+  wrapper nor change the underlying command’s success/failure semantics).
+- Wrappers must be quiet in non-interactive contexts: at minimum, gate with `[[ -o interactive ]]` and avoid producing
+  extra output when stdout is not a TTY (`! -t 1`).
 - If you do use `emulate -L zsh`, be explicit about any options you need to match the user's expectations.
 
 ### "Flow control via non-zero return"
@@ -108,6 +115,9 @@ If a function deliberately uses non-zero returns as part of normal flow:
 Inside functions:
 
 - Use `typeset`/`local` and always initialize variables.
+  - Note: if `typeset_silent` is unset, repeatedly declaring variables without initial values (e.g. `typeset key file`
+    inside a loop) can print existing values to stdout (often `key=''` / `file=''`).
+    - Prefer `typeset key='' file=''` or declare once outside the loop and only assign inside the loop.
 - Assign positional parameters to named locals near the top (avoid repeated `$1`, `$2`, ...).
 - Under `nounset`, use `${var-}` when reading optional/unset variables.
 
@@ -125,6 +135,14 @@ Some execution paths run in a new process (e.g. `fzf --preview`, `xargs`, `sh -c
 - Use `printf` instead of `print` in those contexts.
 - If you need zsh-only behavior, wrap the command as `zsh -fc '...'`.
 - If the subshell needs functions from a module, source it explicitly inside that subshell (guarded by `[[ -f ... ]]`), and prefer locating files via `${ZSH_SCRIPT_DIR-}` / `${ZDOTDIR-}`.
+
+## Zsh string quoting rules
+
+- Literal strings (no `$var` / `$(cmd)` expansion): prefer single quotes, e.g. `typeset homebrew_path=''`.
+- When expansion is required: use double quotes and keep them, e.g. `typeset repo_root="$PWD"`, `print -r -- "$msg"`.
+- When escape sequences are required: use `$'...'` (e.g., `\n`).
+- Auto-fix (empty strings only): `./tools/fix-typeset-empty-string-quotes.zsh --write` normalizes `typeset/local ...=""`
+  to `''`.
 
 ## Validation checklist
 
