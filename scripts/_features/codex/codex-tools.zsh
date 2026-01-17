@@ -247,6 +247,19 @@ codex-commit-with-scope() {
 
   _codex_require_allow_dangerous 'codex-commit-with-scope' || return 1
 
+  if ! command -v git >/dev/null; then
+    print -u2 -r -- "codex-commit-with-scope: missing binary: git"
+    return 1
+  fi
+
+  local git_root=''
+  if ! git_root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    print -u2 -r -- "codex-commit-with-scope: not a git repository"
+    return 1
+  fi
+
+  git -C "$git_root" add -A || return 1
+
   local extra_prompt=''
   if (( $# )); then
     extra_prompt="$*"

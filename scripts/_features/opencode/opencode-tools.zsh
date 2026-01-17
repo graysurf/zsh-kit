@@ -241,6 +241,19 @@ opencode-commit-with-scope() {
     auto_stage_flag='true'
   fi
 
+  if ! command -v git >/dev/null; then
+    print -u2 -r -- "opencode-commit-with-scope: missing binary: git"
+    return 1
+  fi
+
+  local git_root=''
+  if ! git_root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    print -u2 -r -- "opencode-commit-with-scope: not a git repository"
+    return 1
+  fi
+
+  git -C "$git_root" add -A || return 1
+
   local extra_prompt=''
   if (( $# )); then
     extra_prompt="$*"
