@@ -173,6 +173,23 @@ git-tools commit context
 git-tools commit context --stdout --no-color
 ```
 
+#### `git-tools commit context-json [--stdout|--both] [--pretty] [--bundle] [--out-dir <path>]`
+
+Generate a JSON manifest for staged changes and write the staged diff as a standalone `.patch` file.
+
+- Writes:
+  - `<out-dir>/commit-context.json`
+  - `<out-dir>/staged.patch`
+- Default `<out-dir>` is `$(git rev-parse --git-dir)/commit-context` (usually `.git/commit-context`).
+- `--bundle` prints/copies a single output containing both JSON + patch (good for pasting into an API).
+- Alias: `git-tools commit json`.
+
+```bash
+git-tools commit context-json
+git-tools commit context-json --stdout --bundle
+git-tools commit context-json --out-dir ./commit-context --stdout --bundle --pretty
+```
+
 #### `git-tools commit to-stash [commit]`
 
 Convert a commit into a stash entry (default: `HEAD`) and optionally drop it.  

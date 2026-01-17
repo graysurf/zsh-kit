@@ -5,7 +5,7 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias \
     gr grs grm grh \
     gbh gbc gdb gdbs \
-    gcc gdc \
+    gcc gccj gdc \
     git-tools
 fi
 
@@ -64,6 +64,11 @@ alias gdbs='gdb --squash'
 # Usage: gcc [--stdout|--both] [--no-color]
 alias gcc='git-commit-context'
 
+# gccj
+# Alias of `git-commit-context-json`.
+# Usage: gccj [--stdout|--both] [--pretty] [--bundle] [--out-dir <path>]
+alias gccj='git-commit-context-json'
+
 # gdc
 # Alias of `git-copy-staged`.
 # Usage: gdc [--stdout|--both]
@@ -85,7 +90,7 @@ _git_tools_usage() {
   print -r -- "Groups:"
   print -r -- "  utils    zip | copy-staged | root | commit-hash"
   print -r -- "  reset    soft | mixed | hard | undo | back-head | back-checkout | remote"
-  print -r -- "  commit   context | to-stash"
+  print -r -- "  commit   context | context-json | to-stash"
   print -r -- "  branch   cleanup"
   print -r --
   print -r -- "Help:"
@@ -118,7 +123,7 @@ _git_tools_group_usage() {
       ;;
     commit)
       print -r -- "Usage: git-tools commit <command> [args]"
-      print -r -- "  context | to-stash"
+      print -r -- "  context | context-json | to-stash"
       ;;
     branch)
       print -r -- "Usage: git-tools branch <command> [args]"
@@ -219,6 +224,9 @@ git-tools() {
       case "$cmd" in
         context)
           git-commit-context "$@"
+          ;;
+        context-json|context_json|contextjson|json)
+          git-commit-context-json "$@"
           ;;
         to-stash|stash)
           git-commit-to-stash "$@"

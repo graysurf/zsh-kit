@@ -4,7 +4,8 @@
 if command -v safe_unalias >/dev/null; then
   safe_unalias \
     git-commit-to-stash \
-    git-commit-context
+    git-commit-context \
+    git-commit-context-json
 fi
 
 # _git_commit_confirm <prompt>
@@ -478,5 +479,448 @@ $contents" > "$tmpfile"
     printf "  • Diff\n"
     printf "  • Scope summary (via git-scope staged)\n"
     printf "  • Staged file contents (index version)\n"
+  fi
+}
+
+# _git_commit_json_escape <string>
+# Print a JSON-escaped version of <string> (without surrounding quotes).
+# Usage: _git_commit_json_escape <string>
+_git_commit_json_escape() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  typeset s="${1-}"
+
+  typeset out=''
+  typeset ch='' hex=''
+  typeset -i code=0 i=0
+
+  for (( i = 1; i <= ${#s}; i++ )); do
+    ch="${s[i]}"
+    case "$ch" in
+      $'\\')
+        out+='\\'
+        ;;
+      '"')
+        out+='\"'
+        ;;
+      $'\n')
+        out+='\n'
+        ;;
+      $'\r')
+        out+='\r'
+        ;;
+      $'\t')
+        out+='\t'
+        ;;
+      $'\b')
+        out+='\b'
+        ;;
+      $'\f')
+        out+='\f'
+        ;;
+      *)
+        if [[ "$ch" == [[:cntrl:]] ]]; then
+          code=$(printf '%d' "'$ch")
+          if (( code >= 0 && code <= 31 )); then
+            printf -v hex '%02X' "$code"
+            out+="\\u00${hex}"
+          else
+            out+="$ch"
+          fi
+        else
+          out+="$ch"
+        fi
+        ;;
+    esac
+  done
+
+  print -r -- "$out"
+}
+
+# _git_commit_json_pretty <json>
+# Pretty-print JSON (basic formatter; preserves string contents; assumes valid JSON input).
+# Usage: _git_commit_json_pretty <json>
+_git_commit_json_pretty() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  typeset json="${1-}"
+  typeset -a out=()
+  typeset pad=''
+  typeset ch=''
+  typeset newline=$'\n'
+  typeset in_string=false
+  typeset escape_next=false
+  typeset -i indent=0 i=0
+
+  for (( i = 1; i <= ${#json}; i++ )); do
+    ch="${json[i]}"
+
+    if [[ "$in_string" == true ]]; then
+      out+=("$ch")
+      if [[ "$escape_next" == true ]]; then
+        escape_next=false
+      else
+        [[ "$ch" == $'\\' ]] && escape_next=true
+        [[ "$ch" == '"' ]] && in_string=false
+      fi
+      continue
+    fi
+
+    case "$ch" in
+      '"')
+        in_string=true
+        out+=("$ch")
+        ;;
+      '{'|'[')
+        out+=("$ch")
+        (( indent++ ))
+        out+=("$newline")
+        printf -v pad '%*s' $(( indent * 2 )) ''
+        out+=("$pad")
+        ;;
+      '}'|']')
+        typeset opener='{'
+        [[ "$ch" == ']' ]] && opener='['
+
+        if (( i > 1 )) && [[ "${json[i-1]}" == "$opener" ]]; then
+          if (( ${#out[@]} >= 2 )); then
+            out[-1]=()
+            out[-1]=()
+          fi
+          (( indent-- ))
+          out+=("$ch")
+          continue
+        fi
+
+        (( indent-- ))
+        out+=("$newline")
+        printf -v pad '%*s' $(( indent * 2 )) ''
+        out+=("$pad")
+        out+=("$ch")
+        ;;
+      ',')
+        out+=("$ch")
+        out+=("$newline")
+        printf -v pad '%*s' $(( indent * 2 )) ''
+        out+=("$pad")
+        ;;
+      ':')
+        out+=("$ch")
+        out+=(' ')
+        ;;
+      [[:space:]])
+        ;;
+      *)
+        out+=("$ch")
+        ;;
+    esac
+  done
+
+  print -r -- "${(j::)out}"
+}
+
+# git-commit-context-json [--stdout|--both] [--pretty] [--bundle] [--out-dir <path>]
+# Generate a compact JSON manifest + staged diff as a standalone `.patch` file.
+# Usage: git-commit-context-json [--stdout|--both] [--pretty] [--bundle] [--out-dir <path>]
+# Notes:
+# - Writes two files:
+#   - <out-dir>/commit-context.json
+#   - <out-dir>/staged.patch
+# - Default copies the JSON manifest to clipboard via `set_clipboard`; use `--stdout` to print only.
+# - JSON contains metadata, file list, and stats; the diff is written as `.patch` (not embedded in JSON).
+git-commit-context-json() {
+  emulate -L zsh
+  setopt pipe_fail local_traps
+
+  typeset mode='clipboard'
+  typeset pretty=false
+  typeset bundle=false
+  typeset arg=''
+  typeset outdir=''
+  typeset git_dir=''
+  typeset patch_path='' manifest_path=''
+  typeset branch='' head_sha='' generated_at='' repo_name=''
+  typeset -i insertions=0 deletions=0 file_count=0 binary_file_count=0 lockfile_count=0
+  typeset -i root_file_count=0 top_level_dir_count=0
+  typeset -A status_counts=()
+  typeset -A top_dir_counts=()
+  typeset json=''
+  typeset -a extra_args=()
+  typeset -a file_objects=()
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 -r -- "❌ Not a git repository."
+    return 1
+  fi
+
+  while [[ $# -gt 0 ]]; do
+    arg="${1-}"
+    case "$arg" in
+      --stdout|-p|--print)
+        mode="stdout"
+        ;;
+      --both)
+        mode="both"
+        ;;
+      --pretty)
+        pretty=true
+        ;;
+      --bundle)
+        bundle=true
+        ;;
+      --out-dir)
+        shift
+        outdir="${1-}"
+        if [[ -z "$outdir" ]]; then
+          print -u2 -r -- "❌ Missing value for --out-dir"
+          return 2
+        fi
+        ;;
+      --out-dir=*)
+        outdir="${arg#*=}"
+        ;;
+      --help|-h)
+        print -r -- "Usage: git-commit-context-json [--stdout|--both] [--pretty] [--bundle] [--out-dir <path>]"
+        print -r -- "  --stdout    Print to stdout only (JSON by default; bundle with --bundle)"
+        print -r -- "  --both      Print to stdout and copy to clipboard (JSON by default; bundle with --bundle)"
+        print -r -- "  --pretty    Pretty-print JSON (default is compact)"
+        print -r -- "  --bundle    Print/copy a single bundle (JSON + patch content)"
+        print -r -- "  --out-dir   Write files to this directory (default: <git-dir>/commit-context)"
+        return 0
+        ;;
+      *)
+        extra_args+=("$arg")
+        ;;
+    esac
+    shift
+  done
+
+  if (( ${#extra_args[@]} > 0 )); then
+    print -u2 -r -- "⚠️  Ignoring unknown arguments: ${extra_args[*]}"
+  fi
+
+  if git diff --cached --quiet --exit-code; then
+    print -u2 -r -- "⚠️  No staged changes to record"
+    return 1
+  fi
+
+  if [[ -z "$outdir" ]]; then
+    git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"
+    if [[ -z "$git_dir" ]]; then
+      print -u2 -r -- "❌ Failed to resolve git dir."
+      return 1
+    fi
+    outdir="${git_dir%/}/commit-context"
+  fi
+
+  if ! mkdir -p -- "$outdir" 2>/dev/null; then
+    print -u2 -r -- "❌ Failed to create output directory: $outdir"
+    return 1
+  fi
+
+  patch_path="${outdir%/}/staged.patch"
+  manifest_path="${outdir%/}/commit-context.json"
+
+  if ! git -c core.quotepath=false diff --cached --no-color > "$patch_path"; then
+    print -u2 -r -- "❌ Failed to write staged patch: $patch_path"
+    return 1
+  fi
+
+  branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+  head_sha="$(git rev-parse --short HEAD 2>/dev/null || true)"
+  generated_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || true)"
+  repo_name="$(basename -- "$(git rev-parse --show-toplevel 2>/dev/null || print -r -- '')" 2>/dev/null || true)"
+
+  while IFS= read -r -d '' fstatus; do
+    typeset file='' newfile=''
+    typeset status_letter='' status_score=''
+    typeset file_path='' old_file_path=''
+    typeset numstat='' added='' deleted=''
+    typeset binary_file=false
+    typeset lockfile=false
+    typeset ins_json='null' del_json='null'
+
+    [[ -n "$fstatus" ]] || continue
+
+    case "$fstatus" in
+      R*|C*)
+        IFS= read -r -d '' file || break
+        IFS= read -r -d '' newfile || break
+        old_file_path="$file"
+        file_path="$newfile"
+        ;;
+      *)
+        IFS= read -r -d '' file || break
+        file_path="$file"
+        ;;
+    esac
+
+    status_letter="${fstatus[1,1]}"
+    status_score="${fstatus[2,-1]}"
+    [[ -n "$status_score" ]] || status_score=""
+
+    (( status_counts[$status_letter]++ ))
+    if [[ "$file_path" == */* ]]; then
+      typeset top_dir="${file_path%%/*}"
+      (( top_dir_counts[$top_dir]++ ))
+    else
+      (( root_file_count++ ))
+    fi
+
+    case "${file_path:t}" in
+      yarn.lock|package-lock.json|pnpm-lock.yaml|bun.lockb|bun.lock|npm-shrinkwrap.json)
+        lockfile=true
+        ;;
+      *)
+        ;;
+    esac
+
+    numstat="$(git -c core.quotepath=false diff --cached --numstat -- "$file_path" 2>/dev/null | head -n 1)"
+    if [[ -n "$numstat" ]]; then
+      IFS=$' \t' read -r added deleted _ <<< "$numstat"
+      if [[ "$added" == "-" || "$deleted" == "-" ]]; then
+        binary_file=true
+      else
+        ins_json="$added"
+        del_json="$deleted"
+        (( insertions += added ))
+        (( deletions += deleted ))
+      fi
+    fi
+
+    if [[ "$binary_file" == true ]]; then
+      (( binary_file_count++ ))
+    fi
+    if [[ "$lockfile" == true ]]; then
+      (( lockfile_count++ ))
+    fi
+
+    typeset path_json='' old_path_json=''
+    path_json="$(_git_commit_json_escape "$file_path")"
+    old_path_json="$(_git_commit_json_escape "$old_file_path")"
+
+    typeset obj=''
+    obj="{\"path\":\"${path_json}\",\"status\":\"${status_letter}\""
+    if [[ -n "$status_score" ]]; then
+      obj+=",\"score\":${status_score}"
+    fi
+    if [[ -n "$old_file_path" ]]; then
+      obj+=",\"oldPath\":\"${old_path_json}\""
+    fi
+    obj+=",\"insertions\":${ins_json},\"deletions\":${del_json},\"binary\":$([[ "$binary_file" == true ]] && print -r -- true || print -r -- false),\"lockfile\":$([[ "$lockfile" == true ]] && print -r -- true || print -r -- false)}"
+
+    file_objects+=("$obj")
+    (( file_count++ ))
+  done < <(git -c core.quotepath=false diff --cached --name-status -z)
+
+  typeset files_json='[]'
+  if (( ${#file_objects[@]} > 0 )); then
+    files_json="[${(j:,:)file_objects}]"
+  fi
+
+  top_level_dir_count=${#top_dir_counts}
+
+  typeset -a status_objects=()
+  typeset status_counts_json='[]'
+  for status_letter in ${(ok)status_counts}; do
+    status_objects+=("{\"status\":\"$(_git_commit_json_escape "$status_letter")\",\"count\":${status_counts[$status_letter]}}")
+  done
+  if (( ${#status_objects[@]} > 0 )); then
+    status_counts_json="[${(j:,:)status_objects}]"
+  fi
+
+  typeset -a top_dir_objects=()
+  typeset top_dirs_json='[]'
+  for top_dir in ${(ok)top_dir_counts}; do
+    top_dir_objects+=("{\"name\":\"$(_git_commit_json_escape "$top_dir")\",\"count\":${top_dir_counts[$top_dir]}}")
+  done
+  if (( ${#top_dir_objects[@]} > 0 )); then
+    top_dirs_json="[${(j:,:)top_dir_objects}]"
+  fi
+
+  typeset branch_json='null'
+  if [[ -n "$branch" ]]; then
+    branch_json="\"$(_git_commit_json_escape "$branch")\""
+  fi
+
+  typeset head_json='null'
+  if [[ -n "$head_sha" ]]; then
+    head_json="\"$(_git_commit_json_escape "$head_sha")\""
+  fi
+
+  typeset generated_at_json='null'
+  if [[ -n "$generated_at" ]]; then
+    generated_at_json="\"$(_git_commit_json_escape "$generated_at")\""
+  fi
+
+  typeset repo_name_json='null'
+  if [[ -n "$repo_name" ]]; then
+    repo_name_json="\"$(_git_commit_json_escape "$repo_name")\""
+  fi
+
+  json="{\"schemaVersion\":1"
+  json+=",\"generatedAt\":${generated_at_json}"
+  json+=",\"repo\":{\"name\":${repo_name_json}}"
+  json+=",\"git\":{\"branch\":${branch_json},\"head\":${head_json}}"
+  json+=",\"staged\":{\"summary\":{\"fileCount\":${file_count},\"insertions\":${insertions},\"deletions\":${deletions},\"binaryFileCount\":${binary_file_count},\"lockfileCount\":${lockfile_count},\"rootFileCount\":${root_file_count},\"topLevelDirCount\":${top_level_dir_count}},\"statusCounts\":${status_counts_json},\"structure\":{\"topLevelDirs\":${top_dirs_json}},\"files\":${files_json},\"patch\":{\"path\":\"staged.patch\",\"format\":\"git diff --cached\"}}"
+  json+="}"
+
+  if [[ "$pretty" == true ]]; then
+    json="$(_git_commit_json_pretty "$json")"
+  fi
+
+  if ! printf "%s\n" "$json" > "$manifest_path"; then
+    print -u2 -r -- "❌ Failed to write JSON manifest: $manifest_path"
+    return 1
+  fi
+
+  if [[ "$mode" == "stdout" ]]; then
+    if [[ "$bundle" == true ]]; then
+      print -r -- "===== commit-context.json ====="
+      printf "%s\n" "$json"
+      print -r -- ""
+      print -r -- "===== staged.patch ====="
+      command cat "$patch_path"
+    else
+      printf "%s\n" "$json"
+    fi
+    return 0
+  fi
+
+  if [[ "$mode" == "both" ]]; then
+    if [[ "$bundle" == true ]]; then
+      print -r -- "===== commit-context.json ====="
+      printf "%s\n" "$json"
+      print -r -- ""
+      print -r -- "===== staged.patch ====="
+      command cat "$patch_path"
+    else
+      printf "%s\n" "$json"
+    fi
+  fi
+
+  if [[ "$bundle" == true ]]; then
+    {
+      print -r -- "===== commit-context.json ====="
+      printf "%s\n" "$json"
+      print -r -- ""
+      print -r -- "===== staged.patch ====="
+      command cat "$patch_path"
+    } | set_clipboard
+  else
+    printf "%s" "$json" | set_clipboard
+  fi
+
+  if [[ "$mode" == "clipboard" ]]; then
+    printf "✅ JSON commit context copied to clipboard with:\n"
+    if [[ "$bundle" == true ]]; then
+      printf "  • Bundle (JSON + patch)\n"
+    else
+      printf "  • JSON manifest\n"
+    fi
+    printf "  • Patch file written to: %s\n" "$patch_path"
+    printf "  • Manifest file written to: %s\n" "$manifest_path"
   fi
 }

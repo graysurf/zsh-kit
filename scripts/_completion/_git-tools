@@ -1,4 +1,4 @@
-#compdef git-tools
+#compdef git-tools git-commit-context git-commit-context-json gccj
 
 _git_tools_commit_hashes() {
   emulate -L zsh -o extendedglob
@@ -143,6 +143,32 @@ _git-tools() {
   local -a line
   typeset -A opt_args
 
+  case "${service-}" in
+    git-commit-context)
+      _arguments -s \
+        '--stdout[Print to stdout only]' \
+        '--print[Print to stdout only]' \
+        '-p[Print to stdout only]' \
+        '--both[Print to stdout and copy to clipboard]' \
+        '--no-color[Disable ANSI colors]' \
+        '*--include=[Show full content for selected paths (repeatable)]:path/glob:_files' \
+        '--help[Show help]' \
+        && return 0
+      ;;
+    git-commit-context-json|gccj)
+      _arguments -s \
+        '--stdout[Print to stdout only (JSON by default; bundle with --bundle)]' \
+        '--print[Print to stdout only (JSON by default; bundle with --bundle)]' \
+        '-p[Print to stdout only (JSON by default; bundle with --bundle)]' \
+        '--both[Print to stdout and copy to clipboard (JSON by default; bundle with --bundle)]' \
+        '--pretty[Pretty-print JSON (default is compact)]' \
+        '--bundle[Print/copy a single bundle (JSON + patch content)]' \
+        '--out-dir=[Write files to this directory]:directory:_files -/' \
+        '--help[Show help]' \
+        && return 0
+      ;;
+  esac
+
   typeset -a groups subcmds
   groups=(
     'utils:Utility helpers'
@@ -153,7 +179,7 @@ _git-tools() {
     'list:Show usage'
   )
 
-  _arguments -C \
+  _arguments -C -A '-*' \
     '1:group:->groups' \
     '2:command:->commands' \
     '*::arg:->args'
@@ -163,7 +189,7 @@ _git-tools() {
       _describe -t groups 'git-tools group' groups && return 0
       ;;
     commands)
-      case "${line[1]-${words[2]-}}" in
+      case "${line[1]-${words[1]-}}" in
         utils)
           subcmds=(
             'zip:Archive HEAD as zip'
@@ -188,6 +214,8 @@ _git-tools() {
         commit)
           subcmds=(
             'context:Generate commit context'
+            'context-json:Generate JSON manifest + staged patch'
+            'json:Generate JSON manifest + staged patch'
             'to-stash:Convert commit to stash'
             'stash:Convert commit to stash'
           )
@@ -202,8 +230,10 @@ _git-tools() {
       _describe -t commands 'git-tools command' subcmds && return 0
       ;;
     args)
-      typeset group="${line[1]-${words[2]-}}"
-      typeset cmd="${line[2]-${words[3]-}}"
+      typeset group="${line[1]-${words[1]-}}"
+      typeset cmd="${line[2]-${words[2]-}}"
+
+      compset -n 2
 
       case "$group" in
         utils)
@@ -218,7 +248,7 @@ _git-tools() {
                 && return 0
               ;;
             commit-hash|hash)
-              if (( CURRENT == 4 )); then
+              if (( CURRENT == 2 )); then
                 typeset -a commit_hashes=()
                 commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
                 if (( ${#commit_hashes[@]} > 0 )); then
@@ -259,11 +289,24 @@ _git-tools() {
                 '-p[Print to stdout only]' \
                 '--both[Print to stdout and copy to clipboard]' \
                 '--no-color[Disable ANSI colors]' \
+                '*--include=[Show full content for selected paths (repeatable)]:path/glob:_files' \
+                '--help[Show help]' \
+                && return 0
+              ;;
+            context-json|json)
+              _arguments -s \
+                '--stdout[Print to stdout only (JSON by default; bundle with --bundle)]' \
+                '--print[Print to stdout only (JSON by default; bundle with --bundle)]' \
+                '-p[Print to stdout only (JSON by default; bundle with --bundle)]' \
+                '--both[Print to stdout and copy to clipboard (JSON by default; bundle with --bundle)]' \
+                '--pretty[Pretty-print JSON (default is compact)]' \
+                '--bundle[Print/copy a single bundle (JSON + patch content)]' \
+                '--out-dir=[Write files to this directory]:directory:_files -/' \
                 '--help[Show help]' \
                 && return 0
               ;;
             to-stash|stash)
-              if (( CURRENT == 4 )); then
+              if (( CURRENT == 2 )); then
                 typeset -a commit_hashes=()
                 commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
                 if (( ${#commit_hashes[@]} > 0 )); then
@@ -289,3 +332,4 @@ _git-tools() {
 }
 
 compdef _git-tools git-tools
+compdef _git-tools git-commit-context git-commit-context-json gccj
