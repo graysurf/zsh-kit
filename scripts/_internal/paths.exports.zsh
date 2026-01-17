@@ -29,6 +29,17 @@ typeset -a _zsh_path_prepend=()
 [[ -d /usr/local/opt/coreutils/libexec/gnubin ]] && _zsh_path_prepend+=(/usr/local/opt/coreutils/libexec/gnubin)
 [[ -d /usr/local/opt/grep/libexec/gnubin ]] && _zsh_path_prepend+=(/usr/local/opt/grep/libexec/gnubin)
 
+# Database clients (keg-only Homebrew packages)
+[[ -d /opt/homebrew/opt/libpq/bin ]] && _zsh_path_prepend+=(/opt/homebrew/opt/libpq/bin)
+[[ -d /usr/local/opt/libpq/bin ]] && _zsh_path_prepend+=(/usr/local/opt/libpq/bin)
+[[ -d /home/linuxbrew/.linuxbrew/opt/libpq/bin ]] && _zsh_path_prepend+=(/home/linuxbrew/.linuxbrew/opt/libpq/bin)
+[[ -d /opt/homebrew/opt/mysql-client/bin ]] && _zsh_path_prepend+=(/opt/homebrew/opt/mysql-client/bin)
+[[ -d /usr/local/opt/mysql-client/bin ]] && _zsh_path_prepend+=(/usr/local/opt/mysql-client/bin)
+[[ -d /home/linuxbrew/.linuxbrew/opt/mysql-client/bin ]] && _zsh_path_prepend+=(/home/linuxbrew/.linuxbrew/opt/mysql-client/bin)
+[[ -d /opt/homebrew/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/opt/homebrew/opt/mssql-tools18/bin)
+[[ -d /usr/local/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/usr/local/opt/mssql-tools18/bin)
+[[ -d /home/linuxbrew/.linuxbrew/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/home/linuxbrew/.linuxbrew/opt/mssql-tools18/bin)
+
 # Homebrew (Apple Silicon)
 [[ -d /opt/homebrew/bin ]] && _zsh_path_prepend+=(/opt/homebrew/bin /opt/homebrew/sbin)
 

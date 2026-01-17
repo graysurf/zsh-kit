@@ -9,10 +9,14 @@
 #   config/tools.list
 # On macOS, it also includes:
 #   config/tools.macos.list
+# On Linux, it also includes:
+#   config/tools.linux.list
 # Optional tools can be added from:
 #   config/tools.optional.list (with --all)
 # On macOS, optional tools can also be added from:
 #   config/tools.optional.macos.list (with --all, if present)
+# On Linux, optional tools can also be added from:
+#   config/tools.optional.linux.list (with --all, if present)
 #
 # Usage:
 #   ./install-tools.zsh [--dry-run] [--quiet] [--all]

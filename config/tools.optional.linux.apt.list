@@ -1,0 +1,11 @@
+# tool::apt-name::comment
+#
+# Linux-only optional tools installed via apt (Ubuntu/Debian).
+# Prefer Homebrew whenever possible; use apt only when Linuxbrew is unavailable or broken.
+
+# IDE / editor
+code::code::VS Code editor (installs `code` / `code-tunnel`; requires Microsoft apt repo)
+
+# API / network debugging (power tools)
+mitmproxy::mitmproxy::Intercept and inspect HTTP(S) traffic
+

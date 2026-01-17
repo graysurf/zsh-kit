@@ -22,6 +22,14 @@
 #     - $ZSH_CONFIG_DIR/tools.macos.list
 #     - $ZSH_CONFIG_DIR/tools.optional.macos.list (with --all, if present)
 #
+#   On Linux (linux), it will also include tools from:
+#     - $ZSH_CONFIG_DIR/tools.linux.list
+#     - $ZSH_CONFIG_DIR/tools.optional.linux.list (with --all, if present)
+#
+#   Note:
+#   - This script installs tools via Homebrew only. If you maintain apt-only lists
+#     (e.g. tools.*.linux.apt.list), install them separately.
+#
 #   It prompts for confirmation before proceeding, unless --dry-run is used.
 #
 #   Homebrew runs on both macOS and Linux; if brew is missing, run ./install-tools.zsh to bootstrap it.
@@ -52,6 +60,8 @@ TOOLS_REQUIRED_LIST="$ZSH_CONFIG_DIR/tools.list"
 TOOLS_OPTIONAL_LIST="$ZSH_CONFIG_DIR/tools.optional.list"
 TOOLS_MACOS_LIST="$ZSH_CONFIG_DIR/tools.macos.list"
 TOOLS_OPTIONAL_MACOS_LIST="$ZSH_CONFIG_DIR/tools.optional.macos.list"
+TOOLS_LINUX_LIST="$ZSH_CONFIG_DIR/tools.linux.list"
+TOOLS_OPTIONAL_LINUX_LIST="$ZSH_CONFIG_DIR/tools.optional.linux.list"
 ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED="${ZSH_INSTALL_TOOLS_DRY_RUN_ENABLED-false}"
 ZSH_INSTALL_TOOLS_QUIET_ENABLED="${ZSH_INSTALL_TOOLS_QUIET_ENABLED-false}"
 ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED="${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-false}"
@@ -171,6 +181,11 @@ case "${OSTYPE-}" in
       tools_list_files+=("$TOOLS_MACOS_LIST")
     fi
     ;;
+  linux*)
+    if [[ -f "$TOOLS_LINUX_LIST" ]]; then
+      tools_list_files+=("$TOOLS_LINUX_LIST")
+    fi
+    ;;
 esac
 if zsh_env::is_true "${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-}" "ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED"; then
   tools_list_files+=("$TOOLS_OPTIONAL_LIST")
@@ -178,6 +193,11 @@ if zsh_env::is_true "${ZSH_INSTALL_TOOLS_INCLUDE_OPTIONAL_ENABLED-}" "ZSH_INSTAL
     darwin*)
       if [[ -f "$TOOLS_OPTIONAL_MACOS_LIST" ]]; then
         tools_list_files+=("$TOOLS_OPTIONAL_MACOS_LIST")
+      fi
+      ;;
+    linux*)
+      if [[ -f "$TOOLS_OPTIONAL_LINUX_LIST" ]]; then
+        tools_list_files+=("$TOOLS_OPTIONAL_LINUX_LIST")
       fi
       ;;
   esac

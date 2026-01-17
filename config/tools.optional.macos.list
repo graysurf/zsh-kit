@@ -1,4 +1,10 @@
 # tool::brew-name::comment
 
+# IDE / editor (host GUI; provides CLI entrypoints)
+code::visual-studio-code::VS Code editor (installs `code` / `code-tunnel`)
+
+# API / network debugging (power tools)
+mitmproxy::mitmproxy::Intercept and inspect HTTP(S) traffic
+
 # System / performance deep dive
 mactop::mactop::Apple Silicon Monitor Top

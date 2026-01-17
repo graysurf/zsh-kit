@@ -1,0 +1,5 @@
+# tool::apt-name::comment
+#
+# Linux-only required tools installed via apt (Ubuntu/Debian).
+# Prefer Homebrew whenever possible; use apt only when Linuxbrew is unavailable or broken.
+

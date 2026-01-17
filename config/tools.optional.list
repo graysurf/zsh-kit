@@ -4,9 +4,6 @@
 # DEFAULT (always useful)
 ############################
 
-# IDE / editor (host GUI; provides CLI entrypoints)
-code::visual-studio-code::VS Code editor (installs `code` / `code-tunnel`)
-
 # AI agents (terminal)
 codex::codex::OpenAI Codex CLI (terminal coding agent)
 opencode::opencode::AI coding agent (terminal)
@@ -49,6 +46,11 @@ ipython::ipython::Better REPL for debugging experiments
 node::node::Node.js runtime
 pnpm::pnpm::Fast package manager (reproducible installs)
 
+# Database / SQL clients
+psql::libpq::PostgreSQL client CLI (psql)
+mysql::mysql-client::MySQL client CLI (mysql)
+sqlcmd::sqlcmd::Microsoft SQL Server CLI (sqlcmd)
+
 # Repo / files / system utilities
 glow::glow::Render markdown on the CLI
 repomix::repomix::Packs entire repository into a AI-friendly file
@@ -77,7 +79,6 @@ tokei::tokei::Code statistics (lines/files by language)
 fastfetch::fastfetch::System info snapshot for bug reports
 
 # API / network debugging (power tools)
-mitmproxy::mitmproxy::Intercept and inspect HTTP(S) traffic
 grpcurl::grpcurl::Curl for gRPC services
 websocat::websocat::WebSocket client
 hey::hey::HTTP load generator

@@ -1,0 +1,5 @@
+# tool::brew-name::comment
+#
+# Linux-only required tools (installed via Homebrew on Linux).
+# Keep this file empty unless a tool is required on Linux but not on macOS.
+
