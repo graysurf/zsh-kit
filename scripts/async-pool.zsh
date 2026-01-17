@@ -136,9 +136,10 @@ async_pool::map() {
   local -A stderr_files=()
   local -A result_lines=()
   local -A result_rcs=()
+  local -A child_pids=()
 
   local -i next_index=1 running=0 completed=0 overall_rc=0
-  local index_raw='' pid='' event_index='' event_pid='' event_rc='' event_line=''
+  local index_raw='' pid='' event_index='' event_rc='' event_line=''
   local err_file='' item='' tab=$'\t'
 
   while (( running < jobs && next_index <= total )); do
@@ -168,16 +169,18 @@ async_pool::map() {
       out="${out//$'\r'/ }"
       out="${out//$'\t'/ }"
 
-      print -u9 -r -- "${index_raw}${tab}${$}${tab}${child_rc}${tab}${out}"
+      print -u9 -r -- "${index_raw}${tab}${child_rc}${tab}${out}"
       return 0
     } "${index_raw}" "${item}" "${worker}" "${err_file}" &
+    pid=$!
+    child_pids[$index_raw]="${pid}"
 
     running=$(( running + 1 ))
     next_index=$(( next_index + 1 ))
   done
 
   while (( completed < total )); do
-    if ! IFS=$'\t' read -r -u 9 event_index event_pid event_rc event_line; then
+    if ! IFS=$'\t' read -r -u 9 event_index event_rc event_line; then
       overall_rc=1
       break
     fi
@@ -199,8 +202,9 @@ async_pool::map() {
       progress_bar::update "$progress_id" "$completed" --suffix "${item}" --force || true
     fi
 
-    if [[ -n "${event_pid}" && "${event_pid}" == <-> ]]; then
-      wait "${event_pid}" 2>/dev/null || true
+    pid="${child_pids[$event_index]-}"
+    if [[ -n "${pid}" && "${pid}" == <-> ]]; then
+      wait "${pid}" 2>/dev/null || true
     fi
 
     while (( running < jobs && next_index <= total )); do
@@ -230,9 +234,11 @@ async_pool::map() {
         out="${out//$'\r'/ }"
         out="${out//$'\t'/ }"
 
-        print -u9 -r -- "${index_raw}${tab}${$}${tab}${child_rc}${tab}${out}"
+        print -u9 -r -- "${index_raw}${tab}${child_rc}${tab}${out}"
         return 0
       } "${index_raw}" "${item}" "${worker}" "${err_file}" &
+      pid=$!
+      child_pids[$index_raw]="${pid}"
 
       running=$(( running + 1 ))
       next_index=$(( next_index + 1 ))
