@@ -133,6 +133,47 @@ Notes:
   - The whitespace trim (`%%[[:space:]]#`) is defensive: some completion contexts include trailing spaces
   in `line` / `words` elements.
 
+## Common Pitfall: nested subcommands need `compset` (wrappers like `tool group cmd`)
+
+If your tool is a wrapper with *nested* subcommands (e.g. `git-tools commit context`), it’s common to:
+
+1. Use an outer `_arguments -C` to parse `group` and `cmd`.
+2. Call another `_arguments` in the `args` state to complete flags for the chosen `cmd`.
+
+However, after the outer `_arguments`, zsh may have already rewritten `words` so the tool name is gone
+(e.g. `words=(commit context --b)`), meaning `words[1]` is the *group*, not the *cmd*.
+If you then call `_arguments` for the subcommand flags, it can treat the `cmd` as an “unknown positional”
+argument and return non-zero, resulting in **no flag completion**.
+
+Fix pattern (shift off the group before the inner `_arguments`):
+
+```zsh
+case "${state-}" in
+  args)
+    local group="${line[1]-${words[1]-}}"
+    local cmd="${line[2]-${words[2]-}}"
+
+    case "$group:$cmd" in
+      commit:context)
+        # words is often: (commit context <rest...>)
+        # Make the subcommand (`context`) become words[1] for the inner `_arguments`.
+        compset -n 2
+
+        _arguments -s \
+          '--stdout[Print to stdout only]' \
+          '--both[Print to stdout and copy to clipboard]' \
+          '--help[Show help]' \
+          && return 0
+        ;;
+    esac
+    ;;
+esac
+```
+
+Notes:
+
+- `compset -n 2` also adjusts `CURRENT`, so if you do positional checks, do them **after** the shift.
+
 ## Common Pitfall: fzf-tab strips ANSI from the selected text
 
 When using `fzf-tab`, `fzf --ansi` will **strip ANSI escape sequences** from the selected output.
