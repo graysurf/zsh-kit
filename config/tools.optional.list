@@ -46,6 +46,13 @@ glow::glow::Render markdown on the CLI
 repomix::repomix::Packs entire repository into a AI-friendly file
 yazi::yazi::Blazing fast terminal file manager
 
+# Image processing
+imagemagick::imagemagick::Image convert/resize toolkit (magick/convert)
+vips::vips::Fast image processing for batch resize
+pngquant::pngquant::PNG lossy compression
+jpegoptim::jpegoptim::JPEG optimizer (lossy/lossless)
+webp::webp::WebP encoder/decoder (cwebp/dwebp)
+
 
 ############################
 # HEAVY / DEBUG-ONLY
