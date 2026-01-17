@@ -71,7 +71,9 @@ ansi_theme_night_owl::fg_for_percent() {
   [[ -n "${percent_raw}" && "${percent_raw}" == <-> ]] || return 1
 
   local -i percent="${percent_raw}"
-  if (( percent >= 80 )); then
+  if (( percent <= 0 )); then
+    ansi::fg_truecolor 99 119 119  # #637777
+  elif (( percent >= 80 )); then
     ansi::fg_truecolor 127 219 202  # #7fdbca
   elif (( percent >= 60 )); then
     ansi::fg_truecolor 173 219 103  # #addb67
