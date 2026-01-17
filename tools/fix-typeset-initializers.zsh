@@ -196,7 +196,7 @@ fix_line() {
 
       if [[ "$preserve_existing" == true ]]; then
         if [[ "$tok_is_array" == true ]]; then
-          tok_init="(\"\\${(@)${tok}}\")"
+          tok_init="(\\${${tok}:+\\\"\\${(@)${tok}}\\\"})"
         elif [[ "$tok_is_int" == true ]]; then
           tok_init="\"\\${${tok}-0}\""
         else
