@@ -3,11 +3,11 @@
 _git-scope() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
-  typeset -a subcommands
+  typeset -a subcommands=()
   subcommands=(
     'tracked:Show all tracked files (filtered by prefix, supports -p)'
     'staged:Show staged files (index contents, supports -p)'

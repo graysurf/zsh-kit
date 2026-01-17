@@ -15,6 +15,7 @@ print_usage() {
   print -r -- ""
   print -r -- "Rewrite first-party zsh files to prefer single quotes for empty-string"
   print -r -- "initializers in typeset/local lines (\"\" -> '')."
+  print -r -- "Note: does not add initializers (e.g. 'typeset foo' is unchanged)."
   print -r -- ""
   print -r -- "Modes:"
   print -r -- "  --check: Print files that would change; exit 1 if any (default)"

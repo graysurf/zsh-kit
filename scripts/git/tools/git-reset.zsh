@@ -185,12 +185,12 @@ git-reset-mixed() {
 # Safety:
 # - Can rewrite history and/or discard tracked changes depending on your choice.
 git-reset-undo() {
-  typeset target_commit
-  typeset status_lines
-  typeset reflog_line_current reflog_subject_current
-  typeset reflog_line_target  reflog_subject_target
-  typeset choice
-  typeset -a op_warnings
+  typeset target_commit=''
+  typeset status_lines=''
+  typeset reflog_line_current='' reflog_subject_current=''
+  typeset reflog_line_target='' reflog_subject_target=''
+  typeset choice=''
+  typeset -a op_warnings=()
 
   # ── Safety: ensure we are inside a Git repository ───────────────────────────
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -360,7 +360,7 @@ git-reset-undo() {
 # - May update tracked files to match the target state; checkout can fail if it would overwrite changes.
 # - Depending on reflog, you may end up in detached HEAD.
 git-back-head() {
-  typeset prev_head
+  typeset prev_head=''
 
   # Resolve HEAD@{1} to a commit SHA for display/validation
   prev_head=$(git rev-parse HEAD@{1} 2>/dev/null)
@@ -392,7 +392,7 @@ git-back-head() {
 # Safety:
 # - Checkout may fail if local changes would be overwritten.
 git-back-checkout() {
-  typeset current_branch from_branch
+  typeset current_branch='' from_branch=''
 
   # Determine the current branch; in detached HEAD this becomes literal "HEAD"
   current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || return 1

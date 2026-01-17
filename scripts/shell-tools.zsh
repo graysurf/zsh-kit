@@ -78,15 +78,15 @@ _su_kill_do() {
   emulate -L zsh
   setopt err_return
 
-  typeset -i signal
+  typeset -i signal=0
   signal=${1:-15}
   shift
 
-  typeset -a pids
+  typeset -a pids=()
   pids=($@)
   # Deduplicate numeric PIDs only
   typeset -a filtered=()
-  local pid
+  local pid=''
   for pid in ${pids[@]}; do
     [[ "$pid" == <-> ]] && filtered+=("$pid")
   done
@@ -169,7 +169,7 @@ kill-process() {
   fi
 
   typeset -a pids=()
-  typeset pid
+  typeset pid=''
   for pid in "$@"; do
     if [[ "$pid" == <-> ]]; then
       pids+=("$pid")
@@ -266,7 +266,7 @@ edit-zsh() {
   emulate -L zsh
   setopt err_return
 
-  typeset cwd
+  typeset cwd=''
   cwd="$(pwd)"
 
   code "$ZDOTDIR"

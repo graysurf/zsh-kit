@@ -103,8 +103,8 @@ typeset -g _GIT_OPEN_PR_STATE_TO_COLOR_DEFAULT=$'\e[36m' # cyan
 
 zstyle -e ':fzf-tab:*:git-open:*' group-colors '
   reply=()
-  local group_name
-  local color
+  local group_name=''
+  local color=''
   for group_name in "${_ftb_groups[@]}"; do
     color="${_GIT_OPEN_PR_STATE_TO_COLOR[$group_name]-$_GIT_OPEN_PR_STATE_TO_COLOR_DEFAULT}"
     reply+=("$color")
@@ -112,8 +112,8 @@ zstyle -e ':fzf-tab:*:git-open:*' group-colors '
 '
 zstyle -e ':fzf-tab:*:*:git-open:*' group-colors '
   reply=()
-  local group_name
-  local color
+  local group_name=''
+  local color=''
   for group_name in "${_ftb_groups[@]}"; do
     color="${_GIT_OPEN_PR_STATE_TO_COLOR[$group_name]-$_GIT_OPEN_PR_STATE_TO_COLOR_DEFAULT}"
     reply+=("$color")
@@ -121,8 +121,8 @@ zstyle -e ':fzf-tab:*:*:git-open:*' group-colors '
 '
 zstyle -e ':fzf-tab:*:*:*:git-open:*' group-colors '
   reply=()
-  local group_name
-  local color
+  local group_name=''
+  local color=''
   for group_name in "${_ftb_groups[@]}"; do
     color="${_GIT_OPEN_PR_STATE_TO_COLOR[$group_name]-$_GIT_OPEN_PR_STATE_TO_COLOR_DEFAULT}"
     reply+=("$color")

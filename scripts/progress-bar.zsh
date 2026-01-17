@@ -236,7 +236,7 @@ progress_bar::init() {
     return 2
   fi
 
-  typeset -i total width head_len fd
+  typeset -i total=0 width=0 head_len=0 fd=0
   total="$total_raw"
   (( total < 0 )) && total=0
 
@@ -333,7 +333,7 @@ progress_bar::update() {
   typeset fd_raw="${_progress_bar_state[${id},fd]-2}"
   typeset last_filled_raw="${_progress_bar_state[${id},last_filled]--1}"
 
-  typeset -i current_int total width head_len fd filled last_filled
+  typeset -i current_int=0 total=0 width=0 head_len=0 fd=0 filled=0 last_filled=0
   current_int="$current_raw"
   total="$total_raw"
   width="$width_raw"
@@ -443,7 +443,7 @@ progress_bar::init_indeterminate() {
     return 2
   fi
 
-  typeset -i width head_len fd
+  typeset -i width=0 head_len=0 fd=0
   width=0
   if [[ -n "$width_raw" && "$width_raw" == <-> ]]; then
     width="$width_raw"
@@ -534,7 +534,7 @@ progress_bar::tick() {
   typeset dir_raw="${_progress_bar_state[${id},dir]-1}"
   typeset last_filled_raw="${_progress_bar_state[${id},last_filled]--1}"
 
-  typeset -i width head_len fd pos dir filled last_filled
+  typeset -i width=0 head_len=0 fd=0 pos=0 dir=0 filled=0 last_filled=0
   width="$width_raw"
   head_len="$head_len_raw"
   fd="$fd_raw"

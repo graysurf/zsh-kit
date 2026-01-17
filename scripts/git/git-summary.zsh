@@ -159,7 +159,7 @@ _git_last_month() {
 # Usage: _git_last_week
 _git_last_week() {
   typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
-  typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
+  typeset CURRENT_DATE='' WEEKDAY='' START_DATE='' END_DATE=''
   CURRENT_DATE=$(date +"$fmt")
 
   if $GIT_SUMMARY_DATE_HAS_V; then
@@ -183,7 +183,7 @@ _git_last_week() {
 # Usage: _git_this_week
 _git_this_week() {
   typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
-  typeset CURRENT_DATE WEEKDAY START_DATE END_DATE
+  typeset CURRENT_DATE='' WEEKDAY='' START_DATE='' END_DATE=''
   CURRENT_DATE=$(date +"$fmt")
 
   if $GIT_SUMMARY_DATE_HAS_V; then

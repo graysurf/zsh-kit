@@ -88,7 +88,7 @@ async_pool::map() {
     fd=2
   fi
 
-  local -a items
+  local -a items=()
   items=("$@")
   local -i total="${#items[@]}"
 
@@ -118,7 +118,7 @@ async_pool::map() {
   progress_id="async-pool:${$}"
   progress_active='false'
   if (( $+functions[progress_bar::init] )); then
-    local -a pb_args
+    local -a pb_args=()
     pb_args=( --prefix "${prefix}" --total "${total}" --fd "${fd}" )
     if [[ "${enabled_mode}" == 'true' ]]; then
       pb_args+=( --enabled )
@@ -350,14 +350,14 @@ async_pool_demo::sleep() {
     jobs=10
   fi
 
-  local -a items
+  local -a items=()
   items=()
   local -i i=0
   for (( i = 1; i <= count; i++ )); do
     items+=("req-${i}")
   done
 
-  local -a args
+  local -a args=()
   args=( --worker async_pool_demo::_sleep_worker --jobs "${jobs}" --prefix "${prefix}" )
   if [[ "${debug_mode}" == 'true' ]]; then
     args+=( --debug )

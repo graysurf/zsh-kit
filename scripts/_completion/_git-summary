@@ -3,7 +3,7 @@
 _git-summary() {
   emulate -L zsh -o extendedglob
 
-  typeset -a subcmds
+  typeset -a subcmds=()
   subcmds=(
     "today:Show today's git summary"
     "yesterday:Show yesterday's git summary"

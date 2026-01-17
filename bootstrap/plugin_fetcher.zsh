@@ -21,8 +21,8 @@ PLUGIN_UPDATE_FILE="$ZSH_CACHE_DIR/plugin.timestamp"
 # - When PLUGIN_FETCH_FORCE_ENABLED=true and PLUGIN_FETCH_DRY_RUN_ENABLED=false, this removes the plugin directory.
 plugin_fetch_if_missing_from_entry() {
   typeset entry="$1"
-  typeset -a parts
-  typeset plugin_name git_url
+  typeset -a parts=()
+  typeset plugin_name='' git_url=''
 
   parts=("${(@s/::/)entry}")
   plugin_name="${parts[1]}"
@@ -123,7 +123,7 @@ plugin_update_all() {
 # - Calls plugin_update_all and writes a new timestamp when an update is performed.
 # - Current threshold: 7 days (see implementation).
 plugin_maybe_auto_update() {
-  typeset now_epoch last_epoch
+  typeset now_epoch='' last_epoch=''
 
   now_epoch=$(date +%s)
 

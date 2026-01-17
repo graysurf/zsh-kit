@@ -99,7 +99,7 @@ function _install_tools::ensure_homebrew() {
     return 0
   fi
 
-  local candidate
+  local candidate=''
   for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
       _install_tools::apply_homebrew_env "$candidate" || return 1
@@ -200,7 +200,7 @@ function _install_tools::main() {
   local dry_run=false
   local quiet=false
 
-  local arg
+  local arg=''
   for arg in "$@"; do
     case "$arg" in
       --dry-run)

@@ -5,14 +5,14 @@
 _opencode-tools() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
   local -i orig_current="$CURRENT"
   local -a orig_words=("${words[@]}")
 
-  typeset -a subcmds
+  typeset -a subcmds=()
   subcmds=(
     'commit-with-scope:Run semantic-commit skill (with git-scope context)'
     'commit:Alias of commit-with-scope'

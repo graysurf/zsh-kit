@@ -29,7 +29,7 @@ done < "$ZSH_PLUGIN_LIST_FILE"
 # - Supports `KEY=VALUE` style extras (no eval).
 load_plugin_entry() {
 	typeset entry="$1"
-	typeset -a parts
+	typeset -a parts=()
 	parts=("${(@s/::/)entry}")
 
   typeset plugin_name="${parts[1]}"

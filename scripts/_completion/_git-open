@@ -207,14 +207,14 @@ __git_open_workflow_files() {
 _git-open() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
   typeset -i orig_current="$CURRENT"
   typeset -a orig_words=("${words[@]}")
 
-  typeset -a subcmds
+  typeset -a subcmds=()
   subcmds=(
     'repo:Open repo page'
     'branch:Open branch/tree (optional ref)'
@@ -279,7 +279,7 @@ _git-open() {
             refs+=(${(f)"$(__git_open_remote_refs)"})
             refs+=(${(f)"$(__git_open_tag_names)"})
             if (( ${#refs[@]} > 0 )); then
-              local expl
+              local expl=''
               _wanted -V refs expl 'ref' compadd -- $refs && return 0
             fi
             _message 'ref (default upstream branch)'
@@ -306,7 +306,7 @@ _git-open() {
             fi
 
             if (( ${#commit_hashes[@]} > 0 )); then
-              local expl
+              local expl=''
               _wanted -V commits expl 'commit ref' compadd -d commit_displays -- $commit_hashes && return 0
             fi
 
@@ -383,7 +383,7 @@ _git-open() {
             typeset -a tags=()
             tags=(${(f)"$(__git_open_tag_names)"})
             if (( ${#tags[@]} > 0 )); then
-              local expl
+              local expl=''
               _wanted -V tags expl 'tag' compadd -- $tags && return 0
             fi
             _message 'tag (optional)'

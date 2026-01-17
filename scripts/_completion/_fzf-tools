@@ -3,7 +3,7 @@
 emulate -L zsh -o extendedglob
 
 # List of subcommands with their descriptions
-typeset -a commands
+typeset -a commands=()
 commands=(
   'file:Search and preview text files'
   'directory:Search directories and cd into selection'

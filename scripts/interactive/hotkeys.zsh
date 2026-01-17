@@ -12,7 +12,7 @@
 # - Bound to Ctrl+B.
 # - Requires an interactive ZLE session and `fzf`.
 fzf-tools-launcher-widget() {
-  typeset raw selected subcommand
+  typeset raw='' selected='' subcommand=''
 
   raw=$(cat <<EOF | fzf --ansi \
     --prompt="🔧 fzf-tools > " \
@@ -121,7 +121,7 @@ bindkey '^G' fzf-tools-git-commit-widget
 # - Bound to Ctrl+R.
 # - Depends on `fzf-history-select` (defined in `scripts/fzf-tools.zsh`).
 fzf-history-widget() {
-  local selected output cmd
+  local selected='' output='' cmd=''
 
   # fzf returns two lines: 1) key pressed, 2) selected entry
   output="$(fzf-history-select)"

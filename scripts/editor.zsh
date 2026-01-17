@@ -21,7 +21,7 @@ vi() {
     return 1
   fi
 
-  typeset -a editor_cmd
+  typeset -a editor_cmd=()
   editor_cmd=(${(z)EDITOR})
   "${editor_cmd[@]}" "$@"
 }

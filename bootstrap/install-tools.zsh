@@ -64,7 +64,7 @@ function _install_tools::parse_tools_list_line() {
   setopt errexit nounset pipefail
 
   local line="$1"
-  local -a parts
+  local -a parts=()
   parts=("${(@s/::/)line}")
 
   local tool="${parts[1]}"
@@ -97,7 +97,7 @@ function _install_tools::ensure_homebrew_on_path() {
   )
   [[ -n "$home" ]] && candidates+=("$home/.linuxbrew/bin/brew")
 
-  local candidate
+  local candidate=''
   for candidate in "${candidates[@]}"; do
     if [[ -x "$candidate" ]]; then
       local homebrew_prefix="${candidate:h:h}"

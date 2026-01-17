@@ -5,6 +5,9 @@ if command -v safe_unalias >/dev/null; then
     crl crla
 fi
 
+(( ${+_CODEX_SECRET_SOURCED} )) && return 0
+typeset -g _CODEX_SECRET_SOURCED=1
+
 typeset -gr CODEX_SCRIPT_PATH="${(%):-%N}"
 typeset -gr CODEX_SECRET_DIR="${CODEX_SCRIPT_PATH:A:h}"
 typeset -gr _CODEX_AUTH_FILE_PRIMARY="${HOME}/.config/codex-kit/auth.json"
@@ -15,9 +18,9 @@ if [[ "${CODEX_AUTH_FILE}" == "${_CODEX_AUTH_FILE_PRIMARY}" && ! -f "${_CODEX_AU
 elif [[ "${CODEX_AUTH_FILE}" == "${_CODEX_AUTH_FILE_FALLBACK}" && ! -f "${_CODEX_AUTH_FILE_FALLBACK}" && -f "${_CODEX_AUTH_FILE_PRIMARY}" ]]; then
   CODEX_AUTH_FILE="${_CODEX_AUTH_FILE_PRIMARY}"
 fi
-typeset -gr CODEX_AUTH_FILE
+typeset -gr CODEX_AUTH_FILE="${CODEX_AUTH_FILE-}"
 typeset -g CODEX_OAUTH_CLIENT_ID="${CODEX_OAUTH_CLIENT_ID:-app_EMoamEEZ73f0CkXaXp7hrann}"
-typeset -gr CODEX_OAUTH_CLIENT_ID
+typeset -gr CODEX_OAUTH_CLIENT_ID="${CODEX_OAUTH_CLIENT_ID-}"
 typeset -gr CODEX_SECRET_CACHE_DIR="${CODEX_SECRET_CACHE_DIR:-${ZSH_CACHE_DIR:-${ZDOTDIR:-$HOME/.config/zsh}/cache}/codex/secrets}"
 typeset -g CODEX_SYNC_AUTH_ON_CHANGE_ENABLED="${CODEX_SYNC_AUTH_ON_CHANGE_ENABLED:-true}"
 
@@ -51,7 +54,7 @@ _codex_file_sig() {
   [[ -n "${file}" && -f "${file}" ]] || return 1
 
   if zmodload zsh/stat 2>/dev/null; then
-    local -a s
+    local -a s=()
     if zstat -A s -- "${file}" 2>/dev/null; then
       # device inode mode nlink uid gid rdev size atime mtime ctime blksize block link
       print -r -- "${s[2]}:${s[8]}:${s[10]}:${s[11]}"
@@ -432,7 +435,7 @@ codex-refresh-auth() {
     return 1
   fi
 
-  local refresh_token
+  local refresh_token=''
   if ! refresh_token="$(
     jq -er '
       if (.tokens? // {}) | has("refresh_token") then .tokens.refresh_token
@@ -444,7 +447,7 @@ codex-refresh-auth() {
     return 2
   fi
 
-  local now_iso tmp_response tmp_out auth_dir cache_dir timestamp_file http_status
+  local now_iso='' tmp_response='' tmp_out='' auth_dir='' cache_dir='' timestamp_file='' http_status=''
   now_iso="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   auth_dir="${target_file:h}"
   mkdir -p -- "${auth_dir}"
@@ -1260,7 +1263,7 @@ codex-rate-limits() {
       return 1
     fi
 
-    local -a secret_files
+    local -a secret_files=()
     secret_files=("${secret_dir}"/*.json(N))
     if (( ${#secret_files} == 0 )); then
       print -ru2 -r -- "codex-rate-limits: no secrets found in ${secret_dir}"
@@ -1502,12 +1505,12 @@ codex-rate-limits() {
   [[ -n "${connect_timeout}" && "${connect_timeout}" == <-> ]] || connect_timeout="2"
   [[ -n "${max_time}" && "${max_time}" == <-> ]] || max_time="8"
 
-  local tmp_response tmp_status http_status
+  local tmp_response='' tmp_status='' http_status=''
   tmp_response="$(mktemp "${target_file:h}/wham.usage.XXXXXX")"
   tmp_status="$(mktemp "${target_file:h}/wham.status.XXXXXX")"
   trap "rm -f -- ${(qq)tmp_response} ${(qq)tmp_status}" EXIT
 
-  local -a curl_args
+  local -a curl_args=()
   curl_args=(
     -sS
     -o "${tmp_response}"
@@ -1831,7 +1834,7 @@ codex-rate-limits-async() {
     return 1
   fi
 
-  local -a secret_files
+  local -a secret_files=()
   secret_files=("${secret_dir}"/*.json(N))
   if (( ${#secret_files} == 0 )); then
     print -ru2 -r -- "codex-rate-limits-async: no secrets found in ${secret_dir}"
@@ -1876,7 +1879,7 @@ codex-rate-limits-async() {
     fi
   fi
 
-  local -a per_secret_args
+  local -a per_secret_args=()
   per_secret_args=( --one-line )
   if [[ "${cached_mode}" == 'true' ]]; then
     per_secret_args+=( --cached )

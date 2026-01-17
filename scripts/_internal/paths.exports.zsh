@@ -18,7 +18,7 @@ export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 # PATH
 # ──────────────────────────────
 # Use unique path entries (prevents duplicates)
-typeset -U path PATH
+typeset -U path=($path) PATH="${PATH-}"
 
 # Prepend critical paths to PATH
 typeset -a _zsh_path_prepend=()

@@ -168,7 +168,7 @@ _git_scope_collect() {
         | grep -v '^$' | sort -u ;;
     tracked)
       typeset -a prefixes=("${args[@]}")
-      typeset files all_filtered
+      typeset files='' all_filtered=''
       files=$(git -c core.quotepath=false ls-files)
       if [[ ${#prefixes[@]} -gt 0 ]]; then
         for prefix in "${prefixes[@]}"; do
@@ -221,7 +221,7 @@ print_file_content() {
       printf '\n```\n'
     fi
   elif git cat-file -e "HEAD:$file" 2>/dev/null; then
-    typeset tmp
+    typeset tmp=''
     tmp="$(mktemp)"
     git show "HEAD:$file" > "$tmp"
 
@@ -323,7 +323,7 @@ _git_scope_commit() {
   _git_scope_print_commit_message "$commit"
   _git_scope_render_commit_files "$commit" "$parent_selector"
 
-  typeset -a file_list
+  typeset -a file_list=()
   file_list=("${_git_scope_commit_file_list[@]}")
 
   if [[ "$_git_scope_should_print" == true ]]; then

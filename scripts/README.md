@@ -143,6 +143,8 @@ Some execution paths run in a new process (e.g. `fzf --preview`, `xargs`, `sh -c
 - When escape sequences are required: use `$'...'` (e.g., `\n`).
 - Auto-fix (empty strings only): `./tools/fix-typeset-empty-string-quotes.zsh --write` normalizes `typeset/local ...=""`
   to `''`.
+- Auto-fix (missing initializers): `./tools/fix-typeset-initializers.zsh --write` adds explicit initializers for bare
+  `typeset/local` declarations (e.g. `foo` -> `foo=''`, `-a/-A` -> `=()`, `-i` -> `=0`).
 
 ## Validation checklist
 

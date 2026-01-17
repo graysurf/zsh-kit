@@ -42,7 +42,7 @@ _git_lock_confirm() {
 # - Prints the resolved label to stdout.
 _git_lock_resolve_label() {
   typeset input_label="$1"
-  typeset repo_id lock_dir latest_file
+  typeset repo_id='' lock_dir='' latest_file=''
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
@@ -66,7 +66,7 @@ _git_lock_resolve_label() {
 # - Defaults: label=default, commit=HEAD.
 # - Stores lock files under `$ZSH_CACHE_DIR/git-locks/<repo>-<label>.lock`.
 _git_lock() {
-  typeset label note commit repo_id lock_dir lock_file latest_file timestamp hash
+  typeset label='' note='' commit='' repo_id='' lock_dir='' lock_file='' latest_file='' timestamp='' hash=''
 
   typeset label_arg="${1-}"
   typeset note_arg="${2-}"
@@ -110,7 +110,7 @@ _git_lock() {
 # Safety:
 # - Runs `git reset --hard <hash>` which discards tracked changes.
 _git_lock_unlock() {
-  typeset label repo_id lock_dir lock_file latest_file
+  typeset label='' repo_id='' lock_dir='' lock_file='' latest_file=''
   typeset label_arg="${1-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
@@ -133,7 +133,7 @@ _git_lock_unlock() {
     return 1
   fi
 
-  typeset hash note msg
+  typeset hash='' note='' msg=''
   read -r line < "$lock_file"
   hash=$(print -r -- "$line" | cut -d '#' -f 1 | xargs)
   note=$(print -r -- "$line" | cut -d '#' -f 2- | xargs)
@@ -158,7 +158,7 @@ _git_lock_unlock() {
 # - Shows label, commit hash, note, timestamp, and commit subject.
 # - Marks the per-repo "latest" label.
 _git_lock_list() {
-  typeset repo_id lock_dir latest
+  typeset repo_id='' lock_dir='' latest=''
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
@@ -169,7 +169,7 @@ _git_lock_list() {
 
   [[ -f "$lock_dir/${repo_id}-latest" ]] && latest=$(cat "$lock_dir/${repo_id}-latest")
 
-  typeset file tmp_list=()
+  typeset file='' tmp_list=()
   for file in "$lock_dir/${repo_id}-"*.lock; do
     [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
     typeset ts_line='' epoch=''
@@ -214,7 +214,7 @@ _git_lock_list() {
 # - Prompts before overwriting the target label if it exists.
 # - Sets the copied label as the per-repo "latest".
 _git_lock_copy() {
-  typeset repo_id lock_dir src_label dst_label src_file dst_file
+  typeset repo_id='' lock_dir='' src_label='' dst_label='' src_file='' dst_file=''
   typeset src_label_arg="${1-}"
   typeset dst_label_arg="${2-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
@@ -250,7 +250,7 @@ _git_lock_copy() {
   cp "$src_file" "$dst_file"
   printf "%s\n" "$dst_label" > "$lock_dir/${repo_id}-latest"
 
-  typeset content hash note timestamp subject
+  typeset content='' hash='' note='' timestamp='' subject=''
   content=$(<"$src_file")
   hash=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
@@ -272,7 +272,7 @@ _git_lock_copy() {
 # - When label is omitted, it uses the per-repo "latest" label if present.
 # - Removes the "latest" marker if you delete the latest label.
 _git_lock_delete() {
-  typeset repo_id lock_dir label lock_file latest_file latest_label
+  typeset repo_id='' lock_dir='' label='' lock_file='' latest_file='' latest_label=''
   typeset label_arg="${1-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
   lock_dir="$ZSH_CACHE_DIR/git-locks"
@@ -294,7 +294,7 @@ _git_lock_delete() {
     return 1
   fi
 
-  typeset content hash note timestamp subject
+  typeset content='' hash='' note='' timestamp='' subject=''
   content=$(<"$lock_file")
   hash=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f1 | xargs)
   note=$(print -r -- "$content" | sed -n '1p' | cut -d '#' -f2- | xargs)
@@ -407,8 +407,8 @@ _git_lock_diff() {
 # Safety:
 # - `--push` publishes the tag to `origin` and deletes the local tag afterwards.
 _git_lock_tag() {
-  typeset label tag_name tag_msg='' do_push=false
-  typeset repo_id lock_dir lock_file hash timestamp line1
+  typeset label='' tag_name='' tag_msg='' do_push=false
+  typeset repo_id='' lock_dir='' lock_file='' hash='' timestamp='' line1=''
   typeset -a positional=()
 
   while [[ $# -gt 0 ]]; do

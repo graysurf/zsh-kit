@@ -72,9 +72,9 @@ _git_tools_remote_refs() {
 _git_tools_complete_branch_cleanup() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
   typeset -a branches=()
   branches=(${(f)"$(_git_tools_branch_names)"})
@@ -95,9 +95,9 @@ _git_tools_complete_branch_cleanup() {
 _git_tools_complete_reset_remote() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
   typeset -a remotes=()
   typeset -a branches=()
@@ -139,9 +139,9 @@ _git_tools_complete_reset_remote() {
 _git-tools() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
   case "${service-}" in
     git-commit-context)
@@ -169,7 +169,7 @@ _git-tools() {
       ;;
   esac
 
-  typeset -a groups subcmds
+  typeset -a groups=() subcmds=()
   groups=(
     'utils:Utility helpers'
     'reset:Reset helpers'

@@ -216,10 +216,10 @@ _codex_auto_refresh_main() {
 
   local -i min_days="${min_days_raw}"
   local -i min_seconds=$(( min_days * 86400 ))
-  local -i now_epoch
+  local -i now_epoch=0
   now_epoch="$(date -u +%s)"
 
-  local -a targets
+  local -a targets=()
   targets=( "${CODEX_AUTH_FILE}" "${CODEX_SECRET_DIR}"/*.json )
 
   local -i refreshed=0 skipped=0 failures=0

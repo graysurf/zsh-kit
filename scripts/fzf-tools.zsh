@@ -56,7 +56,7 @@ _fzf_confirm() {
 
   printf "$prompt" "$@"
 
-  local confirm
+  local confirm=''
   read -r confirm
   [[ "$confirm" != [yY] ]] && printf "🚫 Aborted.\n" && return 1
   return 0
@@ -90,7 +90,7 @@ _fzf_ensure_git_utils() {
     return 0
   fi
 
-  local script_root
+  local script_root=''
   script_root="$(_fzf_script_root)"
 
   [[ -f "$script_root/git/tools/git-utils.zsh" ]] && source "$script_root/git/tools/git-utils.zsh"
@@ -112,7 +112,7 @@ _fzf_ensure_git_scope() {
     return 0
   fi
 
-  local script_root
+  local script_root=''
   script_root="$(_fzf_script_root)"
 
   [[ -f "$script_root/git/git-scope.zsh" ]] && source "$script_root/git/git-scope.zsh"
@@ -174,7 +174,7 @@ _fzf_kill_flow() {
   _fzf_confirm "Kill PID(s): %s? [y/N] " "$pids" || return 1
 
   printf "Force SIGKILL (-9)? [y/N] "
-  local force
+  local force=''
   read -r force
   if [[ "$force" == [yY] ]]; then
     printf "☠️  Killing PID(s) with SIGKILL: %s\n" "$pids"
@@ -200,7 +200,7 @@ fzf-git-branch() {
   local query="$*"
 
   # List local branches, strip '* ' from current, but show it
-  local selected
+  local selected=''
   selected=$(git branch --color=always --sort=-committerdate | \
     sed 's/^..//' | \
     fzf --ansi --reverse \
@@ -216,7 +216,7 @@ fzf-git-branch() {
   [[ -z "$selected" ]] && return 1
 
   # Remove any leading '*' and spaces
-  local branch
+  local branch=''
   branch=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
   _fzf_confirm "🚚 Checkout to branch '%s'? [y/N] " "$branch" || return 1
@@ -245,7 +245,7 @@ fzf-git-tag() {
   local query="$*"
 
   # List tags, sorted by most recent
-  local selected
+  local selected=''
   selected=$(git tag --sort=-creatordate | \
     fzf --ansi --reverse \
       --prompt="🏷️  Tag > " \
@@ -263,13 +263,13 @@ fzf-git-tag() {
   [[ -z "$selected" ]] && return 1
 
   # Remove any leading '*' and spaces (shouldn't be present for tags, but for symmetry)
-  local tag
+  local tag=''
   tag=$(print -r -- "$selected" | sed 's/^[* ]*//')
 
   # Pre-resolve tag to commit hash for preview and checkout
   _fzf_ensure_git_utils || return 1
 
-  local hash
+  local hash=''
   hash=$(get_commit_hash "$tag" 2>/dev/null)
   if [[ -z "$hash" ]]; then
     printf "❌ Could not resolve tag '%s' to a commit hash.\n" "$tag"
@@ -300,7 +300,7 @@ fzf-process() {
   local kill_now="$_fzf_kill_now" force_kill="$_fzf_force_kill"
   local query="${(j: :)_fzf_kill_rest}"
 
-  local line
+  local line=''
   line=$(ps -eo user,pid,ppid,pcpu,pmem,stat,lstart,time,args | sed 1d | \
     fzf -m \
       --query="$query" \
@@ -328,7 +328,7 @@ fzf-process() {
         printf "💬 CMD\n%s\n", cmd;
       }'\''') || return
 
-  local pids
+  local pids=''
   pids=$(print -r -- "$line" | awk '{print $2}')
   _fzf_kill_flow "$pids" "$kill_now" "$force_kill"
 }
@@ -348,7 +348,7 @@ fzf-port() {
   local query="${(j: :)_fzf_kill_rest}"
 
   # Prefer lsof for cross-platform listing (macOS/Linux). Show TCP LISTEN and UDP sockets.
-  local line
+  local line=''
   if command -v lsof >/dev/null 2>&1; then
     # Limit to TCP listeners explicitly (-iTCP) so state filter is reliable across platforms
     line=$(lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | sed 1d | \
@@ -385,7 +385,7 @@ fzf-port() {
   fi
 
   # Extract PIDs (lsof output second column). Deduplicate.
-  local pids
+  local pids=''
   pids=$(print -r -- "$line" | awk '{print $2}' | sort -u)
   _fzf_kill_flow "$pids" "$kill_now" "$force_kill"
 }
@@ -439,7 +439,7 @@ printf "🕒 %s\n\n%s" "$fts" "$cmd"' \
 # Notes:
 # - Uses fzf-history-select; executes selected command.
 fzf-history() {
-  local selected output cmd
+  local selected='' output='' cmd=''
 
   output="$(fzf-history-select "$*")"
   selected="$(printf "%s\n" "$output" | sed -n '2p')"
@@ -515,7 +515,7 @@ _fzf_open_in_vscode_workspace() {
   typeset workspace_path="${workspace_root:A}"
   typeset file_path="${file:A}"
 
-  typeset -a code_args
+  typeset -a code_args=()
   code_args=(--goto "$file_path")
   if [[ "$wait" == "--wait" ]]; then
     code_args=(--wait "${code_args[@]}")
@@ -651,7 +651,7 @@ fzf-file() {
   open_with="$REPLY"
   query_parts=("${reply[@]}")
 
-  typeset file
+  typeset file=''
   file=$(_fzf_file_select "${query_parts[*]}")
   [[ -z "$file" ]] && return 0
 
@@ -721,7 +721,7 @@ fzf-git-status() {
 _fzf_select_commit() {
   local query="${1:-}"
   local selected="${2:-}"
-  local result
+  local result=''
   local debug=false debug_log=''
   if [[ -n "${FZF_GIT_COMMIT_DEBUG-}" && "${FZF_GIT_COMMIT_DEBUG-}" != "0" ]]; then
     debug=true
@@ -762,7 +762,7 @@ _fzf_select_commit() {
   [[ -z "$result" ]] && return 1
 
   if $debug; then
-    local out_query out_selected
+    local out_query='' out_selected=''
     out_query=$(printf "%s\n" "$result" | sed -n '1p')
     out_selected=$(printf "%s\n" "$result" | sed -n '2p')
     print -r -- "fzf_out_query='${out_query}'" >>| "$debug_log"
@@ -781,7 +781,7 @@ _fzf_select_commit() {
 # - Confirms checkout; offers auto-stash retry on failure.
 fzf-git-checkout() {
   local query="$*"
-  local ref result
+  local ref='' result=''
   result=$(_fzf_select_commit "$query") || return 1
 
   ref=$(sed -n '2p' <<< "$result" | awk '{print $1}')
@@ -795,7 +795,7 @@ fzf-git-checkout() {
   printf "⚠️  Checkout to '%s' failed. Likely due to local changes.\n" "$ref"
   _fzf_confirm "📦 Stash your current changes and retry checkout? [y/N] " || return 1
 
-  local timestamp subject
+  local timestamp='' subject=''
   timestamp=$(date +%F_%H%M)
   subject=$(git log -1 --pretty=%s HEAD)
   local stash_msg="auto-stash ${timestamp} HEAD - ${subject}"
@@ -1146,7 +1146,7 @@ _fzf_def_doc_cache_timestamp_file() {
   emulate -L zsh
   setopt err_return
 
-  local cache_dir
+  local cache_dir=''
   cache_dir="$(_fzf_def_doc_cache_dir)"
   print -r -- "$cache_dir/fzf-def-doc.timestamp"
 }
@@ -1158,7 +1158,7 @@ _fzf_def_doc_cache_data_file() {
   emulate -L zsh
   setopt err_return
 
-  local cache_dir
+  local cache_dir=''
   cache_dir="$(_fzf_def_doc_cache_dir)"
   print -r -- "$cache_dir/fzf-def-doc.cache.zsh"
 }
@@ -1336,7 +1336,7 @@ fzf-def-doc-cache-rebuild() {
   emulate -L zsh
   setopt err_return
 
-  local cache_file cache_ts_file
+  local cache_file='' cache_ts_file=''
   cache_file="$(_fzf_def_doc_cache_data_file)"
   cache_ts_file="$(_fzf_def_doc_cache_timestamp_file)"
 

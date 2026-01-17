@@ -1,0 +1,371 @@
+#!/usr/bin/env -S zsh -f
+
+setopt pipe_fail err_exit nounset
+
+typeset -gr SCRIPT_PATH="${0:A}"
+typeset -gr SCRIPT_NAME="${SCRIPT_PATH:t}"
+typeset -gr SCRIPT_HINT="./tools/$SCRIPT_NAME"
+
+# print_usage: Print CLI usage/help.
+print_usage() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  print -r -- "Usage: $SCRIPT_HINT [-h|--help] [--check|--write]"
+  print -r -- ""
+  print -r -- "Rewrite first-party zsh files to avoid bare typeset/local declarations that"
+  print -r -- "can print existing values to stdout (e.g. when typeset_silent is unset)."
+  print -r -- ""
+  print -r -- "Fix:"
+  print -r -- "  local foo bar        -> local foo='' bar=''"
+  print -r -- "  typeset -a items     -> typeset -a items=()"
+  print -r -- "  typeset -i count     -> typeset -i count=0"
+  print -r -- ""
+  print -r -- "Modes:"
+  print -r -- "  --check: Print files that would change; exit 1 if any (default)"
+  print -r -- "  --write: Apply changes in-place"
+}
+
+# repo_root_from_script: Resolve repo root directory from this script path.
+repo_root_from_script() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  typeset script_dir='' root_dir=''
+  script_dir="${SCRIPT_PATH:h}"
+  root_dir="${script_dir:h}"
+  print -r -- "$root_dir"
+}
+
+# targets_from_root: Print target file paths (newline-separated).
+targets_from_root() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset extendedglob null_glob
+
+  typeset root_dir="$1"
+
+  typeset -a targets=()
+
+  [[ -f "$root_dir/.zshenv" ]] && targets+=("$root_dir/.zshenv")
+  [[ -f "$root_dir/.zshrc" ]] && targets+=("$root_dir/.zshrc")
+  [[ -f "$root_dir/.zprofile" ]] && targets+=("$root_dir/.zprofile")
+  targets+=("$root_dir"/*.zsh(.N))
+
+  targets+=("$root_dir"/bootstrap/**/*.zsh(.N))
+  targets+=("$root_dir"/scripts/**/*.zsh(.N))
+  targets+=("$root_dir"/tools/**/*.zsh(.N))
+  targets+=("$root_dir"/tests/**/*.zsh(.N))
+  targets+=("$root_dir"/.private/**/*.zsh(.N))
+
+  # Completion functions are often extension-less but still zsh.
+  targets+=("$root_dir"/scripts/_completion/_*(.N))
+  targets+=("$root_dir"/scripts/_features/**/_completion/_*(.N))
+
+  print -rl -- "${targets[@]}"
+}
+
+line_needs_fix() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset line="$1"
+
+  [[ "$line" =~ '^[[:space:]]*(typeset|local)([[:space:]]|$)' ]] || return 1
+
+  typeset -a words=("${(z)line}")
+  (( ${#words[@]} > 0 )) || return 1
+
+  typeset cmd="${words[1]}"
+  [[ "$cmd" == "typeset" || "$cmd" == "local" ]] || return 1
+
+  typeset -a opts=()
+  typeset idx=2
+  while (( idx <= ${#words[@]} )); do
+    typeset tok="${words[idx]}"
+    [[ "$tok" == "#" ]] && break
+    if [[ "$tok" == "--" ]]; then
+      opts+=("$tok")
+      (( idx++ ))
+      break
+    fi
+    if [[ "$tok" == [-+]* ]]; then
+      opts+=("$tok")
+      (( idx++ ))
+      continue
+    fi
+    break
+  done
+
+  typeset opt_flags="${(j::)opts}"
+  [[ "$opt_flags" == *f* || "$opt_flags" == *p* ]] && return 1
+
+  typeset tok=''
+  typeset i="$idx"
+  while (( i <= ${#words[@]} )); do
+    tok="${words[i]}"
+    [[ "$tok" == "#" ]] && break
+    [[ "$tok" == *"="* ]] && { (( i++ )); continue }
+    [[ "$tok" =~ '^[A-Za-z_][A-Za-z0-9_]*$' ]] || { (( i++ )); continue }
+    return 0
+  done
+
+  return 1
+}
+
+fix_line() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset line="$1"
+
+  [[ "$line" =~ '^[[:space:]]*(typeset|local)([[:space:]]|$)' ]] || {
+    print -r -- "$line"
+    return 1
+  }
+
+  typeset -a words=("${(z)line}")
+  (( ${#words[@]} > 0 )) || {
+    print -r -- "$line"
+    return 1
+  }
+
+  typeset cmd="${words[1]}"
+  [[ "$cmd" == "typeset" || "$cmd" == "local" ]] || {
+    print -r -- "$line"
+    return 1
+  }
+
+  typeset -a opts=()
+  typeset idx=2
+  while (( idx <= ${#words[@]} )); do
+    typeset tok="${words[idx]}"
+    [[ "$tok" == "#" ]] && break
+    if [[ "$tok" == "--" ]]; then
+      opts+=("$tok")
+      (( idx++ ))
+      break
+    fi
+    if [[ "$tok" == [-+]* ]]; then
+      opts+=("$tok")
+      (( idx++ ))
+      continue
+    fi
+    break
+  done
+
+  typeset opt_flags="${(j::)opts}"
+  [[ "$opt_flags" == *f* || "$opt_flags" == *p* ]] && {
+    print -r -- "$line"
+    return 1
+  }
+
+  typeset preserve_existing=false
+  if [[ "$opt_flags" == *r* || "$opt_flags" == *x* || "$opt_flags" == *U* ]]; then
+    preserve_existing=true
+  fi
+
+  typeset changed=false
+  typeset -a out_words=("$cmd" "${opts[@]}")
+
+  typeset i="$idx" tok=''
+  while (( i <= ${#words[@]} )); do
+    tok="${words[i]}"
+    if [[ "$tok" == "#" ]]; then
+      out_words+=("${words[@]:$(( i - 1 ))}")
+      break
+    fi
+
+    if [[ "$tok" == *"="* ]]; then
+      out_words+=("$tok")
+    elif [[ "$tok" =~ '^[A-Za-z_][A-Za-z0-9_]*$' ]]; then
+      typeset tok_init="''"
+      typeset tok_is_array=false
+      typeset tok_is_int=false
+
+      if [[ "$opt_flags" == *A* || "$opt_flags" == *a* ]]; then
+        tok_is_array=true
+      elif [[ "$opt_flags" == *i* ]]; then
+        tok_is_int=true
+      fi
+
+      # Special params: `path` is an array even without `-a`, and is commonly declared with `-U`.
+      if [[ "$opt_flags" == *U* && "$tok" == 'path' ]]; then
+        tok_is_array=true
+        tok_is_int=false
+      fi
+
+      if [[ "$preserve_existing" == true ]]; then
+        if [[ "$tok_is_array" == true ]]; then
+          tok_init="(\"\\${(@)${tok}}\")"
+        elif [[ "$tok_is_int" == true ]]; then
+          tok_init="\"\\${${tok}-0}\""
+        else
+          tok_init="\"\\${${tok}-}\""
+        fi
+      else
+        if [[ "$tok_is_array" == true ]]; then
+          tok_init="()"
+        elif [[ "$tok_is_int" == true ]]; then
+          tok_init="0"
+        fi
+      fi
+
+      out_words+=("${tok}=${tok_init}")
+      changed=true
+    else
+      out_words+=("$tok")
+    fi
+    (( i++ ))
+  done
+
+  if [[ "$changed" == true ]]; then
+    typeset indent="${line%%[^[:space:]]*}"
+    # Note: ${(z)...} tokenization may split `name=()` into `name=` and `()`.
+    # Avoid producing the invalid `name= ()` (space after '=') when rebuilding.
+    typeset out_line='' prev='' cur=''
+    out_line="${out_words[1]-}"
+    typeset j=2
+    while (( j <= ${#out_words[@]} )); do
+      prev="${out_words[$(( j - 1 ))]}"
+      cur="${out_words[j]}"
+      if [[ "$prev" =~ '^[A-Za-z_][A-Za-z0-9_]*=$' && "$cur" == \(* ]]; then
+        out_line+="$cur"
+      else
+        out_line+=" $cur"
+      fi
+      (( j++ ))
+    done
+
+    print -r -- "${indent}${out_line}"
+    return 0
+  fi
+
+  print -r -- "$line"
+  return 1
+}
+
+# fix_file_in_place <file>
+fix_file_in_place() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset file="$1"
+
+  typeset orig_perm=''
+  if zmodload zsh/stat >/dev/null 2>&1; then
+    typeset -a st=()
+    if zstat -A st +mode "$file" >/dev/null 2>&1; then
+      orig_perm="$(printf '%o' $(( st[1] & 8#7777 )))"
+    fi
+  fi
+
+  typeset tmp=''
+  tmp="$(mktemp 2>/dev/null || true)"
+  if [[ -z "$tmp" ]]; then
+    tmp="$(mktemp -t zsh-kit-fix.XXXXXX 2>/dev/null || true)"
+  fi
+  [[ -n "$tmp" ]] || {
+    print -u2 -r -- "error: failed to create temp file"
+    return 1
+  }
+
+  typeset changed=false
+  typeset -a out_lines=()
+  typeset line='' fixed=''
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    fixed="$(fix_line "$line" || true)"
+    if [[ "$fixed" != "$line" ]]; then
+      changed=true
+    fi
+    out_lines+=("$fixed")
+  done <"$file"
+
+  if [[ "$changed" != true ]]; then
+    rm -f -- "$tmp" >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  print -rl -- "${out_lines[@]}" >"$tmp" || {
+    rm -f -- "$tmp" >/dev/null 2>&1 || true
+    return 1
+  }
+  if [[ -n "$orig_perm" ]]; then
+    command chmod "$orig_perm" "$tmp" >/dev/null 2>&1 || {
+      rm -f -- "$tmp" >/dev/null 2>&1 || true
+      return 1
+    }
+  fi
+  command mv -f -- "$tmp" "$file" || {
+    rm -f -- "$tmp" >/dev/null 2>&1 || true
+    return 1
+  }
+  if [[ -n "$orig_perm" ]]; then
+    command chmod "$orig_perm" "$file" >/dev/null 2>&1 || return 1
+  fi
+  return 0
+}
+
+# file_needs_fix <file>
+file_needs_fix() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset file="$1"
+  typeset line=''
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line_needs_fix "$line" && return 0
+  done <"$file"
+  return 1
+}
+
+# main [args...]
+main() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset -A opts=()
+  zparseopts -D -E -A opts -- h -help -check -write || return 2
+
+  if (( ${+opts[-h]} || ${+opts[--help]} )); then
+    print_usage
+    return 0
+  fi
+
+  typeset mode='check'
+  if (( ${+opts[--write]} )); then
+    mode='write'
+  elif (( ${+opts[--check]} )); then
+    mode='check'
+  fi
+
+  typeset root_dir=''
+  root_dir="$(repo_root_from_script)"
+
+  typeset -a targets=()
+  IFS=$'\n' targets=($(targets_from_root "$root_dir"))
+
+  typeset -a changed=()
+  typeset file=''
+  for file in "${targets[@]}"; do
+    [[ -f "$file" ]] || continue
+    file_needs_fix "$file" || continue
+    changed+=("$file")
+
+    if [[ "$mode" == 'write' ]]; then
+      fix_file_in_place "$file" || return 1
+    fi
+  done
+
+  if (( ${#changed[@]} == 0 )); then
+    return 0
+  fi
+
+  print -u2 -r -- "files with bare typeset/local declarations (missing initializers):"
+  print -u2 -rl -- "${changed[@]}"
+
+  [[ "$mode" == 'check' ]] && return 1
+  return 0
+}
+
+main "$@"

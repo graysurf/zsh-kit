@@ -3,7 +3,7 @@
 __git_lock_labels() {
   emulate -L zsh -o extendedglob
 
-  local toplevel repo_id lock_dir file
+  local toplevel='' repo_id='' lock_dir='' file=''
   lock_dir="$ZSH_CACHE_DIR/git-locks"
 
   toplevel="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
@@ -26,9 +26,9 @@ __git_lock_labels() {
 _git-lock() {
   emulate -L zsh -o extendedglob
 
-  local context state state_descr
-  local -a line
-  typeset -A opt_args
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
 
   _arguments -s -C \
     '1:command:((lock\:Save\ commit\ hash\ to\ lock \

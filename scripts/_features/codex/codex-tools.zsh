@@ -232,7 +232,7 @@ codex-commit-with-scope() {
     return 1
   fi
 
-  local -A opts
+  local -A opts=()
   zparseopts -D -E -A opts -- p a -auto-stage || return 1
 
   local push_flag='false'
@@ -314,7 +314,7 @@ _codex_tools_run_prompt() {
     return 1
   fi
 
-  local prompt_content
+  local prompt_content=''
   prompt_content=$(cat -- "$prompt_file")
 
   # Replace $ARGUMENTS with user query

@@ -112,7 +112,7 @@ load_script_group() {
   shift 2
   typeset -a exclude=("$@")
 
-  typeset -a all_scripts filtered_scripts skipped_scripts remove_list
+  typeset -a all_scripts=() filtered_scripts=() skipped_scripts=() remove_list=()
   typeset file='' ex=''
   all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
 
@@ -210,7 +210,7 @@ load_script_group_ordered() {
     esac
   done
 
-  typeset -a all_scripts filtered_scripts remove_list
+  typeset -a all_scripts=() filtered_scripts=() remove_list=()
   all_scripts=(${(f)"$(collect_scripts "$base_dir")"})
 
   typeset -A pinned_set=()

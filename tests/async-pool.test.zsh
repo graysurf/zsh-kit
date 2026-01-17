@@ -73,7 +73,7 @@ assert_contains() {
     fail "async_pool::map should not treat '--' as an item"
   fi
 
-  typeset -a lines
+  typeset -a lines=()
   lines=("${(@f)output}")
 
   typeset line=''

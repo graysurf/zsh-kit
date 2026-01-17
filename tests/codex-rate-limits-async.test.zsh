@@ -124,7 +124,7 @@ assert_not_contains() {
   assert_contains "$output" "      -" "missing left values should be right-aligned" || fail "$output"
   assert_not_contains "$output" "acc_12345678901234567890" "names should be truncated to 20 chars" || fail "$output"
 
-  typeset -a lines names
+  typeset -a lines=() names=()
   lines=("${(@f)output}")
   names=()
 

@@ -17,8 +17,8 @@ export EZA_CONFIG_DIR="$HOME/.config/eza"
 # Notes:
 # - If the first arg after `--` is a number, it becomes `-L <n>`.
 __eza_with_optional_depth() {
-  local -a base_args level_flag
-  local arg first_arg
+  local -a base_args=() level_flag=()
+  local arg='' first_arg=''
 
   base_args=()
   while (( $# > 0 )); do
