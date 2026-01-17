@@ -4,6 +4,14 @@
 # DEFAULT (always useful)
 ############################
 
+# IDE / editor (host GUI; provides CLI entrypoints)
+code::visual-studio-code::VS Code editor (installs `code` / `code-tunnel`)
+
+# AI agents (terminal)
+codex::codex::OpenAI Codex CLI (terminal coding agent)
+opencode::opencode::AI coding agent (terminal)
+gemini-cli::gemini-cli::Google Gemini CLI (command: `gemini`)
+
 # Terminal workflow
 atuin::atuin::Magical shell history (searchable DB, optional encrypted sync)
 chezmoi::chezmoi::Dotfiles manager (templating + secrets + multi-machine)
