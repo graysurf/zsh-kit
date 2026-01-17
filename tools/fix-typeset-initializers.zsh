@@ -64,6 +64,8 @@ targets_from_root() {
   print -rl -- "${targets[@]}"
 }
 
+# line_needs_fix <line>
+# Return 0 when the line contains a bare typeset/local declaration (missing an initializer).
 line_needs_fix() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -112,6 +114,8 @@ line_needs_fix() {
   return 1
 }
 
+# fix_line <line>
+# Print the rewritten line; return 0 when changed, 1 when unchanged.
 fix_line() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
