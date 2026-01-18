@@ -29,6 +29,8 @@ _codex_workspace_confirm_or_abort() {
   return 1
 }
 
+# _codex_workspace_print_folders [paths...]
+# Print a bullet list of folders/paths.
 _codex_workspace_print_folders() {
   emulate -L zsh
 
@@ -38,6 +40,8 @@ _codex_workspace_print_folders() {
   done
 }
 
+# _codex_workspace_require_docker
+# Ensure `docker` is available on the host.
 _codex_workspace_require_docker() {
   emulate -L zsh
 
@@ -48,6 +52,8 @@ _codex_workspace_require_docker() {
   return 0
 }
 
+# _codex_workspace_require_container <container>
+# Ensure the workspace container exists on the host.
 _codex_workspace_require_container() {
   emulate -L zsh
 
@@ -64,6 +70,8 @@ _codex_workspace_require_container() {
   return 0
 }
 
+# _codex_workspace_container_reset_repo <container> <repo_dir> [ref]
+# Reset a repo inside a workspace container to a remote-tracking ref.
 _codex_workspace_container_reset_repo() {
   emulate -L zsh
   setopt pipe_fail
@@ -78,6 +86,8 @@ set -euo pipefail
 repo_dir="${1:?missing repo_dir}"
 ref="${2:-origin/main}"
 
+# _load_git_reset_remote
+# Load git-reset-remote when available (preferred: function, fallback: zsh-kit file).
 _load_git_reset_remote() {
   if typeset -f git-reset-remote >/dev/null 2>&1; then
     return 0
@@ -89,6 +99,8 @@ _load_git_reset_remote() {
   return 1
 }
 
+# _resolve_target_ref <remote/branch>
+# Resolve and validate a remote-tracking ref (fallbacks: remote/HEAD, then remote/master).
 _resolve_target_ref() {
   local ref="$1"
   local remote="${ref%%/*}"
@@ -129,6 +141,8 @@ _resolve_target_ref() {
   return 1
 }
 
+# _force_checkout_branch <branch> [start_point]
+# Force checkout a branch, cleaning untracked files if needed.
 _force_checkout_branch() {
   local branch="$1"
   local start_point="${2:-}"
@@ -145,6 +159,8 @@ _force_checkout_branch() {
   git checkout --force "$branch"
 }
 
+# _reset_repo_to_ref <repo_dir> <remote/branch>
+# Reset a repo dir to the resolved remote-tracking ref (hard reset + clean).
 _reset_repo_to_ref() {
   local repo_dir="$1"
   local ref="$2"
@@ -182,6 +198,8 @@ _reset_repo_to_ref "$repo_dir" "$ref"
 EOF
 }
 
+# _codex_workspace_container_list_git_repos <container> [root] [depth]
+# List git repo dirs under <root> inside a workspace container.
 _codex_workspace_container_list_git_repos() {
   emulate -L zsh
   setopt pipe_fail
@@ -217,6 +235,8 @@ print -rl -- ${(ou)repos}
 EOF
 }
 
+# codex-workspace-reset-repo <container> <repo_dir> [--ref <remote/branch>] [--yes]
+# Reset a single repo inside a workspace container.
 codex-workspace-reset-repo() {
   emulate -L zsh
   setopt pipe_fail
@@ -295,6 +315,8 @@ EOF
   _codex_workspace_container_reset_repo "$container" "$repo_dir" "$ref"
 }
 
+# codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
+# Reset all git repos under a root directory inside a workspace container.
 codex-workspace-reset-work-repos() {
   emulate -L zsh
   setopt pipe_fail
@@ -393,6 +415,8 @@ set -euo pipefail
 
 ref="${1:-origin/main}"
 
+# _load_git_reset_remote
+# Load git-reset-remote when available (preferred: function, fallback: zsh-kit file).
 _load_git_reset_remote() {
   if typeset -f git-reset-remote >/dev/null 2>&1; then
     return 0
@@ -404,6 +428,8 @@ _load_git_reset_remote() {
   return 1
 }
 
+# _resolve_target_ref <remote/branch>
+# Resolve and validate a remote-tracking ref (fallbacks: remote/HEAD, then remote/master).
 _resolve_target_ref() {
   local ref="$1"
   local remote="${ref%%/*}"
@@ -442,6 +468,8 @@ _resolve_target_ref() {
   return 1
 }
 
+# _force_checkout_branch <branch> [start_point]
+# Force checkout a branch, cleaning untracked files if needed.
 _force_checkout_branch() {
   local branch="$1"
   local start_point="${2:-}"
@@ -458,6 +486,8 @@ _force_checkout_branch() {
   git checkout --force "$branch"
 }
 
+# _reset_repo_to_ref <repo_dir> <remote/branch>
+# Reset a repo dir to the resolved remote-tracking ref (hard reset + clean).
 _reset_repo_to_ref() {
   local repo_dir="$1"
   local ref="$2"
@@ -502,10 +532,12 @@ done
 if (( fail_count > 0 )); then
   print -u2 -r -- "error: failed to reset $fail_count repo(s)"
   exit 1
-fi
+	fi
 EOF
 }
 
+# codex-workspace-refresh-opt-repos <container> [--yes]
+# Force-update the image-bundled repos inside a workspace container.
 codex-workspace-refresh-opt-repos() {
   emulate -L zsh
   setopt pipe_fail
@@ -587,6 +619,8 @@ if command -v gh >/dev/null 2>&1; then
   gh config set git_protocol https -h github.com 2>/dev/null || gh config set git_protocol https 2>/dev/null || true
 fi
 
+# _restore_zsh_kit_codex_secrets_mount <dst>
+# If secrets are mounted outside the default, restore the zsh-kit codex secrets symlink.
 _restore_zsh_kit_codex_secrets_mount() {
   local src="/opt/zsh-kit/scripts/_features/codex/secrets"
   local dst="${1:-}"
@@ -602,6 +636,8 @@ _restore_zsh_kit_codex_secrets_mount() {
   ln -s "$dst" "$src"
 }
 
+# _load_git_reset_remote
+# Load git-reset-remote when available (preferred: function, fallback: zsh-kit file).
 _load_git_reset_remote() {
   if typeset -f git-reset-remote >/dev/null 2>&1; then
     return 0
@@ -613,6 +649,8 @@ _load_git_reset_remote() {
   return 1
 }
 
+# _resolve_target_ref <remote/branch>
+# Resolve and validate a remote-tracking ref (fallbacks: remote/HEAD, then remote/master).
 _resolve_target_ref() {
   local ref="$1"
   local remote="${ref%%/*}"
@@ -651,6 +689,8 @@ _resolve_target_ref() {
   return 1
 }
 
+# _force_checkout_branch <branch> [start_point]
+# Force checkout a branch, cleaning untracked files if needed.
 _force_checkout_branch() {
   local branch="$1"
   local start_point="${2:-}"
@@ -667,6 +707,8 @@ _force_checkout_branch() {
   git checkout --force "$branch"
 }
 
+# _reset_repo_to_ref <repo_dir> <remote/branch>
+# Reset a repo dir to the resolved remote-tracking ref (hard reset + clean).
 _reset_repo_to_ref() {
   local repo_dir="$1"
   local ref="$2"
@@ -701,6 +743,8 @@ _reset_repo_to_ref() {
   git clean -fd
 }
 
+# _detect_codex_secrets_mount
+# Detect the codex secrets mount path in the container (symlink or common defaults).
 _detect_codex_secrets_mount() {
   local src="/opt/zsh-kit/scripts/_features/codex/secrets"
   local dst=''
@@ -732,4 +776,3 @@ _reset_repo_to_ref /opt/zsh-kit origin/main
 _restore_zsh_kit_codex_secrets_mount "$codex_secrets_mount"
 EOF
 }
-

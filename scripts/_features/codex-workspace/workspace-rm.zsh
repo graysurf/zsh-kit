@@ -10,6 +10,8 @@
 #       <container>-home
 #       <container>-codex-home
 
+# _codex_workspace_normalize_container_name <name>
+# Normalize a workspace name into a docker container name (adds CODEX_WORKSPACE_PREFIX when needed).
 _codex_workspace_normalize_container_name() {
   emulate -L zsh
 
@@ -26,6 +28,8 @@ _codex_workspace_normalize_container_name() {
   return 0
 }
 
+# _codex_workspace_volume_names <container>
+# Print the 3 named volumes used by a workspace container (one per line).
 _codex_workspace_volume_names() {
   emulate -L zsh
 
@@ -37,6 +41,8 @@ _codex_workspace_volume_names() {
   print -r -- "${container}-codex-home"
 }
 
+# _codex_workspace_container_names
+# Print detected workspace container names (one per line).
 _codex_workspace_container_names() {
   emulate -L zsh
   setopt pipe_fail
@@ -68,6 +74,8 @@ _codex_workspace_container_names() {
   return 0
 }
 
+# codex-workspace-list
+# List workspace containers (one per line).
 codex-workspace-list() {
   emulate -L zsh
   setopt pipe_fail
@@ -109,6 +117,8 @@ EOF
   return 0
 }
 
+# codex-workspace-delete
+# Delete one workspace or all workspaces (container + volumes).
 codex-workspace-delete() {
   emulate -L zsh
   setopt pipe_fail
@@ -232,6 +242,8 @@ EOF
   return $?
 }
 
+# codex-workspace-rm <name|container> [--yes]
+# Remove a workspace container and its named volumes.
 codex-workspace-rm() {
   emulate -L zsh
   setopt pipe_fail

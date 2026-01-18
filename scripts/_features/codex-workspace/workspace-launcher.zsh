@@ -20,6 +20,8 @@ fi
 # Usage: cw <subcommand> [args...]
 alias cw='codex-workspace'
 
+# _codex_workspace_tunnel_name_hash4 <input>
+# Print a 4-char hash used for VS Code tunnel name shortening.
 _codex_workspace_tunnel_name_hash4() {
   emulate -L zsh
   setopt pipe_fail
@@ -43,6 +45,8 @@ _codex_workspace_tunnel_name_hash4() {
   return 0
 }
 
+# _codex_workspace_tunnel_name_sanitize <name>
+# Normalize a tunnel name candidate (lowercase, alnum + '-') for VS Code.
 _codex_workspace_tunnel_name_sanitize() {
   emulate -L zsh
 
@@ -60,6 +64,8 @@ _codex_workspace_tunnel_name_sanitize() {
   return 0
 }
 
+# _codex_workspace_tunnel_default_name <container>
+# Derive a default VS Code tunnel name (<= 20 chars) from the workspace container name.
 _codex_workspace_tunnel_default_name() {
   emulate -L zsh
   setopt pipe_fail
@@ -99,6 +105,8 @@ _codex_workspace_tunnel_default_name() {
   return 0
 }
 
+# _codex_workspace_repo_default_from_cwd
+# Print a best-effort repo URL from the current git worktree (origin preferred).
 _codex_workspace_repo_default_from_cwd() {
   emulate -L zsh
   setopt pipe_fail
@@ -126,6 +134,8 @@ _codex_workspace_repo_default_from_cwd() {
   return 1
 }
 
+# _codex_workspace_usage
+# Print CLI usage/help for `codex-workspace`.
 _codex_workspace_usage() {
   emulate -L zsh
 
@@ -185,6 +195,8 @@ EOF
   return 0
 }
 
+# _codex_workspace_parse_repo_spec <input> [default_host]
+# Parse a repo spec (OWNER/REPO or URL) into host/owner/repo and https clone URL.
 _codex_workspace_parse_repo_spec() {
   emulate -L zsh
   setopt pipe_fail
@@ -228,6 +240,8 @@ _codex_workspace_parse_repo_spec() {
   return 0
 }
 
+# _codex_workspace_launcher_default_path
+# Return the default codex-kit launcher path on the host.
 _codex_workspace_launcher_default_path() {
   emulate -L zsh
 
@@ -235,6 +249,8 @@ _codex_workspace_launcher_default_path() {
   return 0
 }
 
+# _codex_workspace_launcher_auto_path
+# Return the auto-install path for the launcher under XDG cache.
 _codex_workspace_launcher_auto_path() {
   emulate -L zsh
 
@@ -244,6 +260,8 @@ _codex_workspace_launcher_auto_path() {
   return 0
 }
 
+# _codex_workspace_launcher_normalize_url <url>
+# Normalize GitHub "blob" URLs to raw URLs for direct downloads.
 _codex_workspace_launcher_normalize_url() {
   emulate -L zsh
 
@@ -267,6 +285,8 @@ _codex_workspace_launcher_normalize_url() {
   return 0
 }
 
+# _codex_workspace_ensure_launcher <launcher> <explicit>
+# Return an executable launcher path; auto-download when missing and not explicit.
 _codex_workspace_ensure_launcher() {
   emulate -L zsh
   setopt pipe_fail
@@ -368,6 +388,8 @@ _codex_workspace_ensure_launcher() {
   return 0
 }
 
+# codex-workspace-tunnel [--name <tunnel_name>] [--detach] <name|container>
+# Start a VS Code tunnel inside a workspace container.
 codex-workspace-tunnel() {
   emulate -L zsh
   setopt pipe_fail
@@ -538,6 +560,8 @@ EOF
   docker exec -u codex -it "$container" code tunnel --accept-server-license-terms --name "$tunnel_name"
 }
 
+# codex-workspace <subcommand> [args...]
+# Host entrypoint for creating and managing Codex workspace containers.
 codex-workspace() {
   emulate -L zsh
   setopt pipe_fail
