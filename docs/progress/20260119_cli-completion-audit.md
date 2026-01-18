@@ -6,7 +6,7 @@
 
 Links:
 
-- PR: TBD
+- PR: [graysurf/zsh-kit/pull/40](https://github.com/graysurf/zsh-kit/pull/40)
 - Docs: `scripts/interactive/completion.zsh`, `scripts/_completion/README.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
