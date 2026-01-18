@@ -31,9 +31,16 @@ compinit-reset() {
   typeset dump_dir="${dump_file:h}"
   [[ -d "$dump_dir" ]] || mkdir -p -- "$dump_dir"
 
-  command rm -f -- "$dump_file"
+  command rm -f -- "$dump_file" "${dump_file}.zwc"
   autoload -Uz compinit
   compinit -i -d "$dump_file"
+}
+
+# rz [dump_file]
+# Shorthand for `compinit-reset`.
+# Usage: rz [path/to/.zcompdump]
+rz() {
+  compinit-reset "$@"
 }
 
 fpath=("$ZDOTDIR/scripts/_completion" $fpath)
@@ -47,42 +54,6 @@ if (( $+functions[__zoxide_z_complete] )); then
 fi
 typeset -g ZSH_COMPLETION_CACHE_DIR="${ZSH_COMPLETION_CACHE_DIR:-$ZSH_CACHE_DIR/completion-cache}"
 [[ -d "$ZSH_COMPLETION_CACHE_DIR" ]] || mkdir -p -- "$ZSH_COMPLETION_CACHE_DIR"
-
-# ───────────────────────────────────────────────────────
-# Docker completion (fallback via `docker completion zsh`)
-# ───────────────────────────────────────────────────────
-__zsh_completion_load_docker() {
-  emulate -L zsh
-  setopt err_return pipe_fail
-
-  command -v docker >/dev/null 2>&1 || return 0
-  if (( ${+_comps[docker]} )); then
-    if command -v docker-compose >/dev/null 2>&1; then
-      typeset docker_comp="${_comps[docker]-}"
-      [[ -n "$docker_comp" ]] && compdef "$docker_comp" docker-compose
-    fi
-    return 0
-  fi
-
-  typeset cache_file="$ZSH_COMPLETION_CACHE_DIR/docker.zsh"
-  if [[ ! -s "$cache_file" || "$cache_file" -ot "$(command -v docker)" ]]; then
-    typeset tmp_file="$cache_file.$$"
-    command docker completion zsh >| "$tmp_file" 2>/dev/null || {
-      command rm -f -- "$tmp_file"
-      return 0
-    }
-    command mv -f -- "$tmp_file" "$cache_file"
-  fi
-
-  [[ -s "$cache_file" ]] || return 0
-  source "$cache_file"
-
-  if command -v docker-compose >/dev/null 2>&1; then
-    (( ${+_comps[docker]} )) && compdef "${_comps[docker]}" docker-compose
-  fi
-}
-__zsh_completion_load_docker
-unset -f __zsh_completion_load_docker 2>/dev/null || true
 
 # ──────────────────────────────────────
 # fzf-tab configuration (after compinit)

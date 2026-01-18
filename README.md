@@ -27,6 +27,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 - 📊 [git-summary](docs/cli/git-summary.md): Author-based contribution stats over time ranges
 - 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in Codex wrappers (feature: `codex`) with safety gate
 - 🧠 [OpenCode CLI helpers](docs/cli/opencode-cli-helpers.md): Opt-in OpenCode prompt wrappers (feature: `opencode`)
+- 🐳 [docker-tools](docs/cli/docker-tools.md): Opt-in Docker helpers (feature: `docker`)
 
 ## Structure
 
@@ -47,6 +48,7 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 │   ├── _completion/   # Custom completions for CLI tools or aliases
 │   ├── _features/     # Optional feature modules (opt-in via `ZSH_FEATURES`)
 │   │   ├── codex/     # Codex helpers (disabled by default)
+│   │   ├── docker/    # Docker helpers (disabled by default)
 │   │   └── opencode/  # OpenCode prompt helpers (disabled by default)
 │   ├── _internal/     # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
 │   ├── git/           # Git workflow tools and custom logic
@@ -134,6 +136,7 @@ Current features:
 
 - `codex`: enables `codex-tools` and `codex-starship` (plus `codex-tools` completion)
 - `opencode`: enables `opencode-tools` (plus `opencode-tools` completion)
+- `docker`: enables `docker-tools` + `docker-aliases` (plus `docker-tools` + `docker` completion)
 
 Why the extra `source`? `.zshenv` is the first startup file, so setting `ZDOTDIR` inside `~/.zshenv`
 does not automatically make Zsh restart and load `$ZDOTDIR/.zshenv`.

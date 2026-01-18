@@ -1,0 +1,242 @@
+#compdef docker-tools docker-aliases
+
+_docker_tools_container_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a names=()
+  if (( $+commands[docker] )); then
+    names=(${(f)"$(command docker ps --format '{{.Names}}' 2>/dev/null || true)"})
+  fi
+
+  if (( ${#names[@]} > 0 )); then
+    print -r -- "${names[@]}"
+  fi
+  return 0
+}
+
+_docker_tools_image_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a images=()
+  if (( $+commands[docker] )); then
+    images=(${(f)"$(command docker image ls --format '{{.Repository}}:{{.Tag}}' 2>/dev/null || true)"})
+  fi
+
+  images=(${images:#<none>:<none>})
+
+  if (( ${#images[@]} > 0 )); then
+    print -r -- "${images[@]}"
+  fi
+  return 0
+}
+
+_docker-aliases() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  typeset -a actions=() sets=()
+  actions=(
+    'list:List available alias sets'
+    'status:Show enabled alias sets'
+    'enable:Enable one or more alias sets'
+    'disable:Disable one or more alias sets'
+    'init:Enable defaults from env'
+    'help:Show help'
+  )
+  sets=(
+    'base:Minimal (d/dc/dt/dsh/drz)'
+    'omz:oh-my-zsh style (dps/dxcit/dcup/...)'
+    'long:Verbose (docker-ps/docker-execit/...)'
+    'all:Enable all sets'
+    'none:Disable all sets'
+  )
+
+  _arguments -C \
+    '1:action:->actions' \
+    '*:set:->sets'
+
+  case "${state-}" in
+    actions)
+      _describe -t actions 'docker-aliases action' actions && return 0
+      ;;
+    sets)
+      case "${line[1]-}" in
+        enable|disable)
+          _describe -t sets 'alias set' sets && return 0
+          ;;
+        *)
+          _message 'no more arguments'
+          return 0
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_docker-tools() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  case "${service-}" in
+    docker-aliases)
+      _docker-aliases
+      return 0
+      ;;
+  esac
+
+  typeset -a groups=() subcmds=()
+  groups=(
+    'container:Container helpers'
+    'compose:Docker Compose helpers'
+    'run:Run interactive containers'
+    'alias:Alias set management'
+    'help:Show usage'
+    'list:Show usage'
+  )
+
+  _arguments -C -A '-*' \
+    '1:group:->groups' \
+    '2:command:->commands' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    groups)
+      _describe -t groups 'docker-tools group' groups && return 0
+      ;;
+    commands)
+      case "${line[1]-${words[1]-}}" in
+        container)
+          subcmds=(
+            'sh:Exec into container with best shell'
+            'zsh:Exec into container (prefer zsh)'
+            'rm:Remove container(s) (force by default)'
+          )
+          ;;
+        compose)
+          subcmds=(
+            'down:docker compose down (optionally --all)'
+          )
+          ;;
+        run)
+          subcmds=(
+            'zsh:Run image and exec zsh (fallback bash/sh)'
+          )
+          ;;
+        alias)
+          subcmds=(
+            'list:List available alias sets'
+            'enable:Enable one or more alias sets'
+            'disable:Disable one or more alias sets'
+            'status:Show enabled alias sets'
+          )
+          ;;
+      esac
+      _describe -t commands 'docker-tools command' subcmds && return 0
+      ;;
+    args)
+      typeset group="${line[1]-${words[1]-}}"
+      typeset cmd="${line[2]-${words[2]-}}"
+
+      compset -n 2
+
+      case "$group:$cmd" in
+        container:sh|container:zsh)
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '(-u --user)'{-u,--user}'[User inside container]:user:' \
+            '--root[Exec as root]' \
+            '1:container:->containers'
+
+          case "${state-}" in
+            containers)
+              typeset -a containers=()
+              containers=(${(f)"$(_docker_tools_container_names)"})
+              if (( ${#containers[@]} > 0 )); then
+                _values 'container' $containers && return 0
+              fi
+              _message 'container name'
+              return 0
+              ;;
+          esac
+          return 0
+          ;;
+        container:rm)
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '--no-force[Do not force remove]' \
+            '(-v --volumes)'{-v,--volumes}'[Remove anonymous volumes]' \
+            '*:container:->containers'
+
+          case "${state-}" in
+            containers)
+              typeset -a containers=()
+              containers=(${(f)"$(_docker_tools_container_names)"})
+              if (( ${#containers[@]} > 0 )); then
+                _values 'container' $containers && return 0
+              fi
+              _message 'container name'
+              return 0
+              ;;
+          esac
+          return 0
+          ;;
+        compose:down)
+          _arguments -s \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '(-a --all)'{-a,--all}'[Remove images, volumes, and orphans]' \
+            '(-y --yes)'{-y,--yes}'[Skip confirmation prompts]' \
+            '*:arg:_message'
+          return 0
+          ;;
+        run:zsh)
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '--no-mount[Do not mount $PWD to /work]' \
+            '(-w --workdir)'{-w,--workdir}'[Container workdir]:dir:_files -/' \
+            '(-n --name)'{-n,--name}'[Container name]:name:' \
+            '(-u --user)'{-u,--user}'[User inside container]:user:' \
+            '--root[Run as root]' \
+            '1:image:->images'
+
+          case "${state-}" in
+            images)
+              typeset -a images=()
+              images=(${(f)"$(_docker_tools_image_names)"})
+              if (( ${#images[@]} > 0 )); then
+                _values 'image' $images && return 0
+              fi
+              _message 'image'
+              return 0
+              ;;
+          esac
+          return 0
+          ;;
+        alias:list|alias:status)
+          _message 'no more arguments'
+          return 0
+          ;;
+        alias:enable|alias:disable)
+          typeset -a sets=(
+            base
+            omz
+            long
+            all
+            none
+          )
+          _values 'alias set' $sets
+          return 0
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _docker-tools docker-tools
+compdef _docker-aliases docker-aliases
+
