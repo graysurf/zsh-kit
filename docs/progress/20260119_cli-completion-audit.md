@@ -97,12 +97,12 @@ Links:
 Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason: ...` or a nested `- Reason: ...`) before close-progress-pr can complete. Step 4 is excluded (post-merge / wrap-up).
 Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like this~~` and include `Reason:`. Unchecked and unstruck items (e.g. `- [ ] foo`) will block close-progress-pr.
 
-- [ ] Step 0: Inventory and conventions
+- [x] Step 0: Inventory and conventions
   - Work Items:
     - [x] Enumerate completion entrypoints (`compinit`, `fpath`, caches) and record them in this file.
     - [x] Enumerate first-party completion modules (`#compdef` files) and record them in Modules.
     - [x] Define completion authoring rules (when to use `_arguments` vs `_describe`; alias handling; option order).
-    - [ ] Define a manual smoke-test matrix per CLI (commands + expected behavior).
+    - [x] Define a manual smoke-test matrix per CLI (commands + expected behavior).
   - Artifacts:
     - `docs/progress/20260119_cli-completion-audit.md` (this file)
     - `docs/progress/README.md` (index row)
@@ -110,9 +110,9 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
       - `rg -n "^#compdef\\b" scripts -S`
       - `rg -n "\\bcompinit\\b" scripts -S`
   - Exit Criteria:
-    - [ ] Modules list is complete and reviewed.
-    - [ ] Scope boundaries and acceptance criteria are agreed.
-    - [ ] A clear smoke-test matrix exists (use `rz` / `compinit-reset` when iterating).
+    - [x] Modules list is complete and reviewed.
+    - [x] Scope boundaries and acceptance criteria are agreed.
+    - [x] A clear smoke-test matrix exists (use `rz` / `compinit-reset` when iterating).
 - [x] Step 1: Add guardrails (MVP)
   - Work Items:
     - [x] Add a completion lint/check that catches common footguns (PR: #41).
@@ -167,6 +167,30 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
 - Use `_describe` for `name:desc` pairs; use `_values` for pure values.
 - Never use `_arguments` spec strings (like `--flag[desc]`) in `_describe` candidate arrays (they can be inserted literally).
 - If a completion file contains explicit `compdef ... <cmd>` bindings, include all those `<cmd>` values in the file's `#compdef` header.
+
+## Manual Smoke Matrix
+
+Notes:
+
+- After changing completion scripts, run `rz` / `compinit-reset` to rebuild the compdump.
+- For each CLI below, verify both:
+  - `<cmd><TAB>` suggests expected subcommands/args.
+  - `<cmd> --<TAB>` suggests options (and never inserts `_arguments` spec text like `--flag[desc]`).
+
+Matrix:
+
+- `fzf-tools`: `fzf-tools<TAB>` lists subcommands; selected completion inserts only the subcommand.
+- `git-summary`: `git-summary<TAB>` lists preset ranges; `git-summary <YYYY-MM-DD> <YYYY-MM-DD>` shows date hints.
+- `git-lock`: `git-lock<TAB>` lists subcommands; `git-lock unlock<TAB>` suggests cached lock labels (when present).
+- `git-scope`: `git-scope<TAB>` lists subcommands; `git-scope commit<TAB>` suggests recent commits; `git-scope tracked<TAB>` completes path prefixes.
+- `git-open`: `git-open<TAB>` lists subcommands; `git-open --<TAB>` suggests `--help` (no bracketed specs inserted).
+- `git-tools`: `git-tools<TAB>` lists groups; `git-tools <group><TAB>` lists commands; nested flags complete under `git-tools <group> <cmd> --<TAB>`.
+- `codex-workspace` / `cw`: `cw<TAB>` lists subcommands; `cw rm --<TAB>` suggests `--yes`; `cw rm<TAB>` suggests workspace containers (requires docker).
+- `codex-tools` / `cx`: `cx<TAB>` lists subcommands; `cx commit --<TAB>` suggests `--auto-stage` / `--push`.
+- `codex-rate-limits` / `crl`: `crl --<TAB>` suggests options; `crl<TAB>` suggests secret file names.
+- `docker-tools` / `docker-aliases`: `docker-tools<TAB>` and `docker-aliases<TAB>` list subcommands/options (requires docker feature enabled).
+- `docker-compose`: `docker-compose<TAB>` suggests options when completion generation is available (docker feature enabled).
+- `opencode-tools` / `oc`: `oc<TAB>` lists subcommands; `oc commit --<TAB>` suggests `--auto-stage` / `--push`.
 
 ## Modules
 
