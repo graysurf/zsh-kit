@@ -258,7 +258,16 @@ codex-commit-with-scope() {
     return 1
   fi
 
-  git -C "$git_root" add -A || return 1
+  if [[ "$auto_stage_flag" == 'true' ]]; then
+    git -C "$git_root" add -A || return 1
+  else
+    local staged=''
+    staged="$(git -C "$git_root" -c core.quotepath=false diff --cached --name-only --diff-filter=ACMRTUXB 2>/dev/null || true)"
+    if [[ -z "$staged" ]]; then
+      print -u2 -r -- "codex-commit-with-scope: no staged changes (stage files then retry)"
+      return 1
+    fi
+  fi
 
   local extra_prompt=''
   if (( $# )); then
