@@ -1,4 +1,4 @@
-#compdef opencode-tools
+#compdef opencode-tools oc
 #
 # Feature-gated: loaded only when `ZSH_FEATURES` includes `opencode`.
 

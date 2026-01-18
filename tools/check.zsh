@@ -11,10 +11,11 @@ print_usage() {
   emulate -L zsh
   setopt pipe_fail nounset
 
-  print -r -- "Usage: $SCRIPT_HINT [-h|--help] [-s|--smoke] [-b|--bash] [--env-bools] [--semgrep] [-a|--all]"
+  print -r -- "Usage: $SCRIPT_HINT [-h|--help] [-s|--smoke] [-b|--bash] [-c|--completions] [--env-bools] [--semgrep] [-a|--all]"
   print -r -- ""
   print -r -- "Checks:"
   print -r -- "  (default) zsh syntax: zsh -n on repo zsh + zsh-style *.sh (excluding plugins/)"
+  print -r -- "  --completions: completion lint/check (scripts/_completion + scripts/_features/*/_completion)"
   print -r -- "  --smoke: load .zshrc (and .zprofile) in isolated ZDOTDIR/cache; fails if any stderr is emitted"
   print -r -- "  --bash : bash -n on bash scripts; runs ShellCheck if installed"
   print -r -- "  --env-bools: audit boolean env flag rules (including .private/ when present)"
@@ -22,6 +23,7 @@ print_usage() {
   print -r -- ""
   print -r -- "Examples:"
   print -r -- "  $SCRIPT_HINT"
+  print -r -- "  $SCRIPT_HINT --completions"
   print -r -- "  $SCRIPT_HINT --smoke"
   print -r -- "  $SCRIPT_HINT --bash"
   print -r -- "  $SCRIPT_HINT --env-bools"
@@ -101,6 +103,24 @@ check_zsh_syntax() {
   done
 
   return "$failed"
+}
+
+# check_completions <root_dir>
+# Run tools/check-completions.zsh (completion lint/check).
+# Usage: check_completions <root_dir>
+check_completions() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  typeset root_dir="$1"
+  typeset check_script="$root_dir/tools/check-completions.zsh"
+
+  if [[ ! -f "$check_script" ]]; then
+    print -u2 -r -- "completions: missing check script: $check_script"
+    return 1
+  fi
+
+  zsh -f -- "$check_script"
 }
 
 # check_smoke_load <root_dir>
@@ -301,21 +321,23 @@ main() {
 
   typeset -A opts=()
   # NOTE: In zparseopts, `-help` matches `--help` (GNU-style long options).
-  zparseopts -D -E -A opts -- h -help s -smoke b -bash -env-bools -semgrep a -all || return 2
+  zparseopts -D -E -A opts -- h -help s -smoke b -bash c -completions -env-bools -semgrep a -all || return 2
 
   if (( ${+opts[-h]} || ${+opts[--help]} )); then
     print_usage
     return 0
   fi
 
-  typeset -i run_smoke=0 run_bash=0 run_env_bools=0 run_semgrep=0
+  typeset -i run_smoke=0 run_bash=0 run_completions=0 run_env_bools=0 run_semgrep=0
   (( ${+opts[-s]} || ${+opts[--smoke]} )) && run_smoke=1
   (( ${+opts[-b]} || ${+opts[--bash]} )) && run_bash=1
+  (( ${+opts[-c]} || ${+opts[--completions]} )) && run_completions=1
   (( ${+opts[--env-bools]} )) && run_env_bools=1
   (( ${+opts[--semgrep]} )) && run_semgrep=1
   if (( ${+opts[-a]} || ${+opts[--all]} )); then
     run_smoke=1
     run_bash=1
+    run_completions=1
     run_env_bools=1
     run_semgrep=1
   fi
@@ -324,6 +346,9 @@ main() {
   root_dir="$(repo_root_from_script)"
 
   check_zsh_syntax "$root_dir" || return 1
+  if (( run_completions )); then
+    check_completions "$root_dir" || return 1
+  fi
   if (( run_env_bools )); then
     check_env_bools "$root_dir" || return 1
   fi

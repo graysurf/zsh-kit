@@ -1,4 +1,4 @@
-#compdef codex-tools
+#compdef codex-tools cx
 #
 # Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
 
