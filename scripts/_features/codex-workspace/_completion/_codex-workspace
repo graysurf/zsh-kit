@@ -1,0 +1,229 @@
+#compdef codex-workspace codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-work-repos codex-workspace-rm
+
+__codex_workspace_container_names() {
+  emulate -L zsh -o extendedglob
+
+  command -v docker >/dev/null 2>&1 || return 0
+
+  local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
+  local -a names=()
+  names=(${(f)"$(command docker ps -a --format '{{.Names}}' 2>/dev/null || true)"})
+
+  local name
+  for name in "${names[@]}"; do
+    [[ "$name" == "${prefix}-"* ]] || continue
+    print -r -- "$name"
+  done
+
+  return 0
+}
+
+_codex-workspace() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  typeset -i orig_current="$CURRENT"
+  typeset -a orig_words=("${words[@]}")
+
+  typeset -a containers=()
+  containers=(${(f)"$(__codex_workspace_container_names)"})
+
+  case "${service-}" in
+    codex-workspace)
+      local cmd="${orig_words[2]-}"
+      cmd="${cmd%%[[:space:]]#}"
+
+      if (( orig_current == 2 )); then
+        local cur="${orig_words[2]-}"
+        cur="${cur%%[[:space:]]#}"
+
+        if [[ "$cur" == -* ]]; then
+          typeset -a ws_opts=()
+          ws_opts=(
+            '-h[Show help]'
+            '--help[Show help]'
+            '--private-repo=[Seed container ~/.private from repo (owner/repo or URL)]'
+          )
+          _describe -t options 'option' ws_opts && return 0
+          return 0
+        fi
+
+        typeset -a subcmds=()
+        subcmds=(
+          'rm:Remove workspace (container + volumes)'
+          'remove:Alias of rm'
+          'delete:Alias of rm'
+        )
+        _describe -t commands 'codex-workspace command' subcmds && return 0
+        _message 'repo (owner/repo or URL)'
+        return 0
+      fi
+
+      if (( orig_current > 2 )) && [[ "${orig_words[orig_current-1]-}" == "--private-repo" ]]; then
+        _message 'private repo (owner/repo or URL)'
+        return 0
+      fi
+
+      case "$cmd" in
+        rm|remove|delete)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          # Complete rm flags when the current word looks like an option.
+          if [[ "$cur" == -* ]]; then
+            typeset -a rm_opts=()
+            rm_opts=(
+              '-h[Show help]'
+              '--help[Show help]'
+              '-y[Skip confirmation]'
+              '--yes[Skip confirmation]'
+            )
+            _describe -t options 'option' rm_opts && return 0
+            return 0
+          fi
+
+          # Find the first non-option arg after the rm subcommand.
+          local -i idx=3
+          local workspace=''
+          while (( idx < orig_current )); do
+            local w="${orig_words[idx]-}"
+            case "$w" in
+              -h|--help)
+                return 0
+                ;;
+              -y|--yes)
+                idx=$((idx + 1))
+                ;;
+              *)
+                workspace="$w"
+                break
+                ;;
+            esac
+          done
+
+          # Workspace already provided; nothing more to complete.
+          [[ -n "$workspace" ]] && return 0
+
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+      esac
+
+      local cur="${orig_words[orig_current]-}"
+      cur="${cur%%[[:space:]]#}"
+      if [[ "$cur" == -* ]]; then
+        typeset -a ws_opts=()
+        ws_opts=(
+          '-h[Show help]'
+          '--help[Show help]'
+          '--private-repo=[Seed container ~/.private from repo (owner/repo or URL)]'
+        )
+        _describe -t options 'option' ws_opts && return 0
+        return 0
+      fi
+
+      _message 'repo (owner/repo or URL)'
+      return 0
+      ;;
+
+    codex-workspace-rm)
+      _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
+        '1:workspace:->workspaces'
+
+      case "${state-}" in
+        workspaces)
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+      esac
+
+      return 0
+      ;;
+
+    codex-workspace-refresh-opt-repos)
+      _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
+        '1:container:->workspaces'
+
+      case "${state-}" in
+        workspaces)
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+      esac
+
+      return 0
+      ;;
+
+    codex-workspace-reset-repo)
+      _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
+        '--ref=[Remote/branch ref (default: origin/main)]:ref' \
+        '1:container:->workspaces' \
+        '2:repo dir:->repo_dir'
+
+      case "${state-}" in
+        workspaces)
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+        repo_dir)
+          _message 'repo dir (e.g. /work/OWNER/REPO)'
+          return 0
+          ;;
+      esac
+
+      return 0
+      ;;
+
+    codex-workspace-reset-work-repos)
+      _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
+        '--root=[Root dir inside container (default: /work)]:root:(/work)' \
+        '--depth=[Search depth (default: 2)]:depth' \
+        '--ref=[Remote/branch ref (default: origin/main)]:ref' \
+        '1:container:->workspaces'
+
+      case "${state-}" in
+        workspaces)
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+      esac
+
+      return 0
+      ;;
+  esac
+
+  return 0
+}
+
+compdef _codex-workspace codex-workspace
+compdef _codex-workspace codex-workspace-refresh-opt-repos
+compdef _codex-workspace codex-workspace-reset-repo
+compdef _codex-workspace codex-workspace-reset-work-repos
+compdef _codex-workspace codex-workspace-rm
+

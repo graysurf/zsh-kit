@@ -135,6 +135,7 @@ export ZSH_FEATURES="codex,opencode"
 Current features:
 
 - `codex`: enables `codex-tools` and `codex-starship` (plus `codex-tools` completion)
+- `codex-workspace`: enables `codex-workspace` helpers (plus `codex-workspace` completion)
 - `opencode`: enables `opencode-tools` (plus `opencode-tools` completion)
 - `docker`: enables `docker-tools` + `docker-aliases` (plus `docker-tools` + `docker` completion)
 

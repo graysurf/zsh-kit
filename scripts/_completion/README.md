@@ -6,6 +6,7 @@ This document explains how to write and maintain completion scripts in
 ## Scope and Load Order
 
 - Completion files live under `scripts/_completion`.
+- Some completions are feature-gated and live under `scripts/_features/<name>/_completion` (added to `fpath` by the feature `init.zsh` before `compinit`).
 - `scripts/interactive/completion.zsh` adds this directory to `fpath` and runs `compinit`.
 - If a new completion does not show up, rebuild the compdump:
   - `rm -f "$ZSH_COMPDUMP"`
