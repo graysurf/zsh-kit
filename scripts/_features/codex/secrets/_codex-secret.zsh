@@ -9,7 +9,7 @@ fi
 typeset -g _CODEX_SECRET_SOURCED=1
 
 typeset -gr CODEX_SCRIPT_PATH="${(%):-%N}"
-typeset -gr CODEX_SECRET_DIR="${CODEX_SCRIPT_PATH:A:h}"
+typeset -gr CODEX_SECRET_DIR="${CODEX_SECRET_DIR:-${CODEX_SCRIPT_PATH:A:h}}"
 typeset -gr _CODEX_AUTH_FILE_PRIMARY="${HOME}/.config/codex-kit/auth.json"
 typeset -gr _CODEX_AUTH_FILE_FALLBACK="${HOME}/.codex/auth.json"
 typeset -g CODEX_AUTH_FILE="${CODEX_AUTH_FILE:-${_CODEX_AUTH_FILE_PRIMARY}}"
