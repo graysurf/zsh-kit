@@ -80,7 +80,7 @@ _codex_workspace_container_reset_repo() {
   local repo_dir="${2:?missing repo_dir}"
   local ref="${3:-origin/main}"
 
-  docker exec -u codex "$container" zsh -s -- "$repo_dir" "$ref" <<'EOF'
+  docker exec -i -u codex "$container" zsh -s -- "$repo_dir" "$ref" <<'EOF'
 set -euo pipefail
 
 repo_dir="${1:?missing repo_dir}"
@@ -208,7 +208,7 @@ _codex_workspace_container_list_git_repos() {
   local root="${2:-/work}"
   local depth="${3:-2}"
 
-  docker exec -u codex "$container" zsh -s -- "$root" "$depth" <<'EOF'
+  docker exec -i -u codex "$container" zsh -s -- "$root" "$depth" <<'EOF'
 set -euo pipefail
 
 root="${1:?missing root}"
@@ -255,6 +255,12 @@ Notes:
   - Discards tracked changes (hard reset) and removes untracked files/dirs (git clean -fd).
 EOF
     return 0
+  fi
+
+  if [[ -z "$repo_dir" ]]; then
+    print -u2 -r -- "error: missing required args"
+    print -u2 -r -- "hint: codex-workspace-reset-repo <container> <repo_dir> [--ref origin/main]"
+    return 2
   fi
 
   shift 2 2>/dev/null || true
@@ -612,7 +618,7 @@ EOF
   fi
 
   print -r -- "+ refresh /opt repos in $container"
-  docker exec -u codex "$container" zsh -s -- <<'EOF'
+  docker exec -i -u codex "$container" zsh -s -- <<'EOF'
 set -euo pipefail
 
 if command -v gh >/dev/null 2>&1; then
