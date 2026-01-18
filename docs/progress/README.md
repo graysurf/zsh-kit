@@ -4,7 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-19 | [Audit compinit and CLI completions](20260119_cli-completion-audit.md) | [#40](https://github.com/graysurf/zsh-kit/pull/40) |
+| 2026-01-19 | [Audit compinit and CLI completions](20260119_cli-completion-audit.md) | [#41](https://github.com/graysurf/zsh-kit/pull/41) |
 
 ## Archived
 

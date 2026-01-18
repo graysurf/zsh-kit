@@ -2,11 +2,12 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| DRAFT | 2026-01-19 | 2026-01-19 |
+| IN PROGRESS | 2026-01-19 | 2026-01-19 |
 
 Links:
 
-- PR: [graysurf/zsh-kit/pull/40](https://github.com/graysurf/zsh-kit/pull/40)
+- Planning PR: [graysurf/zsh-kit/pull/40](https://github.com/graysurf/zsh-kit/pull/40)
+- Implementation PR: [graysurf/zsh-kit/pull/41](https://github.com/graysurf/zsh-kit/pull/41)
 - Docs: `scripts/interactive/completion.zsh`, `scripts/_completion/README.md`
 - Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
 
@@ -23,13 +24,14 @@ Links:
 ## Acceptance Criteria
 
 - Inventory:
-  - This progress file lists every completion entrypoint and first-party completion module (Modules section).
+  - This progress file lists every completion entrypoint and first-party completion module (Completion Entrypoints + Modules).
   - Each module lists the commands it completes and relevant runtime dependencies (if any).
 - Guardrails:
   - `./tools/check.zsh` passes.
-  - A dedicated completion lint/check exists (TBD implementation location) that fails on known footguns, e.g.:
-    - `_describe` candidate arrays written in `_arguments` syntax (like `--flag[desc]`).
-    - Missing/mismatched `#compdef` / `compdef` coverage for shipped aliases.
+  - A dedicated completion lint/check exists: `./tools/check.zsh --completions` (script: `tools/check-completions.zsh`).
+    - Fails on known footguns, e.g.:
+      - `_arguments`-style specs (like `--flag[desc]`) outside `_arguments` calls (common `_describe` mixup).
+      - `compdef` bindings missing from `#compdef` headers (alias coverage).
 - UX correctness (manual smoke):
   - For each CLI listed in Modules:
     - `<cmd><TAB>` suggests expected subcommands/args.
@@ -68,7 +70,7 @@ Links:
 - Consistent, correct completion behavior for all first-party CLIs listed in Modules.
 - A repeatable verification workflow:
   - `./tools/check.zsh`
-  - completion lint/check command (TBD) with clear failure messages
+  - `./tools/check.zsh --completions` (script: `tools/check-completions.zsh`)
 
 ### Intermediate Artifacts
 
@@ -97,9 +99,9 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
 
 - [ ] Step 0: Inventory and conventions
   - Work Items:
-    - [ ] Enumerate completion entrypoints (`compinit`, `fpath`, caches) and record them in this file.
-    - [ ] Enumerate first-party completion modules (`#compdef` files) and record them in Modules.
-    - [ ] Define completion authoring rules (when to use `_arguments` vs `_describe`; alias handling; option order).
+    - [x] Enumerate completion entrypoints (`compinit`, `fpath`, caches) and record them in this file.
+    - [x] Enumerate first-party completion modules (`#compdef` files) and record them in Modules.
+    - [x] Define completion authoring rules (when to use `_arguments` vs `_describe`; alias handling; option order).
     - [ ] Define a manual smoke-test matrix per CLI (commands + expected behavior).
   - Artifacts:
     - `docs/progress/20260119_cli-completion-audit.md` (this file)
@@ -111,15 +113,19 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
     - [ ] Modules list is complete and reviewed.
     - [ ] Scope boundaries and acceptance criteria are agreed.
     - [ ] A clear smoke-test matrix exists (use `rz` / `compinit-reset` when iterating).
-- [ ] Step 1: Add guardrails (MVP)
+- [x] Step 1: Add guardrails (MVP)
   - Work Items:
-    - [ ] Add a completion lint/check that catches common footguns (TBD implementation location).
-    - [ ] Fix any failures found in first-party completion files.
+    - [x] Add a completion lint/check that catches common footguns (PR: #41).
+    - [x] Fix any failures found in first-party completion files (PR: #41).
   - Artifacts:
-    - New check script or `./tools/check.zsh` integration (TBD path).
+    - `tools/check-completions.zsh`
+    - `tools/check.zsh` (`--completions`, included in `--all`)
   - Exit Criteria:
-    - [ ] Repo checks pass (`./tools/check.zsh` + completion lint/check).
-    - [ ] Known footgun cases are covered by the lint/check.
+    - [x] Repo checks pass: `./tools/check.zsh` + `./tools/check.zsh --completions`.
+    - [x] Known footgun cases covered (as of PR #41):
+      - Missing `#compdef`
+      - `compdef` commands missing from `#compdef`
+      - `_arguments`-style specs outside `_arguments`
 - [ ] Step 2: Normalize and expand
   - Work Items:
     - [ ] Ensure aliases are consistently covered (via `#compdef`/`compdef` lists or a documented policy).
@@ -144,8 +150,27 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
     - [ ] Status set to DONE and file moved to `docs/progress/archived/`.
     - [ ] `docs/progress/README.md` updated with PR link.
 
+## Completion Entrypoints
+
+- `scripts/_internal/paths.exports.zsh`: exports default `ZSH_COMPDUMP` (`$ZSH_CACHE_DIR/.zcompdump`).
+- `scripts/interactive/completion.zsh`:
+  - Prepends `scripts/_completion` to `$fpath`.
+  - Sets `ZSH_COMPLETION_CACHE_DIR` and configures `zstyle ':completion:*' cache-path`.
+  - Runs `compinit -i -d "$ZSH_COMPDUMP"`.
+  - Provides `compinit-reset` / `rz`.
+- `scripts/_features/*/init.zsh`: prepends feature completion dirs to `$fpath` before `compinit` (`codex`, `codex-workspace`, `docker`, `opencode`).
+- `scripts/_features/docker/docker-completion.zsh`: generates cached completions under `${ZSH_COMPLETION_CACHE_DIR}/completions` and prepends that dir to `$fpath` before `compinit`.
+
+## Completion Authoring Rules
+
+- Prefer `_arguments -C` with state routing; resolve the subcommand from `line[1]` (fallback: captured `orig_words[2]`).
+- Use `_describe` for `name:desc` pairs; use `_values` for pure values.
+- Never use `_arguments` spec strings (like `--flag[desc]`) in `_describe` candidate arrays (they can be inserted literally).
+- If a completion file contains explicit `compdef ... <cmd>` bindings, include all those `<cmd>` values in the file's `#compdef` header.
+
 ## Modules
 
+- `scripts/_internal/paths.exports.zsh`: Exports completion-related env defaults (`ZSH_COMPDUMP`).
 - `scripts/interactive/completion.zsh`: Runs `compinit`, sets `fpath`, configures zstyles and fzf-tab, provides `rz`.
 - `scripts/_completion/_fzf-tools`: Completion for `fzf-tools`.
 - `scripts/_completion/_git-lock`: Completion for `git-lock`.
@@ -153,9 +178,14 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
 - `scripts/_completion/_git-scope`: Completion for `git-scope`.
 - `scripts/_completion/_git-summary`: Completion for `git-summary`.
 - `scripts/_completion/_git-tools`: Completion for `git-tools`, `git-commit-context`, `git-commit-context-json`, `gccj`.
+- `scripts/_features/codex/init.zsh`: Adds `scripts/_features/codex/_completion` to `$fpath`.
 - `scripts/_features/codex-workspace/_completion/_codex-workspace`: Completion for `codex-workspace` and helpers (incl. `cw`).
+- `scripts/_features/codex-workspace/init.zsh`: Adds `scripts/_features/codex-workspace/_completion` to `$fpath`.
 - `scripts/_features/codex/_completion/_codex-tools`: Completion for `codex-tools` (incl. `cx`).
 - `scripts/_features/codex/_completion/_codex-rate-limits`: Completion for `codex-rate-limits` (incl. `crl`).
+- `scripts/_features/docker/init.zsh`: Adds `scripts/_features/docker/_completion` to `$fpath`.
 - `scripts/_features/docker/_completion/_docker-tools`: Completion for `docker-tools` and `docker-aliases`.
 - `scripts/_features/docker/docker-completion.zsh`: Generates/caches docker-compose completion before `compinit`.
+- `scripts/_features/opencode/init.zsh`: Adds `scripts/_features/opencode/_completion` to `$fpath`.
 - `scripts/_features/opencode/_completion/_opencode-tools`: Completion for `opencode-tools` (incl. `oc`).
+- `tools/check-completions.zsh`: Static completion lint/check (invoked via `./tools/check.zsh --completions`).
