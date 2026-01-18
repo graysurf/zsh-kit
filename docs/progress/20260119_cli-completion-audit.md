@@ -126,14 +126,23 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
       - Missing `#compdef`
       - `compdef` commands missing from `#compdef`
       - `_arguments`-style specs outside `_arguments`
-- [ ] Step 2: Normalize and expand
+- [x] Step 2: Normalize and expand
   - Work Items:
-    - [ ] Ensure aliases are consistently covered (via `#compdef`/`compdef` lists or a documented policy).
-    - [ ] Review complex completions for correctness and performance (cache where needed).
+    - [x] Ensure aliases are consistently covered (command-level aliases included in `#compdef` / `compdef`).
+    - [x] Review complex completions for correctness and performance (cache where needed).
+    - Notes:
+      - Command-level aliases are covered (e.g. `ft`, `gs`, `gho`, `gcc`).
+      - Subcommand shortcut aliases are not explicitly covered yet (e.g. `gop`, `gsc`, `gst`). Reason: they
+        pre-fill args and would need wrapper completions or a documented alias-expansion dependency.
   - Artifacts:
-    - Updated completion modules (TBD list in PR).
+    - `scripts/_completion/_fzf-tools` (alias: `ft`)
+    - `scripts/_completion/_git-open` (alias: `gho`)
+    - `scripts/_completion/_git-tools` (alias: `gcc`)
+    - `scripts/_completion/_git-scope` (alias: `gs`)
+    - `scripts/_completion/_git-lock` (completes `diff`/`tag` options)
   - Exit Criteria:
-    - [ ] Completion UX is consistent across all modules listed.
+    - [x] Completion lint passes (`./tools/check.zsh --completions`).
+    - [x] Alias coverage is consistent across the listed Modules.
 - [ ] Step 3: Validation and evidence
   - Work Items:
     - [ ] Run the smoke-test matrix and record results (in this file or in the PR).
@@ -179,12 +188,13 @@ Notes:
 
 Matrix:
 
-- `fzf-tools`: `fzf-tools<TAB>` lists subcommands; selected completion inserts only the subcommand.
+- `fzf-tools` / `ft`: `<cmd><TAB>` lists subcommands; selected completion inserts only the subcommand.
 - `git-summary`: `git-summary<TAB>` lists preset ranges; `git-summary <YYYY-MM-DD> <YYYY-MM-DD>` shows date hints.
-- `git-lock`: `git-lock<TAB>` lists subcommands; `git-lock unlock<TAB>` suggests cached lock labels (when present).
-- `git-scope`: `git-scope<TAB>` lists subcommands; `git-scope commit<TAB>` suggests recent commits; `git-scope tracked<TAB>` completes path prefixes.
-- `git-open`: `git-open<TAB>` lists subcommands; `git-open --<TAB>` suggests `--help` (no bracketed specs inserted).
+- `git-lock`: `git-lock<TAB>` lists subcommands; `git-lock unlock<TAB>` suggests cached lock labels; `git-lock diff --<TAB>` suggests `--no-color`; `git-lock tag --<TAB>` suggests `--push` / `-m`.
+- `git-scope` / `gs`: `<cmd><TAB>` lists subcommands; `git-scope commit<TAB>` suggests recent commits; `git-scope tracked<TAB>` completes path prefixes.
+- `git-open` / `gho`: `<cmd><TAB>` lists subcommands; `<cmd> --<TAB>` suggests `--help` (no bracketed specs inserted).
 - `git-tools`: `git-tools<TAB>` lists groups; `git-tools <group><TAB>` lists commands; nested flags complete under `git-tools <group> <cmd> --<TAB>`.
+- `git-commit-context` / `gcc`: `<cmd> --<TAB>` suggests options; `*--include=` completes files.
 - `codex-workspace` / `cw`: `cw<TAB>` lists subcommands; `cw rm --<TAB>` suggests `--yes`; `cw rm<TAB>` suggests workspace containers (requires docker).
 - `codex-tools` / `cx`: `cx<TAB>` lists subcommands; `cx commit --<TAB>` suggests `--auto-stage` / `--push`.
 - `codex-rate-limits` / `crl`: `crl --<TAB>` suggests options; `crl<TAB>` suggests secret file names.
@@ -196,12 +206,12 @@ Matrix:
 
 - `scripts/_internal/paths.exports.zsh`: Exports completion-related env defaults (`ZSH_COMPDUMP`).
 - `scripts/interactive/completion.zsh`: Runs `compinit`, sets `fpath`, configures zstyles and fzf-tab, provides `rz`.
-- `scripts/_completion/_fzf-tools`: Completion for `fzf-tools`.
+- `scripts/_completion/_fzf-tools`: Completion for `fzf-tools` (incl. `ft`).
 - `scripts/_completion/_git-lock`: Completion for `git-lock`.
-- `scripts/_completion/_git-open`: Completion for `git-open` (includes `gh`-powered branches).
-- `scripts/_completion/_git-scope`: Completion for `git-scope`.
+- `scripts/_completion/_git-open`: Completion for `git-open` (incl. `gho`; includes `gh`-powered branches).
+- `scripts/_completion/_git-scope`: Completion for `git-scope` (incl. `gs`).
 - `scripts/_completion/_git-summary`: Completion for `git-summary`.
-- `scripts/_completion/_git-tools`: Completion for `git-tools`, `git-commit-context`, `git-commit-context-json`, `gccj`.
+- `scripts/_completion/_git-tools`: Completion for `git-tools`, `git-commit-context` (incl. `gcc`), `git-commit-context-json` (incl. `gccj`).
 - `scripts/_features/codex/init.zsh`: Adds `scripts/_features/codex/_completion` to `$fpath`.
 - `scripts/_features/codex-workspace/_completion/_codex-workspace`: Completion for `codex-workspace` and helpers (incl. `cw`).
 - `scripts/_features/codex-workspace/init.zsh`: Adds `scripts/_features/codex-workspace/_completion` to `$fpath`.
