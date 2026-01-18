@@ -30,42 +30,123 @@ _git-lock() {
   local -a line=()
   typeset -A opt_args=()
 
-  _arguments -s -C \
-    '1:command:((lock\:Save\ commit\ hash\ to\ lock \
-                 unlock\:Reset\ to\ a\ saved\ commit \
-                 list\:Show\ all\ locks \
-                 copy\:Duplicate\ a\ lock\ label \
-                 delete\:Remove\ a\ lock \
-                 diff\:Compare\ two\ locks \
-                 tag\:Create\ a\ tag\ from\ a\ lock))' \
-    '*::args:->args'
+  local -i orig_current="$CURRENT"
+  local -a orig_words=("${words[@]}")
 
-  local subcmd="${line[1]-${words[2]-}}"
+  local cur="${orig_words[orig_current]-}"
+  cur="${cur%%[[:space:]]#}"
+
+  typeset -a subcmds=() opts=() labels=()
+  subcmds=(
+    'lock:Save commit hash to lock'
+    'unlock:Reset to a saved commit'
+    'list:Show all locks'
+    'copy:Duplicate a lock label'
+    'delete:Remove a lock'
+    'diff:Compare commits between two locks'
+    'tag:Create a git tag from a lock'
+    'help:Show usage'
+  )
+  opts=(
+    '-h:Show help'
+    '--help:Show help'
+  )
+
+  if (( orig_current == 2 )); then
+    if [[ "$cur" == -* ]]; then
+      _describe -t options 'option' opts && return 0
+      return 0
+    fi
+    _describe -t commands 'git-lock command' subcmds && return 0
+    _message 'command (lock|unlock|list|copy|delete|diff|tag)'
+    return 0
+  fi
+
+  local subcmd="${orig_words[2]-}"
+  subcmd="${subcmd%%[[:space:]]#}"
+
+  case "$subcmd" in
+    -h|--help|help)
+      return 0
+      ;;
+  esac
+
+  labels=(${(f)"$(__git_lock_labels)"})
 
   case "$subcmd" in
     unlock|delete)
-      _values 'label' $(__git_lock_labels)
+      if (( orig_current == 3 )); then
+        (( ${#labels[@]} > 0 )) && _values 'label' "${labels[@]}" && return 0
+        _message 'label'
+        return 0
+      fi
       ;;
     copy)
-      if (( CURRENT == 3 )); then
-        _values 'source label' $(__git_lock_labels)
-      elif (( CURRENT == 4 )); then
+      if (( orig_current == 3 )); then
+        (( ${#labels[@]} > 0 )) && _values 'source label' "${labels[@]}" && return 0
+        _message 'source label'
+        return 0
+      elif (( orig_current == 4 )); then
         _message 'target label'
+        return 0
       fi
       ;;
     diff)
-      if (( CURRENT == 3 || CURRENT == 4 )); then
-        _values 'label' $(__git_lock_labels)
+      if [[ "$cur" == -* ]]; then
+        typeset -a diff_opts=(
+          '--no-color:Disable ANSI colors'
+          '-h:Show diff help'
+          '--help:Show diff help'
+        )
+        _describe -t options 'option' diff_opts && return 0
+        return 0
+      fi
+
+      if (( orig_current == 3 || orig_current == 4 )); then
+        (( ${#labels[@]} > 0 )) && _values 'label' "${labels[@]}" && return 0
+        _message 'label'
+        return 0
       fi
       ;;
     tag)
-      if (( CURRENT == 3 )); then
-        _values 'git-lock label' $(__git_lock_labels)
-      elif (( CURRENT == 4 )); then
-        _message 'git tag name'
-      elif [[ $words[CURRENT-1] == "-m" ]]; then
+      if [[ "${orig_words[orig_current-1]-}" == "-m" ]]; then
         _message 'tag message'
+        return 0
       fi
+
+      if [[ "$cur" == -* ]]; then
+        typeset -a tag_opts=(
+          '--push:Push the tag to origin'
+          '-m:Tag message'
+        )
+        _describe -t options 'option' tag_opts && return 0
+        return 0
+      fi
+
+      if (( orig_current == 3 )); then
+        (( ${#labels[@]} > 0 )) && _values 'git-lock label' "${labels[@]}" && return 0
+        _message 'git-lock label'
+        return 0
+      elif (( orig_current == 4 )); then
+        _message 'git tag name'
+        return 0
+      fi
+      ;;
+    lock)
+      if (( orig_current == 3 )); then
+        _message 'label (default: default)'
+        return 0
+      elif (( orig_current == 4 )); then
+        _message 'note (optional)'
+        return 0
+      elif (( orig_current == 5 )); then
+        _message 'commit (default: HEAD)'
+        return 0
+      fi
+      ;;
+    list)
+      _message 'no more arguments'
+      return 0
       ;;
   esac
 }

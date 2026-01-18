@@ -1,4 +1,4 @@
-#compdef git-open
+#compdef git-open gho
 
 __git_open_commit_hashes() {
   emulate -L zsh -o extendedglob
@@ -409,4 +409,4 @@ _git-open() {
   esac
 }
 
-compdef _git-open git-open
+compdef _git-open git-open gho

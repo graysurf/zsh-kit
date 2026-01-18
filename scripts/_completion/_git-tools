@@ -1,4 +1,4 @@
-#compdef git-tools git-commit-context git-commit-context-json gccj
+#compdef git-tools git-commit-context gcc git-commit-context-json gccj
 
 _git_tools_commit_hashes() {
   emulate -L zsh -o extendedglob
@@ -144,7 +144,7 @@ _git-tools() {
   typeset -A opt_args=()
 
   case "${service-}" in
-    git-commit-context)
+    git-commit-context|gcc)
       _arguments -s \
         '--stdout[Print to stdout only]' \
         '--print[Print to stdout only]' \
@@ -332,4 +332,4 @@ _git-tools() {
 }
 
 compdef _git-tools git-tools
-compdef _git-tools git-commit-context git-commit-context-json gccj
+compdef _git-tools git-commit-context gcc git-commit-context-json gccj

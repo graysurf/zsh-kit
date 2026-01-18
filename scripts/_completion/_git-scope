@@ -1,4 +1,4 @@
-#compdef git-scope
+#compdef git-scope gs
 
 _git-scope() {
   emulate -L zsh -o extendedglob
@@ -6,6 +6,9 @@ _git-scope() {
   local context='' state='' state_descr=''
   local -a line=()
   typeset -A opt_args=()
+
+  local -i orig_current="$CURRENT"
+  local -a orig_words=("${words[@]}")
 
   typeset -a subcommands=()
   subcommands=(
@@ -27,7 +30,8 @@ _git-scope() {
       _describe -t commands 'git-scope subcommand' subcommands && return 0
       ;;
     args)
-      local subcmd="${line[1]-${words[2]-}}"
+      local subcmd="${line[1]:-${orig_words[2]-}}"
+      subcmd="${subcmd%%[[:space:]]#}"
 
       case "$subcmd" in
         commit)
@@ -68,4 +72,4 @@ _git-scope() {
   esac
 }
 
-compdef _git-scope git-scope
+compdef _git-scope git-scope gs

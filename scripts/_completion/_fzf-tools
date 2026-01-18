@@ -1,4 +1,4 @@
-#compdef fzf-tools
+#compdef fzf-tools ft
 
 emulate -L zsh -o extendedglob
 
@@ -27,4 +27,4 @@ if (( CURRENT == 2 )); then
   return
 fi
 
-compdef _fzf-tools fzf-tools
+compdef _fzf-tools fzf-tools ft
