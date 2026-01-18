@@ -356,7 +356,7 @@ _codex_workspace_ensure_launcher() {
     return 1
   fi
 
-  command chmod 700 -- "$tmp" 2>/dev/null || true
+  command chmod 700 "$tmp" 2>/dev/null || true
   command mv -f -- "$tmp" "$auto_path" || {
     rm -f -- "$tmp" 2>/dev/null || true
     print -u2 -r -- "error: failed to install launcher to: $auto_path"
