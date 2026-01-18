@@ -1,4 +1,4 @@
-#compdef codex-workspace codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-work-repos codex-workspace-rm
+#compdef codex-workspace cw codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-work-repos codex-workspace-rm
 
 __codex_workspace_container_names() {
   emulate -L zsh -o extendedglob
@@ -32,7 +32,7 @@ _codex-workspace() {
   containers=(${(f)"$(__codex_workspace_container_names)"})
 
   case "${service-}" in
-    codex-workspace)
+    codex-workspace|cw)
       local cmd="${orig_words[2]-}"
       cmd="${cmd%%[[:space:]]#}"
 
@@ -43,9 +43,8 @@ _codex-workspace() {
         if [[ "$cur" == -* ]]; then
           typeset -a ws_opts=()
           ws_opts=(
-            '-h[Show help]'
-            '--help[Show help]'
-            '--private-repo=[Seed container ~/.private from repo (owner/repo or URL)]'
+            '-h:Show help'
+            '--help:Show help'
           )
           _describe -t options 'option' ws_opts && return 0
           return 0
@@ -53,12 +52,16 @@ _codex-workspace() {
 
         typeset -a subcmds=()
         subcmds=(
+          'create:Create workspace'
+          'list:List workspaces'
+          'ls:Alias of list'
           'rm:Remove workspace (container + volumes)'
           'remove:Alias of rm'
-          'delete:Alias of rm'
+          'delete:Delete workspace(s)'
+          'tunnel:Open a tunnel for a workspace'
         )
         _describe -t commands 'codex-workspace command' subcmds && return 0
-        _message 'repo (owner/repo or URL)'
+        _message 'subcommand (create|list|rm|delete|tunnel)'
         return 0
       fi
 
@@ -68,7 +71,51 @@ _codex-workspace() {
       fi
 
       case "$cmd" in
-        rm|remove|delete)
+        list|ls)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+          if [[ "$cur" == -* ]]; then
+            typeset -a list_opts=()
+            list_opts=(
+              '-h:Show help'
+              '--help:Show help'
+            )
+            _describe -t options 'option' list_opts && return 0
+            return 0
+          fi
+          return 0
+          ;;
+        create)
+          if (( orig_current > 2 )) && [[ "${orig_words[orig_current-1]-}" == "--name" ]]; then
+            _message 'workspace name'
+            return 0
+          fi
+
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+          if [[ "$cur" == -* ]]; then
+            typeset -a ws_opts=()
+            ws_opts=(
+              '-h:Show help'
+              '--help:Show help'
+              '--no-extras:Do not clone ~/.private or extra repos under /work'
+              '--no-work-repos:Do not clone any repos into /work (requires --name)'
+              '--name:Workspace name (required with --no-work-repos)'
+              '--private-repo:Seed container ~/.private from repo (owner/repo or URL)'
+            )
+            _describe -t options 'option' ws_opts && return 0
+            return 0
+          fi
+
+          if (( ${orig_words[(I)--no-work-repos]} > 0 )); then
+            _message 'no positional args (use --name)'
+            return 0
+          fi
+
+          _message 'repo (owner/repo or URL; repeatable; default from CWD git)'
+          return 0
+          ;;
+        rm|remove)
           local cur="${orig_words[orig_current]-}"
           cur="${cur%%[[:space:]]#}"
 
@@ -76,10 +123,10 @@ _codex-workspace() {
           if [[ "$cur" == -* ]]; then
             typeset -a rm_opts=()
             rm_opts=(
-              '-h[Show help]'
-              '--help[Show help]'
-              '-y[Skip confirmation]'
-              '--yes[Skip confirmation]'
+              '-h:Show help'
+              '--help:Show help'
+              '-y:Skip confirmation'
+              '--yes:Skip confirmation'
             )
             _describe -t options 'option' rm_opts && return 0
             return 0
@@ -113,23 +160,130 @@ _codex-workspace() {
           _message 'workspace container'
           return 0
           ;;
+        delete)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          if [[ "$cur" == -* ]]; then
+            typeset -a delete_opts=()
+            delete_opts=(
+              '-h:Show help'
+              '--help:Show help'
+              '--all:Delete all workspaces'
+              '-y:Skip confirmation'
+              '--yes:Skip confirmation'
+            )
+            _describe -t options 'option' delete_opts && return 0
+            return 0
+          fi
+
+          # If --all is present, don't complete container names.
+          if (( ${orig_words[(I)--all]} > 0 )); then
+            return 0
+          fi
+
+          # Find the first non-option arg after the delete subcommand.
+          local -i idx=3
+          local workspace=''
+          while (( idx < orig_current )); do
+            local w="${orig_words[idx]-}"
+            case "$w" in
+              -h|--help)
+                return 0
+                ;;
+              -y|--yes)
+                idx=$((idx + 1))
+                ;;
+              --all)
+                idx=$((idx + 1))
+                ;;
+              -*)
+                idx=$((idx + 1))
+                ;;
+              *)
+                workspace="$w"
+                break
+                ;;
+            esac
+          done
+
+          # Workspace already provided; nothing more to complete.
+          [[ -n "$workspace" ]] && return 0
+
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+        tunnel)
+          if (( orig_current > 2 )) && [[ "${orig_words[orig_current-1]-}" == "--name" ]]; then
+            _message 'tunnel name (<=20 chars)'
+            return 0
+          fi
+
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          typeset -a tunnel_opts=()
+          tunnel_opts=(
+            '-h:Show help'
+            '--help:Show help'
+            '--detach:Start tunnel in background'
+            '--name:VS Code tunnel name (<=20 chars)'
+          )
+
+          # Complete tunnel flags when the current word looks like an option.
+          if [[ "$cur" == -* ]]; then
+            _describe -t options 'option' tunnel_opts && return 0
+            return 0
+          fi
+
+          # Find the first non-option arg after the tunnel subcommand.
+          local -i idx=3
+          local workspace=''
+          while (( idx < orig_current )); do
+            local w="${orig_words[idx]-}"
+            case "$w" in
+              -h|--help)
+                return 0
+                ;;
+              --name)
+                idx=$((idx + 2))
+                ;;
+              --name=*)
+                idx=$((idx + 1))
+                ;;
+              --detach)
+                idx=$((idx + 1))
+                ;;
+              -*)
+                idx=$((idx + 1))
+                ;;
+              *)
+                workspace="$w"
+                break
+                ;;
+            esac
+          done
+
+          # Workspace already provided; complete flags (even without a '-' prefix).
+          if [[ -n "$workspace" ]]; then
+            _describe -t values 'option' tunnel_opts && return 0
+            return 0
+          fi
+
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+        *)
+          _message 'subcommand (create|rm|tunnel)'
+          return 0
+          ;;
       esac
-
-      local cur="${orig_words[orig_current]-}"
-      cur="${cur%%[[:space:]]#}"
-      if [[ "$cur" == -* ]]; then
-        typeset -a ws_opts=()
-        ws_opts=(
-          '-h[Show help]'
-          '--help[Show help]'
-          '--private-repo=[Seed container ~/.private from repo (owner/repo or URL)]'
-        )
-        _describe -t options 'option' ws_opts && return 0
-        return 0
-      fi
-
-      _message 'repo (owner/repo or URL)'
-      return 0
       ;;
 
     codex-workspace-rm)
@@ -226,4 +380,3 @@ compdef _codex-workspace codex-workspace-refresh-opt-repos
 compdef _codex-workspace codex-workspace-reset-repo
 compdef _codex-workspace codex-workspace-reset-work-repos
 compdef _codex-workspace codex-workspace-rm
-
