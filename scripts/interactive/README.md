@@ -92,12 +92,15 @@ bindkey -M vicmd 'j' history-substring-search-down
 
 ZLE widgets are defined in `hotkeys.zsh`:
 
-- `Ctrl+B`: `fzf-tools-launcher-widget` (pick a subcommand via `fzf` and execute it)
-- `Ctrl+F`: `fzf-tools-file-widget` (run `fzf-tools file [query]`)
+- `Ctrl+F`: `fzf-tools-launcher-widget` (pick a subcommand via `fzf` and execute it)
 - `Ctrl+T`: `fzf-tools-def-widget` (run `fzf-tools def [query]`)
 - `Ctrl+G`: `fzf-tools-git-commit-widget` (run `fzf-tools git-commit [--snapshot] [query]`)
 - `Ctrl+R`: `fzf-history-widget` (fzf history insert; no execution)
 
-Note: `Ctrl+B` and `Ctrl+F` override the default Emacs-style cursor movement bindings.
-If you use tmux with the default prefix (`Ctrl+B`), press `Ctrl+B` twice to send it to Zsh (or
-rebind the tmux prefix).
+Note: `Ctrl+F` overrides the default Emacs-style cursor movement binding.
+
+### Codex Hotkeys (feature: codex)
+
+If you enable the `codex` feature (`ZSH_FEATURES=codex`), extra widgets may be available:
+
+- `Ctrl+U`: `codex-rate-limits-async` (query rate limits for all configured accounts)

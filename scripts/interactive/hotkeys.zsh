@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────
 # Interactive launcher for `fzf-tools`
-# - Bound to Ctrl+B
+# - Bound to Ctrl+F
 # - Presents categorized, emoji-enhanced command list via `fzf`
 # - Inserts selected subcommand into shell prompt
 # ────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@
 # ZLE widget: pick an `fzf-tools` subcommand via `fzf` and execute it.
 # Usage: fzf-tools-launcher-widget
 # Notes:
-# - Bound to Ctrl+B.
+# - Bound to Ctrl+F.
 # - Requires an interactive ZLE session and `fzf`.
 fzf-tools-launcher-widget() {
   typeset raw='' selected='' subcommand=''
@@ -47,19 +47,19 @@ EOF
   return 0
 }
 
-# Register ZLE widget and bind to Ctrl+B
+# Register ZLE widget and bind to Ctrl+F
 zle -N fzf-tools-launcher-widget
-bindkey '^B' fzf-tools-launcher-widget
+bindkey '^F' fzf-tools-launcher-widget
 
 # ────────────────────────────────────────────────────────
-# Bind `fzf-tools file` to Ctrl+F
+# `fzf-tools file` widget (intentionally unbound)
 # ────────────────────────────────────────────────────────
 
 # fzf-tools-file-widget
 # ZLE widget: prefix the current buffer with `fzf-tools file` and execute it.
 # Usage: fzf-tools-file-widget
 # Notes:
-# - Bound to Ctrl+F.
+# - Intentionally not bound to a hotkey.
 fzf-tools-file-widget() {
   BUFFER="fzf-tools file $BUFFER"
   CURSOR=${#BUFFER}
@@ -68,7 +68,6 @@ fzf-tools-file-widget() {
 }
 
 zle -N fzf-tools-file-widget
-bindkey '^F' fzf-tools-file-widget
 
 # ────────────────────────────────────────────────────────
 # Bind `fzf-tools def` to Ctrl+T
@@ -143,3 +142,32 @@ fzf-history-widget() {
 # Register ZLE widget and bind to Ctrl+R
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
+
+# ────────────────────────────────────────────────────────
+# Codex feature hotkeys (optional)
+# ────────────────────────────────────────────────────────
+
+# Bind `codex-rate-limits-async` to Ctrl+U when feature:codex is enabled.
+if (( $+functions[codex-rate-limits-async] )); then
+  # codex-rate-limits-async-widget
+  # ZLE widget: run `codex-rate-limits-async` without clobbering the current buffer.
+  codex-rate-limits-async-widget() {
+    emulate -L zsh
+
+    local saved_buffer="${BUFFER}"
+    local -i saved_cursor="${CURSOR}"
+    local -i rc=0
+
+    print -r --
+    codex-rate-limits-async
+    rc=$?
+
+    BUFFER="${saved_buffer}"
+    CURSOR="${saved_cursor}"
+    zle reset-prompt
+    return $rc
+  }
+
+  zle -N codex-rate-limits-async-widget
+  bindkey '^U' codex-rate-limits-async-widget
+fi
