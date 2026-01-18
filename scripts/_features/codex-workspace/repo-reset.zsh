@@ -703,7 +703,7 @@ _reset_repo_to_ref() {
 
 _detect_codex_secrets_mount() {
   local src="/opt/zsh-kit/scripts/_features/codex/secrets"
-  local dst=""
+  local dst=''
 
   if [[ -L "$src" ]]; then
     dst="$(readlink "$src" 2>/dev/null || true)"

@@ -62,6 +62,14 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   [[ -f "$FEATURE_SCRIPT" ]] || fail "missing feature script: $FEATURE_SCRIPT"
   source "$FEATURE_SCRIPT"
 
+  # Keep this test hermetic: avoid calling the real docker-dependent implementation.
+  codex-workspace-refresh-opt-repos() {
+    emulate -L zsh
+    setopt pipe_fail
+
+    return 0
+  }
+
   typeset blob_url="https://github.com/graysurf/codex-kit/blob/main/docker/codex-env/bin/codex-workspace"
   typeset normalized=''
   normalized="$(_codex_workspace_launcher_normalize_url "$blob_url")" || fail "normalize_url failed"
@@ -78,10 +86,74 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
     print -r -- 'setopt nounset'
     print -r -- 'log="${CODEX_TEST_CURL_LOG:?missing CODEX_TEST_CURL_LOG}"'
     print -r -- 'print -r -- "curl $*" >>| "$log"'
-    print -r -- 'print -r -- "#!/usr/bin/env bash"'
-    print -r -- 'print -r -- "exit 0"'
+    print -r -- "cat <<'EOF'"
+    print -r -- '#!/bin/sh'
+    print -r -- 'set -eu'
+    print -r -- 'log="${CODEX_TEST_LAUNCHER_LOG:-}"'
+    print -r -- 'if [ -n "$log" ]; then printf "%s\n" "$*" >>"$log"; fi'
+    print -r --
+    print -r -- 'case "${1-}" in'
+    print -r -- '  -h|--help|help|"")'
+    print -r -- '    printf "%s\n" "--no-clone"'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- 'esac'
+    print -r --
+    print -r -- 'if [ "${1-}" = up ]; then'
+    print -r -- '  printf "%s\n" "workspace:  codex-ws-test"'
+    print -r -- '  printf "%s\n" "path:       /work"'
+    print -r -- '  exit 0'
+    print -r -- 'fi'
+    print -r --
+    print -r -- 'exit 0'
+    print -r -- 'EOF'
   } >| "$stub_curl"
   chmod 700 "$stub_curl" || fail "chmod failed: $stub_curl"
+
+  typeset docker_log="$tmp_dir/docker.log"
+  : >| "$docker_log"
+  typeset stub_docker="$stub_bin/docker"
+  {
+    print -r -- '#!/usr/bin/env -S zsh -f'
+    print -r -- 'setopt nounset'
+    print -r -- 'log="${CODEX_TEST_DOCKER_LOG:-}"'
+    print -r -- 'if [[ -n "$log" ]]; then'
+    print -r -- '  print -r -- "docker $*" >>| "$log"'
+    print -r -- 'fi'
+    print -r -- 'case "${1-}" in'
+    print -r -- '  info)'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- '  context)'
+    print -r -- '    if [[ "${2-}" == "show" ]]; then'
+    print -r -- '      print -r -- "default"'
+    print -r -- '    fi'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- '  exec)'
+    print -r -- '    # Skip snapshot tar by claiming the marker exists.'
+    print -r -- '    if [[ "$*" == *".codex-env/config.snapshot.ok"* ]]; then'
+    print -r -- '      exit 0'
+    print -r -- '    fi'
+    print -r -- '    # Drain stdin in interactive mode to avoid blocking if a pipe is used.'
+    print -r -- '    if [[ " $* " == *" -i "* ]]; then'
+    print -r -- '      command cat >/dev/null 2>&1 || true'
+    print -r -- '    fi'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- '  *)'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- 'esac'
+  } >| "$stub_docker"
+  chmod 700 "$stub_docker" || fail "chmod failed: $stub_docker"
+
+  typeset stub_gh="$stub_bin/gh"
+  {
+    print -r -- '#!/usr/bin/env -S zsh -f'
+    print -r -- 'exit 0'
+  } >| "$stub_gh"
+  chmod 700 "$stub_gh" || fail "chmod failed: $stub_gh"
 
   typeset auto_path="$tmp_dir/launcher/codex-workspace"
   typeset out='' rc=0 output=''
@@ -149,7 +221,7 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   chmod 700 "$launcher_no_clone" || fail "chmod failed: $launcher_no_clone"
 
   (
-    export PATH="$stub_bin"
+    export PATH="$stub_bin:$PATH"
     export CODEX_WORKSPACE_LAUNCHER="$launcher_no_clone"
     output="$(codex-workspace create --no-work-repos --name ws 2>&1)" && exit 0
     ok_rc=$?
@@ -170,20 +242,38 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   } >| "$launcher_with_no_clone"
   chmod 700 "$launcher_with_no_clone" || fail "chmod failed: $launcher_with_no_clone"
 
-  (
-    export PATH="$stub_bin"
-    export CODEX_WORKSPACE_LAUNCHER="$launcher_with_no_clone"
-    output="$(codex-workspace create --no-work-repos --name ws 2>&1)" && exit 0
-    ok_rc=$?
-    print -r -- "$ok_rc"
-    print -r -- "$output"
-  ) | {
-    IFS=$'\n' read -r ok_rc || ok_rc=0
-    IFS=$'\n' read -r output || output=''
-    assert_eq 1 "$ok_rc" "launcher with --no-clone should reach docker check" || fail "$output"
-    assert_contains "$output" "docker not found" "should fail later due to missing docker in PATH" || fail "$output"
-    assert_not_contains "$output" "does not support --no-clone" "should not reject launcher that supports --no-clone" || fail "$output"
-  }
+  typeset launcher_args_log="$tmp_dir/launcher.args.log"
+  : >| "$launcher_args_log"
+
+  typeset fake_home="$tmp_dir/fake-home"
+  mkdir -p -- "$fake_home" || fail "mkdir failed: $fake_home"
+
+  output="$( \
+    PATH="$stub_bin:$PATH" \
+    HOME="$fake_home" \
+    XDG_CACHE_HOME="$tmp_dir/xdg-cache" \
+    CODEX_TEST_CURL_LOG="$curl_log" \
+    CODEX_TEST_DOCKER_LOG="$docker_log" \
+    CODEX_TEST_LAUNCHER_LOG="$launcher_args_log" \
+    CODEX_WORKSPACE_LAUNCHER_AUTO_PATH="$tmp_dir/xdg-cache/codex-workspace/launcher/codex-workspace" \
+    CODEX_WORKSPACE_LAUNCHER_URL="https://example.invalid/codex-workspace" \
+    CODEX_WORKSPACE_AUTH=none \
+    CODEX_WORKSPACE_PRIVATE_REPO="" \
+    codex-workspace create --no-work-repos --name ws 2>&1 \
+  )"
+  ok_rc=$?
+  assert_eq 0 "$ok_rc" "create --no-work-repos should succeed with docker+curl stubs" || fail "$output"
+  assert_contains "$output" "workspace:" "create should surface launcher output" || fail "$output"
+  assert_contains "$output" "snapshot: ~/.config already copied" "create should skip snapshot tar when marker exists" || fail "$output"
+
+  typeset launcher_args=''
+  launcher_args="$(command cat -- "$launcher_args_log" 2>/dev/null || true)"
+  assert_contains "$launcher_args" "--help" "create should probe launcher --help" || fail "$launcher_args"
+  assert_contains "$launcher_args" "up --no-clone" "create should call launcher up --no-clone" || fail "$launcher_args"
+  assert_contains "$launcher_args" "--name ws" "create should pass --name" || fail "$launcher_args"
+  assert_contains "$launcher_args" "--host github.com" "create should pass --host" || fail "$launcher_args"
+  assert_contains "$launcher_args" "--secrets-dir" "create should pass secrets args" || fail "$launcher_args"
+  assert_not_contains "$launcher_args" "foo/bar" "create --no-work-repos should not pass repo args" || fail "$launcher_args"
 
   print -r -- "OK"
 } always {

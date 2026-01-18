@@ -755,13 +755,13 @@ codex-workspace() {
 
   local auth_mode="${CODEX_WORKSPACE_AUTH:-auto}"
   local env_token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
-  local keyring_token=""
+  local keyring_token=''
   if command -v gh >/dev/null 2>&1; then
     keyring_token="$(env -u GH_TOKEN -u GITHUB_TOKEN gh auth token -h "$gh_host" 2>/dev/null || true)"
   fi
 
-  local chosen_token=""
-  local chosen_source=""
+  local chosen_token=''
+  local chosen_source=''
   case "$auth_mode" in
     none)
       chosen_token=""
@@ -1017,7 +1017,7 @@ codex-workspace() {
       [[ -n "$docker_context" ]] || docker_context="default"
 
       local authority_json="{\"containerName\":\"/${container}\",\"settings\":{\"context\":\"${docker_context}\"}}"
-      local authority_hex=""
+      local authority_hex=''
       if command -v python3 >/dev/null 2>&1; then
         authority_hex="$(python3 -c 'import sys,binascii; print(binascii.hexlify(sys.argv[1].encode()).decode())' "$authority_json" 2>/dev/null || true)"
       fi
