@@ -53,15 +53,13 @@ _codex-workspace() {
         typeset -a subcmds=()
         subcmds=(
           'create:Create workspace'
-          'list:List workspaces'
-          'ls:Alias of list'
-          'rm:Remove workspace (container + volumes)'
-          'remove:Alias of rm'
-          'delete:Delete workspace(s)'
+          'ls:List workspaces'
+          'exec:Exec into workspace (default: zsh)'
+          'rm:Remove workspace(s)'
           'tunnel:Open a tunnel for a workspace'
         )
         _describe -t commands 'codex-workspace command' subcmds && return 0
-        _message 'subcommand (create|list|rm|delete|tunnel)'
+        _message 'subcommand (create|ls|rm|exec|tunnel)'
         return 0
       fi
 
@@ -71,7 +69,7 @@ _codex-workspace() {
       fi
 
       case "$cmd" in
-        list|ls)
+        ls)
           local cur="${orig_words[orig_current]-}"
           cur="${cur%%[[:space:]]#}"
           if [[ "$cur" == -* ]]; then
@@ -115,7 +113,7 @@ _codex-workspace() {
           _message 'repo (owner/repo or URL; repeatable; default from CWD git)'
           return 0
           ;;
-        rm|remove)
+        rm)
           local cur="${orig_words[orig_current]-}"
           cur="${cur%%[[:space:]]#}"
 
@@ -125,10 +123,16 @@ _codex-workspace() {
             rm_opts=(
               '-h:Show help'
               '--help:Show help'
+              '--all:Remove all workspaces'
               '-y:Skip confirmation'
               '--yes:Skip confirmation'
             )
             _describe -t options 'option' rm_opts && return 0
+            return 0
+          fi
+
+          # If --all is present, don't complete container names.
+          if (( ${orig_words[(I)--all]} > 0 )); then
             return 0
           fi
 
@@ -140,6 +144,9 @@ _codex-workspace() {
             case "$w" in
               -h|--help)
                 return 0
+                ;;
+              --all)
+                idx=$((idx + 1))
                 ;;
               -y|--yes)
                 idx=$((idx + 1))
@@ -160,29 +167,32 @@ _codex-workspace() {
           _message 'workspace container'
           return 0
           ;;
-        delete)
+        exec)
+          if (( orig_current > 2 )); then
+            local prev="${orig_words[orig_current-1]-}"
+            if [[ "$prev" == "-u" || "$prev" == "--user" ]]; then
+              _message 'user (default: codex)'
+              return 0
+            fi
+          fi
+
           local cur="${orig_words[orig_current]-}"
           cur="${cur%%[[:space:]]#}"
 
           if [[ "$cur" == -* ]]; then
-            typeset -a delete_opts=()
-            delete_opts=(
+            typeset -a exec_opts=()
+            exec_opts=(
               '-h:Show help'
               '--help:Show help'
-              '--all:Delete all workspaces'
-              '-y:Skip confirmation'
-              '--yes:Skip confirmation'
+              '--root:Exec as root'
+              '-u:Exec as user'
+              '--user:Exec as user'
             )
-            _describe -t options 'option' delete_opts && return 0
+            _describe -t options 'option' exec_opts && return 0
             return 0
           fi
 
-          # If --all is present, don't complete container names.
-          if (( ${orig_words[(I)--all]} > 0 )); then
-            return 0
-          fi
-
-          # Find the first non-option arg after the delete subcommand.
+          # Find the first non-option arg after the exec subcommand.
           local -i idx=3
           local workspace=''
           while (( idx < orig_current )); do
@@ -191,10 +201,16 @@ _codex-workspace() {
               -h|--help)
                 return 0
                 ;;
-              -y|--yes)
+              --root)
                 idx=$((idx + 1))
                 ;;
-              --all)
+              -u|--user)
+                idx=$((idx + 2))
+                ;;
+              --user=*)
+                idx=$((idx + 1))
+                ;;
+              --)
                 idx=$((idx + 1))
                 ;;
               -*)
@@ -280,7 +296,7 @@ _codex-workspace() {
           return 0
           ;;
         *)
-          _message 'subcommand (create|rm|tunnel)'
+          _message 'subcommand (create|ls|rm|exec|tunnel)'
           return 0
           ;;
       esac
@@ -290,10 +306,14 @@ _codex-workspace() {
       _arguments -C \
         '(-h --help)'{-h,--help}'[Show help]' \
         '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
+        '--all[Remove all workspaces]' \
         '1:workspace:->workspaces'
 
       case "${state-}" in
         workspaces)
+          if (( ${words[(I)--all]} > 0 )); then
+            return 0
+          fi
           if (( ${#containers[@]} > 0 )); then
             _values 'workspace container' $containers && return 0
           fi

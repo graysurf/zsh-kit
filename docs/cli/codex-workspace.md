@@ -4,10 +4,10 @@
 
 - `codex-workspace create`: start a workspace container for a repo (Dev Containers mode)
 - `cw`: alias of `codex-workspace`
-- `codex-workspace list`: list workspace containers
+- `codex-workspace ls`: list workspace containers
+- `codex-workspace exec`: exec into a workspace container (default: `zsh`)
 - `codex-workspace tunnel`: open a tunnel for a running workspace (auto-shortens tunnel name to meet VS Code limits)
-- `codex-workspace rm` / `codex-workspace-rm`: remove a workspace container + named volumes
-- `codex-workspace delete --all`: remove all workspace containers + named volumes
+- `codex-workspace rm`: remove workspace container(s) + named volumes (`--all` supported)
 - `codex-workspace-refresh-opt-repos`: refresh `/opt/codex-kit` + `/opt/zsh-kit` inside the container
 - `codex-workspace-reset-repo`: hard reset a single repo inside the container
 - `codex-workspace-reset-work-repos`: hard reset all repos under `/work` inside the container
@@ -37,10 +37,12 @@ codex-workspace create --no-extras             # same, but repo inferred from cu
 codex-workspace create --no-work-repos --name ws-foo
 codex-workspace create --no-work-repos --name ws-foo --private-repo OWNER/PRIVATE_REPO
 
-codex-workspace list
+codex-workspace ls
+
+codex-workspace exec <name|container> [--root]
 
 codex-workspace rm <name|container> [--yes]
-codex-workspace delete --all [--yes]
+codex-workspace rm --all [--yes]
 codex-workspace tunnel <container> [--name <tunnel_name>] [--detach]
 ```
 
@@ -85,7 +87,7 @@ For `OWNER/REPO`, the host defaults to the target repo host when available; othe
 - `CODEX_WORKSPACE_LAUNCHER_URL`: override the launcher download URL (optional)
 - `CODEX_WORKSPACE_LAUNCHER_AUTO_PATH`: override the launcher auto-install path (optional)
 - `CODEX_WORKSPACE_AUTH`: `auto|gh|env|none` (default: `auto`)
-- `CODEX_WORKSPACE_PREFIX`: container name prefix used by `codex-workspace-rm` and completion (default: `codex-ws`)
+- `CODEX_WORKSPACE_PREFIX`: container name prefix used by `codex-workspace rm` and completion (default: `codex-ws`)
 - `CODEX_WORKSPACE_OPEN_VSCODE_ENABLED`: `true|false` (optional)
 - `CODEX_WORKSPACE_TUNNEL_NAME`: override `codex-workspace tunnel` name (must be <= 20 chars)
 

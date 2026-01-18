@@ -13,7 +13,7 @@ Links:
 
 ## Addendum
 
-- None
+- 2026-01-19: Normalized `codex-workspace` to docker-style subcommands (`ls`/`rm`), added `exec` (default `zsh`), and updated completion + docs.
 
 ## Goal
 
@@ -195,7 +195,7 @@ Matrix:
 - `git-open` / `gho`: `<cmd><TAB>` lists subcommands; `<cmd> --<TAB>` suggests `--help` (no bracketed specs inserted).
 - `git-tools`: `git-tools<TAB>` lists groups; `git-tools <group><TAB>` lists commands; nested flags complete under `git-tools <group> <cmd> --<TAB>`.
 - `git-commit-context` / `gcc`: `<cmd> --<TAB>` suggests options; `*--include=` completes files.
-- `codex-workspace` / `cw`: `cw<TAB>` lists subcommands; `cw rm --<TAB>` suggests `--yes`; `cw rm<TAB>` suggests workspace containers (requires docker).
+- `codex-workspace` / `cw`: `cw<TAB>` lists subcommands; `cw rm --<TAB>` suggests `--yes`/`--all`; `cw exec<TAB>` suggests workspace containers; `cw rm<TAB>` suggests workspace containers (requires docker).
 - `codex-tools` / `cx`: `cx<TAB>` lists subcommands; `cx commit --<TAB>` suggests `--auto-stage` / `--push`.
 - `codex-rate-limits` / `crl`: `crl --<TAB>` suggests options; `crl<TAB>` suggests secret file names.
 - `docker-tools` / `docker-aliases`: `docker-tools<TAB>` and `docker-aliases<TAB>` list subcommands/options (requires docker feature enabled).

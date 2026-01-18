@@ -142,12 +142,12 @@ _codex_workspace_usage() {
   cat <<'EOF'
 usage:
   codex-workspace
-  codex-workspace list
+  codex-workspace ls
   codex-workspace create [--no-extras] [--private-repo <owner/repo|URL>] [<owner/repo|URL>...]
   codex-workspace create --no-work-repos --name <name> [--no-extras] [--private-repo <owner/repo|URL>]
+  codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
   codex-workspace rm <name|container> [--yes]
-  codex-workspace delete <name|container> [--yes]
-  codex-workspace delete --all [--yes]
+  codex-workspace rm --all [--yes]
   codex-workspace tunnel <container> [--name <tunnel_name>] [--detach]
 
 example:
@@ -159,8 +159,9 @@ example:
   codex-workspace create --no-work-repos --name ws-foo --private-repo OWNER/PRIVATE_REPO
   codex-workspace create --private-repo OWNER/PRIVATE_REPO OWNER/REPO
   CODEX_WORKSPACE_PRIVATE_REPO=OWNER/PRIVATE_REPO codex-workspace create OWNER/REPO
-  codex-workspace list
-  codex-workspace delete --all
+  codex-workspace ls
+  codex-workspace exec ws-foo
+  codex-workspace rm --all
 
 notes:
   - `codex-workspace` prints help; use `codex-workspace create ...` to start a workspace.
@@ -388,6 +389,131 @@ _codex_workspace_ensure_launcher() {
   return 0
 }
 
+# codex-workspace-exec [--root] [--user <user>] <name|container> [--] [cmd...]
+# Exec into a workspace container (default: zsh).
+codex-workspace-exec() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  if (( $# == 0 )); then
+    cat <<'EOF'
+usage: codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
+
+Exec into a workspace container (default: zsh).
+
+Notes:
+  - Options must appear before the container name.
+  - Uses `docker exec -it` when stdin+stdout are TTYs; otherwise uses `-i`.
+EOF
+    return 0
+  fi
+
+  local -i want_help=0
+  local -i want_root=0
+  local user='codex'
+
+  while (( $# > 0 )); do
+    case "$1" in
+      -h|--help)
+        want_help=1
+        shift
+        ;;
+      --root)
+        want_root=1
+        shift
+        ;;
+      -u|--user)
+        user="${2:-}"
+        if [[ -z "${user//[[:space:]]/}" ]]; then
+          print -u2 -r -- "error: $1 requires a value"
+          return 2
+        fi
+        shift 2 2>/dev/null || true
+        ;;
+      --user=*)
+        user="${1#*=}"
+        if [[ -z "${user//[[:space:]]/}" ]]; then
+          print -u2 -r -- "error: --user requires a value"
+          return 2
+        fi
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        print -u2 -r -- "error: unknown option: $1"
+        return 2
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  if (( want_help )); then
+    cat <<'EOF'
+usage: codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
+
+Exec into a workspace container (default: zsh).
+
+Notes:
+  - Options must appear before the container name.
+  - Uses `docker exec -it` when stdin+stdout are TTYs; otherwise uses `-i`.
+EOF
+    return 0
+  fi
+
+  local name="${1:-}"
+  if [[ -z "$name" ]]; then
+    print -u2 -r -- "error: missing workspace name/container"
+    print -u2 -r -- "hint: codex-workspace exec <container>"
+    return 2
+  fi
+  shift 1 2>/dev/null || true
+
+  local -a cmd=()
+  cmd=("$@")
+  if (( ${#cmd[@]} == 0 )); then
+    cmd=(zsh)
+  fi
+
+  if (( want_root )); then
+    user='root'
+  fi
+
+  _codex_workspace_require_docker || return $?
+  if ! docker info >/dev/null 2>&1; then
+    print -u2 -r -- "error: docker daemon not running (start OrbStack/Docker Desktop)"
+    return 1
+  fi
+
+  local container=''
+  container="$(_codex_workspace_normalize_container_name "$name")" || return 1
+  _codex_workspace_require_container "$container" || return $?
+
+  local container_status=''
+  container_status="$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null || true)"
+  if [[ "$container_status" != "running" ]]; then
+    print -r -- "+ docker start $container"
+    docker start "$container" >/dev/null || return 1
+  fi
+
+  local -a docker_exec=()
+  docker_exec=(exec -u "$user")
+  if [[ -t 0 && -t 1 ]]; then
+    docker_exec+=(-it)
+  elif [[ -t 0 ]]; then
+    docker_exec+=(-i)
+  fi
+
+  docker_exec+=("$container")
+  docker_exec+=("${cmd[@]}")
+
+  command docker "${docker_exec[@]}"
+}
+
 # codex-workspace-tunnel [--name <tunnel_name>] [--detach] <name|container>
 # Start a VS Code tunnel inside a workspace container.
 codex-workspace-tunnel() {
@@ -573,22 +699,37 @@ codex-workspace() {
       _codex_workspace_usage
       return 0
       ;;
-    list|ls)
+    ls)
       shift 1 2>/dev/null || true
       codex-workspace-list "$@"
       return $?
       ;;
+    list)
+      print -u2 -r -- "error: subcommand removed: list"
+      print -u2 -r -- "hint: use: codex-workspace ls"
+      return 2
+      ;;
     create)
       shift 1 2>/dev/null || true
       ;;
-    rm|remove)
+    rm)
       shift 1 2>/dev/null || true
       codex-workspace-rm "$@"
       return $?
       ;;
+    remove)
+      print -u2 -r -- "error: subcommand removed: remove"
+      print -u2 -r -- "hint: use: codex-workspace rm"
+      return 2
+      ;;
     delete)
+      print -u2 -r -- "error: subcommand removed: delete"
+      print -u2 -r -- "hint: use: codex-workspace rm --all"
+      return 2
+      ;;
+    exec)
       shift 1 2>/dev/null || true
-      codex-workspace-delete "$@"
+      codex-workspace-exec "$@"
       return $?
       ;;
     tunnel)
@@ -597,7 +738,8 @@ codex-workspace() {
       return $?
       ;;
     *)
-      print -u2 -r -- "error: missing subcommand (expected: create|list|rm|delete|tunnel)"
+      print -u2 -r -- "error: unknown subcommand: $arg1"
+      print -u2 -r -- "hint: expected: create|ls|rm|exec|tunnel"
       print -u2 -r -- "hint: codex-workspace create [--private-repo ...] [repo...]"
       _codex_workspace_usage
       return 2

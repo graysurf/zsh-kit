@@ -2,6 +2,7 @@
 #
 # Usage:
 #   codex-workspace-rm <name|container> [--yes]
+#   codex-workspace-rm --all [--yes]
 #
 # Notes:
 #   - Always uses `docker rm -f` (removes even if running).
@@ -93,7 +94,7 @@ codex-workspace-list() {
 
   if [[ "$arg1" == "-h" || "$arg1" == "--help" ]]; then
     cat <<'EOF'
-usage: codex-workspace list
+usage: codex-workspace ls
 
 List workspace containers (one per line).
 EOF
@@ -117,188 +118,20 @@ EOF
   return 0
 }
 
-# codex-workspace-delete
-# Delete one workspace or all workspaces (container + volumes).
-codex-workspace-delete() {
-  emulate -L zsh
-  setopt pipe_fail
-
-  if (( $# == 0 )); then
-    cat <<'EOF'
-usage:
-  codex-workspace delete <name|container> [--yes]
-  codex-workspace delete --all [--yes]
-
-Remove workspace container(s) and their named volumes.
-EOF
-    return 0
-  fi
-
-  local -i want_all=0
-  local -i want_yes=0
-  local name=''
-  local -a extra_args=()
-
-  while (( $# > 0 )); do
-    case "$1" in
-      -h|--help)
-        cat <<'EOF'
-usage:
-  codex-workspace delete <name|container> [--yes]
-  codex-workspace delete --all [--yes]
-
-Remove workspace container(s) and their named volumes.
-EOF
-        return 0
-        ;;
-      --all)
-        want_all=1
-        shift
-        ;;
-      -y|--yes)
-        want_yes=1
-        shift
-        ;;
-      --)
-        shift
-        while (( $# > 0 )); do
-          if [[ -z "$name" ]]; then
-            name="$1"
-          else
-            extra_args+=("$1")
-          fi
-          shift
-        done
-        ;;
-      -*)
-        print -u2 -r -- "error: unknown option: $1"
-        return 2
-        ;;
-      *)
-        if [[ -z "$name" ]]; then
-          name="$1"
-        else
-          extra_args+=("$1")
-        fi
-        shift
-        ;;
-    esac
-  done
-
-  if (( ${#extra_args[@]} > 0 )); then
-    print -u2 -r -- "error: unexpected extra args: ${extra_args[*]}"
-    return 2
-  fi
-
-  if (( want_all )); then
-    if [[ -n "$name" ]]; then
-      print -u2 -r -- "error: cannot combine --all with a workspace name"
-      return 2
-    fi
-
-    _codex_workspace_require_docker || return $?
-    if ! docker info >/dev/null 2>&1; then
-      print -u2 -r -- "error: docker daemon not running (start OrbStack/Docker Desktop)"
-      return 1
-    fi
-
-    local -a containers=()
-    containers=("${(@f)$(_codex_workspace_container_names)}")
-    if (( ${#containers[@]} == 0 )); then
-      print -u2 -r -- "no workspaces found"
-      return 0
-    fi
-
-    if (( !want_yes )); then
-      print -r -- "This will REMOVE ${#containers[@]} workspace(s):"
-      _codex_workspace_print_folders "${containers[@]}"
-      print -r --
-      print -r -- "Actions (per workspace):"
-      print -r -- "  - docker rm -f <container>"
-      print -r -- "  - docker volume rm <container>-work <container>-home <container>-codex-home"
-      _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
-    fi
-
-    local -i rc=0
-    local container=''
-    for container in "${containers[@]}"; do
-      codex-workspace-rm "$container" --yes || rc=1
-    done
-    return $rc
-  fi
-
-  if [[ -z "$name" ]]; then
-    print -u2 -r -- "error: missing workspace name/container"
-    print -u2 -r -- "hint: codex-workspace delete <name|container> [--yes]"
-    return 2
-  fi
-
-  if (( want_yes )); then
-    codex-workspace-rm "$name" --yes
-    return $?
-  fi
-
-  codex-workspace-rm "$name"
-  return $?
-}
-
-# codex-workspace-rm <name|container> [--yes]
-# Remove a workspace container and its named volumes.
-codex-workspace-rm() {
+# _codex_workspace_rm_one <name|container> [--yes]
+# Remove a single workspace container and its named volumes.
+_codex_workspace_rm_one() {
   emulate -L zsh
   setopt pipe_fail
 
   local name="${1:-}"
-  if [[ -z "$name" || "$name" == "-h" || "$name" == "--help" ]]; then
-    cat <<'EOF'
-usage: codex-workspace-rm <name|container> [--yes]
-
-Remove a workspace container and its named volumes.
-
-Notes:
-  - Always runs: docker rm -f <container>
-  - Always runs: docker volume rm <container>-work <container>-home <container>-codex-home
-  - Add --yes to skip the confirmation prompt.
-EOF
-    return 0
-  fi
-
-  shift 1 2>/dev/null || true
-
-  local want_yes=0
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      -y|--yes)
-        want_yes=1
-        shift
-        ;;
-      -h|--help)
-        cat <<'EOF'
-usage: codex-workspace-rm <name|container> [--yes]
-
-Remove a workspace container and its named volumes.
-
-Notes:
-  - Always runs: docker rm -f <container>
-  - Always runs: docker volume rm <container>-work <container>-home <container>-codex-home
-  - Add --yes to skip the confirmation prompt.
-EOF
-        return 0
-        ;;
-      *)
-        print -u2 -r -- "error: unknown arg: $1"
-        return 2
-        ;;
-    esac
-  done
+  local -i want_yes="${2:-0}"
 
   if [[ -z "$name" ]]; then
     print -u2 -r -- "error: missing workspace name/container"
-    print -u2 -r -- "hint: codex-workspace-rm <name|container>"
+    print -u2 -r -- "hint: codex-workspace rm <name|container> [--yes]"
     return 2
   fi
-
-  _codex_workspace_require_docker || return $?
 
   local container=''
   container="$(_codex_workspace_normalize_container_name "$name")" || return 1
@@ -365,4 +198,141 @@ EOF
   fi
 
   return 0
+}
+
+# codex-workspace-rm <name|container> [--yes]
+# codex-workspace-rm --all [--yes]
+# Remove workspace container(s) and their named volumes.
+codex-workspace-rm() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  if (( $# == 0 )); then
+    cat <<'EOF'
+usage:
+  codex-workspace-rm <name|container> [--yes]
+  codex-workspace-rm --all [--yes]
+
+Remove workspace container(s) and their named volumes.
+
+Notes:
+  - Always runs: docker rm -f <container>
+  - Always runs: docker volume rm <container>-work <container>-home <container>-codex-home
+  - Add --yes to skip the confirmation prompt.
+EOF
+    return 0
+  fi
+
+  local -i want_all=0
+  local -i want_yes=0
+  local -i want_help=0
+  local name=''
+  local -a extra_args=()
+
+  while (( $# > 0 )); do
+    case "$1" in
+      -h|--help)
+        want_help=1
+        shift
+        ;;
+      --all)
+        want_all=1
+        shift
+        ;;
+      -y|--yes)
+        want_yes=1
+        shift
+        ;;
+      --)
+        shift
+        while (( $# > 0 )); do
+          if [[ -z "$name" ]]; then
+            name="$1"
+          else
+            extra_args+=("$1")
+          fi
+          shift
+        done
+        ;;
+      -*)
+        print -u2 -r -- "error: unknown option: $1"
+        return 2
+        ;;
+      *)
+        if [[ -z "$name" ]]; then
+          name="$1"
+        else
+          extra_args+=("$1")
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  if (( want_help )); then
+    cat <<'EOF'
+usage:
+  codex-workspace-rm <name|container> [--yes]
+  codex-workspace-rm --all [--yes]
+
+Remove workspace container(s) and their named volumes.
+
+Notes:
+  - Always runs: docker rm -f <container>
+  - Always runs: docker volume rm <container>-work <container>-home <container>-codex-home
+  - Add --yes to skip the confirmation prompt.
+EOF
+    return 0
+  fi
+
+  if (( ${#extra_args[@]} > 0 )); then
+    print -u2 -r -- "error: unexpected extra args: ${extra_args[*]}"
+    return 2
+  fi
+
+  _codex_workspace_require_docker || return $?
+  if ! docker info >/dev/null 2>&1; then
+    print -u2 -r -- "error: docker daemon not running (start OrbStack/Docker Desktop)"
+    return 1
+  fi
+
+  if (( want_all )); then
+    if [[ -n "$name" ]]; then
+      print -u2 -r -- "error: cannot combine --all with a workspace name"
+      return 2
+    fi
+
+    local -a containers=()
+    containers=("${(@f)$(_codex_workspace_container_names)}")
+    if (( ${#containers[@]} == 0 )); then
+      print -u2 -r -- "no workspaces found"
+      return 0
+    fi
+
+    if (( !want_yes )); then
+      print -r -- "This will REMOVE ${#containers[@]} workspace(s):"
+      _codex_workspace_print_folders "${containers[@]}"
+      print -r --
+      print -r -- "Actions (per workspace):"
+      print -r -- "  - docker rm -f <container>"
+      print -r -- "  - docker volume rm <container>-work <container>-home <container>-codex-home"
+      _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
+    fi
+
+    local -i rc=0
+    local container=''
+    for container in "${containers[@]}"; do
+      _codex_workspace_rm_one "$container" 1 || rc=1
+    done
+    return $rc
+  fi
+
+  if [[ -z "$name" ]]; then
+    print -u2 -r -- "error: missing workspace name/container"
+    print -u2 -r -- "hint: codex-workspace rm <name|container> [--yes]"
+    return 2
+  fi
+
+  _codex_workspace_rm_one "$name" "$want_yes"
+  return $?
 }
