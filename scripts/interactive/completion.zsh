@@ -56,7 +56,13 @@ __zsh_completion_load_docker() {
   setopt err_return pipe_fail
 
   command -v docker >/dev/null 2>&1 || return 0
-  (( ${+_comps[docker]} )) && return 0
+  if (( ${+_comps[docker]} )); then
+    if command -v docker-compose >/dev/null 2>&1; then
+      typeset docker_comp="${_comps[docker]-}"
+      [[ -n "$docker_comp" ]] && compdef "$docker_comp" docker-compose
+    fi
+    return 0
+  fi
 
   typeset cache_file="$ZSH_COMPLETION_CACHE_DIR/docker.zsh"
   if [[ ! -s "$cache_file" || "$cache_file" -ot "$(command -v docker)" ]]; then
@@ -70,6 +76,10 @@ __zsh_completion_load_docker() {
 
   [[ -s "$cache_file" ]] || return 0
   source "$cache_file"
+
+  if command -v docker-compose >/dev/null 2>&1; then
+    (( ${+_comps[docker]} )) && compdef "${_comps[docker]}" docker-compose
+  fi
 }
 __zsh_completion_load_docker
 unset -f __zsh_completion_load_docker 2>/dev/null || true
