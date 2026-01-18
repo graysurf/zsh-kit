@@ -11,15 +11,21 @@ typeset -g CODEX_AUTO_REFRESH_MIN_DAYS="${CODEX_AUTO_REFRESH_MIN_DAYS:-5}"
 typeset -g CODEX_AUTO_REFRESH_ENABLED="${CODEX_AUTO_REFRESH_ENABLED:-false}"
 
 # _codex_auto_refresh_secrets_dir
-# Print the secrets directory path (feature-local), based on this script location.
+# Print the secrets directory path (CODEX_SECRET_DIR override or feature-local default).
 _codex_auto_refresh_secrets_dir() {
   emulate -L zsh
   setopt localoptions pipe_fail nounset
 
+  typeset secrets_dir="${CODEX_SECRET_DIR-}"
+  if [[ -n "$secrets_dir" && -d "$secrets_dir" ]]; then
+    print -r -- "$secrets_dir"
+    return 0
+  fi
+
   typeset feature_dir="${_codex_auto_refresh_dir-}"
   [[ -n "$feature_dir" ]] || return 1
 
-  typeset secrets_dir="$feature_dir/secrets"
+  secrets_dir="$feature_dir/secrets"
   [[ -d "$secrets_dir" ]] || return 1
 
   print -r -- "$secrets_dir"
@@ -73,14 +79,19 @@ _codex_auto_refresh_require_codex() {
     return 0
   fi
 
-  typeset secrets_dir=''
-  secrets_dir="$(_codex_auto_refresh_secrets_dir 2>/dev/null)" || secrets_dir=''
-  if [[ -z "$secrets_dir" ]]; then
-    print -u2 -r -- "codex-auto-refresh: secrets dir not found (expected: ${_codex_auto_refresh_dir}/secrets)"
+  typeset feature_dir="${_codex_auto_refresh_dir-}"
+  if [[ -z "${feature_dir}" ]]; then
+    print -u2 -r -- "codex-auto-refresh: feature dir not found"
     return 1
   fi
 
-  source "$secrets_dir/_codex-secret.zsh"
+  typeset secrets_module="${feature_dir}/_codex-secret.zsh"
+  if [[ ! -f "${secrets_module}" ]]; then
+    print -u2 -r -- "codex-auto-refresh: missing secrets module: ${secrets_module}"
+    return 1
+  fi
+
+  source "${secrets_module}"
 
   if ! typeset -f codex-refresh-auth >/dev/null 2>&1 \
       || [[ -z "${CODEX_AUTH_FILE-}" || -z "${CODEX_SECRET_DIR-}" || -z "${CODEX_SECRET_CACHE_DIR-}" ]]; then

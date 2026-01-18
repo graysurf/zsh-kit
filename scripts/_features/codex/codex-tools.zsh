@@ -460,7 +460,7 @@ _codex_tools_require_secrets() {
     return 1
   }
 
-  typeset secrets_file="$feature_dir/secrets/_codex-secret.zsh"
+  typeset secrets_file="$feature_dir/_codex-secret.zsh"
   if [[ ! -f "$secrets_file" ]]; then
     print -u2 -r -- "codex-tools: missing secrets helper: $secrets_file"
     return 1

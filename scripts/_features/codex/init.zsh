@@ -16,7 +16,7 @@ fi
 
 typeset script=''
 for script in \
-  "$feature_dir/secrets/_codex-secret.zsh" \
+  "$feature_dir/_codex-secret.zsh" \
   "$feature_dir/codex-auto-refresh.zsh" \
   "$feature_dir/codex-starship.zsh" \
   "$feature_dir/codex-tools.zsh"

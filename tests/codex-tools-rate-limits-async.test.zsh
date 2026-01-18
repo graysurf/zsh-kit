@@ -56,7 +56,7 @@ assert_contains() {
 
   mkdir -p -- "${module_dir}" "${cache_dir}" || fail "failed to create temp directories"
 
-  typeset secret_script_src="${REPO_ROOT}/scripts/_features/codex/secrets/_codex-secret.zsh"
+  typeset secret_script_src="${REPO_ROOT}/scripts/_features/codex/_codex-secret.zsh"
   typeset secret_script="${module_dir}/_codex-secret.zsh"
   cp -f -- "${secret_script_src}" "${secret_script}" || fail "failed to copy _codex-secret.zsh for isolated secrets dir"
 
@@ -106,4 +106,3 @@ assert_contains() {
 
   print -r -- "OK"
 }
-
