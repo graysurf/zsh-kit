@@ -4,6 +4,7 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2026-01-19 | [Audit compinit and CLI completions](20260119_cli-completion-audit.md) | TBD |
 
 ## Archived
 
