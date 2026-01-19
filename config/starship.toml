@@ -4,6 +4,7 @@ command_timeout = 1000
 format = """
 ${custom.emoji}\
 $username\
+$container\
 $hostname\
 $directory\
 $git_state\
@@ -41,9 +42,22 @@ command = "codex-starship --time-format '%m-%d %H:%M'"
 when = "command -v codex-starship >/dev/null 2>&1 && codex-starship --is-enabled"
 format = "[$symbol$output ](bold #637777)"
 
+[username]
+style_user = "bold #ffffff"
+style_root = "bold #f78c6c"
+format = "[$user]($style) on "
+disabled = false
+show_always = true
+
+[container]
+disabled = false
+format = "[$symbol]($style) "
+symbol = "🐳"
+style  = "bold red dimmed"
+
 [hostname]
 ssh_only = false
-format =  "on [$hostname](#c792ea) "
+format =  "[$hostname](#c792ea) "
 disabled = false
 
 [character]
@@ -58,13 +72,6 @@ disabled = false
 [package]
 style = "bold #7fdbca"
 disabled = false
-
-[username]
-style_user = "bold #ffffff"
-style_root = "bold #f78c6c"
-format = "[$user]($style) "
-disabled = false
-show_always = true
 
 [time]
 style = "bold #637777"
