@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.0 - 2026-01-19
+
+### Added
+- `codex-workspace`: Dev Containers workspace management helper (`create/ls/exec/tunnel/rm/reset`) with completion (`ZSH_FEATURES=codex-workspace`).
+- `docker-tools` feature module (`docker-tools`, `docker-aliases`) plus cached completion for `docker` and `docker-compose` (`ZSH_FEATURES=docker`).
+- Completion lint/check: `tools/check.zsh --completions` (runs `tools/check-completions.zsh`).
+- `git-tools commit context-json` (alias: `gccj`) to generate a JSON manifest + staged patch for commit context.
+- Linux tool lists for `install-tools` (`config/tools.linux*.list` + `config/tools.linux.apt.list`).
+
+### Changed
+- Bootstrap supports structured debug levels and optional feature summary at startup.
+- Commit helper tooling adds git validation and improved auto-staging flows.
+- Starship prompt includes the container module.
+- Optional tool lists include image processing tools.
+
+### Fixed
+- `codex-workspace reset` supports resetting repos at any depth up to `--depth` (default: 3) and keeps stdin attached for container scripts.
+- `CODEX_SECRET_DIR` override handling is more robust across Codex helpers.
+- Completion coverage and flag sets are more consistent (including alias coverage and `git push` flags).
+- Async worker pool now waits reliably for worker PIDs (`scripts/async-pool.zsh`).
+
 ## v2.0.1 - 2026-01-17
 
 ### Added
