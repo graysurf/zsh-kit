@@ -407,6 +407,9 @@ _git_lock_diff() {
 # Safety:
 # - `--push` publishes the tag to `origin` and deletes the local tag afterwards.
 _git_lock_tag() {
+  emulate -L zsh
+  setopt pipe_fail
+
   typeset label='' tag_name='' tag_msg='' do_push=false
   typeset repo_id='' lock_dir='' lock_file='' hash='' timestamp='' line1=''
   typeset -a positional=()
@@ -428,14 +431,19 @@ _git_lock_tag() {
     esac
   done
 
-  label=$(_git_lock_resolve_label "${positional[0]}") || {
+  if (( ${#positional[@]} != 2 )); then
+    printf "❗ Usage: git-lock tag <git-lock-label> <tag-name> [-m <tag-message>] [--push]\n"
+    return 1
+  fi
+
+  label=$(_git_lock_resolve_label "${positional[1]-}") || {
     printf "❌ git-lock label not provided or not found\n"
     return 1
   }
 
-  tag_name="${positional[1]}"
+  tag_name="${positional[2]-}"
   [[ -z "$tag_name" ]] && {
-    printf "❗ Usage: git-lock-tag <git-lock-label> <tag-name> [-m <tag-message>] [--push]\n"
+    printf "❗ Usage: git-lock tag <git-lock-label> <tag-name> [-m <tag-message>] [--push]\n"
     return 1
   }
 
