@@ -151,14 +151,14 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
     - Smoke-test results recorded (this file).
   - Exit Criteria:
     - [x] Results recorded and any failures tracked with follow-up tasks.
-- [ ] Step 4: Release / wrap-up
+- [x] Step 4: Release / wrap-up
   - Work Items:
-    - [ ] Update docs (when needed) and archive this progress file.
+    - [x] Update docs (when needed) and archive this progress file.
   - Artifacts:
     - Archived progress file under `docs/progress/archived/`.
   - Exit Criteria:
-    - [ ] Status set to DONE and file moved to `docs/progress/archived/`.
-    - [ ] `docs/progress/README.md` updated with PR link.
+    - [x] Status set to DONE and file moved to `docs/progress/archived/`.
+    - [x] `docs/progress/README.md` updated with PR link.
 
 ### Smoke Test Environment
 
