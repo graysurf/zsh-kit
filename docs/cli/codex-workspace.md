@@ -44,6 +44,10 @@ codex-workspace exec <name|container> [--root]
 codex-workspace rm <name|container> [--yes]
 codex-workspace rm --all [--yes]
 codex-workspace tunnel <container> [--name <tunnel_name>] [--detach]
+
+codex-workspace-refresh-opt-repos <container> [--yes]
+codex-workspace-reset-repo <container> <repo_dir> [--ref origin/main] [--yes]
+codex-workspace-reset-work-repos <container> [--root /work] [--depth 3] [--ref origin/main] [--yes]
 ```
 
 Notes:

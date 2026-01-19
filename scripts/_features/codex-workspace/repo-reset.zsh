@@ -335,7 +335,7 @@ usage: codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>]
 Reset all git repos under a root directory inside a workspace container.
 Defaults:
   --root /work
-  --depth 2          # repo roots: /work/*/*
+  --depth 3          # repo roots: /work/*/*/*
   --ref origin/main
 EOF
     return 0
@@ -344,7 +344,7 @@ EOF
   shift 1 2>/dev/null || true
 
   local root="/work"
-  local depth="2"
+  local depth="3"
   local ref="origin/main"
   local want_yes=0
 
@@ -373,7 +373,7 @@ usage: codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>]
 Reset all git repos under a root directory inside a workspace container.
 Defaults:
   --root /work
-  --depth 2          # repo roots: /work/*/*
+  --depth 3          # repo roots: /work/*/*/*
   --ref origin/main
 EOF
         return 0
@@ -387,7 +387,7 @@ EOF
 
   if [[ -z "$container" ]]; then
     print -u2 -r -- "error: missing container"
-    print -u2 -r -- "hint: codex-workspace-reset-work-repos <container> [--depth 2]"
+    print -u2 -r -- "hint: codex-workspace-reset-work-repos <container> [--depth 3]"
     return 2
   fi
 
@@ -416,7 +416,8 @@ EOF
     _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
   fi
 
-  print -r -- "$repos_out" | docker exec -i -u codex "$container" zsh -s -- "$ref" <<'EOF'
+  local reset_script=''
+  reset_script="$(cat <<'EOF'
 set -euo pipefail
 
 ref="${1:-origin/main}"
@@ -540,6 +541,11 @@ if (( fail_count > 0 )); then
   exit 1
 	fi
 EOF
+
+)"
+
+  # Feed repo dirs via stdin; pass the reset script via `zsh -c` to avoid stdin conflicts.
+  print -r -- "$repos_out" | docker exec -i -u codex "$container" zsh -c "$reset_script" -- "$ref"
 }
 
 # codex-workspace-refresh-opt-repos <container> [--yes]
