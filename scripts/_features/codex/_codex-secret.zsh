@@ -1880,7 +1880,7 @@ codex-rate-limits-async() {
 
   local progress_id='' progress_active='false'
   progress_id="codex-rate-limits:async:${$}"
-  if [[ -t 2 ]] && (( $+functions[progress_bar::init] )); then
+  if [[ -t 2 && -z "${ZLE-}" ]] && (( $+functions[progress_bar::init] )); then
     progress_active='true'
     progress_bar::init "$progress_id" --prefix 'codex-rate-limits' --total "${total}" --fd 2 || progress_active='false'
     if [[ "$progress_active" == 'true' ]]; then
