@@ -6,6 +6,7 @@ typeset -gr SCRIPT_PATH="${0:A}"
 typeset -gr TEST_DIR="${SCRIPT_PATH:h}"
 typeset -gr REPO_ROOT="${TEST_DIR:h}"
 typeset -gr FEATURE_SCRIPT="$REPO_ROOT/scripts/_features/codex-workspace/repo-reset.zsh"
+typeset -gr LAUNCHER_SCRIPT="$REPO_ROOT/scripts/_features/codex-workspace/workspace-launcher.zsh"
 
 fail() {
   emulate -L zsh
@@ -61,6 +62,8 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-repo-reset-stdin-test.
 {
   [[ -f "$FEATURE_SCRIPT" ]] || fail "missing feature script: $FEATURE_SCRIPT"
   source "$FEATURE_SCRIPT"
+  [[ -f "$LAUNCHER_SCRIPT" ]] || fail "missing launcher script: $LAUNCHER_SCRIPT"
+  source "$LAUNCHER_SCRIPT"
 
   _codex_workspace_require_docker() { return 0 }
   _codex_workspace_require_container() { return 0 }
@@ -104,7 +107,7 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-repo-reset-stdin-test.
     PATH="$stub_bin:$PATH" \
     CODEX_TEST_DOCKER_LOG="$docker_log" \
     CODEX_TEST_DOCKER_STDIN_LOG="$stdin_log" \
-    codex-workspace-reset-work-repos test-container --yes --ref origin/main 2>&1 \
+    codex-workspace reset work-repos test-container --yes --ref origin/main 2>&1 \
   )"
   rc=$?
   assert_eq 0 "$rc" "reset-work-repos should succeed with stub docker" || fail "$out"
@@ -120,4 +123,3 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-repo-reset-stdin-test.
   assert_contains "$stdin_payload" "/work/b/repo" "stdin should contain repo list" || fail "$stdin_payload"
   assert_not_contains "$stdin_payload" "set -euo pipefail" "stdin should not contain script" || fail "$stdin_payload"
 }
-

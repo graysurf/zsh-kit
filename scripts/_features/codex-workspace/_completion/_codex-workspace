@@ -1,4 +1,4 @@
-#compdef codex-workspace cw codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-work-repos codex-workspace-rm
+#compdef codex-workspace cw codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-private-repo codex-workspace-reset-work-repos codex-workspace-rm
 
 __codex_workspace_container_names() {
   emulate -L zsh -o extendedglob
@@ -55,11 +55,12 @@ _codex-workspace() {
           'create:Create workspace'
           'ls:List workspaces'
           'exec:Exec into workspace (default: zsh)'
+          'reset:Reset repos inside workspace'
           'rm:Remove workspace(s)'
           'tunnel:Open a tunnel for a workspace'
         )
         _describe -t commands 'codex-workspace command' subcmds && return 0
-        _message 'subcommand (create|ls|rm|exec|tunnel)'
+        _message 'subcommand (create|ls|rm|exec|reset|tunnel)'
         return 0
       fi
 
@@ -232,6 +233,218 @@ _codex-workspace() {
           _message 'workspace container'
           return 0
           ;;
+        reset)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          if (( orig_current == 3 )); then
+            if [[ "$cur" == -* ]]; then
+              typeset -a reset_opts=()
+              reset_opts=(
+                '-h:Show help'
+                '--help:Show help'
+              )
+              _describe -t options 'option' reset_opts && return 0
+              return 0
+            fi
+
+            typeset -a reset_subcmds=()
+            reset_subcmds=(
+              'repo:Reset a single repo inside the container'
+              'work-repos:Reset all git repos under /work'
+              'opt-repos:Refresh /opt/codex-kit + /opt/zsh-kit'
+              'private-repo:Reset ~/.private inside the container'
+            )
+            _describe -t commands 'codex-workspace reset command' reset_subcmds && return 0
+            _message 'reset subcommand (repo|work-repos|opt-repos|private-repo)'
+            return 0
+          fi
+
+          local reset_cmd="${orig_words[3]-}"
+          reset_cmd="${reset_cmd%%[[:space:]]#}"
+
+          # Complete option values.
+          if (( orig_current > 3 )); then
+            local prev="${orig_words[orig_current-1]-}"
+            case "$reset_cmd" in
+              repo|private-repo)
+                if [[ "$prev" == "--ref" ]]; then
+                  _message 'ref (remote/branch; default: origin/main)'
+                  return 0
+                fi
+                ;;
+              work-repos)
+                if [[ "$prev" == "--root" ]]; then
+                  _message 'root dir inside container (default: /work)'
+                  return 0
+                fi
+                if [[ "$prev" == "--depth" ]]; then
+                  _message 'max search depth (default: 3)'
+                  return 0
+                fi
+                if [[ "$prev" == "--ref" ]]; then
+                  _message 'ref (remote/branch; default: origin/main)'
+                  return 0
+                fi
+                ;;
+            esac
+          fi
+
+          case "$reset_cmd" in
+            repo)
+              if (( orig_current == 4 )); then
+                if [[ "$cur" == -* ]]; then
+                  typeset -a repo_help_opts=()
+                  repo_help_opts=(
+                    '-h:Show help'
+                    '--help:Show help'
+                  )
+                  _describe -t options 'option' repo_help_opts && return 0
+                  return 0
+                fi
+
+                if (( ${#containers[@]} > 0 )); then
+                  _values 'workspace container' $containers && return 0
+                fi
+                _message 'workspace container'
+                return 0
+              fi
+
+              if (( orig_current == 5 )); then
+                _message 'repo dir (e.g. /work/OWNER/REPO)'
+                return 0
+              fi
+
+              if [[ "$cur" == -* ]]; then
+                typeset -a repo_opts=()
+                repo_opts=(
+                  '-h:Show help'
+                  '--help:Show help'
+                  '-y:Skip confirmation'
+                  '--yes:Skip confirmation'
+                  '--ref:Remote/branch ref (default: origin/main)'
+                )
+                _describe -t options 'option' repo_opts && return 0
+                return 0
+              fi
+
+              return 0
+              ;;
+
+            work-repos)
+              if (( orig_current == 4 )); then
+                if [[ "$cur" == -* ]]; then
+                  typeset -a work_help_opts=()
+                  work_help_opts=(
+                    '-h:Show help'
+                    '--help:Show help'
+                  )
+                  _describe -t options 'option' work_help_opts && return 0
+                  return 0
+                fi
+
+                if (( ${#containers[@]} > 0 )); then
+                  _values 'workspace container' $containers && return 0
+                fi
+                _message 'workspace container'
+                return 0
+              fi
+
+              if [[ "$cur" == -* ]]; then
+                typeset -a work_opts=()
+                work_opts=(
+                  '-h:Show help'
+                  '--help:Show help'
+                  '-y:Skip confirmation'
+                  '--yes:Skip confirmation'
+                  '--root:Root dir inside container (default: /work)'
+                  '--depth:Max search depth (default: 3)'
+                  '--ref:Remote/branch ref (default: origin/main)'
+                )
+                _describe -t options 'option' work_opts && return 0
+                return 0
+              fi
+
+              return 0
+              ;;
+
+            opt-repos)
+              if (( orig_current == 4 )); then
+                if [[ "$cur" == -* ]]; then
+                  typeset -a opt_help_opts=()
+                  opt_help_opts=(
+                    '-h:Show help'
+                    '--help:Show help'
+                  )
+                  _describe -t options 'option' opt_help_opts && return 0
+                  return 0
+                fi
+
+                if (( ${#containers[@]} > 0 )); then
+                  _values 'workspace container' $containers && return 0
+                fi
+                _message 'workspace container'
+                return 0
+              fi
+
+              if [[ "$cur" == -* ]]; then
+                typeset -a opt_opts=()
+                opt_opts=(
+                  '-h:Show help'
+                  '--help:Show help'
+                  '-y:Skip confirmation'
+                  '--yes:Skip confirmation'
+                )
+                _describe -t options 'option' opt_opts && return 0
+                return 0
+              fi
+
+              return 0
+              ;;
+
+            private-repo)
+              if (( orig_current == 4 )); then
+                if [[ "$cur" == -* ]]; then
+                  typeset -a priv_help_opts=()
+                  priv_help_opts=(
+                    '-h:Show help'
+                    '--help:Show help'
+                  )
+                  _describe -t options 'option' priv_help_opts && return 0
+                  return 0
+                fi
+
+                if (( ${#containers[@]} > 0 )); then
+                  _values 'workspace container' $containers && return 0
+                fi
+                _message 'workspace container'
+                return 0
+              fi
+
+              if [[ "$cur" == -* ]]; then
+                typeset -a priv_opts=()
+                priv_opts=(
+                  '-h:Show help'
+                  '--help:Show help'
+                  '-y:Skip confirmation'
+                  '--yes:Skip confirmation'
+                  '--ref:Remote/branch ref (default: origin/main)'
+                )
+                _describe -t options 'option' priv_opts && return 0
+                return 0
+              fi
+
+              return 0
+              ;;
+          esac
+
+          if (( orig_current == 3 )); then
+            _message 'reset subcommand (repo|work-repos|opt-repos|private-repo)'
+            return 0
+          fi
+
+          return 0
+          ;;
         tunnel)
           if (( orig_current > 2 )) && [[ "${orig_words[orig_current-1]-}" == "--name" ]]; then
             _message 'tunnel name (<=20 chars)'
@@ -369,6 +582,26 @@ _codex-workspace() {
       return 0
       ;;
 
+    codex-workspace-reset-private-repo)
+      _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
+        '--ref=[Remote/branch ref (default: origin/main)]:ref' \
+        '1:container:->workspaces'
+
+      case "${state-}" in
+        workspaces)
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
+          return 0
+          ;;
+      esac
+
+      return 0
+      ;;
+
     codex-workspace-reset-work-repos)
       _arguments -C \
         '(-h --help)'{-h,--help}'[Show help]' \
@@ -398,5 +631,6 @@ _codex-workspace() {
 compdef _codex-workspace codex-workspace
 compdef _codex-workspace codex-workspace-refresh-opt-repos
 compdef _codex-workspace codex-workspace-reset-repo
+compdef _codex-workspace codex-workspace-reset-private-repo
 compdef _codex-workspace codex-workspace-reset-work-repos
 compdef _codex-workspace codex-workspace-rm

@@ -8,9 +8,7 @@
 - `codex-workspace exec`: exec into a workspace container (default: `zsh`)
 - `codex-workspace tunnel`: open a tunnel for a running workspace (auto-shortens tunnel name to meet VS Code limits)
 - `codex-workspace rm`: remove workspace container(s) + named volumes (`--all` supported)
-- `codex-workspace-refresh-opt-repos`: refresh `/opt/codex-kit` + `/opt/zsh-kit` inside the container
-- `codex-workspace-reset-repo`: hard reset a single repo inside the container
-- `codex-workspace-reset-work-repos`: hard reset all repos under `/work` inside the container
+- `codex-workspace reset`: reset helpers inside a workspace container (repos, /opt, ~/.private)
 - Completion for these commands (loaded during `compinit`)
 
 ---
@@ -45,9 +43,16 @@ codex-workspace rm <name|container> [--yes]
 codex-workspace rm --all [--yes]
 codex-workspace tunnel <container> [--name <tunnel_name>] [--detach]
 
-codex-workspace-refresh-opt-repos <container> [--yes]
-codex-workspace-reset-repo <container> <repo_dir> [--ref origin/main] [--yes]
-codex-workspace-reset-work-repos <container> [--root /work] [--depth 3] [--ref origin/main] [--yes]
+codex-workspace reset repo <name|container> <repo_dir> [--ref origin/main] [--yes]
+codex-workspace reset work-repos <name|container> [--root /work] [--depth 3] [--ref origin/main] [--yes]
+codex-workspace reset opt-repos <name|container> [--yes]
+codex-workspace reset private-repo <name|container> [--ref origin/main] [--yes]
+
+# Legacy (still supported):
+codex-workspace-refresh-opt-repos <name|container> [--yes]
+codex-workspace-reset-repo <name|container> <repo_dir> [--ref origin/main] [--yes]
+codex-workspace-reset-work-repos <name|container> [--root /work] [--depth 3] [--ref origin/main] [--yes]
+codex-workspace-reset-private-repo <name|container> [--ref origin/main] [--yes]
 ```
 
 Notes:
@@ -58,7 +63,7 @@ Notes:
 - Use `--no-extras` to disable cloning `~/.private` and additional repos under `/work` (seed repo is still cloned).
 - Use `--no-work-repos` to skip cloning any repos into `/work` (including the default-from-CWD `origin`);
   requires `--name` and rejects repo args. `--private-repo` still runs unless `--no-extras` is also set.
-- For `codex-workspace-reset-work-repos`, `--depth` is the max repo depth under `--root` (includes shallower repos).
+- For `codex-workspace reset work-repos`, `--depth` is the max repo depth under `--root` (includes shallower repos).
 - If the host launcher script is missing, `codex-workspace create` auto-downloads it to:
   - `${XDG_CACHE_HOME:-~/.cache}/codex-workspace/launcher/codex-workspace`
 

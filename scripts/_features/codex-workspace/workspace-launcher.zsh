@@ -148,6 +148,10 @@ usage:
   codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
   codex-workspace rm <name|container> [--yes]
   codex-workspace rm --all [--yes]
+  codex-workspace reset repo <name|container> <repo_dir> [--ref <remote/branch>] [--yes]
+  codex-workspace reset work-repos <name|container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
+  codex-workspace reset opt-repos <name|container> [--yes]
+  codex-workspace reset private-repo <name|container> [--ref <remote/branch>] [--yes]
   codex-workspace tunnel <container> [--name <tunnel_name>] [--detach]
 
 example:
@@ -161,6 +165,9 @@ example:
   CODEX_WORKSPACE_PRIVATE_REPO=OWNER/PRIVATE_REPO codex-workspace create OWNER/REPO
   codex-workspace ls
   codex-workspace exec ws-foo
+  codex-workspace reset work-repos ws-foo --yes
+  codex-workspace reset opt-repos ws-foo --yes
+  codex-workspace reset private-repo ws-foo --yes
   codex-workspace rm --all
 
 notes:
@@ -732,6 +739,11 @@ codex-workspace() {
       codex-workspace-exec "$@"
       return $?
       ;;
+    reset)
+      shift 1 2>/dev/null || true
+      codex-workspace-reset "$@"
+      return $?
+      ;;
     tunnel)
       shift 1 2>/dev/null || true
       codex-workspace-tunnel "$@"
@@ -739,7 +751,7 @@ codex-workspace() {
       ;;
     *)
       print -u2 -r -- "error: unknown subcommand: $arg1"
-      print -u2 -r -- "hint: expected: create|ls|rm|exec|tunnel"
+      print -u2 -r -- "hint: expected: create|ls|rm|exec|reset|tunnel"
       print -u2 -r -- "hint: codex-workspace create [--private-repo ...] [repo...]"
       _codex_workspace_usage
       return 2

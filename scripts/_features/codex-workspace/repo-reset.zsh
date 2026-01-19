@@ -1,8 +1,10 @@
 # Repo reset helpers for Codex workspace containers (feature: codex-workspace).
 #
 # Public functions:
+#   - codex-workspace-reset <subcommand> [args...]
 #   - codex-workspace-refresh-opt-repos <container> [--yes]
 #   - codex-workspace-reset-repo <container> <repo_dir> [--ref <remote/branch>] [--yes]
+#   - codex-workspace-reset-private-repo <container> [--ref <remote/branch>] [--yes]
 #   - codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
 
 # _codex_workspace_confirm <prompt>
@@ -235,17 +237,69 @@ print -rl -- ${(ou)repos}
 EOF
 }
 
+# codex-workspace-reset <subcommand> [args...]
+# Reset helpers under the `codex-workspace reset ...` namespace.
+codex-workspace-reset() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local subcmd="${1:-}"
+  case "$subcmd" in
+    ""|-h|--help)
+      cat <<'EOF'
+usage:
+  codex-workspace reset repo <name|container> <repo_dir> [--ref <remote/branch>] [--yes]
+  codex-workspace reset work-repos <name|container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
+  codex-workspace reset opt-repos <name|container> [--yes]
+  codex-workspace reset private-repo <name|container> [--ref <remote/branch>] [--yes]
+
+subcommands:
+  repo         Reset a single repo inside the container
+  work-repos   Reset all git repos under a root dir (default: /work)
+  opt-repos    Refresh /opt/codex-kit + /opt/zsh-kit inside the container
+  private-repo Reset ~/.private inside the container
+EOF
+      return 0
+      ;;
+    repo)
+      shift 1 2>/dev/null || true
+      codex-workspace-reset-repo "$@"
+      return $?
+      ;;
+    work-repos)
+      shift 1 2>/dev/null || true
+      codex-workspace-reset-work-repos "$@"
+      return $?
+      ;;
+    opt-repos)
+      shift 1 2>/dev/null || true
+      codex-workspace-refresh-opt-repos "$@"
+      return $?
+      ;;
+    private-repo)
+      shift 1 2>/dev/null || true
+      codex-workspace-reset-private-repo "$@"
+      return $?
+      ;;
+    *)
+      print -u2 -r -- "error: unknown reset subcommand: $subcmd"
+      print -u2 -r -- "hint: codex-workspace reset --help"
+      return 2
+      ;;
+  esac
+}
+
 # codex-workspace-reset-repo <container> <repo_dir> [--ref <remote/branch>] [--yes]
 # Reset a single repo inside a workspace container.
 codex-workspace-reset-repo() {
   emulate -L zsh
   setopt pipe_fail
 
-  local container="${1:-}"
+  local name="${1:-}"
   local repo_dir="${2:-}"
-  if [[ -z "$container" || "$container" == "-h" || "$container" == "--help" ]]; then
+  if [[ -z "$name" || "$name" == "-h" || "$name" == "--help" ]]; then
     cat <<'EOF'
-usage: codex-workspace-reset-repo <container> <repo_dir> [--ref <remote/branch>] [--yes]
+usage: codex-workspace-reset-repo <name|container> <repo_dir> [--ref <remote/branch>] [--yes]
 
 Reset a repo inside a workspace container to a remote-tracking branch.
 Defaults:
@@ -280,7 +334,7 @@ EOF
         ;;
       -h|--help)
         cat <<'EOF'
-usage: codex-workspace-reset-repo <container> <repo_dir> [--ref <remote/branch>] [--yes]
+usage: codex-workspace-reset-repo <name|container> <repo_dir> [--ref <remote/branch>] [--yes]
 
 Reset a repo inside a workspace container to a remote-tracking branch.
 Defaults:
@@ -298,17 +352,126 @@ EOF
     esac
   done
 
-  if [[ -z "$container" || -z "$repo_dir" ]]; then
+  if [[ -z "$name" || -z "$repo_dir" ]]; then
     print -u2 -r -- "error: missing required args"
     print -u2 -r -- "hint: codex-workspace-reset-repo <container> <repo_dir> [--ref origin/main]"
     return 2
   fi
 
   _codex_workspace_require_docker || return $?
+  local container=''
+  if (( $+functions[_codex_workspace_normalize_container_name] )); then
+    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
+  else
+    local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
+    if [[ "$name" == "${prefix}-"* ]]; then
+      container="$name"
+    else
+      container="${prefix}-${name}"
+    fi
+  fi
   _codex_workspace_require_container "$container" || return $?
 
   if (( !want_yes )); then
     print -r -- "This will reset a repo inside container: $container"
+    _codex_workspace_print_folders "$repo_dir"
+    print -r --
+    print -r -- "Actions:"
+    print -r -- "  - Force checkout to target branch (default: main)"
+    print -r -- "  - git reset --hard <remote/branch> (DISCARDS tracked changes)"
+    print -r -- "  - git clean -fd (REMOVES untracked files/dirs)"
+    _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
+  fi
+
+  _codex_workspace_container_reset_repo "$container" "$repo_dir" "$ref"
+}
+
+# codex-workspace-reset-private-repo <container> [--ref <remote/branch>] [--yes]
+# Reset ~/.private inside a workspace container.
+codex-workspace-reset-private-repo() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local name="${1:-}"
+  if [[ -z "$name" || "$name" == "-h" || "$name" == "--help" ]]; then
+    cat <<'EOF'
+usage: codex-workspace-reset-private-repo <name|container> [--ref <remote/branch>] [--yes]
+
+Reset ~/.private inside a workspace container to a remote-tracking branch.
+Defaults:
+  --ref origin/main
+Notes:
+  - If ~/.private is missing (or not a git repo), this is a no-op.
+  - Discards tracked changes (hard reset) and removes untracked files/dirs (git clean -fd).
+EOF
+    return 0
+  fi
+
+  shift 1 2>/dev/null || true
+
+  local ref="origin/main"
+  local want_yes=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --ref)
+        ref="${2:-}"
+        shift 2 || break
+        ;;
+      -y|--yes)
+        want_yes=1
+        shift
+        ;;
+      -h|--help)
+        cat <<'EOF'
+usage: codex-workspace-reset-private-repo <name|container> [--ref <remote/branch>] [--yes]
+
+Reset ~/.private inside a workspace container to a remote-tracking branch.
+Defaults:
+  --ref origin/main
+Notes:
+  - If ~/.private is missing (or not a git repo), this is a no-op.
+  - Discards tracked changes (hard reset) and removes untracked files/dirs (git clean -fd).
+EOF
+        return 0
+        ;;
+      *)
+        print -u2 -r -- "error: unknown arg: $1"
+        return 2
+        ;;
+    esac
+  done
+
+  if [[ -z "$name" ]]; then
+    print -u2 -r -- "error: missing container"
+    print -u2 -r -- "hint: codex-workspace-reset-private-repo <container> [--ref origin/main]"
+    return 2
+  fi
+
+  _codex_workspace_require_docker || return $?
+  local container=''
+  if (( $+functions[_codex_workspace_normalize_container_name] )); then
+    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
+  else
+    local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
+    if [[ "$name" == "${prefix}-"* ]]; then
+      container="$name"
+    else
+      container="${prefix}-${name}"
+    fi
+  fi
+  _codex_workspace_require_container "$container" || return $?
+
+  local repo_dir="/home/codex/.private"
+
+  if ! docker exec -u codex "$container" bash -lc 'test -d "$HOME/.private/.git"' >/dev/null 2>&1; then
+    print -u2 -r -- "warn: ~/.private not found (or not a git repo) in container: $container"
+    print -u2 -r -- "hint: seed it with: CODEX_WORKSPACE_PRIVATE_REPO=OWNER/REPO codex-workspace create ..."
+    return 0
+  fi
+
+  if (( !want_yes )); then
+    print -r -- "This will reset ~/.private inside container: $container"
     _codex_workspace_print_folders "$repo_dir"
     print -r --
     print -r -- "Actions:"
@@ -327,10 +490,10 @@ codex-workspace-reset-work-repos() {
   emulate -L zsh
   setopt pipe_fail
 
-  local container="${1:-}"
-  if [[ -z "$container" || "$container" == "-h" || "$container" == "--help" ]]; then
+  local name="${1:-}"
+  if [[ -z "$name" || "$name" == "-h" || "$name" == "--help" ]]; then
     cat <<'EOF'
-usage: codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
+usage: codex-workspace-reset-work-repos <name|container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
 
 	Reset all git repos under a root directory inside a workspace container.
 	Defaults:
@@ -368,7 +531,7 @@ EOF
         ;;
       -h|--help)
         cat <<'EOF'
-usage: codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
+usage: codex-workspace-reset-work-repos <name|container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
 
 	Reset all git repos under a root directory inside a workspace container.
 	Defaults:
@@ -385,13 +548,24 @@ EOF
     esac
   done
 
-  if [[ -z "$container" ]]; then
+  if [[ -z "$name" ]]; then
     print -u2 -r -- "error: missing container"
     print -u2 -r -- "hint: codex-workspace-reset-work-repos <container> [--depth 3]"
     return 2
   fi
 
   _codex_workspace_require_docker || return $?
+  local container=''
+  if (( $+functions[_codex_workspace_normalize_container_name] )); then
+    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
+  else
+    local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
+    if [[ "$name" == "${prefix}-"* ]]; then
+      container="$name"
+    else
+      container="${prefix}-${name}"
+    fi
+  fi
   _codex_workspace_require_container "$container" || return $?
 
   local repos_out=''
@@ -548,16 +722,16 @@ EOF
   print -r -- "$repos_out" | docker exec -i -u codex "$container" zsh -c "$reset_script" -- "$ref"
 }
 
-# codex-workspace-refresh-opt-repos <container> [--yes]
+# codex-workspace-refresh-opt-repos <name|container> [--yes]
 # Force-update the image-bundled repos inside a workspace container.
 codex-workspace-refresh-opt-repos() {
   emulate -L zsh
   setopt pipe_fail
 
-  local container="${1:-}"
-  if [[ -z "$container" || "$container" == "-h" || "$container" == "--help" ]]; then
+  local name="${1:-}"
+  if [[ -z "$name" || "$name" == "-h" || "$name" == "--help" ]]; then
     cat <<'EOF'
-usage: codex-workspace-refresh-opt-repos <container> [--yes]
+usage: codex-workspace-refresh-opt-repos <name|container> [--yes]
 
 Force-update the image-bundled repos inside a workspace container:
   - /opt/codex-kit
@@ -582,7 +756,7 @@ EOF
         ;;
       -h|--help)
         cat <<'EOF'
-usage: codex-workspace-refresh-opt-repos <container> [--yes]
+usage: codex-workspace-refresh-opt-repos <name|container> [--yes]
 
 Force-update the image-bundled repos inside a workspace container:
   - /opt/codex-kit
@@ -602,13 +776,25 @@ EOF
     esac
   done
 
-  if [[ -z "$container" ]]; then
+  if [[ -z "$name" ]]; then
     print -u2 -r -- "error: missing container"
     print -u2 -r -- "hint: codex-workspace-refresh-opt-repos <container>"
     return 2
   fi
 
   _codex_workspace_require_docker || return $?
+
+  local container=''
+  if (( $+functions[_codex_workspace_normalize_container_name] )); then
+    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
+  else
+    local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
+    if [[ "$name" == "${prefix}-"* ]]; then
+      container="$name"
+    else
+      container="${prefix}-${name}"
+    fi
+  fi
   _codex_workspace_require_container "$container" || return $?
 
   local -a repo_dirs=(/opt/codex-kit /opt/zsh-kit)
