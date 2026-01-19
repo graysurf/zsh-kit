@@ -218,10 +218,10 @@ _codex_tools_commit_with_scope_fallback() {
   return 0
 }
 
-# codex-commit-with-scope [-p] [-a] [extra prompt...]
+# codex-commit-with-scope [-p|--push] [-a|--auto-stage] [extra prompt...]
 # Run the semantic-commit skill to create a Semantic Commit and report git-scope output.
 # Options:
-#   -p    Push to remote after a successful commit.
+#   -p, --push    Push to remote after a successful commit.
 #   -a, --auto-stage  Use semantic-commit-autostage (autostage all changes) instead of semantic-commit.
 codex-commit-with-scope() {
   emulate -L zsh
@@ -233,10 +233,10 @@ codex-commit-with-scope() {
   fi
 
   local -A opts=()
-  zparseopts -D -E -A opts -- p a -auto-stage || return 1
+  zparseopts -D -E -A opts -- p -push a -auto-stage || return 1
 
   local push_flag='false'
-  if (( ${+opts[-p]} )); then
+  if (( ${+opts[-p]} || ${+opts[--push]} )); then
     push_flag='true'
   fi
 
@@ -586,8 +586,8 @@ _codex_tools_usage() {
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
   print -u"$fd" -r -- '  prompt [prompt...]                             Run a raw prompt (useful when prompt starts with a command word)'
-  print -u"$fd" -r -- '  commit-with-scope [-p] [-a] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
-  print -u"$fd" -r -- '    -p                                           Push to remote after commit'
+  print -u"$fd" -r -- '  commit-with-scope [-p|--push] [-a|--auto-stage] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
+  print -u"$fd" -r -- '    -p, --push                                             Push to remote after commit'
   print -u"$fd" -r -- '    -a, --auto-stage                             Use semantic-commit-autostage (autostage all changes)'
   print -u"$fd" -r -- '  auto-refresh                                   Run codex-auto-refresh (token refresh helper)'
   print -u"$fd" -r -- '  rate-limits                                    Run codex-rate-limits (supports --async/--jobs for concurrent all-accounts table)'

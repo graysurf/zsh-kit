@@ -38,7 +38,7 @@ _opencode-tools() {
       case "$subcmd" in
         commit-with-scope|commit)
           _arguments \
-            '(-p)'{-p}'[Push to remote after commit]' \
+            '(-p --push)'{-p,--push}'[Push to remote after commit]' \
             '(-a --auto-stage)'{-a,--auto-stage}'[Use semantic-commit-autostage (autostage all changes)]' \
             '*:prompt text:' && return 0
           return 0

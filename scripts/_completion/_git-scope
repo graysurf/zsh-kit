@@ -37,7 +37,7 @@ _git-scope() {
         commit)
           _arguments -C \
             '(-p --print)'{-p,--print}'[Print contents of each file in the commit (from HEAD or working tree)]' \
-            '2:commit hash:->commit_hashes'
+            '1:commit hash:->commit_hashes'
 
           case "${state-}" in
             commit_hashes)
@@ -61,7 +61,7 @@ _git-scope() {
         tracked|staged|unstaged|all|untracked)
           _arguments -C \
             '(-p --print)'{-p,--print}'[Print the contents of each file]' \
-            '2:prefix:_files -/' \
+            '1:prefix:_files -/' \
             '*:prefix:_files -/' \
             && return 0
           _message 'prefix'
