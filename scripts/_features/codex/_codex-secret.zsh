@@ -1169,7 +1169,7 @@ codex-rate-limits() {
       -h|--help)
         print -r -- "codex-rate-limits: usage: codex-rate-limits [-c] [-d] [--cached] [--no-refresh-auth] [--json] [--one-line] [--all] [secret.json]"
         print -r -- '  -c                 Clear codex-starship cache ($ZSH_CACHE_DIR/codex/starship-rate-limits) before querying'
-        print -r -- '  -d, --debug        Keep stderr and show per-account errors in --all mode (also enabled with ZSH_DEBUG>=1)'
+        print -r -- '  -d, --debug        Keep stderr and show per-account errors in --all mode (also enabled with ZSH_DEBUG>=2)'
         print -r -- '  --cached           Print cached one-line output from codex-starship cache (no network; implies --one-line)'
         print -r -- '  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)'
         print -r -- "  --json             Print raw wham/usage JSON (single account only)"
@@ -1238,7 +1238,7 @@ codex-rate-limits() {
 
   if [[ "${debug_mode}" != "true" ]]; then
     local zsh_debug_raw="${ZSH_DEBUG:-0}"
-    if [[ "${zsh_debug_raw}" == <-> ]] && (( zsh_debug_raw >= 1 )); then
+    if [[ "${zsh_debug_raw}" == <-> ]] && (( zsh_debug_raw >= 2 )); then
       debug_mode="true"
     fi
   fi

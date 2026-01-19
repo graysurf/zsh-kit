@@ -224,12 +224,12 @@ if [[ ! -d "$root" ]]; then
   exit 1
 fi
 
-typeset -i git_depth=$((depth + 1))
-typeset -a repos=()
+	typeset -i git_depth=$((depth + 1))
+	typeset -a repos=()
 
-while IFS= read -r -d '' git_entry; do
-  repos+=("${git_entry:h}")
-done < <(find -L "$root" -maxdepth "$git_depth" -mindepth "$git_depth" \( -type d -o -type f \) -name .git -print0 2>/dev/null)
+	while IFS= read -r -d '' git_entry; do
+	  repos+=("${git_entry:h}")
+	done < <(find -L "$root" -maxdepth "$git_depth" -mindepth 2 \( -type d -o -type f \) -name .git -print0 2>/dev/null)
 
 print -rl -- ${(ou)repos}
 EOF
@@ -332,11 +332,11 @@ codex-workspace-reset-work-repos() {
     cat <<'EOF'
 usage: codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
 
-Reset all git repos under a root directory inside a workspace container.
-Defaults:
-  --root /work
-  --depth 3          # repo roots: /work/*/*/*
-  --ref origin/main
+	Reset all git repos under a root directory inside a workspace container.
+	Defaults:
+	  --root /work
+	  --depth 3          # repo roots up to: /work/*/*/*
+	  --ref origin/main
 EOF
     return 0
   fi
@@ -370,11 +370,11 @@ EOF
         cat <<'EOF'
 usage: codex-workspace-reset-work-repos <container> [--root <dir>] [--depth <N>] [--ref <remote/branch>] [--yes]
 
-Reset all git repos under a root directory inside a workspace container.
-Defaults:
-  --root /work
-  --depth 3          # repo roots: /work/*/*/*
-  --ref origin/main
+	Reset all git repos under a root directory inside a workspace container.
+	Defaults:
+	  --root /work
+	  --depth 3          # repo roots up to: /work/*/*/*
+	  --ref origin/main
 EOF
         return 0
         ;;

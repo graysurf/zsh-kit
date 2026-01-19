@@ -58,6 +58,7 @@ Notes:
 - Use `--no-extras` to disable cloning `~/.private` and additional repos under `/work` (seed repo is still cloned).
 - Use `--no-work-repos` to skip cloning any repos into `/work` (including the default-from-CWD `origin`);
   requires `--name` and rejects repo args. `--private-repo` still runs unless `--no-extras` is also set.
+- For `codex-workspace-reset-work-repos`, `--depth` is the max repo depth under `--root` (includes shallower repos).
 - If the host launcher script is missing, `codex-workspace create` auto-downloads it to:
   - `${XDG_CACHE_HOME:-~/.cache}/codex-workspace/launcher/codex-workspace`
 

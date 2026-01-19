@@ -374,7 +374,7 @@ _codex-workspace() {
         '(-h --help)'{-h,--help}'[Show help]' \
         '(-y --yes)'{-y,--yes}'[Skip confirmation]' \
         '--root=[Root dir inside container (default: /work)]:root:(/work)' \
-        '--depth=[Search depth (default: 3)]:depth' \
+        '--depth=[Max search depth (default: 3)]:depth' \
         '--ref=[Remote/branch ref (default: origin/main)]:ref' \
         '1:container:->workspaces'
 
