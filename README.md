@@ -76,10 +76,15 @@ Weather report: Taipei City, Taiwan
                 
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
 🌿  Thinking shell initialized. Expect consequences...
-🧩 Features: docker,codex,codex-workspace,opencode
 
 🍎 yourname on MacBook ~ 🐳 orbstack
 08:00:00.000 ✔︎
+```
+
+To show a one-line feature summary at startup, set:
+
+```bash
+export ZSH_BOOT_FEATURES_ENABLED=true
 ```
 
 ## Setup

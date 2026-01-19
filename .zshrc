@@ -55,6 +55,7 @@ export HISTTIMEFORMAT='%F %T '
 export ZSH_DEBUG="${ZSH_DEBUG:-0}"
 export ZSH_BOOT_WEATHER_ENABLED="${ZSH_BOOT_WEATHER_ENABLED-true}"
 export ZSH_BOOT_QUOTE_ENABLED="${ZSH_BOOT_QUOTE_ENABLED-true}"
+export ZSH_BOOT_FEATURES_ENABLED="${ZSH_BOOT_FEATURES_ENABLED-false}"
 
 # ──────────────────────────────
 # Startup banner (optional)
@@ -76,7 +77,7 @@ source "$ZSH_BOOTSTRAP_SCRIPT_DIR/bootstrap.zsh"
 # Enabled features (always visible)
 # ──────────────────────────────
 # Print the effective, successfully-loaded feature list (from `ZSH_FEATURES`).
-if [[ -t 1 ]]; then
+if [[ -t 1 ]] && zsh_env::is_true "${ZSH_BOOT_FEATURES_ENABLED-}" "ZSH_BOOT_FEATURES_ENABLED"; then
   typeset -a _loaded_features=() _missing_features=() _failed_features=()
   (( ${+ZSH_FEATURES_LOADED} )) && _loaded_features=("${ZSH_FEATURES_LOADED[@]}")
   (( ${+ZSH_FEATURES_MISSING} )) && _missing_features=("${ZSH_FEATURES_MISSING[@]}")

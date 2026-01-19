@@ -121,7 +121,7 @@ What it does:
 3. Configures history behavior and a few boot flags (`ZSH_DEBUG`, `ZSH_BOOT_WEATHER_ENABLED`, `ZSH_BOOT_QUOTE_ENABLED`).
 4. Optionally shows the login banner (weather + quote).
 5. Sources `bootstrap/bootstrap.zsh`, which loads the rest of the repo modules under `scripts/`.
-6. Prints the enabled feature list (always visible in interactive TTY sessions).
+6. Optionally prints the enabled feature list when `ZSH_BOOT_FEATURES_ENABLED=true` (default: false).
 
 ---
 
@@ -142,6 +142,10 @@ Notes:
 - Migration: if you previously used `ZSH_DEBUG=0` to see timings, use `ZSH_DEBUG=1` now.
 - Some modules treat `ZSH_DEBUG>=2` as "show warnings" (e.g. feature loader, docker completion).
 - `codex-rate-limits -d` is roughly equivalent to `ZSH_DEBUG>=2` for keeping stderr / per-account errors.
+
+Related:
+
+- `ZSH_BOOT_FEATURES_ENABLED=true` shows the one-line enabled feature summary at startup (TTY only).
 
 Quick example:
 

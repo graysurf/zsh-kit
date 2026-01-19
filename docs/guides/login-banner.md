@@ -69,10 +69,15 @@ Need weather tweaks? Set `ZSH_WEATHER_URL='https://wttr.in/Taipei?0'` or `ZSH_WE
 ```text
 📜 "Be grateful for what you have now, and nothing should be taken for granted." — Roy T. Bennett
 🌵  Thinking shell initialized. Expect consequences...
-🧩 Features: codex,codex-workspace,docker,opencode
 ```
 
 If you want per-file timing output during startup, set `ZSH_DEBUG=1` (and higher levels add more detail).
+
+If you want a one-line enabled feature summary on each startup, set:
+
+```bash
+export ZSH_BOOT_FEATURES_ENABLED=true
+```
 
 If `ZSH_BOOT_WEATHER_ENABLED=true`, the login banner is preceded by the cached wttr.in snapshot managed by `bootstrap/weather.zsh` (refreshes once per hour; override via `ZSH_WEATHER_INTERVAL=<seconds>`), e.g.:
 
