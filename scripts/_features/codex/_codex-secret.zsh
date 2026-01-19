@@ -1774,7 +1774,7 @@ codex-rate-limits-async() {
   setopt localtraps
   unsetopt monitor notify
 
-  local jobs_raw='10'
+  local jobs_raw='5'
   local debug_mode='false'
   local refresh_auth_on_401='true'
   local cached_mode='false'
@@ -1783,7 +1783,7 @@ codex-rate-limits-async() {
     case "${1-}" in
       -h|--help)
         print -r -- "codex-rate-limits-async: usage: codex-rate-limits-async [--jobs N] [--cached] [--no-refresh-auth] [-d|--debug]"
-        print -r -- "  --jobs N           Max concurrent requests (default: 10)"
+        print -r -- "  --jobs N           Max concurrent requests (default: 5)"
         print -r -- "  --cached           Use codex-starship cache only (no network; one line per account)"
         print -r -- "  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)"
         print -r -- "  -d, --debug        Print per-account stderr after the table"
@@ -1830,11 +1830,11 @@ codex-rate-limits-async() {
   fi
 
   if [[ -z "${jobs_raw}" || "${jobs_raw}" != <-> ]]; then
-    jobs_raw='10'
+    jobs_raw='5'
   fi
   local -i jobs="${jobs_raw}"
   if (( jobs <= 0 )); then
-    jobs=10
+    jobs=5
   fi
 
   local secret_dir="${CODEX_SECRET_DIR-}"
@@ -1912,11 +1912,33 @@ codex-rate-limits-async() {
 
       local secret_name="${1-}"
       local err_file="${2-}"
-      shift 2 || true
+      local cached_mode="${3-}"
+      shift 3 || true
 
       local out='' child_rc=0
-      out="$(codex-rate-limits "$@" "${secret_name}" 2>"${err_file}")"
-      child_rc=$?
+      local -i attempt=1 max_attempts=2
+      while (( attempt <= max_attempts )); do
+        out="$(codex-rate-limits "$@" "${secret_name}" 2>"${err_file}")"
+        child_rc=$?
+        if (( child_rc == 0 )) || (( child_rc != 3 )) || (( attempt >= max_attempts )); then
+          break
+        fi
+        sleep "0.$(( RANDOM % 6 + 2 ))" 2>/dev/null || sleep 1 2>/dev/null || true
+        attempt=$(( attempt + 1 ))
+      done
+
+      if [[ "${cached_mode}" != 'true' ]] && { (( child_rc != 0 )) || [[ -z "${out}" ]]; }; then
+        local cached_out='' cached_rc=0
+        cached_out="$(codex-rate-limits --cached --one-line "${secret_name}" 2>>"${err_file}")"
+        cached_rc=$?
+        if (( cached_rc == 0 )) && [[ -n "${cached_out}" ]]; then
+          if (( child_rc != 0 )); then
+            print -r -- "codex-rate-limits-async: falling back to cache for ${secret_name} (rc=${child_rc})" >>| "${err_file}" 2>/dev/null || true
+          fi
+          out="${cached_out}"
+          child_rc=0
+        fi
+      fi
 
       out="${out//$'\n'/ }"
       out="${out//$'\r'/ }"
@@ -1925,7 +1947,7 @@ codex-rate-limits-async() {
       local tab=$'\t'
       print -u9 -r -- "${secret_name}${tab}${$}${tab}${child_rc}${tab}${out}"
       return 0
-    } "${secret_name}" "${err_file}" "${per_secret_args[@]}" &
+    } "${secret_name}" "${err_file}" "${cached_mode}" "${per_secret_args[@]}" &
 
     pid="$!"
     running=$(( running + 1 ))
@@ -1973,11 +1995,33 @@ codex-rate-limits-async() {
 
         local secret_name="${1-}"
         local err_file="${2-}"
-        shift 2 || true
+        local cached_mode="${3-}"
+        shift 3 || true
 
         local out='' child_rc=0
-        out="$(codex-rate-limits "$@" "${secret_name}" 2>"${err_file}")"
-        child_rc=$?
+        local -i attempt=1 max_attempts=2
+        while (( attempt <= max_attempts )); do
+          out="$(codex-rate-limits "$@" "${secret_name}" 2>"${err_file}")"
+          child_rc=$?
+          if (( child_rc == 0 )) || (( child_rc != 3 )) || (( attempt >= max_attempts )); then
+            break
+          fi
+          sleep "0.$(( RANDOM % 6 + 2 ))" 2>/dev/null || sleep 1 2>/dev/null || true
+          attempt=$(( attempt + 1 ))
+        done
+
+        if [[ "${cached_mode}" != 'true' ]] && { (( child_rc != 0 )) || [[ -z "${out}" ]]; }; then
+          local cached_out='' cached_rc=0
+          cached_out="$(codex-rate-limits --cached --one-line "${secret_name}" 2>>"${err_file}")"
+          cached_rc=$?
+          if (( cached_rc == 0 )) && [[ -n "${cached_out}" ]]; then
+            if (( child_rc != 0 )); then
+              print -r -- "codex-rate-limits-async: falling back to cache for ${secret_name} (rc=${child_rc})" >>| "${err_file}" 2>/dev/null || true
+            fi
+            out="${cached_out}"
+            child_rc=0
+          fi
+        fi
 
         out="${out//$'\n'/ }"
         out="${out//$'\r'/ }"
@@ -1986,7 +2030,7 @@ codex-rate-limits-async() {
         local tab=$'\t'
         print -u9 -r -- "${secret_name}${tab}${$}${tab}${child_rc}${tab}${out}"
         return 0
-      } "${secret_name}" "${err_file}" "${per_secret_args[@]}" &
+      } "${secret_name}" "${err_file}" "${cached_mode}" "${per_secret_args[@]}" &
 
       pid="$!"
       running=$(( running + 1 ))
@@ -2065,6 +2109,25 @@ codex-rate-limits-async() {
 	    else
 	      non_weekly_reset_epoch="$(jq -r '.codex_rate_limits.non_weekly_reset_at_epoch // empty' "${secret_file}" 2>/dev/null)" || non_weekly_reset_epoch=''
 	      weekly_reset_epoch="$(jq -r '.codex_rate_limits.weekly_reset_at_epoch // empty' "${secret_file}" 2>/dev/null)" || weekly_reset_epoch=''
+	    fi
+	    if { [[ -z "${non_weekly_reset_epoch}" || "${non_weekly_reset_epoch}" != <-> ]] || [[ -z "${weekly_reset_epoch}" || "${weekly_reset_epoch}" != <-> ]]; }; then
+	      local cache_file='' kv='' cache_non_weekly_epoch='' cache_weekly_epoch=''
+	      cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${secret_file}")" || cache_file=''
+	      if [[ -n "${cache_file}" && -f "${cache_file}" ]]; then
+	        kv=''
+	        while IFS= read -r kv; do
+	          case "${kv}" in
+	            non_weekly_reset_epoch=*) cache_non_weekly_epoch="${kv#non_weekly_reset_epoch=}" ;;
+	            weekly_reset_epoch=*) cache_weekly_epoch="${kv#weekly_reset_epoch=}" ;;
+	          esac
+	        done < "${cache_file}" 2>/dev/null || true
+	      fi
+	      if [[ -z "${non_weekly_reset_epoch}" || "${non_weekly_reset_epoch}" != <-> ]] && [[ -n "${cache_non_weekly_epoch}" && "${cache_non_weekly_epoch}" == <-> ]]; then
+	        non_weekly_reset_epoch="${cache_non_weekly_epoch}"
+	      fi
+	      if [[ -z "${weekly_reset_epoch}" || "${weekly_reset_epoch}" != <-> ]] && [[ -n "${cache_weekly_epoch}" && "${cache_weekly_epoch}" == <-> ]]; then
+	        weekly_reset_epoch="${cache_weekly_epoch}"
+	      fi
 	    fi
 	    if [[ -z "${non_weekly_reset_epoch}" || "${non_weekly_reset_epoch}" != <-> ]]; then
 	      non_weekly_reset_epoch='-'

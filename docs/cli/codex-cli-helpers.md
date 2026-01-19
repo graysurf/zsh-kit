@@ -120,11 +120,12 @@ Options:
 - `--one-line`: Print a single-line summary (single account only).
 - `--all`: Query all secrets under `CODEX_SECRET_DIR` (sync).
 - `--async`: Query all secrets under `CODEX_SECRET_DIR` concurrently (`codex-rate-limits-async`).
-- `-j`, `--jobs N`: Max concurrent requests (with `--async`).
+- `-j`, `--jobs N`: Max concurrent requests (with `--async`, default: 5).
 
 Notes:
 
 - `--async` does not accept positional `secret.json` and does not support `--json` / `--one-line`.
+- `--async` falls back to cached per-account output when a network request fails (use `--debug` to see captured stderr).
 - When printing to a TTY, percent cells are ANSI-colored by default; set `NO_COLOR=1` to disable colors.
 
 ```bash

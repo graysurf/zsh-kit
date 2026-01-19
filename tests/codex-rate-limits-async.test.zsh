@@ -106,6 +106,7 @@ assert_not_contains() {
           command date "$@"
         }
         source bootstrap/00-preload.zsh
+        export CODEX_SECRET_DIR="'"${module_dir}"'"
         export ZSH_CACHE_DIR="'"${cache_root}"'"
         source "'"${secret_script}"'"
         codex-rate-limits-async --cached --jobs 2
@@ -129,6 +130,78 @@ assert_not_contains() {
   names=()
 
   typeset line=''
+  for line in "${lines[@]}"; do
+    if [[ "${line}" == acc_* ]]; then
+      names+=("${line%% *}")
+    fi
+  done
+
+  assert_eq 4 "${#names[@]}" "should print one row per secret" || fail "$output"
+  assert_eq "acc_b acc_c acc_1234567890123456 acc_missing" "${(j: :)names}" "rows should be sorted by Reset ascending" || fail "$output"
+
+  cache_file="${cache_dir}/acc_missing.kv"
+  {
+    print -r -- 'fetched_at=1700000000'
+    print -r -- 'non_weekly_label=1h'
+    print -r -- 'non_weekly_remaining=90'
+    print -r -- 'non_weekly_reset_epoch=invalid'
+    print -r -- 'weekly_remaining=80'
+    print -r -- "weekly_reset_epoch=$(( fixed_now_epoch + 200000 ))"
+  } >| "${cache_file}" || fail "failed to rewrite cache: ${cache_file}"
+
+  output="$(
+    cd "$REPO_ROOT" && \
+      "$ZSH_BIN" -f -c '
+        date() {
+          if [[ "$#" -eq 1 && "$1" == "+%s" ]]; then
+            print -r -- '"${fixed_now_epoch}"'
+            return 0
+          fi
+          command date "$@"
+        }
+        sleep() { return 0 }
+
+        source bootstrap/00-preload.zsh
+        export CODEX_SECRET_DIR="'"${module_dir}"'"
+        export ZSH_CACHE_DIR="'"${cache_root}"'"
+        source "'"${secret_script}"'"
+
+        functions -c codex-rate-limits _orig_codex_rate_limits
+        codex-rate-limits() {
+          emulate -L zsh
+          setopt localoptions pipe_fail nounset SH_WORD_SPLIT
+          setopt localtraps
+
+          local arg=""
+          for arg in "$@"; do
+            if [[ "$arg" == "--cached" ]]; then
+              _orig_codex_rate_limits "$@"
+              return $?
+            fi
+          done
+
+          print -u2 -r -- "stub: network failure"
+          return 3
+        }
+
+        codex-rate-limits-async --jobs 2
+      ' 2>&1
+  )"
+  rc=$?
+
+  assert_eq 0 "$rc" "codex-rate-limits-async should fall back to cache and exit 0" || fail "$output"
+  assert_contains "$output" "Codex rate limits for all accounts" "should print heading" || fail "$output"
+  assert_contains "$output" "Reset" "should print table header" || fail "$output"
+  assert_contains "$output" "Left" "should print countdown columns" || fail "$output"
+  assert_contains "$output" " 5h  0m" "single-digit hours/minutes should be padded for alignment" || fail "$output"
+  assert_contains "$output" " 4h 59m" "two-digit minutes should remain compact" || fail "$output"
+  assert_contains "$output" "23h 20m" "two-digit hours/minutes should remain compact" || fail "$output"
+  assert_contains "$output" " 1d  1h" "single-digit days/hours should be padded for alignment" || fail "$output"
+  assert_contains "$output" "      -" "missing left values should be right-aligned" || fail "$output"
+  assert_not_contains "$output" "acc_12345678901234567890" "names should be truncated to 20 chars" || fail "$output"
+
+  lines=("${(@f)output}")
+  names=()
   for line in "${lines[@]}"; do
     if [[ "${line}" == acc_* ]]; then
       names+=("${line%% *}")
