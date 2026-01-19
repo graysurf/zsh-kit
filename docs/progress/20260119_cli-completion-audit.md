@@ -143,13 +143,13 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
   - Exit Criteria:
     - [x] Completion lint passes (`./tools/check.zsh --completions`).
     - [x] Alias coverage is consistent across the listed Modules.
-- [ ] Step 3: Validation and evidence
+- [x] Step 3: Validation and evidence
   - Work Items:
-    - [ ] Run the smoke-test matrix and record results (in this file or in the PR).
+    - [x] Run the smoke-test matrix and record results (in this file or in the PR).
   - Artifacts:
-    - Smoke-test results recorded (TBD location; prefer progress file updates).
+    - Smoke-test results recorded (this file).
   - Exit Criteria:
-    - [ ] Results recorded and any failures tracked with follow-up tasks.
+    - [x] Results recorded and any failures tracked with follow-up tasks.
 - [ ] Step 4: Release / wrap-up
   - Work Items:
     - [ ] Update docs (when needed) and archive this progress file.
@@ -158,6 +158,51 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
   - Exit Criteria:
     - [ ] Status set to DONE and file moved to `docs/progress/archived/`.
     - [ ] `docs/progress/README.md` updated with PR link.
+
+### Smoke Test Environment
+
+- TERM=xterm-256color; ZSH_FEATURES=codex,codex-workspace,docker,opencode
+- ZSH_CACHE_DIR=/var/folders/3d/s2d3jvyn0g758lsd_2t79h1w0000gn/T/tmp.eTT9ctOoT0/cache
+- CODEX_SECRET_DIR=/var/folders/3d/s2d3jvyn0g758lsd_2t79h1w0000gn/T/tmp.eTT9ctOoT0/secrets (fixtures: account-a.json/account-b.json)
+- Docker available (containers: codex-ws-graysurf-zsh-kit-20260119-062255, codex-ws-victory)
+
+## Step 3 Smoke Results
+
+Status: PASS (with fixes noted below).
+
+- `fzf-tools` / `ft`: PASS
+  - Evidence: `SMOKE_BUFFER:ft def `
+- `git-summary`: PASS
+  - Evidence: `SMOKE_BUFFER:git-summary all `
+- `git-lock`: PASS
+  - Evidence: `SMOKE_BUFFER:git-lock copy `, `SMOKE_BUFFER:git-lock unlock alpha `, `SMOKE_BUFFER:git-lock diff --no-color `, `SMOKE_BUFFER:git-lock tag --push `
+- `git-scope` / `gs`: PASS
+  - Evidence: `SMOKE_BUFFER:git-scope all `, `SMOKE_BUFFER:git-scope commit 079a3e6 `, `SMOKE_BUFFER:git-scope tracked README.md `
+  - Fix: adjusted positional index so commit hashes/prefixes complete at arg1 (`scripts/_completion/_git-scope`).
+- `git-open` / `gho`: PASS
+  - Evidence: `SMOKE_BUFFER:git-open repo `, `SMOKE_BUFFER:git-open --help `
+- `git-tools`: PASS
+  - Evidence: `SMOKE_BUFFER:git-tools branch `, `SMOKE_BUFFER:git-tools branch cleanup `
+- `git-commit-context` / `gcc`: PASS
+  - Evidence: `SMOKE_BUFFER:gcc --include=README.md `
+- `codex-workspace` / `cw`: PASS
+  - Evidence: `SMOKE_BUFFER:cw exec `, `SMOKE_BUFFER:cw rm --all `, `SMOKE_BUFFER:cw exec codex-ws-graysurf-zsh-kit-20260119-062255 `, `SMOKE_BUFFER:cw rm codex-ws-graysurf-zsh-kit-20260119-062255 `
+- `codex-tools` / `cx`: PASS (post-fix)
+  - Evidence: `SMOKE_BUFFER:cx advice `, `SMOKE_BUFFER:cx commit --push `, `SMOKE_BUFFER:cx commit --auto-stage `
+  - Fix: completion spec corrected to accept `--push` (`scripts/_features/codex/_completion/_codex-tools`).
+- `codex-rate-limits` / `crl`: PASS
+  - Evidence: `SMOKE_BUFFER:crl account-a.json `, `SMOKE_BUFFER:crl --cached `
+- `docker-tools` / `docker-aliases`: PASS
+  - Evidence: `SMOKE_BUFFER:docker-tools container `, `SMOKE_BUFFER:docker-tools container zsh --user `, `SMOKE_BUFFER:docker-tools container zsh codex-ws-graysurf-zsh-kit-20260119-062255\ codex-ws-victory `, `SMOKE_BUFFER:docker-aliases status `
+  - Note: multiple running containers are inserted as space-separated candidates when no prefix is provided.
+- `docker-compose`: PASS
+  - Evidence: `SMOKE_BUFFER:docker-compose --all-resources `
+- `opencode-tools` / `oc`: PASS (post-fix)
+  - Evidence: `SMOKE_BUFFER:oc advice `, `SMOKE_BUFFER:oc commit --push `, `SMOKE_BUFFER:oc commit --auto-stage `
+  - Fix: completion spec corrected to accept `--push` (`scripts/_features/opencode/_completion/_opencode-tools`).
+
+Checks:
+- `./tools/check.zsh`: not run (scope: manual completion smoke only).
 
 ## Completion Entrypoints
 
