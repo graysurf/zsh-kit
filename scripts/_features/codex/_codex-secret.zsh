@@ -1876,7 +1876,7 @@ codex-rate-limits-async() {
     return 1
   }
 
-  trap "exec 9>&- 2>/dev/null || true; command rm -rf -- ${(qq)tmp_dir} 2>/dev/null || true" EXIT
+  trap "{ { exec 9>&- } 2>/dev/null || true; command rm -rf -- ${(qq)tmp_dir} 2>/dev/null || true }" EXIT
 
   local progress_id='' progress_active='false'
   progress_id="codex-rate-limits:async:${$}"

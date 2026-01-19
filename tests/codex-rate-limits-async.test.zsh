@@ -211,5 +211,23 @@ assert_not_contains() {
   assert_eq 4 "${#names[@]}" "should print one row per secret" || fail "$output"
   assert_eq "acc_b acc_c acc_1234567890123456 acc_missing" "${(j: :)names}" "rows should be sorted by Reset ascending" || fail "$output"
 
+  output="$(
+    cd "$REPO_ROOT" && \
+      "$ZSH_BIN" -f -c '
+        source bootstrap/00-preload.zsh
+        export CODEX_SECRET_DIR="'"${module_dir}"'"
+        export ZSH_CACHE_DIR="'"${cache_root}"'"
+        source "'"${secret_script}"'"
+
+        print -u2 -r -- "sentinel:before"
+        codex-rate-limits-async --cached --jobs 2 >/dev/null
+        print -u2 -r -- "sentinel:after"
+      ' 2>&1
+  )"
+  rc=$?
+  assert_eq 0 "$rc" "codex-rate-limits-async should not clobber stderr" || fail "$output"
+  assert_contains "$output" "sentinel:before" "should preserve stderr before call" || fail "$output"
+  assert_contains "$output" "sentinel:after" "should preserve stderr after call" || fail "$output"
+
   print -r -- "OK"
 }
