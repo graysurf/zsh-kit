@@ -143,10 +143,22 @@ _progress_bar::write_line() {
   [[ -n "$id" ]] || return 0
   [[ -n "$fd_raw" && "$fd_raw" == <-> ]] || fd_raw='2'
 
+  typeset cols_raw=''
+  cols_raw="$(_progress_bar::columns 2>/dev/null)" || cols_raw='80'
+  [[ -n "$cols_raw" && "$cols_raw" == <-> ]] || cols_raw='80'
+  typeset -i cols=80 max_len=79
+  cols="$cols_raw"
+  (( cols <= 0 )) && cols=80
+  max_len=$(( cols - 1 ))
+  (( max_len < 10 )) && max_len=10
+
   typeset last_len_key=''
   last_len_key="$(_progress_bar::key "$id" last_len)"
   typeset -i last_len=0 line_len=0
   last_len="${_progress_bar_state[$last_len_key]:-0}"
+  if (( ${#line} > max_len )); then
+    line="${line[1,${max_len}]}"
+  fi
   line_len="${#line}"
 
   typeset padded="$line"
