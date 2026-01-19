@@ -2,7 +2,7 @@
 typeset -f source_file >/dev/null && return
 
 # source_file <file> [label]
-# Source a file and print load timing (always prints a timing line).
+# Source a file and optionally print load timing (controlled by ZSH_DEBUG).
 # Usage: source_file <path> [label]
 # Notes:
 # - No-ops (returns 0) when <path> is empty or missing.
@@ -27,7 +27,7 @@ source_file() {
     start_time="$SECONDS"
   fi
 
-  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
     printf "🔍 Loading: %s\n" "$file"
   fi
 
@@ -44,8 +44,9 @@ source_file() {
   duration_ms=$(( (end_time - start_time) * 1000 ))
   (( duration_ms < 0 )) && duration_ms=0
 
-  # ✅ Always show timing
-  printf "✅ Loaded %s in %dms\n" "$label" "$duration_ms"
+  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
+    printf "✅ Loaded %s in %dms\n" "$label" "$duration_ms"
+  fi
   return "$source_status"
 }
 
@@ -121,7 +122,7 @@ load_script_group() {
     script_is_in_underscored_path "$base_dir" "$file" && skipped_scripts+=("$file")
   done
 
-  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
     printf "🗂 Loading group: %s\n" "$group_name"
     printf "🔽 Base: %s\n" "$base_dir"
     if (( ${#skipped_scripts[@]} > 0 )); then
@@ -134,7 +135,7 @@ load_script_group() {
     done
   fi
 
-  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 3 ]]; then
     printf "📦 All collected scripts:\n"
     printf '   • %s\n' "${all_scripts[@]}"
   fi
@@ -147,7 +148,7 @@ load_script_group() {
     printf "%s\n" "${all_scripts[@]}" | grep -vFxf <(printf "%s\n" "${remove_list[@]}")
   )"})
 
-  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 3 ]]; then
     printf "✅ Scripts after filtering:\n"
     printf '   → %s\n' "${filtered_scripts[@]}"
   fi
@@ -238,7 +239,7 @@ load_script_group_ordered() {
     printf "%s\n" "${all_scripts[@]}" | grep -vFxf <(printf "%s\n" "${remove_list[@]}")
   )"})
 
-  if [[ "${ZSH_DEBUG:-0}" -ge 1 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
     printf "🗂 Loading group: %s\n" "$group_name"
     printf "🔽 Base: %s\n" "$base_dir"
     if (( ${#skipped_scripts[@]} > 0 )); then
@@ -260,7 +261,7 @@ load_script_group_ordered() {
     fi
   fi
 
-  if [[ "${ZSH_DEBUG:-0}" -ge 2 ]]; then
+  if [[ "${ZSH_DEBUG:-0}" -ge 3 ]]; then
     printf "📦 All collected scripts:\n"
     printf '   • %s\n' "${all_scripts[@]}"
 

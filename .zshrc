@@ -71,3 +71,25 @@ zsh_env::is_true "${ZSH_BOOT_QUOTE_ENABLED-}" "ZSH_BOOT_QUOTE_ENABLED" && source
 # Bootstrap
 # ──────────────────────────────
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/bootstrap.zsh"
+
+# ──────────────────────────────
+# Enabled features (always visible)
+# ──────────────────────────────
+# Print the effective, successfully-loaded feature list (from `ZSH_FEATURES`).
+if [[ -t 1 ]]; then
+  typeset -a _loaded_features=() _missing_features=() _failed_features=()
+  (( ${+ZSH_FEATURES_LOADED} )) && _loaded_features=("${ZSH_FEATURES_LOADED[@]}")
+  (( ${+ZSH_FEATURES_MISSING} )) && _missing_features=("${ZSH_FEATURES_MISSING[@]}")
+  (( ${+ZSH_FEATURES_FAILED} )) && _failed_features=("${ZSH_FEATURES_FAILED[@]}")
+
+  typeset features_summary="(none)"
+  if (( ${#_loaded_features[@]} > 0 )); then
+    features_summary="${(j:,:)_loaded_features}"
+  fi
+
+  typeset msg="🧩 Features: $features_summary"
+  (( ${#_missing_features[@]} > 0 )) && msg+=" (missing: ${(j:,:)_missing_features})"
+  (( ${#_failed_features[@]} > 0 )) && msg+=" (failed: ${(j:,:)_failed_features})"
+
+  print -r -- "$msg"
+fi

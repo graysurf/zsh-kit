@@ -37,8 +37,6 @@ if (( now - last_fetch > QUOTE_FETCH_INTERVAL )); then
   ) >/dev/null 2>&1
 fi
 
-printf "\n"
-
 # emoji
 # Print a random emoji (used by the login banner).
 # Usage: emoji
@@ -49,4 +47,4 @@ emoji() {
   return 0
 }
 
-printf "$(emoji)  Thinking shell initialized. Expect consequences...\n\n"
+printf "%s  Thinking shell initialized. Expect consequences...\n" "$(emoji)"

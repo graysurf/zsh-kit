@@ -11,7 +11,7 @@
 #
 # Notes:
 # - Runs only in interactive TTY sessions; otherwise it is a no-op.
-# - Silent by default; use `ZSH_DEBUG>=1` to see warnings.
+# - Silent by default; use `ZSH_DEBUG>=2` to see warnings.
 
 (( ${+_ZSH_DOCKER_COMPLETION_BOOTSTRAPPED} )) && return 0
 typeset -g _ZSH_DOCKER_COMPLETION_BOOTSTRAPPED=1
@@ -56,7 +56,7 @@ if [[ ! -s "$docker_completion" || "$docker_completion" -ot "$docker_bin" ]]; th
     command mv -f -- "$tmp_file" "$docker_completion"
   else
     command rm -f -- "$tmp_file" >/dev/null 2>&1 || true
-    [[ "${ZSH_DEBUG:-0}" -ge 1 ]] && print -u2 -r -- "docker-completion: failed to generate _docker"
+    [[ "${ZSH_DEBUG:-0}" -ge 2 ]] && print -u2 -r -- "docker-completion: failed to generate _docker"
     return 0
   fi
 fi

@@ -75,36 +75,8 @@ Weather report: Taipei City, Taiwan
      ‘ ‘ ‘ ‘    0.7 mm
                 
 📜 "Focus on how far you have come in life rather than looking at the accomplishments of others." — Lolly Daskal
-
 🌿  Thinking shell initialized. Expect consequences...
-
-✅ Loaded 00-preload.zsh in 0ms
-✅ Loaded plugins.zsh in 37ms
-✅ Loaded builtin-overrides.zsh in 0ms
-✅ Loaded chrome-devtools-rdp.zsh in 0ms
-✅ Loaded editor.zsh in 0ms
-✅ Loaded eza.zsh in 0ms
-✅ Loaded fzf-tools.zsh in 1ms
-✅ Loaded git-lock.zsh in 0ms
-✅ Loaded git-magic.zsh in 0ms
-✅ Loaded git-open.zsh in 1ms
-✅ Loaded git-scope.zsh in 0ms
-✅ Loaded git-summary.zsh in 3ms
-✅ Loaded git.zsh in 0ms
-✅ Loaded git-branch-cleanup.zsh in 0ms
-✅ Loaded git-commit.zsh in 0ms
-✅ Loaded git-reset.zsh in 0ms
-✅ Loaded git-utils.zsh in 0ms
-✅ Loaded macos.zsh in 0ms
-✅ Loaded shell-tools.zsh in 0ms
-✅ Loaded git-tools.zsh in 0ms
-✅ Loaded env.zsh in 30ms
-✅ Loaded features.zsh in 0ms
-✅ Loaded runtime.zsh in 17ms
-✅ Loaded hotkeys.zsh in 0ms
-✅ Loaded plugin-hooks.zsh in 0ms
-✅ Loaded completion.zsh in 219ms
-✅ Loaded development.zsh (delayed) in 2ms
+🧩 Features: docker,codex,codex-workspace,opencode
 
 🍎 yourname on MacBook ~ 🐳 orbstack
 08:00:00.000 ✔︎

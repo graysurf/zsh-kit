@@ -121,6 +121,33 @@ What it does:
 3. Configures history behavior and a few boot flags (`ZSH_DEBUG`, `ZSH_BOOT_WEATHER_ENABLED`, `ZSH_BOOT_QUOTE_ENABLED`).
 4. Optionally shows the login banner (weather + quote).
 5. Sources `bootstrap/bootstrap.zsh`, which loads the rest of the repo modules under `scripts/`.
+6. Prints the enabled feature list (always visible in interactive TTY sessions).
+
+---
+
+## 🐛 `ZSH_DEBUG` levels (startup diagnostics)
+
+`ZSH_DEBUG` is a numeric verbosity level for interactive startup diagnostics.
+
+Levels:
+
+- `0` (default): quiet boot (no per-file timing output)
+- `1`: prints `✅ Loaded <label> in <N>ms` for each sourced bootstrap/module file
+- `2`: adds `🔍 Loading: <path>` and script-group headers
+- `3`: also prints the full collected/filtered script lists for each group
+
+Notes:
+
+- Levels are additive (higher levels include lower-level output).
+- Migration: if you previously used `ZSH_DEBUG=0` to see timings, use `ZSH_DEBUG=1` now.
+- Some modules treat `ZSH_DEBUG>=2` as "show warnings" (e.g. feature loader, docker completion).
+- `codex-rate-limits -d` is roughly equivalent to `ZSH_DEBUG>=2` for keeping stderr / per-account errors.
+
+Quick example:
+
+```bash
+ZSH_BOOT_WEATHER_ENABLED=false ZSH_BOOT_QUOTE_ENABLED=false ZSH_DEBUG=1 zsh -i -c 'exit'
+```
 
 ---
 
