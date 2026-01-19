@@ -999,6 +999,7 @@ if ! command -v rsync >/dev/null 2>&1; then
 fi
 
 mkdir -p "$codex_home"
+print -r -- "+ rsync /opt/codex-kit -> ${codex_home} (delete + excludes)"
 rsync -a --delete \
   --exclude='.env' \
   --exclude='.venv' \
