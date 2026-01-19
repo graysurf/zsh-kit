@@ -110,7 +110,7 @@ _codex_starship_auth_file() {
   typeset home="${HOME-}"
   [[ -n "$home" ]] || return 1
 
-  auth_file="$home/.config/codex-kit/auth.json"
+  auth_file="$home/.codex/auth.json"
   if [[ -f "$auth_file" ]]; then
     print -r -- "$auth_file"
     return 0

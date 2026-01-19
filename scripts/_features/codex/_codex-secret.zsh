@@ -19,7 +19,7 @@ if [[ -z "${CODEX_SECRET_DIR}" ]]; then
   fi
 fi
 typeset -gr CODEX_SECRET_DIR="${CODEX_SECRET_DIR-}"
-typeset -gr _CODEX_AUTH_FILE_PRIMARY="${HOME}/.config/codex-kit/auth.json"
+typeset -gr _CODEX_AUTH_FILE_PRIMARY="${HOME}/.codex/auth.json"
 typeset -gr _CODEX_AUTH_FILE_FALLBACK="${HOME}/.codex/auth.json"
 typeset -g CODEX_AUTH_FILE="${CODEX_AUTH_FILE:-${_CODEX_AUTH_FILE_PRIMARY}}"
 if [[ "${CODEX_AUTH_FILE}" == "${_CODEX_AUTH_FILE_PRIMARY}" && ! -f "${_CODEX_AUTH_FILE_PRIMARY}" && -f "${_CODEX_AUTH_FILE_FALLBACK}" ]]; then

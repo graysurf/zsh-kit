@@ -134,6 +134,6 @@ Notes:
 - `CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP`: max number of `auth_<sha256>` cache entries to keep (default: `5`; set `0` to disable)
 - `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS`: `curl` connect timeout seconds for `wham/usage` fetch (default: `2`)
 - `CODEX_STARSHIP_CURL_MAX_TIME_SECONDS`: `curl` max time seconds for `wham/usage` fetch (default: `8`)
-- `CODEX_AUTH_FILE`: override the auth file path (default: `~/.config/codex-kit/auth.json`, fallback: `~/.codex/auth.json`)
+- `CODEX_AUTH_FILE`: override the auth file path (default: `~/.codex/auth.json`, fallback: `~/.codex/auth.json`)
 - `CODEX_SECRET_DIR`: override the secrets/profile directory used for friendly name resolution (default: `$ZDOTDIR/scripts/_features/codex/secrets`)
 - `CODEX_CHATGPT_BASE_URL`: override the API base URL (default: `https://chatgpt.com/backend-api/`)

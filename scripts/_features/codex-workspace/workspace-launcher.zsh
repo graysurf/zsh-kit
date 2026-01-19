@@ -253,6 +253,12 @@ _codex_workspace_parse_repo_spec() {
 _codex_workspace_launcher_default_path() {
   emulate -L zsh
 
+  local primary="$HOME/.codex/docker/codex-env/bin/codex-workspace"
+  if [[ -x "$primary" ]]; then
+    print -r -- "$primary"
+    return 0
+  fi
+
   print -r -- "$HOME/.config/codex-kit/docker/codex-env/bin/codex-workspace"
   return 0
 }

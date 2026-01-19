@@ -92,7 +92,7 @@ For `OWNER/REPO`, the host defaults to the target repo host when available; othe
 
 ## Env
 
-- `CODEX_WORKSPACE_LAUNCHER`: override the host launcher path (default: `~/.config/codex-kit/docker/codex-env/bin/codex-workspace`)
+- `CODEX_WORKSPACE_LAUNCHER`: override the host launcher path (default: `~/.codex/docker/codex-env/bin/codex-workspace`)
 - `CODEX_WORKSPACE_LAUNCHER_AUTO_DOWNLOAD`: `true|false` (default: `true`)
 - `CODEX_WORKSPACE_LAUNCHER_URL`: override the launcher download URL (optional)
 - `CODEX_WORKSPACE_LAUNCHER_AUTO_PATH`: override the launcher auto-install path (optional)

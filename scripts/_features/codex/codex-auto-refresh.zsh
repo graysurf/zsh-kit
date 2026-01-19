@@ -55,7 +55,7 @@ _codex_auto_refresh_is_configured() {
   secrets_dir="$(_codex_auto_refresh_secrets_dir 2>/dev/null)" || secrets_dir=''
 
   typeset -a candidates=(
-    "$home/.config/codex-kit/auth.json"
+    "$home/.codex/auth.json"
     "$home/.codex/auth.json"
   )
   [[ -n "$secrets_dir" ]] && candidates+=("$secrets_dir"/*.json)
