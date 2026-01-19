@@ -16,6 +16,7 @@ out/
 # Zsh runtime files
 .zsh_history
 .zcompdump*
+.zsh_sessions/
 
 # Personal / Misc
 quotes.txt

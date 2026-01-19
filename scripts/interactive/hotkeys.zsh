@@ -158,9 +158,11 @@ if (( $+functions[codex-rate-limits-async] )); then
     local -i saved_cursor="${CURSOR}"
     local -i rc=0
 
+    zle -I
     print -r --
     codex-rate-limits-async
     rc=$?
+    zle -I
 
     BUFFER="${saved_buffer}"
     CURSOR="${saved_cursor}"
