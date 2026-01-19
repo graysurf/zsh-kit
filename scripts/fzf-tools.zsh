@@ -1028,7 +1028,7 @@ fzf_block_preview() {
 
   previewscript="$(mktemp)"
   command cat > "$previewscript" <<'EOF'
-#!/usr/bin/env awk -f
+#!/usr/bin/env -S awk -f
 BEGIN {
   target      = ENVIRON["FZF_PREVIEW_TARGET"]
   start_delim = ENVIRON["FZF_DEF_DELIM"]
