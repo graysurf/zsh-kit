@@ -42,6 +42,19 @@ assert_contains() {
   return 0
 }
 
+assert_not_contains() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset haystack="$1" needle="$2" context="$3"
+  if [[ "$haystack" == *"$needle"* ]]; then
+    print -u2 -r -- "Unexpected substring: $needle"
+    print -u2 -r -- "Context            : $context"
+    return 1
+  fi
+  return 0
+}
+
 {
   [[ -n "$ZSH_BIN" && -x "$ZSH_BIN" ]] || fail "missing zsh binary"
 
@@ -69,6 +82,15 @@ assert_contains() {
   assert_contains "$output" '1/3' "enabled progress bar should include current/total" || fail "$output"
   assert_contains "$output" '3/3' "enabled progress bar should include final current/total" || fail "$output"
 
+  output="$(cd "$REPO_ROOT" && LC_ALL=C COLUMNS=30 "$ZSH_BIN" -f -c '
+    source bootstrap/00-preload.zsh
+    progress_bar::init pb --prefix Test --total 3 --enabled --width 10 --head-len 2 --fd 2
+    progress_bar::update pb 1 --suffix abcdefghijklmnopqrstuvwxyz
+    progress_bar::finish pb --suffix done
+  ' 2>&1)"
+  rc=$?
+  assert_eq 0 "$rc" "progress bar (truncation) should exit 0" || fail "$output"
+  assert_not_contains "$output" 'abcdefghijklmnopqrstuvwxyz' "progress bar should truncate long suffix to avoid wrapping" || fail "$output"
+
   print -r -- "OK"
 }
-
