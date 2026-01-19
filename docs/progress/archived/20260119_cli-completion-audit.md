@@ -2,14 +2,15 @@
 
 | Status | Created | Updated |
 | --- | --- | --- |
-| IN PROGRESS | 2026-01-19 | 2026-01-19 |
+| DONE | 2026-01-19 | 2026-01-19 |
 
 Links:
 
 - Planning PR: [graysurf/zsh-kit/pull/40](https://github.com/graysurf/zsh-kit/pull/40)
 - Implementation PR: [graysurf/zsh-kit/pull/41](https://github.com/graysurf/zsh-kit/pull/41)
-- Docs: `scripts/interactive/completion.zsh`, `scripts/_completion/README.md`
-- Glossary: `docs/templates/PROGRESS_GLOSSARY.md`
+- PR: [#41](https://github.com/graysurf/zsh-kit/pull/41)
+- Docs: [scripts/interactive/completion.zsh](scripts/interactive/completion.zsh), [scripts/_completion/README.md](scripts/_completion/README.md)
+- Glossary: [docs/templates/PROGRESS_GLOSSARY.md](docs/templates/PROGRESS_GLOSSARY.md)
 
 ## Addendum
 
@@ -202,7 +203,7 @@ Status: PASS (with fixes noted below).
   - Fix: completion spec corrected to accept `--push` (`scripts/_features/opencode/_completion/_opencode-tools`).
 
 Checks:
-- `./tools/check.zsh`: not run (scope: manual completion smoke only).
+- `./tools/check.zsh`: pass (2026-01-19).
 
 ## Completion Entrypoints
 

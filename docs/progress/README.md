@@ -4,12 +4,12 @@
 
 | Date | Feature | PR |
 | --- | --- | --- |
-| 2026-01-19 | [Audit compinit and CLI completions](20260119_cli-completion-audit.md) | [#41](https://github.com/graysurf/zsh-kit/pull/41) |
 
 ## Archived
 
 | Date | Feature | PR |
 | --- | --- | --- |
+| 2026-01-19 | [Audit compinit and CLI completions](archived/20260119_cli-completion-audit.md) | [#41](https://github.com/graysurf/zsh-kit/pull/41) |
 | 2026-01-16 | [Boolean env flags standardization](archived/20260116_env-bool-flags.md) | [#29](https://github.com/graysurf/zsh-kit/pull/29) |
 | 2026-01-14 | [Zsh progress bar utilities](archived/20260114_zsh-progress-bar.md) | [#20](https://github.com/graysurf/zsh-kit/pull/20) |
 | 2026-01-09 | [Open changed files in VSCode](archived/20260109_open-changed-files-in-vscode.md) | [#18](https://github.com/graysurf/zsh-kit/pull/18) |
