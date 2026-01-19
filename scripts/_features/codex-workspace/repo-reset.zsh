@@ -723,7 +723,7 @@ EOF
 }
 
 # codex-workspace-refresh-opt-repos <name|container> [--yes]
-# Force-update the image-bundled repos inside a workspace container.
+# Force-update the image-bundled repos inside a workspace container, then sync codex-kit.
 codex-workspace-refresh-opt-repos() {
   emulate -L zsh
   setopt pipe_fail
@@ -740,6 +740,7 @@ Force-update the image-bundled repos inside a workspace container:
 Notes:
   - Uses `git-reset-remote --yes` when available (fallback: git fetch/reset/clean).
   - Re-wires zsh-kit codex secrets symlink when secrets are mounted.
+  - Syncs /opt/codex-kit -> $CODEX_HOME (default: /home/codex/.codex) via rsync.
   - Add --yes to skip the preflight confirmation prompt.
 EOF
     return 0
@@ -765,6 +766,7 @@ Force-update the image-bundled repos inside a workspace container:
 Notes:
   - Uses `git-reset-remote --yes` when available (fallback: git fetch/reset/clean).
   - Re-wires zsh-kit codex secrets symlink when secrets are mounted.
+  - Syncs /opt/codex-kit -> $CODEX_HOME (default: /home/codex/.codex) via rsync.
   - Add --yes to skip the preflight confirmation prompt.
 EOF
         return 0
@@ -816,6 +818,9 @@ set -euo pipefail
 if command -v gh >/dev/null 2>&1; then
   gh config set git_protocol https -h github.com 2>/dev/null || gh config set git_protocol https 2>/dev/null || true
 fi
+
+codex_home="${CODEX_HOME:-/home/codex/.codex}"
+codex_src="/opt/codex-kit"
 
 # _restore_zsh_kit_codex_secrets_mount <dst>
 # If secrets are mounted outside the default, restore the zsh-kit codex secrets symlink.
@@ -987,5 +992,25 @@ codex_secrets_mount="$(_detect_codex_secrets_mount 2>/dev/null || true)"
 _reset_repo_to_ref /opt/codex-kit origin/main
 _reset_repo_to_ref /opt/zsh-kit origin/main
 _restore_zsh_kit_codex_secrets_mount "$codex_secrets_mount"
+
+if ! command -v rsync >/dev/null 2>&1; then
+  print -u2 -r -- "warn: rsync not available; skipped /opt/codex-kit -> ${codex_home} sync"
+  exit 0
+fi
+
+mkdir -p "$codex_home"
+rsync -a --delete \
+  --exclude='.env' \
+  --exclude='.venv' \
+  --exclude='AGENTS.override.md' \
+  --exclude='auth.json' \
+  --exclude='history.jsonl' \
+  --exclude='config.toml' \
+  --exclude='out/' \
+  --exclude='log/' \
+  --exclude='sessions/' \
+  --exclude='shell_snapshots/' \
+  --exclude='tmp/' \
+  "${codex_src%/}/" "${codex_home%/}/"
 EOF
 }
