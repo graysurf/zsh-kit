@@ -63,6 +63,8 @@ Notes:
 - Use `--no-extras` to disable cloning `~/.private` and additional repos under `/work` (seed repo is still cloned).
 - Use `--no-work-repos` to skip cloning any repos into `/work` (including the default-from-CWD `origin`);
   requires `--name` and rejects repo args. `--private-repo` still runs unless `--no-extras` is also set.
+- After `create`, it prints a `code --new-window --folder-uri "vscode-remote://..."` command and a clickable
+  `vscode://...` link for opening the workspace path in VS Code (repo path when available; otherwise `/work`).
 - For `codex-workspace reset work-repos`, `--depth` is the max repo depth under `--root` (includes shallower repos).
 - If the host launcher script is missing, `codex-workspace create` auto-downloads it to:
   - `${XDG_CACHE_HOME:-~/.cache}/codex-workspace/launcher/codex-workspace`
@@ -98,7 +100,7 @@ For `OWNER/REPO`, the host defaults to the target repo host when available; othe
 - `CODEX_WORKSPACE_LAUNCHER_AUTO_PATH`: override the launcher auto-install path (optional)
 - `CODEX_WORKSPACE_AUTH`: `auto|gh|env|none` (default: `auto`)
 - `CODEX_WORKSPACE_PREFIX`: container name prefix used by `codex-workspace rm` and completion (default: `codex-ws`)
-- `CODEX_WORKSPACE_OPEN_VSCODE_ENABLED`: `true|false` (optional)
+- `CODEX_WORKSPACE_OPEN_VSCODE_ENABLED`: `true|false` (optional; auto-runs the printed `code --folder-uri ...`)
 - `CODEX_WORKSPACE_TUNNEL_NAME`: override `codex-workspace tunnel` name (must be <= 20 chars)
 
 ---

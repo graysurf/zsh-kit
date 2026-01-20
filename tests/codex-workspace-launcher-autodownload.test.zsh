@@ -266,6 +266,10 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   assert_eq 0 "$ok_rc" "create --no-work-repos should succeed with docker+curl stubs" || fail "$output"
   assert_contains "$output" "workspace:" "create should surface launcher output" || fail "$output"
   assert_contains "$output" "snapshot: ~/.config already copied" "create should skip snapshot tar when marker exists" || fail "$output"
+  assert_contains "$output" "Dev Containers:" "create should print Dev Containers hints" || fail "$output"
+  assert_contains "$output" "  - Open:   /work" "create should print an Open path for Dev Containers" || fail "$output"
+  assert_contains "$output" 'code --new-window --folder-uri "vscode-remote://attached-container+' "create should print a VS Code folder-uri command" || fail "$output"
+  assert_contains "$output" "  - Link:   vscode://vscode-remote/attached-container+" "create should print a clickable vscode:// link" || fail "$output"
 
   typeset launcher_args=''
   launcher_args="$(command cat -- "$launcher_args_log" 2>/dev/null || true)"

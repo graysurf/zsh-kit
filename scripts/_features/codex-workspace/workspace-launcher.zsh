@@ -50,6 +50,26 @@ _codex_workspace_tunnel_name_hash4() {
   return 0
 }
 
+# _codex_workspace_hex_encode_ascii <input>
+# Print lowercase hex encoding of ASCII input (best-effort).
+_codex_workspace_hex_encode_ascii() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local input="${1-}"
+  [[ -n "$input" ]] || return 1
+
+  local -i i=0
+  local out=""
+  for (( i = 1; i <= ${#input}; i++ )); do
+    local c="${input[i]}"
+    out+="$(printf '%02x' "'$c")"
+  done
+
+  print -r -- "$out"
+  return 0
+}
+
 # _codex_workspace_tunnel_name_sanitize <name>
 # Normalize a tunnel name candidate (lowercase, alnum + '-') for VS Code.
 _codex_workspace_tunnel_name_sanitize() {
@@ -1738,57 +1758,58 @@ codex-workspace() {
     fi
   fi
 
-  if [[ "$repo" == */* ]]; then
+  local open_path=''
+  if [[ -n "${repo_dir//[[:space:]]/}" ]]; then
+    open_path="${repo_dir%%[[:space:]]#}"
+  elif [[ "$repo" == */* ]]; then
     local owner="${repo%%/*}"
     local name="${repo##*/}"
-    print -r --
-    print -r -- "Dev Containers:"
-    print -r -- "  - Attach: Cmd+Shift+P -> Dev Containers: Attach to Running Container..."
-    if [[ -n "$repo_dir" ]]; then
-      print -r -- "  - Open:   ${repo_dir}"
-    else
-      print -r -- "  - Open:   /work/${owner}/${name}"
-    fi
-
-    if [[ -n "$container" && -n "$repo_dir" ]]; then
-      local docker_context="default"
-      docker_context="$(docker context show 2>/dev/null || true)"
-      [[ -n "$docker_context" ]] || docker_context="default"
-
-      local authority_json="{\"containerName\":\"/${container}\",\"settings\":{\"context\":\"${docker_context}\"}}"
-      local authority_hex=''
-      if command -v python3 >/dev/null 2>&1; then
-        authority_hex="$(python3 -c 'import sys,binascii; print(binascii.hexlify(sys.argv[1].encode()).decode())' "$authority_json" 2>/dev/null || true)"
-      fi
-
-      if [[ -n "$authority_hex" ]]; then
-        local folder_uri="vscode-remote://attached-container+${authority_hex}${repo_dir}"
-        print -r -- "  - VS Code: code --new-window --folder-uri \"${folder_uri}\""
-        local open_vscode_enabled="${CODEX_WORKSPACE_OPEN_VSCODE_ENABLED:-}"
-        if [[ -z "$open_vscode_enabled" && -n "${CODEX_WORKSPACE_OPEN_VSCODE:-}" ]]; then
-          print -u2 -r -- "warn: CODEX_WORKSPACE_OPEN_VSCODE is deprecated; use CODEX_WORKSPACE_OPEN_VSCODE_ENABLED=true|false"
-          open_vscode_enabled="true"
-        fi
-        case "$open_vscode_enabled" in
-          ""|false)
-            ;;
-          true)
-            if command -v code >/dev/null 2>&1; then
-              code --new-window --folder-uri "${folder_uri}" >/dev/null 2>&1 || true
-            else
-              print -u2 -r -- "warn: VS Code CLI (code) not found; open the folder URI manually"
-            fi
-            ;;
-          *)
-            print -u2 -r -- "error: CODEX_WORKSPACE_OPEN_VSCODE_ENABLED must be true or false (got: $open_vscode_enabled)"
-            return 2
-            ;;
-        esac
-      fi
-    fi
+    open_path="/work/${owner}/${name}"
   else
-    print -r --
-    print -r -- "Dev Containers:"
-    print -r -- "  - Attach: Cmd+Shift+P -> Dev Containers: Attach to Running Container..."
+    open_path="/work"
+  fi
+
+  print -r --
+  print -r -- "Dev Containers:"
+  print -r -- "  - Attach: Cmd+Shift+P -> Dev Containers: Attach to Running Container..."
+  print -r -- "  - Open:   ${open_path}"
+
+  if [[ -n "$container" && -n "${open_path//[[:space:]]/}" ]]; then
+    local docker_context="default"
+    docker_context="$(docker context show 2>/dev/null || true)"
+    docker_context="${docker_context%%[[:space:]]#}"
+    [[ -n "$docker_context" ]] || docker_context="default"
+
+    local authority_json="{\"containerName\":\"/${container}\",\"settings\":{\"context\":\"${docker_context}\"}}"
+    local authority_hex=''
+    authority_hex="$(_codex_workspace_hex_encode_ascii "$authority_json" 2>/dev/null || true)"
+
+    if [[ -n "$authority_hex" ]]; then
+      local folder_uri="vscode-remote://attached-container+${authority_hex}${open_path}"
+      local vscode_url="vscode://vscode-remote/attached-container+${authority_hex}${open_path}"
+      print -r -- "  - VS Code: code --new-window --folder-uri \"${folder_uri}\""
+      print -r -- "  - Link:   ${vscode_url}"
+
+      local open_vscode_enabled="${CODEX_WORKSPACE_OPEN_VSCODE_ENABLED:-}"
+      if [[ -z "$open_vscode_enabled" && -n "${CODEX_WORKSPACE_OPEN_VSCODE:-}" ]]; then
+        print -u2 -r -- "warn: CODEX_WORKSPACE_OPEN_VSCODE is deprecated; use CODEX_WORKSPACE_OPEN_VSCODE_ENABLED=true|false"
+        open_vscode_enabled="true"
+      fi
+      case "$open_vscode_enabled" in
+        ""|false)
+          ;;
+        true)
+          if command -v code >/dev/null 2>&1; then
+            code --new-window --folder-uri "${folder_uri}" >/dev/null 2>&1 || true
+          else
+            print -u2 -r -- "warn: VS Code CLI (code) not found; open the folder URI manually"
+          fi
+          ;;
+        *)
+          print -u2 -r -- "error: CODEX_WORKSPACE_OPEN_VSCODE_ENABLED must be true or false (got: $open_vscode_enabled)"
+          return 2
+          ;;
+      esac
+    fi
   fi
 }
