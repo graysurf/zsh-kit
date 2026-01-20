@@ -58,3 +58,29 @@ if [[ -o interactive && -t 0 ]]; then
     bindkey -M vicmd 'j' history-substring-search-down
   fi
 fi
+
+# ──────────────────────────────
+# Cursor shape reset (DECSCUSR)
+# ──────────────────────────────
+#
+# Some full-screen apps (e.g. Vim/Neovim) set the terminal cursor shape and may not restore it
+# on exit. Force our preferred cursor shape (steady underline) whenever we return to the prompt.
+#
+# DECSCUSR (xterm) reference shapes:
+# - 0: default, 1/2: block, 3/4: underline, 5/6: bar
+if [[ -o interactive && -t 1 && -n "${TERM-}" && "${TERM-}" != "dumb" ]]; then
+  zsh_cursor::set_underline() {
+    emulate -L zsh
+    setopt localoptions nounset
+
+    # DECSCUSR 4: steady underline.
+    printf '\033[4 q'
+  }
+
+  autoload -Uz add-zsh-hook
+  add-zsh-hook -d precmd zsh_cursor::set_underline 2>/dev/null || true
+  add-zsh-hook precmd zsh_cursor::set_underline
+
+  # Also apply once at startup (covers shells spawned from apps that changed the cursor).
+  zsh_cursor::set_underline
+fi
