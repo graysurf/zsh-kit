@@ -3,9 +3,13 @@
 # Usage:
 #   codex-workspace
 #   codex-workspace create [--private-repo <owner/repo|URL>] [<owner/repo|URL>...]
+#   codex-workspace auth codex [--profile <name>] [--container <name|container>]
+#   codex-workspace auth github [--host <host>] [--container <name|container>]
 #
 # Example:
 #   codex-workspace create OWNER/REPO
+#   codex-workspace auth github
+#   codex-workspace auth codex --profile work
 #
 # Env:
 # - CODEX_WORKSPACE_PRIVATE_REPO: optional; clone/pull this repo into ~/.private inside the container.
