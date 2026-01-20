@@ -92,6 +92,7 @@ _git_tools_usage() {
   print -r -- "  reset    soft | mixed | hard | undo | back-head | back-checkout | remote"
   print -r -- "  commit   context | context-json | to-stash"
   print -r -- "  branch   cleanup"
+  print -r -- "  ci       pick"
   print -r --
   print -r -- "Help:"
   print -r -- "  git-tools help"
@@ -128,6 +129,10 @@ _git_tools_group_usage() {
     branch)
       print -r -- "Usage: git-tools branch <command> [args]"
       print -r -- "  cleanup"
+      ;;
+    ci)
+      print -r -- "Usage: git-tools ci <command> [args]"
+      print -r -- "  pick"
       ;;
     *)
       print -u2 -r -- "Unknown group: $group"
@@ -248,6 +253,18 @@ git-tools() {
           _git_tools_group_usage "$group"
         return 2
         ;;
+      esac
+      ;;
+    ci)
+      case "$cmd" in
+        pick)
+          git-pick "$@"
+          ;;
+        *)
+          print -u2 -r -- "Unknown ci command: $cmd"
+          _git_tools_group_usage "$group"
+          return 2
+          ;;
       esac
       ;;
     *)

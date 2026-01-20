@@ -10,6 +10,7 @@ It keeps resets, commit helpers, branch cleanup, and utilities under a single en
 - Run safe reset flows with prompts and rollback awareness
 - Generate commit context or convert a commit into a stash entry
 - Clean merged branches with base/squash awareness
+- Create `ci/<target>/<name>` branches from selected commits to trigger CI without merging
 - Copy staged diffs or jump to the repo root
 - Open repo/branch/commit/PR pages with `git-open`
 
@@ -215,6 +216,30 @@ optionally treating squash-merged branches as deletable.
 git-tools branch cleanup
 git-tools branch cleanup --base main --squash
 ```
+
+---
+
+### `git-tools ci`
+
+CI helpers for running CI on a subset of commits without merging.
+
+#### `git-tools ci pick <target> <commit-or-range> <name>`
+
+Create a CI branch `ci/<target>/<name>` based on `<target>`, cherry-pick `<commit-or-range>`, then push.
+Also available as a standalone command: `git-pick <target> <commit-or-range> <name>`.
+
+```bash
+git-tools ci pick main abc123 mytest
+git-tools ci pick main HEAD~2..HEAD mytest
+git-tools ci pick origin/main HEAD~2..HEAD mytest
+```
+
+Options:
+
+- `-r, --remote <name>` Remote to fetch/push (default: `origin`, else first remote)
+- `--no-fetch` Skip `git fetch`
+- `-f, --force` Reset existing branch and force-push (with lease)
+- `--stay` Keep checked out on the CI branch
 
 ---
 
