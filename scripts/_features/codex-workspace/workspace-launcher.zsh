@@ -558,7 +558,9 @@ _codex_workspace_auth_github() {
   _codex_workspace_ensure_container_running "$container" || return $?
 
   print -r -- "auth: github -> $container ($gh_host; source=$chosen_source)"
-  if ! print -r -- "$chosen_token" | docker exec -i -u codex "$container" bash -lc '
+  # Use a non-login shell (`bash -c`) to avoid login logout hooks (e.g. bash_logout)
+  # turning a successful auth update into a non-zero exit status.
+  if ! print -r -- "$chosen_token" | docker exec -i -u codex "$container" bash -c '
     set -euo pipefail
     host="${1:-github.com}"
     IFS= read -r token || exit 2
@@ -577,7 +579,7 @@ _codex_workspace_auth_github() {
       printf "%s\n" "$token" >| "$token_file"
       chmod 600 "$token_file" 2>/dev/null || true
       git config --global "credential.https://${host}.helper" \
-        "!f() { echo username=x-access-token; echo password=\\$(cat \"$token_file\"); }; f"
+        "!f() { echo username=x-access-token; echo password=\$(cat \"$token_file\"); }; f"
     fi
   ' -- "$gh_host"; then
     print -u2 -r -- "error: failed to update GitHub auth in $container"
@@ -647,12 +649,19 @@ _codex_workspace_auth_codex() {
   fi
 
   _codex_workspace_ensure_container_running "$container" || return $?
-  docker exec -u codex "$container" bash -lc 'mkdir -p "$HOME/.codex"' >/dev/null 2>&1 || true
-  if ! docker cp "$auth_file" "${container}:/home/codex/.codex/auth.json" >/dev/null 2>&1; then
-    print -u2 -r -- "error: failed to copy auth file to $container"
+  if ! command cat -- "$auth_file" | docker exec -i -u codex "$container" bash -c '
+    set -euo pipefail
+    target="${CODEX_AUTH_FILE:-$HOME/.codex/auth.json}"
+    [[ -n "$target" ]] || target="$HOME/.codex/auth.json"
+    mkdir -p "$(dirname "$target")"
+    rm -f -- "$target"
+    umask 077
+    cat > "$target"
+  '; then
+    print -u2 -r -- "error: failed to sync codex auth into $container"
+    print -u2 -r -- "hint: check CODEX_AUTH_FILE inside the container and ensure it is writable by user 'codex'"
     return 1
   fi
-  docker exec -u codex "$container" bash -lc 'chmod 600 "$HOME/.codex/auth.json" 2>/dev/null || true' >/dev/null 2>&1 || true
   print -r -- "auth: codex -> $container (synced auth file)"
   return 0
 }

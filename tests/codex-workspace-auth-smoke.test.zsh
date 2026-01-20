@@ -114,6 +114,32 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-auth-smoke-test.XXXXXX
   chmod 700 "$stub_gh" || fail "chmod failed: $stub_gh"
 
   typeset output='' rc=0
+  typeset host_auth_file="$tmp_dir/host-auth.json"
+  print -r -- '{"tokens":{"access_token":"test"}}' >| "$host_auth_file" || fail "failed to write host auth file"
+
+  output="$( \
+    PATH="$stub_bin:$PATH" \
+    CODEX_AUTH_FILE="$host_auth_file" \
+    CODEX_WORKSPACE_CODEX_PROFILE="" \
+    CODEX_TEST_DOCKER_LOG="$docker_log" \
+    CODEX_TEST_DOCKER_STDIN_LOG="$stdin_log" \
+    codex-workspace auth codex ws-test 2>&1 \
+  )"
+  rc=$?
+  assert_eq 0 "$rc" "auth codex (sync file) should exit 0" || fail "$output"
+  assert_contains "$output" "auth: codex -> codex-ws-ws-test (synced auth file)" "auth codex should report container" || fail "$output"
+
+  typeset docker_meta=''
+  docker_meta="$(command cat "$docker_log" 2>/dev/null || true)"
+  assert_contains "$docker_meta" "exec -i -u codex codex-ws-ws-test bash -c" "auth codex should exec into container" || fail "$docker_meta"
+
+  typeset stdin_payload=''
+  stdin_payload="$(command cat "$stdin_log" 2>/dev/null || true)"
+  assert_contains "$stdin_payload" "test" "auth codex should stream auth file via stdin" || fail "$stdin_payload"
+
+  : >| "$docker_log"
+  : >| "$stdin_log"
+
   output="$( \
     PATH="$stub_bin:$PATH" \
     CODEX_TEST_DOCKER_LOG="$docker_log" \
@@ -127,11 +153,9 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-auth-smoke-test.XXXXXX
   assert_contains "$output" "auth: github -> codex-ws-ws-test" "auth github should report container" || fail "$output"
   assert_contains "$output" "source=gh" "auth github should report gh source" || fail "$output"
 
-  typeset docker_meta=''
   docker_meta="$(command cat "$docker_log" 2>/dev/null || true)"
-  assert_contains "$docker_meta" "exec -i -u codex codex-ws-ws-test bash -lc" "auth github should exec into container" || fail "$docker_meta"
+  assert_contains "$docker_meta" "exec -i -u codex codex-ws-ws-test bash -c" "auth github should exec into container" || fail "$docker_meta"
 
-  typeset stdin_payload=''
   stdin_payload="$(command cat "$stdin_log" 2>/dev/null || true)"
   assert_contains "$stdin_payload" "gh-test-token" "auth github should pass token via stdin" || fail "$stdin_payload"
 
