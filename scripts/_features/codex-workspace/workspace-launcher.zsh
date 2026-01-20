@@ -142,9 +142,10 @@ _codex_workspace_usage() {
   cat <<'EOF'
 usage:
   codex-workspace
+  codex-workspace auth <provider> [options] [<name|container>]
   codex-workspace ls
-  codex-workspace create [--no-extras] [--private-repo <owner/repo|URL>] [<owner/repo|URL>...]
-  codex-workspace create --no-work-repos --name <name> [--no-extras] [--private-repo <owner/repo|URL>]
+  codex-workspace create [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>] [<owner/repo|URL>...]
+  codex-workspace create --no-work-repos --name <name> [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>]
   codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
   codex-workspace rm <name|container> [--yes]
   codex-workspace rm --all [--yes]
@@ -159,10 +160,13 @@ example:
   codex-workspace create OWNER/REPO OTHER/REPO  # clones in order
   codex-workspace create                        # uses current git remote (origin)
   codex-workspace create --no-extras OWNER/REPO  # skip cloning ~/.private and extra repos
+  codex-workspace create --codex-profile work OWNER/REPO
   codex-workspace create --no-work-repos --name ws-foo
   codex-workspace create --no-work-repos --name ws-foo --private-repo OWNER/PRIVATE_REPO
   codex-workspace create --private-repo OWNER/PRIVATE_REPO OWNER/REPO
   CODEX_WORKSPACE_PRIVATE_REPO=OWNER/PRIVATE_REPO codex-workspace create OWNER/REPO
+  codex-workspace auth github
+  codex-workspace auth codex --profile work
   codex-workspace ls
   codex-workspace exec ws-foo
   codex-workspace reset work-repos ws-foo --yes
@@ -186,6 +190,8 @@ notes:
     - If `gh` is logged in (keyring), this function prefers that token (works better across orgs).
     - Otherwise it falls back to host GH_TOKEN/GITHUB_TOKEN.
     - Override with: CODEX_WORKSPACE_AUTH=env|gh|auto|none
+  - Codex profiles can be set on create with CODEX_WORKSPACE_CODEX_PROFILE or --codex-profile <name>.
+  - Use `codex-workspace auth codex|github` to re-apply auth to an existing workspace.
   - If org SSO blocks access, run: `env -u GH_TOKEN -u GITHUB_TOKEN gh auth refresh -h github.com -s repo -s read:org`
   - VS Code: if you see "cannot find workspace /work/..." you likely attached from an existing window;
     open a new window, or run the printed `code --new-window --folder-uri ...` command.
@@ -400,6 +406,360 @@ _codex_workspace_ensure_launcher() {
   print -u2 -r -- "info: installed launcher: $auto_path"
   print -r -- "$auto_path"
   return 0
+}
+
+# _codex_workspace_resolve_container [name|container]
+# Resolve a workspace container name (auto-picks when only one exists).
+_codex_workspace_resolve_container() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local name="${1:-}"
+
+  _codex_workspace_require_docker || return $?
+  if ! docker info >/dev/null 2>&1; then
+    print -u2 -r -- "error: docker daemon not running (start OrbStack/Docker Desktop)"
+    return 1
+  fi
+
+  if [[ -n "$name" ]]; then
+    local container=''
+    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
+    _codex_workspace_require_container "$container" || return $?
+    print -r -- "$container"
+    return 0
+  fi
+
+  local -a containers=()
+  containers=("${(@f)$(_codex_workspace_container_names)}")
+  if (( ${#containers[@]} == 1 )); then
+    print -r -- "${containers[1]}"
+    return 0
+  fi
+
+  if (( ${#containers[@]} == 0 )); then
+    print -u2 -r -- "error: no workspaces found"
+  else
+    print -u2 -r -- "error: multiple workspaces found; specify one:"
+    _codex_workspace_print_folders "${containers[@]}"
+  fi
+  return 2
+}
+
+# _codex_workspace_ensure_container_running <container>
+# Ensure the workspace container is running (starts it when stopped).
+_codex_workspace_ensure_container_running() {
+  emulate -L zsh
+
+  local container="${1:-}"
+  [[ -n "$container" ]] || return 1
+
+  local running=''
+  running="$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null || true)"
+  if [[ "$running" != "true" ]]; then
+    print -r -- "info: starting workspace: $container"
+    docker start "$container" >/dev/null || {
+      print -u2 -r -- "error: failed to start workspace: $container"
+      return 1
+    }
+  fi
+
+  return 0
+}
+
+# _codex_workspace_require_codex_use
+# Ensure codex-use is available on the host.
+_codex_workspace_require_codex_use() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  if typeset -f codex-use >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local source_file_path=''
+  if [[ -f "$HOME/.config/codex_secrets/_codex-secret.zsh" ]]; then
+    source_file_path="$HOME/.config/codex_secrets/_codex-secret.zsh"
+  elif [[ -n "${ZSH_SCRIPT_DIR-}" && -f "${ZSH_SCRIPT_DIR}/_features/codex/_codex-secret.zsh" ]]; then
+    source_file_path="${ZSH_SCRIPT_DIR}/_features/codex/_codex-secret.zsh"
+  fi
+
+  if [[ -n "$source_file_path" ]]; then
+    if (( $+functions[source_file] )); then
+      source_file "$source_file_path"
+    else
+      source "$source_file_path"
+    fi
+  fi
+
+  typeset -f codex-use >/dev/null 2>&1
+}
+
+# _codex_workspace_auth_github <container> [host]
+# Apply GitHub auth to an existing workspace container.
+_codex_workspace_auth_github() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local container="${1:?missing container}"
+  local gh_host="${2:-${GITHUB_HOST:-github.com}}"
+
+  local auth_mode="${CODEX_WORKSPACE_AUTH:-auto}"
+  local env_token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+  local keyring_token=''
+  if command -v gh >/dev/null 2>&1; then
+    keyring_token="$(env -u GH_TOKEN -u GITHUB_TOKEN gh auth token -h "$gh_host" 2>/dev/null || true)"
+  fi
+
+  local chosen_token='' chosen_source=''
+  case "$auth_mode" in
+    none)
+      chosen_source="none"
+      ;;
+    env)
+      chosen_token="$env_token"
+      chosen_source="env"
+      ;;
+    gh|keyring)
+      if [[ -n "$keyring_token" ]]; then
+        chosen_token="$keyring_token"
+        chosen_source="gh"
+      else
+        print -u2 -r -- "warn: CODEX_WORKSPACE_AUTH=gh but no gh keyring token found; falling back to GH_TOKEN/GITHUB_TOKEN"
+        chosen_token="$env_token"
+        chosen_source="env"
+      fi
+      ;;
+    auto|"")
+      if [[ -n "$keyring_token" ]]; then
+        chosen_token="$keyring_token"
+        chosen_source="gh"
+      else
+        chosen_token="$env_token"
+        chosen_source="env"
+      fi
+      ;;
+    *)
+      print -u2 -r -- "error: unknown CODEX_WORKSPACE_AUTH=$auth_mode (expected: auto|gh|env|none)"
+      return 2
+      ;;
+  esac
+
+  if [[ -z "$chosen_token" ]]; then
+    if [[ "$auth_mode" == "none" ]]; then
+      print -u2 -r -- "error: CODEX_WORKSPACE_AUTH=none; no token to apply"
+    else
+      print -u2 -r -- "error: no GitHub token found (gh keyring or GH_TOKEN/GITHUB_TOKEN)"
+    fi
+    print -u2 -r -- "hint: run 'gh auth login' or export GH_TOKEN/GITHUB_TOKEN"
+    return 1
+  fi
+
+  _codex_workspace_ensure_container_running "$container" || return $?
+
+  print -r -- "auth: github -> $container ($gh_host; source=$chosen_source)"
+  if ! print -r -- "$chosen_token" | docker exec -i -u codex "$container" bash -lc '
+    set -euo pipefail
+    host="${1:-github.com}"
+    IFS= read -r token || exit 2
+    [[ -n "$token" ]] || exit 2
+
+    if command -v gh >/dev/null 2>&1; then
+      printf "%s\n" "$token" | gh auth login --hostname "$host" --with-token >/dev/null 2>&1 || true
+      gh auth setup-git --hostname "$host" --force >/dev/null 2>&1 || gh auth setup-git --hostname "$host" >/dev/null 2>&1 || true
+      gh config set git_protocol https -h "$host" 2>/dev/null || gh config set git_protocol https 2>/dev/null || true
+      exit 0
+    fi
+
+    if command -v git >/dev/null 2>&1; then
+      token_file="$HOME/.codex-env/gh.token"
+      mkdir -p "${token_file%/*}"
+      printf "%s\n" "$token" >| "$token_file"
+      chmod 600 "$token_file" 2>/dev/null || true
+      git config --global "credential.https://${host}.helper" \
+        "!f() { echo username=x-access-token; echo password=\\$(cat \"$token_file\"); }; f"
+    fi
+  ' -- "$gh_host"; then
+    print -u2 -r -- "error: failed to update GitHub auth in $container"
+    return 1
+  fi
+
+  if [[ "$chosen_source" == "gh" || "$chosen_source" == "env" ]]; then
+    typeset -g CODEX_WORKSPACE_AUTH="$chosen_source"
+  fi
+
+  return 0
+}
+
+# _codex_workspace_auth_codex <container> [profile]
+# Apply Codex auth to an existing workspace container.
+_codex_workspace_auth_codex() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local container="${1:?missing container}"
+  local profile="${2-}"
+
+  if [[ -z "$profile" ]]; then
+    profile="${CODEX_WORKSPACE_CODEX_PROFILE:-}"
+  fi
+
+  if [[ -n "$profile" ]]; then
+    if [[ "$profile" == *'/'* || "$profile" == *'..'* || "$profile" == *[[:space:]]* ]]; then
+      print -u2 -r -- "error: invalid codex profile name: $profile"
+      return 2
+    fi
+
+    typeset -g CODEX_WORKSPACE_CODEX_PROFILE="$profile"
+    if _codex_workspace_require_codex_use; then
+      codex-use "$profile" || {
+        print -u2 -r -- "warn: failed to update host codex auth (codex-use $profile)"
+      }
+    else
+      print -u2 -r -- "warn: codex-use not available on host; skipping host auth update"
+    fi
+
+    _codex_workspace_ensure_container_running "$container" || return $?
+
+    if ! docker exec -u codex "$container" zsh -lc '
+      profile="${1:?missing profile}"
+      if ! typeset -f codex-use >/dev/null 2>&1; then
+        if [[ -f /opt/zsh-kit/scripts/_features/codex/_codex-secret.zsh ]]; then
+          source /opt/zsh-kit/scripts/_features/codex/_codex-secret.zsh
+        fi
+      fi
+      codex-use "$profile"
+    ' -- "$profile" >/dev/null 2>&1; then
+      print -u2 -r -- "error: failed to apply codex profile in $container"
+      print -u2 -r -- "hint: ensure codex secrets are mounted (recreate without --no-secrets)"
+      return 1
+    fi
+
+    print -r -- "auth: codex -> $container (profile=$profile)"
+    return 0
+  fi
+
+  local auth_file="${CODEX_AUTH_FILE:-$HOME/.codex/auth.json}"
+  if [[ ! -f "$auth_file" ]]; then
+    print -u2 -r -- "error: codex auth file not found: $auth_file"
+    print -u2 -r -- "hint: set CODEX_WORKSPACE_CODEX_PROFILE or run codex-use <profile> first"
+    return 1
+  fi
+
+  _codex_workspace_ensure_container_running "$container" || return $?
+  docker exec -u codex "$container" bash -lc 'mkdir -p "$HOME/.codex"' >/dev/null 2>&1 || true
+  if ! docker cp "$auth_file" "${container}:/home/codex/.codex/auth.json" >/dev/null 2>&1; then
+    print -u2 -r -- "error: failed to copy auth file to $container"
+    return 1
+  fi
+  docker exec -u codex "$container" bash -lc 'chmod 600 "$HOME/.codex/auth.json" 2>/dev/null || true' >/dev/null 2>&1 || true
+  print -r -- "auth: codex -> $container (synced auth file)"
+  return 0
+}
+
+# codex-workspace-auth <provider> [options] [<name|container>]
+# Update auth for an existing workspace container.
+codex-workspace-auth() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local provider="${1:-}"
+  shift 2>/dev/null || true
+
+  local container_arg=''
+  local profile=''
+  local gh_host=''
+  local -i want_help=0
+
+  while (( $# > 0 )); do
+    case "$1" in
+      -h|--help)
+        want_help=1
+        shift
+        ;;
+      --container)
+        container_arg="${2-}"
+        shift 2 2>/dev/null || true
+        ;;
+      --container=*)
+        container_arg="${1#*=}"
+        shift
+        ;;
+      --name)
+        container_arg="${2-}"
+        shift 2 2>/dev/null || true
+        ;;
+      --name=*)
+        container_arg="${1#*=}"
+        shift
+        ;;
+      --profile)
+        profile="${2-}"
+        shift 2 2>/dev/null || true
+        ;;
+      --profile=*)
+        profile="${1#*=}"
+        shift
+        ;;
+      --host)
+        gh_host="${2-}"
+        shift 2 2>/dev/null || true
+        ;;
+      --host=*)
+        gh_host="${1#*=}"
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        print -u2 -r -- "error: unknown option: $1"
+        return 2
+        ;;
+      *)
+        if [[ -z "$container_arg" ]]; then
+          container_arg="$1"
+          shift
+        else
+          print -u2 -r -- "error: unexpected arg: $1"
+          return 2
+        fi
+        ;;
+    esac
+  done
+
+  if [[ -z "$provider" || "$provider" == "-h" || "$provider" == "--help" || $want_help -eq 1 ]]; then
+    cat <<'EOF'
+usage:
+  codex-workspace auth codex [--profile <name>] [--container <name|container>]
+  codex-workspace auth github [--host <host>] [--container <name|container>]
+
+notes:
+  - GitHub auth uses CODEX_WORKSPACE_AUTH (auto|gh|env|none) and host gh keyring or GH_TOKEN.
+  - Codex auth uses CODEX_WORKSPACE_CODEX_PROFILE when set; otherwise syncs CODEX_AUTH_FILE.
+EOF
+    return 0
+  fi
+
+  local container=''
+  container="$(_codex_workspace_resolve_container "$container_arg")" || return $?
+
+  case "$provider" in
+    codex)
+      _codex_workspace_auth_codex "$container" "$profile"
+      return $?
+      ;;
+    github)
+      _codex_workspace_auth_github "$container" "$gh_host"
+      return $?
+      ;;
+    *)
+      print -u2 -r -- "error: unknown auth provider: $provider"
+      print -u2 -r -- "hint: expected: codex|github"
+      return 2
+      ;;
+  esac
 }
 
 # codex-workspace-exec [--root] [--user <user>] <name|container> [--] [cmd...]
@@ -712,6 +1072,11 @@ codex-workspace() {
       _codex_workspace_usage
       return 0
       ;;
+    auth)
+      shift 1 2>/dev/null || true
+      codex-workspace-auth "$@"
+      return $?
+      ;;
     ls)
       shift 1 2>/dev/null || true
       codex-workspace-list "$@"
@@ -757,7 +1122,7 @@ codex-workspace() {
       ;;
     *)
       print -u2 -r -- "error: unknown subcommand: $arg1"
-      print -u2 -r -- "hint: expected: create|ls|rm|exec|reset|tunnel"
+      print -u2 -r -- "hint: expected: auth|create|ls|rm|exec|reset|tunnel"
       print -u2 -r -- "hint: codex-workspace create [--private-repo ...] [repo...]"
       _codex_workspace_usage
       return 2
@@ -770,6 +1135,7 @@ codex-workspace() {
   local -i no_work_repos=0
   local -i want_help=0
   local workspace_name=''
+  local codex_profile="${CODEX_WORKSPACE_CODEX_PROFILE-}"
 
   while (( $# > 0 )); do
     case "$1" in
@@ -791,6 +1157,14 @@ codex-workspace() {
         ;;
       --private-repo=*)
         private_repo_raw="${1#*=}"
+        shift
+        ;;
+      --codex-profile)
+        codex_profile="${2-}"
+        shift 2 2>/dev/null || break
+        ;;
+      --codex-profile=*)
+        codex_profile="${1#*=}"
         shift
         ;;
       --no-extras)
@@ -822,6 +1196,25 @@ codex-workspace() {
   if (( want_help )); then
     _codex_workspace_usage
     return 0
+  fi
+
+  if [[ -n "${codex_profile//[[:space:]]/}" ]]; then
+    if [[ "$codex_profile" == *'/'* || "$codex_profile" == *'..'* || "$codex_profile" == *[[:space:]]* ]]; then
+      print -u2 -r -- "error: invalid codex profile name: $codex_profile"
+      return 2
+    fi
+    if [[ ! -d "$HOME/.config/codex_secrets" ]]; then
+      print -u2 -r -- "error: codex secrets dir not found: $HOME/.config/codex_secrets"
+      print -u2 -r -- "hint: unset CODEX_WORKSPACE_CODEX_PROFILE or create secrets dir"
+      return 1
+    fi
+  else
+    codex_profile=''
+  fi
+
+  local -a codex_profile_arg=()
+  if [[ -n "$codex_profile" ]]; then
+    codex_profile_arg=(--codex-profile "$codex_profile")
   fi
 
   if (( no_work_repos )); then
@@ -1000,12 +1393,14 @@ codex-workspace() {
         --host "$gh_host" \
         --secrets-dir "$HOME/.config/codex_secrets" \
         --secrets-mount /home/codex/codex_secrets \
+        "${codex_profile_arg[@]}" \
         --persist-gh-token \
         --setup-git 2>&1 | tee "$tmp_out"
     else
       GH_TOKEN="$chosen_token" GITHUB_TOKEN="" "$launcher" up "$repo" \
         --secrets-dir "$HOME/.config/codex_secrets" \
         --secrets-mount /home/codex/codex_secrets \
+        "${codex_profile_arg[@]}" \
         --persist-gh-token \
         --setup-git 2>&1 | tee "$tmp_out"
     fi
@@ -1017,12 +1412,14 @@ codex-workspace() {
         --host "$gh_host" \
         --secrets-dir "$HOME/.config/codex_secrets" \
         --secrets-mount /home/codex/codex_secrets \
+        "${codex_profile_arg[@]}" \
         --persist-gh-token \
         --setup-git 2>&1 | tee "$tmp_out"
     else
       "$launcher" up "$repo" \
         --secrets-dir "$HOME/.config/codex_secrets" \
         --secrets-mount /home/codex/codex_secrets \
+        "${codex_profile_arg[@]}" \
         --persist-gh-token \
         --setup-git 2>&1 | tee "$tmp_out"
     fi

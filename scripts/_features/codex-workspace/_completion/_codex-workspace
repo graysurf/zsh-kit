@@ -52,6 +52,7 @@ _codex-workspace() {
 
         typeset -a subcmds=()
         subcmds=(
+          'auth:Update workspace auth (codex/github)'
           'create:Create workspace'
           'ls:List workspaces'
           'exec:Exec into workspace (default: zsh)'
@@ -60,7 +61,7 @@ _codex-workspace() {
           'tunnel:Open a tunnel for a workspace'
         )
         _describe -t commands 'codex-workspace command' subcmds && return 0
-        _message 'subcommand (create|ls|rm|exec|reset|tunnel)'
+        _message 'subcommand (auth|create|ls|rm|exec|reset|tunnel)'
         return 0
       fi
 
@@ -89,6 +90,10 @@ _codex-workspace() {
             _message 'workspace name'
             return 0
           fi
+          if (( orig_current > 2 )) && [[ "${orig_words[orig_current-1]-}" == "--codex-profile" ]]; then
+            _message 'codex profile (secret name)'
+            return 0
+          fi
 
           local cur="${orig_words[orig_current]-}"
           cur="${cur%%[[:space:]]#}"
@@ -100,6 +105,7 @@ _codex-workspace() {
               '--no-extras:Do not clone ~/.private or extra repos under /work'
               '--no-work-repos:Do not clone any repos into /work (requires --name)'
               '--name:Workspace name (required with --no-work-repos)'
+              '--codex-profile:Codex profile (secret name)'
               '--private-repo:Seed container ~/.private from repo (owner/repo or URL)'
             )
             _describe -t options 'option' ws_opts && return 0
@@ -112,6 +118,127 @@ _codex-workspace() {
           fi
 
           _message 'repo (owner/repo or URL; repeatable; default from CWD git)'
+          return 0
+          ;;
+        auth)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          if (( orig_current == 3 )); then
+            if [[ "$cur" == -* ]]; then
+              typeset -a auth_opts=()
+              auth_opts=(
+                '-h:Show help'
+                '--help:Show help'
+                '--container:Workspace container'
+                '--name:Workspace name'
+              )
+              _describe -t options 'option' auth_opts && return 0
+              return 0
+            fi
+
+            typeset -a auth_providers=()
+            auth_providers=(
+              'codex:Use codex profile for workspace'
+              'github:Update GitHub auth for workspace'
+            )
+            _describe -t commands 'auth provider' auth_providers && return 0
+            _message 'auth provider (codex|github)'
+            return 0
+          fi
+
+          local provider="${orig_words[3]-}"
+          provider="${provider%%[[:space:]]#}"
+
+          if (( orig_current > 3 )); then
+            local prev="${orig_words[orig_current-1]-}"
+            case "$prev" in
+              --profile)
+                _message 'codex profile (secret name)'
+                return 0
+                ;;
+              --host)
+                _message 'GitHub host (default: github.com)'
+                return 0
+                ;;
+              --container|--name)
+                if (( ${#containers[@]} > 0 )); then
+                  _values 'workspace container' $containers && return 0
+                fi
+                _message 'workspace container'
+                return 0
+                ;;
+            esac
+          fi
+
+          if [[ "$cur" == -* ]]; then
+            typeset -a auth_opts=()
+            auth_opts=(
+              '-h:Show help'
+              '--help:Show help'
+              '--container:Workspace container'
+              '--name:Workspace name'
+            )
+            if [[ "$provider" == "codex" ]]; then
+              auth_opts+=(
+                '--profile:Codex profile (secret name)'
+              )
+            elif [[ "$provider" == "github" ]]; then
+              auth_opts+=(
+                '--host:GitHub host (default: github.com)'
+              )
+            fi
+            _describe -t options 'option' auth_opts && return 0
+            return 0
+          fi
+
+          local -i idx=4
+          local workspace=''
+          while (( idx < orig_current )); do
+            local w="${orig_words[idx]-}"
+            case "$w" in
+              -h|--help)
+                return 0
+                ;;
+              --profile)
+                idx=$((idx + 2))
+                ;;
+              --profile=*)
+                idx=$((idx + 1))
+                ;;
+              --host)
+                idx=$((idx + 2))
+                ;;
+              --host=*)
+                idx=$((idx + 1))
+                ;;
+              --container|--name)
+                workspace="${orig_words[idx+1]-}"
+                idx=$((idx + 2))
+                ;;
+              --container=*|--name=*)
+                workspace="${w#*=}"
+                idx=$((idx + 1))
+                ;;
+              --)
+                idx=$((idx + 1))
+                ;;
+              -*)
+                idx=$((idx + 1))
+                ;;
+              *)
+                workspace="$w"
+                idx=$((idx + 1))
+                ;;
+            esac
+          done
+
+          if [[ -z "$workspace" ]]; then
+            if (( ${#containers[@]} > 0 )); then
+              _values 'workspace container' $containers && return 0
+            fi
+            _message 'workspace container'
+          fi
           return 0
           ;;
         rm)
@@ -509,7 +636,7 @@ _codex-workspace() {
           return 0
           ;;
         *)
-          _message 'subcommand (create|ls|rm|exec|tunnel)'
+          _message 'subcommand (auth|create|ls|rm|exec|reset|tunnel)'
           return 0
           ;;
       esac
