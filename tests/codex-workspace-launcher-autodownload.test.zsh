@@ -248,19 +248,20 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   typeset fake_home="$tmp_dir/fake-home"
   mkdir -p -- "$fake_home" || fail "mkdir failed: $fake_home"
 
-  output="$( \
-    PATH="$stub_bin:$PATH" \
-    HOME="$fake_home" \
-    XDG_CACHE_HOME="$tmp_dir/xdg-cache" \
-    CODEX_TEST_CURL_LOG="$curl_log" \
-    CODEX_TEST_DOCKER_LOG="$docker_log" \
-    CODEX_TEST_LAUNCHER_LOG="$launcher_args_log" \
-    CODEX_WORKSPACE_LAUNCHER_AUTO_PATH="$tmp_dir/xdg-cache/codex-workspace/launcher/codex-workspace" \
-    CODEX_WORKSPACE_LAUNCHER_URL="https://example.invalid/codex-workspace" \
-    CODEX_WORKSPACE_AUTH=none \
-    CODEX_WORKSPACE_PRIVATE_REPO="" \
-    codex-workspace create --no-work-repos --name ws 2>&1 \
-  )"
+	  output="$( \
+	    PATH="$stub_bin:$PATH" \
+	    HOME="$fake_home" \
+	    XDG_CACHE_HOME="$tmp_dir/xdg-cache" \
+	    CODEX_TEST_CURL_LOG="$curl_log" \
+	    CODEX_TEST_DOCKER_LOG="$docker_log" \
+	    CODEX_TEST_LAUNCHER_LOG="$launcher_args_log" \
+	    CODEX_WORKSPACE_LAUNCHER_AUTO_PATH="$tmp_dir/xdg-cache/codex-workspace/launcher/codex-workspace" \
+	    CODEX_WORKSPACE_LAUNCHER_URL="https://example.invalid/codex-workspace" \
+	    CODEX_WORKSPACE_AUTH=none \
+	    CODEX_WORKSPACE_GPG=none \
+	    CODEX_WORKSPACE_PRIVATE_REPO="" \
+	    codex-workspace create --no-work-repos --name ws 2>&1 \
+	  )"
   ok_rc=$?
   assert_eq 0 "$ok_rc" "create --no-work-repos should succeed with docker+curl stubs" || fail "$output"
   assert_contains "$output" "workspace:" "create should surface launcher output" || fail "$output"
