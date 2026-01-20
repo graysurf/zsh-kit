@@ -200,6 +200,15 @@ git-pick() {
       return 1
     fi
   fi
+  if (( !want_force )) && ! git show-ref --verify --quiet "refs/heads/$ci_branch"; then
+    typeset remote_ci_ref=''
+    remote_ci_ref="$(git ls-remote --heads "$remote" "$ci_branch" 2>/dev/null || true)"
+    if [[ -n "$remote_ci_ref" ]]; then
+      print -u2 -r -- "❌ Remote branch already exists: $remote/$ci_branch"
+      print -u2 -r -- "   Use --force to reset/rebuild it."
+      return 1
+    fi
+  fi
 
   print -r -- "🌿 CI branch: $ci_branch"
   print -r -- "🔧 Base     : $base_ref"
