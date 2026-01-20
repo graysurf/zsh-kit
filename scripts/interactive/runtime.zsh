@@ -69,6 +69,9 @@ fi
 # DECSCUSR (xterm) reference shapes:
 # - 0: default, 1/2: block, 3/4: underline, 5/6: bar
 if [[ -o interactive && -t 1 && -n "${TERM-}" && "${TERM-}" != "dumb" ]]; then
+  # zsh_cursor::set_underline
+  # precmd hook: reset terminal cursor to steady underline (DECSCUSR 4).
+  # Usage: zsh_cursor::set_underline
   zsh_cursor::set_underline() {
     emulate -L zsh
     setopt localoptions nounset
