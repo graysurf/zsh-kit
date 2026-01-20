@@ -37,6 +37,7 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 
 - Single file syntax check: `zsh -n -- path/to/file.zsh`
 - Repo-wide check (recommended): `./tools/check.zsh`
+- Test suite: `./tests/run.zsh`
 
 ### Additional checks
 
@@ -52,5 +53,7 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 - If you changed functions/aliases/docblocks or added/moved first-party `.zsh` files: also run
   `./tools/audit-fzf-def-docblocks.zsh --check`.
 - If you changed bootstrap/startup/plugin loading: also run `./tools/check.zsh --smoke`.
+- If you added a new feature: add/update a smoke test under `tests/` (fast, deterministic) and run
+  `./tests/run.zsh`.
 - If you changed any `#!/bin/bash` scripts: also run `./tools/check.zsh --bash`.
 - For PRs and change reviews: record each relevant check as `pass`, `failed`, or `not run` (with a short reason).
