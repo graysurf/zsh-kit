@@ -2,6 +2,70 @@
 #
 # Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
 
+_codex_use_completion__rate_limits_desc_for_target() {
+  emulate -L zsh -o extendedglob
+  setopt localoptions pipe_fail nounset
+
+  local target_file="${1-}"
+  [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
+
+  local cache_file=''
+  if (( ${+functions[_codex_rate_limits_starship_cache_file_for_target]} )); then
+    cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${target_file}" 2>/dev/null)" || cache_file=''
+  fi
+
+  if [[ -z "${cache_file}" ]]; then
+    local cache_root="${ZSH_CACHE_DIR-}"
+    if [[ -z "${cache_root}" ]]; then
+      local zdotdir="${ZDOTDIR-}"
+      if [[ -z "${zdotdir}" ]]; then
+        local home="${HOME-}"
+        [[ -n "${home}" ]] || return 1
+        zdotdir="${home}/.config/zsh"
+      fi
+      cache_root="${zdotdir}/cache"
+    fi
+    [[ "${cache_root}" == /* ]] || return 1
+
+    local cache_root_abs="${cache_root:a}"
+    [[ -n "${cache_root_abs}" && "${cache_root_abs}" != "/" ]] || return 1
+
+    local cache_dir="${cache_root_abs}/codex/starship-rate-limits"
+    local display_name="${target_file:t:r}"
+
+    local key="${display_name:l}"
+    key="${key//[^a-z0-9]/_}"
+    key="${key##_}"
+    key="${key%%_}"
+    [[ -n "${key}" ]] || return 1
+
+    cache_file="${cache_dir}/${key}.kv"
+  fi
+
+  [[ -n "${cache_file}" && -f "${cache_file}" ]] || return 1
+
+  local non_weekly_remaining='' weekly_remaining=''
+
+  local kv=''
+  while IFS= read -r kv; do
+    case "${kv}" in
+      non_weekly_remaining=*) non_weekly_remaining="${kv#non_weekly_remaining=}" ;;
+      weekly_remaining=*) weekly_remaining="${kv#weekly_remaining=}" ;;
+    esac
+  done < "${cache_file}" 2>/dev/null || true
+
+  local non_weekly_cell='-' weekly_cell='-'
+  if [[ -n "${non_weekly_remaining}" && "${non_weekly_remaining}" == <-> ]]; then
+    non_weekly_cell="${non_weekly_remaining}%"
+  fi
+  if [[ -n "${weekly_remaining}" && "${weekly_remaining}" == <-> ]]; then
+    weekly_cell="${weekly_remaining}%"
+  fi
+
+  printf "%4s %4s\n" "${non_weekly_cell}" "${weekly_cell}"
+  return 0
+}
+
 _codex-use() {
   emulate -L zsh -o extendedglob
 
@@ -31,7 +95,7 @@ _codex-use() {
       fi
 
       local -a secret_items=()
-      local secret_file='' secret_name='' email='' desc=''
+      local secret_file='' secret_name='' email='' desc='' rate_desc='' desc_display='' desc_aligned=''
       for secret_file in "${secret_files[@]}"; do
         secret_name="${secret_file:t:r}"
         [[ -n "${secret_name}" ]] || continue
@@ -47,10 +111,15 @@ _codex-use() {
           fi
         fi
 
-        if [[ -n "${desc}" ]]; then
-          secret_items+=("${secret_name}:${desc}")
+        desc_display="${desc:-secret}"
+        desc_aligned="$(printf "%-15.15s" "${desc_display}")"
+
+        rate_desc="$(_codex_use_completion__rate_limits_desc_for_target "${secret_file}" 2>/dev/null)" || rate_desc=''
+
+        if [[ -n "${rate_desc}" ]]; then
+          secret_items+=("${secret_name}:${desc_aligned} ${rate_desc}")
         else
-          secret_items+=("${secret_name}:secret")
+          secret_items+=("${secret_name}:${desc_aligned}")
         fi
       done
 
