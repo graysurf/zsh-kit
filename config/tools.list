@@ -9,6 +9,7 @@ fd::fd::Fast find (fzf helper)
 fzf::fzf::Fuzzy finder
 gh::gh::GitHub CLI
 git::git::Core version control
+nvim::neovim::Neovim editor
 rg::ripgrep::Fast grep engine
 starship::starship::Customizable prompt
 tree::tree::Directory structure view
