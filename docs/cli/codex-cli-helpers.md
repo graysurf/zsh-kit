@@ -126,6 +126,7 @@ Notes:
 
 - `--async` does not accept positional `secret.json` and does not support `--json` / `--one-line`.
 - `--async` falls back to cached per-account output when a network request fails (use `--debug` to see captured stderr).
+- `CODEX_STARSHIP_NAME_SOURCE=secret|email` controls the displayed name; set `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true` to show full emails.
 - When printing to a TTY, percent cells are ANSI-colored by default; set `NO_COLOR=1` to disable colors.
 
 ```bash
@@ -157,5 +158,7 @@ Use them only when you trust the workflow and want to bypass Codex sandbox const
 
 ## ⚙️ Configuration
 
-- `CODEX_CLI_MODEL` (default: `gpt-5.1-codex-mini`)
-- `CODEX_CLI_REASONING` (default: `medium`)
+| Env | Default | Options | Description |
+| --- | --- | --- | --- |
+| `CODEX_CLI_MODEL` | `gpt-5.1-codex-mini` | any `codex exec -m` value | Model passed to `codex exec -m`. |
+| `CODEX_CLI_REASONING` | `medium` | e.g. `low|medium\|high` \| Forwarded as `model_reasoning_effort`. |

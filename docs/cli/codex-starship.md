@@ -126,18 +126,20 @@ Notes:
 
 ## ⚙️ Configuration
 
-- `CODEX_STARSHIP_ENABLED`: enable `codex-starship` output and refresh (default: `false`)
-- `CODEX_STARSHIP_TTL`: default cache TTL (default: `5m`)
-- `CODEX_STARSHIP_SHOW_5H_ENABLED`: show the non-weekly window (default: `true`; set `false` to hide)
-- `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED`: show a fallback name when no profile match is found (default: `false`)
-- `CODEX_STARSHIP_NAME_SOURCE`: name source (`secret` default, or `email`)
-- `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED`: when using email names, show full email (default: `false`; otherwise show local-part only)
-- `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
-- `CODEX_STARSHIP_STALE_SUFFIX`: appended to cached output when the cache is stale (default: ` (stale)`; set empty to disable)
-- `CODEX_STARSHIP_LOCK_STALE_SECONDS`: consider refresh artifacts (`<token_key>.refresh.lock`, `wham.usage.*`) stale after this many seconds and clear them (default: `90`)
-- `CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP`: max number of `auth_<sha256>` cache entries to keep (default: `5`; set `0` to disable)
-- `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS`: `curl` connect timeout seconds for `wham/usage` fetch (default: `2`)
-- `CODEX_STARSHIP_CURL_MAX_TIME_SECONDS`: `curl` max time seconds for `wham/usage` fetch (default: `8`)
-- `CODEX_AUTH_FILE`: override the auth file path (default: `~/.codex/auth.json`, fallback: `~/.codex/auth.json`)
-- `CODEX_SECRET_DIR`: override the secrets/profile directory used for friendly name resolution (default: `$ZDOTDIR/scripts/_features/codex/secrets`)
-- `CODEX_CHATGPT_BASE_URL`: override the API base URL (default: `https://chatgpt.com/backend-api/`)
+| Env | Default | Options | Description |
+| --- | --- | --- | --- |
+| `CODEX_STARSHIP_ENABLED` | `false` | `true|false` | Enable `codex-starship` output + refresh. |
+| `CODEX_STARSHIP_TTL` | `5m` | `seconds` or `Ns|Nm|Nh|Nd|Nw` | Cache TTL. |
+| `CODEX_STARSHIP_SHOW_5H_ENABLED` | `true` | `true|false` | Show the non-weekly window (typically `5h`). |
+| `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED` | `false` | `true|false` | When no profile match, show a fallback name (email local-part when available; otherwise JWT identity). |
+| `CODEX_STARSHIP_NAME_SOURCE` | `secret` | `secret|email` | Name source (`secret` = profile filename; `email` = JWT email). |
+| `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED` | `false` | `true|false` | When using email names, show full email (otherwise local-part only). |
+| `CODEX_STARSHIP_REFRESH_MIN_SECONDS` | `30` | integer seconds | Minimum seconds between background refresh attempts. |
+| `CODEX_STARSHIP_STALE_SUFFIX` | ` (stale)` | string (empty disables) | Suffix appended when cached output is stale. |
+| `CODEX_STARSHIP_LOCK_STALE_SECONDS` | `90` | integer seconds | Consider refresh artifacts stale after N seconds and clear them. |
+| `CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP` | `5` | integer (`0` disables) | Max number of `auth_<sha256>` cache entries to keep. |
+| `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS` | `2` | integer seconds | `curl` connect timeout for `wham/usage` fetch. |
+| `CODEX_STARSHIP_CURL_MAX_TIME_SECONDS` | `8` | integer seconds | `curl` max time for `wham/usage` fetch. |
+| `CODEX_AUTH_FILE` | `~/.codex/auth.json` | file path | Override the active auth file path. |
+| `CODEX_SECRET_DIR` | `$ZDOTDIR/scripts/_features/codex/secrets` | directory path | Secrets/profile dir used for friendly name resolution. |
+| `CODEX_CHATGPT_BASE_URL` | `https://chatgpt.com/backend-api/` | URL | Override the API base URL. |

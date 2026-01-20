@@ -197,6 +197,42 @@ _codex_auth_identity() {
   print -r -- "${identity}"
 }
 
+# _codex_auth_email
+# Extract the email address from an auth JSON file (JWT payload).
+_codex_auth_email() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local json_file="$1"
+  [[ -n "${json_file}" && -f "${json_file}" ]] || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+
+  local token=''
+  token="$(jq -r '.tokens.id_token // empty' "${json_file}" 2>/dev/null)" || token=""
+  if [[ -z "${token}" ]]; then
+    token="$(jq -r '.tokens.access_token // empty' "${json_file}" 2>/dev/null)" || token=""
+  fi
+  [[ -n "${token}" ]] || return 1
+
+  local payload=''
+  payload="$(_codex_jwt_payload "${token}")" || return 1
+
+  local email=''
+  email="$(
+    print -r -- "${payload}" | jq -r '
+      .email
+      // .["https://api.openai.com/auth"].email
+      // empty
+    ' 2>/dev/null
+  )" || email=""
+
+  email="${email%%$'\n'*}"
+  email="${email%%$'\r'*}"
+  [[ -n "${email}" ]] || return 1
+
+  print -r -- "${email}"
+}
+
 # _codex_auth_account_id
 # Extract account_id from an auth JSON file.
 _codex_auth_account_id() {
@@ -393,22 +429,96 @@ _codex_apply_secret() {
 
 # codex-use
 # Switch $CODEX_AUTH_FILE to the given secret under $CODEX_SECRET_DIR.
+# Supports:
+# - secret name (with or without .json)
+# - email identity (full email or local-part)
+_codex_secret_name_for_email_identity() {
+  emulate -L zsh
+  setopt localoptions pipe_fail err_return nounset nullglob
+
+  local query_raw="${1-}"
+  [[ -n "${query_raw}" ]] || return 1
+
+  local secret_dir="${CODEX_SECRET_DIR-}"
+  [[ -n "${secret_dir}" && -d "${secret_dir}" ]] || return 1
+
+  local query="${query_raw:l}"
+  local want_full_email='false'
+  if [[ "${query_raw}" == *'@'* ]]; then
+    want_full_email='true'
+  fi
+
+  local -a matches=()
+  local secret_file='' email='' local_part=''
+  for secret_file in "${secret_dir}"/*.json; do
+    [[ -f "${secret_file}" ]] || continue
+
+    email="$(_codex_auth_email "${secret_file}" 2>/dev/null)" || email=''
+    [[ -n "${email}" ]] || continue
+
+    if [[ "${want_full_email}" == 'true' ]]; then
+      if [[ "${email:l}" == "${query}" ]]; then
+        matches+=("${secret_file:t}")
+      fi
+      continue
+    fi
+
+    local_part="${email%%@*}"
+    [[ -n "${local_part}" ]] || continue
+    if [[ "${local_part:l}" == "${query}" ]]; then
+      matches+=("${secret_file:t}")
+    fi
+  done
+
+  if (( ${#matches} == 1 )); then
+    print -r -- "${matches[1]}"
+    return 0
+  fi
+
+  if (( ${#matches} == 0 )); then
+    return 1
+  fi
+
+  print -ru2 -r -- "codex-use: identifier matches multiple secrets: ${query_raw}"
+  print -ru2 -r -- "codex-use: candidates: ${(j:, :)matches}"
+  return 2
+}
+
 codex-use() {
   emulate -L zsh
   setopt localoptions nounset
 
-  local secret_name="${1-}"
-  if (( $# != 1 )) || [[ -z "${secret_name}" ]]; then
-    print -ru2 -r -- "codex-use: usage: codex-use <name|name.json>"
+  local input="${1-}"
+  if (( $# != 1 )) || [[ -z "${input}" ]]; then
+    print -ru2 -r -- "codex-use: usage: codex-use <name|name.json|email>"
     return 64
   fi
-  if [[ "${secret_name}" == *'/'* || "${secret_name}" == *'..'* ]]; then
-    print -ru2 -r -- "codex-use: invalid secret name: ${secret_name}"
+  if [[ "${input}" == *'/'* || "${input}" == *'..'* ]]; then
+    print -ru2 -r -- "codex-use: invalid secret name: ${input}"
     return 64
   fi
-  if [[ "${secret_name}" != *.json ]]; then
+
+  local secret_name="${input}"
+  if [[ "${secret_name}" != *.json && "${secret_name}" != *'@'* ]]; then
     secret_name="${secret_name}.json"
   fi
+
+  if [[ -f "${CODEX_SECRET_DIR}/${secret_name}" ]]; then
+    _codex_apply_secret "${secret_name}"
+    return $?
+  fi
+
+  local resolved='' resolve_status=0
+  resolved="$(_codex_secret_name_for_email_identity "${input}")"
+  resolve_status=$?
+  if (( resolve_status != 0 )); then
+    if (( resolve_status == 2 )); then
+      return 2
+    fi
+    print -ru2 -r -- "codex-use: secret not found: ${input}"
+    return 1
+  fi
+  secret_name="${resolved}"
 
   _codex_apply_secret "${secret_name}"
 }
@@ -1004,6 +1114,81 @@ _codex_rate_limits_starship_secret_name_for_auth() {
   return 1
 }
 
+# _codex_rate_limits_display_name
+# Convert an email address into a display name (local-part by default).
+# Usage: _codex_rate_limits_display_name <name_or_email>
+_codex_rate_limits_display_name() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local raw="${1-}"
+  [[ -n "${raw}" ]] || return 1
+
+  local name="${raw}"
+  if [[ "${name}" == *'@'* ]]; then
+    if ! _codex_is_truthy "${CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED-}" "CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED"; then
+      name="${name%%@*}"
+    fi
+  fi
+
+  [[ -n "${name}" ]] || return 1
+  print -r -- "${name}"
+  return 0
+}
+
+# _codex_rate_limits_display_name_for_target
+# Determine the display name for an auth/secret file based on env:
+# - CODEX_STARSHIP_NAME_SOURCE=secret|email
+# - CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true|false
+# Usage: _codex_rate_limits_display_name_for_target <target_file>
+_codex_rate_limits_display_name_for_target() {
+  emulate -L zsh
+  setopt localoptions pipe_fail nounset
+
+  local target_file="${1-}"
+  [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
+
+  local name_source="${CODEX_STARSHIP_NAME_SOURCE-}"
+  name_source="${name_source:l}"
+  case "${name_source}" in
+    email|mail) name_source='email' ;;
+    secret|secrets|'') name_source='secret' ;;
+    *) name_source='secret' ;;
+  esac
+
+  local secret_name=''
+  if [[ -n "${CODEX_SECRET_DIR-}" && -d "${CODEX_SECRET_DIR-}" && "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
+    secret_name="${target_file:t:r}"
+  elif [[ -n "${CODEX_SECRET_DIR-}" && -d "${CODEX_SECRET_DIR-}" ]]; then
+    secret_name="$(_codex_rate_limits_starship_secret_name_for_auth "${target_file}" 2>/dev/null)" || secret_name=''
+  fi
+
+  if [[ "${name_source}" == 'email' ]]; then
+    local email=''
+    email="$(_codex_auth_email "${target_file}" 2>/dev/null)" || email=''
+    if [[ -n "${email}" ]]; then
+      _codex_rate_limits_display_name "${email}" || return 1
+      return 0
+    fi
+
+    if [[ -n "${secret_name}" ]]; then
+      print -r -- "${secret_name}"
+      return 0
+    fi
+
+    return 1
+  fi
+
+  # Default: keep legacy behavior (only print a name for secrets files).
+  if [[ -n "${CODEX_SECRET_DIR-}" && -d "${CODEX_SECRET_DIR-}" && "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
+    [[ -n "${secret_name}" ]] || return 1
+    print -r -- "${secret_name}"
+    return 0
+  fi
+
+  return 1
+}
+
 # _codex_rate_limits_starship_cache_file_for_target
 # Print the cache file path for a target auth/secret file.
 # Usage: _codex_rate_limits_starship_cache_file_for_target <target_file>
@@ -1085,9 +1270,9 @@ _codex_rate_limits_print_starship_cached() {
   local weekly_reset_time=''
   weekly_reset_time="$(_codex_epoch_format_local_datetime "${weekly_reset_epoch}")" || return 1
 
-  local prefix=''
-  if [[ "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
-    local display_name="${target_file:t:r}"
+  local display_name='' prefix=''
+  display_name="$(_codex_rate_limits_display_name_for_target "${target_file}" 2>/dev/null)" || display_name=''
+  if [[ -n "${display_name}" ]]; then
     prefix="${display_name} "
   fi
 
@@ -1177,6 +1362,8 @@ codex-rate-limits() {
         print -r -- "  --all              Query all secrets under CODEX_SECRET_DIR (one line per account)"
         print -r -- "Env:"
         print -r -- "  CODEX_RATE_LIMITS_DEFAULT_ALL_ENABLED=true  Default to --all when no args are provided"
+        print -r -- "  CODEX_STARSHIP_NAME_SOURCE=secret|email  Name source for one-line/all/async outputs"
+        print -r -- "  CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true  Show full email when using email names"
         print -r -- "  CODEX_RATE_LIMITS_CURL_CONNECT_TIMEOUT_SECONDS=2  curl --connect-timeout seconds"
         print -r -- "  CODEX_RATE_LIMITS_CURL_MAX_TIME_SECONDS=8  curl --max-time seconds"
         return 0
@@ -1729,9 +1916,7 @@ codex-rate-limits() {
 
   if [[ "${one_line}" == "true" ]]; then
     local display_name=''
-    if [[ "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
-      display_name="${target_file:t:r}"
-    fi
+    display_name="$(_codex_rate_limits_display_name_for_target "${target_file}" 2>/dev/null)" || display_name=''
 
     local weekly_remaining='' weekly_reset_iso=''
     local non_weekly_label='' non_weekly_remaining=''
@@ -1787,6 +1972,9 @@ codex-rate-limits-async() {
         print -r -- "  --cached           Use codex-starship cache only (no network; one line per account)"
         print -r -- "  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)"
         print -r -- "  -d, --debug        Print per-account stderr after the table"
+        print -r -- "Env:"
+        print -r -- "  CODEX_STARSHIP_NAME_SOURCE=secret|email  Name source for the Name column"
+        print -r -- "  CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true  Show full email when using email names"
         return 0
         ;;
       -j|--jobs)

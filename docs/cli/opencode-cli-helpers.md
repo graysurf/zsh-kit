@@ -84,5 +84,7 @@ opencode-tools knowledge "What is a closure in programming?"
 
 ## ⚙️ Configuration
 
-- `OPENCODE_CLI_MODEL` (optional; forwarded to `opencode run -m`)
-- `OPENCODE_CLI_VARIANT` (optional; forwarded to `opencode run --variant`)
+| Env | Default | Options | Description |
+| --- | --- | --- | --- |
+| `OPENCODE_CLI_MODEL` | (unset) | any `opencode run -m` value | Forwarded to `opencode run -m`. |
+| `OPENCODE_CLI_VARIANT` | (unset) | any `opencode run --variant` value | Forwarded to `opencode run --variant`. |

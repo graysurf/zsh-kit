@@ -1,0 +1,63 @@
+#compdef codex-use
+#
+# Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
+
+_codex-use() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  _arguments -C \
+    '1:profile (or email):->targets'
+
+  case "${state-}" in
+    targets)
+      local show_full_email='false'
+      if (( ${+functions[zsh_env::is_true]} )) && zsh_env::is_true "${CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED-}" "CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED" 2>/dev/null; then
+        show_full_email='true'
+      fi
+
+      local secret_dir=''
+      secret_dir="${CODEX_SECRET_DIR-}"
+      if [[ -z "${secret_dir}" ]]; then
+        secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
+      fi
+
+      local -a secret_files=()
+      if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+        secret_files=("${secret_dir}"/*.json(N))
+      fi
+
+      local -a secret_items=()
+      local secret_file='' secret_name='' email='' desc=''
+      for secret_file in "${secret_files[@]}"; do
+        secret_name="${secret_file:t:r}"
+        [[ -n "${secret_name}" ]] || continue
+
+        desc=''
+        if (( ${+functions[_codex_auth_email]} )); then
+          email="$(_codex_auth_email "${secret_file}" 2>/dev/null)" || email=''
+          if [[ -n "${email}" ]]; then
+            desc="${email}"
+            if [[ "${desc}" == *'@'* && "${show_full_email}" != 'true' ]]; then
+              desc="${desc%%@*}"
+            fi
+          fi
+        fi
+
+        if [[ -n "${desc}" ]]; then
+          secret_items+=("${secret_name}:${desc}")
+        else
+          secret_items+=("${secret_name}:secret")
+        fi
+      done
+
+      (( ${#secret_items[@]} )) && _describe -t secrets 'codex profile' secret_items
+      return 0
+      ;;
+  esac
+}
+
+compdef _codex-use codex-use
