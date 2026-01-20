@@ -91,6 +91,21 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t git-pick-test.XXXXXX)" || fail 
   fi
   [[ "$output_no_force" == *"Local branch already exists"* ]] || fail "unexpected output: $output_no_force"
 
+  (cd "$repo_dir" && git branch -D ci/main/test >/dev/null 2>&1) || fail "git branch -D ci/main/test failed"
+
+  typeset output_remote_no_force='' rc_remote_no_force=0
+  output_remote_no_force="$(
+    cd "$repo_dir" && {
+      source "$REPO_ROOT/scripts/git/tools/git-pick.zsh" || exit 1
+      git-pick main HEAD~3..HEAD test
+    } 2>&1
+  )"
+  rc_remote_no_force=$?
+  if (( rc_remote_no_force == 0 )); then
+    fail "git-pick should fail when remote ci branch exists without --force"
+  fi
+  [[ "$output_remote_no_force" == *"Remote branch already exists"* ]] || fail "unexpected output: $output_remote_no_force"
+
   # With --force, it should rebuild/reset and include the new commit.
   typeset output_force='' rc_force=0
   output_force="$(
@@ -115,4 +130,3 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t git-pick-test.XXXXXX)" || fail 
 } always {
   rm -rf -- "$tmp_dir"
 }
-
