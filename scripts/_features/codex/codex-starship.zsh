@@ -341,6 +341,42 @@ _codex_starship_auth_identity() {
   return 0
 }
 
+# _codex_starship_auth_email: Print the email address from the auth file JWT payload (if available).
+# Usage: _codex_starship_auth_email <auth_file>
+_codex_starship_auth_email() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset auth_file="${1-}"
+  [[ -n "$auth_file" && -f "$auth_file" ]] || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+
+  typeset token=''
+  token="$(jq -r '.tokens.id_token // empty' "$auth_file" 2>/dev/null)" || token=''
+  if [[ -z "$token" ]]; then
+    token="$(jq -r '.tokens.access_token // empty' "$auth_file" 2>/dev/null)" || token=''
+  fi
+  [[ -n "$token" ]] || return 1
+
+  typeset payload=''
+  payload="$(_codex_starship_jwt_payload "$token")" || return 1
+
+  typeset email=''
+  email="$(
+    print -r -- "$payload" | jq -r '
+      .email
+      // .["https://api.openai.com/auth"].email
+      // empty
+    ' 2>/dev/null
+  )" || email=''
+
+  email="${email%%$'\n'*}"
+  email="${email%%$'\r'*}"
+  [[ -n "$email" ]] || return 1
+  print -r -- "$email"
+  return 0
+}
+
 # _codex_starship_name_from_identity: Convert a token identity into a short display name.
 # Usage: _codex_starship_name_from_identity <identity>
 _codex_starship_name_from_identity() {
@@ -352,7 +388,9 @@ _codex_starship_name_from_identity() {
 
   typeset name="$identity"
   if [[ "$name" == *'@'* ]]; then
-    name="${name%%@*}"
+    if ! _codex_starship_truthy "${CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED-}" "CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED"; then
+      name="${name%%@*}"
+    fi
   fi
 
   [[ -n "$name" ]] || return 1
@@ -1035,7 +1073,7 @@ codex-starship() {
     ttl_seconds="$(_codex_starship_ttl_seconds "$ttl" 2>/dev/null)" || ttl_seconds='300'
   fi
 
-  typeset auth_file='' secret_dir='' name='' key='' secret_name=''
+  typeset auth_file='' secret_dir='' name='' key='' secret_name='' name_source='' email='' identity=''
   auth_file="$(_codex_starship_auth_file 2>/dev/null)" || return 0
   secret_dir="$(_codex_starship_secret_dir 2>/dev/null)" || secret_dir=''
 
@@ -1044,20 +1082,46 @@ codex-starship() {
   fi
 
   if [[ -n "$secret_name" ]]; then
-    name="$secret_name"
-    key="$(_codex_starship_cache_key "$name" 2>/dev/null)" || return 0
+    key="$(_codex_starship_cache_key "$secret_name" 2>/dev/null)" || return 0
   else
     typeset auth_hash=''
     auth_hash="$(_codex_starship_sha256 "$auth_file" 2>/dev/null)" || auth_hash=''
     auth_hash="${auth_hash:l}"
     [[ -n "$auth_hash" ]] || return 0
     key="auth_${auth_hash}"
+  fi
 
+  name_source="${CODEX_STARSHIP_NAME_SOURCE-}"
+  name_source="${name_source:l}"
+  case "$name_source" in
+    email|mail) name_source='email' ;;
+    secret|secrets|'') name_source='secret' ;;
+    *) name_source='secret' ;;
+  esac
+
+  if [[ "$name_source" == 'email' ]]; then
+    email="$(_codex_starship_auth_email "$auth_file" 2>/dev/null)" || email=''
+    if [[ -n "$email" ]]; then
+      name="$(_codex_starship_name_from_identity "$email" 2>/dev/null)" || name=''
+    elif [[ -n "$secret_name" ]]; then
+      name="$secret_name"
+    fi
+  else
+    if [[ -n "$secret_name" ]]; then
+      name="$secret_name"
+    fi
+  fi
+
+  if [[ -z "$name" ]]; then
     if _codex_starship_truthy "${CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED-}" "CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED"; then
-      typeset identity=''
-      identity="$(_codex_starship_auth_identity "$auth_file" 2>/dev/null)" || identity=''
-      if [[ -n "$identity" ]]; then
-        name="$(_codex_starship_name_from_identity "$identity" 2>/dev/null)" || name=''
+      [[ -n "$email" ]] || email="$(_codex_starship_auth_email "$auth_file" 2>/dev/null)" || email=''
+      if [[ -n "$email" ]]; then
+        name="$(_codex_starship_name_from_identity "$email" 2>/dev/null)" || name=''
+      else
+        identity="$(_codex_starship_auth_identity "$auth_file" 2>/dev/null)" || identity=''
+        if [[ -n "$identity" ]]; then
+          name="$(_codex_starship_name_from_identity "$identity" 2>/dev/null)" || name=''
+        fi
       fi
     fi
   fi

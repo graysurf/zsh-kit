@@ -37,11 +37,13 @@ This command is designed for Starship prompt usage:
 
 Notes:
 
-- `<name>` is resolved by matching the active auth file to a known profile under `CODEX_SECRET_DIR`:
+- `<name>` defaults to the matched profile filename under `CODEX_SECRET_DIR`:
   - Prefer: JWT identity + `account_id` (stable across token refreshes).
   - Fallback: SHA-256 whole-file hash (requires the profile file to be byte-identical).
   - If a friendly profile match is not found, the name is omitted by default; set `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED=true`
-    to show the JWT-derived identity (e.g. `user-...`).
+    to show a fallback name (prefer JWT `.email` local-part when available; otherwise JWT-derived identity like `user-...`).
+- Set `CODEX_STARSHIP_NAME_SOURCE=email` to show the JWT email instead of the secrets/profile filename.
+  - Default: show only the local-part (before `@`); set `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true` to show the full email.
 - `<weekly_reset_time>` is the UTC reset time from the weekly window (format is configurable via `--time-format`).
 
 ---
@@ -127,7 +129,9 @@ Notes:
 - `CODEX_STARSHIP_ENABLED`: enable `codex-starship` output and refresh (default: `false`)
 - `CODEX_STARSHIP_TTL`: default cache TTL (default: `5m`)
 - `CODEX_STARSHIP_SHOW_5H_ENABLED`: show the non-weekly window (default: `true`; set `false` to hide)
-- `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED`: show the JWT-derived identity when no profile match is found (default: `false`)
+- `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED`: show a fallback name when no profile match is found (default: `false`)
+- `CODEX_STARSHIP_NAME_SOURCE`: name source (`secret` default, or `email`)
+- `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED`: when using email names, show full email (default: `false`; otherwise show local-part only)
 - `CODEX_STARSHIP_REFRESH_MIN_SECONDS`: minimum seconds between background refresh attempts (default: `30`)
 - `CODEX_STARSHIP_STALE_SUFFIX`: appended to cached output when the cache is stale (default: ` (stale)`; set empty to disable)
 - `CODEX_STARSHIP_LOCK_STALE_SECONDS`: consider refresh artifacts (`<token_key>.refresh.lock`, `wham.usage.*`) stale after this many seconds and clear them (default: `90`)
