@@ -1195,7 +1195,7 @@ codex-workspace() {
       print -r -- "  - Open:   /work/${owner}/${name}"
     fi
 
-    if [[ -n "$container" && -n "$repo_dir" ]] && command -v code >/dev/null 2>&1; then
+    if [[ -n "$container" && -n "$repo_dir" ]]; then
       local docker_context="default"
       docker_context="$(docker context show 2>/dev/null || true)"
       [[ -n "$docker_context" ]] || docker_context="default"
@@ -1218,7 +1218,11 @@ codex-workspace() {
           ""|false)
             ;;
           true)
-            code --new-window --folder-uri "${folder_uri}" >/dev/null 2>&1 || true
+            if command -v code >/dev/null 2>&1; then
+              code --new-window --folder-uri "${folder_uri}" >/dev/null 2>&1 || true
+            else
+              print -u2 -r -- "warn: VS Code CLI (code) not found; open the folder URI manually"
+            fi
             ;;
           *)
             print -u2 -r -- "error: CODEX_WORKSPACE_OPEN_VSCODE_ENABLED must be true or false (got: $open_vscode_enabled)"
