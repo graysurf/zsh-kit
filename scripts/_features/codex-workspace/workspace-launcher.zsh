@@ -5,6 +5,7 @@
 #   codex-workspace create [--private-repo <owner/repo|URL>] [<owner/repo|URL>...]
 #   codex-workspace auth codex [--profile <name>] [--container <name|container>]
 #   codex-workspace auth github [--host <host>] [--container <name|container>]
+#   codex-workspace auth gpg [--key <keyid|fingerprint>] [--container <name|container>]
 #
 # Example:
 #   codex-workspace create OWNER/REPO
@@ -148,7 +149,7 @@ usage:
   codex-workspace
   codex-workspace auth <provider> [options] [<name|container>]
   codex-workspace ls
-  codex-workspace create [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>] [<owner/repo|URL>...]
+  codex-workspace create [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>] [--gpg|--no-gpg] [--gpg-key <keyid|fingerprint>] [<owner/repo|URL>...]
   codex-workspace create --no-work-repos --name <name> [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>]
   codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
   codex-workspace rm <name|container> [--yes]
@@ -165,12 +166,14 @@ example:
   codex-workspace create                        # uses current git remote (origin)
   codex-workspace create --no-extras OWNER/REPO  # skip cloning ~/.private and extra repos
   codex-workspace create --codex-profile work OWNER/REPO
+  codex-workspace create --gpg OWNER/REPO        # import host gpg signing key into container
   codex-workspace create --no-work-repos --name ws-foo
   codex-workspace create --no-work-repos --name ws-foo --private-repo OWNER/PRIVATE_REPO
   codex-workspace create --private-repo OWNER/PRIVATE_REPO OWNER/REPO
   CODEX_WORKSPACE_PRIVATE_REPO=OWNER/PRIVATE_REPO codex-workspace create OWNER/REPO
   codex-workspace auth github
   codex-workspace auth codex --profile work
+  codex-workspace auth gpg --key <fingerprint>
   codex-workspace ls
   codex-workspace exec ws-foo
   codex-workspace reset work-repos ws-foo --yes
@@ -194,8 +197,12 @@ notes:
     - If `gh` is logged in (keyring), this function prefers that token (works better across orgs).
     - Otherwise it falls back to host GH_TOKEN/GITHUB_TOKEN.
     - Override with: CODEX_WORKSPACE_AUTH=env|gh|auto|none
+  - GPG signing is opt-in (imports host secret key into container):
+    - Enable on create: `--gpg` (optionally `--gpg-key ...`)
+    - Or re-apply later: `codex-workspace auth gpg`
+    - Configure defaults via: CODEX_WORKSPACE_GPG=import|none and CODEX_WORKSPACE_GPG_KEY=<key>
   - Codex profiles can be set on create with CODEX_WORKSPACE_CODEX_PROFILE or --codex-profile <name>.
-  - Use `codex-workspace auth codex|github` to re-apply auth to an existing workspace.
+  - Use `codex-workspace auth codex|github|gpg` to re-apply auth to an existing workspace.
   - If org SSO blocks access, run: `env -u GH_TOKEN -u GITHUB_TOKEN gh auth refresh -h github.com -s repo -s read:org`
   - VS Code: if you see "cannot find workspace /work/..." you likely attached from an existing window;
     open a new window, or run the printed `code --new-window --folder-uri ...` command.
@@ -209,6 +216,87 @@ notes:
       - or pass: --private-repo OWNER/REPO (or URL)
   - VS Code: Cmd+Shift+P -> "Dev Containers: Attach to Running Container..."
 EOF
+
+  return 0
+}
+
+# _codex_workspace_default_gpg_signing_key
+# Return a best-effort host signing key to import (prefers explicit env var).
+_codex_workspace_default_gpg_signing_key() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local key="${CODEX_WORKSPACE_GPG_KEY-}"
+  key="${key%%[[:space:]]#}"
+  if [[ -n "$key" ]]; then
+    print -r -- "$key"
+    return 0
+  fi
+
+  if command -v git >/dev/null 2>&1; then
+    key="$(git config --global --get user.signingkey 2>/dev/null || true)"
+    key="${key%%[[:space:]]#}"
+    if [[ -n "$key" ]]; then
+      print -r -- "$key"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+# _codex_workspace_auth_gpg <container> [key]
+# Import the host GPG secret key into the workspace container (so `git commit -S` works).
+_codex_workspace_auth_gpg() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local container="${1:?missing container}"
+  local key="${2-}"
+
+  if [[ -z "${key//[[:space:]]/}" ]]; then
+    key="$(_codex_workspace_default_gpg_signing_key 2>/dev/null || true)"
+  fi
+
+  if [[ -z "${key//[[:space:]]/}" ]]; then
+    print -u2 -r -- "error: missing gpg signing key"
+    print -u2 -r -- "hint: pass --key <fingerprint> or set CODEX_WORKSPACE_GPG_KEY"
+    print -u2 -r -- "hint: or set: git config --global user.signingkey <keyid>"
+    return 1
+  fi
+
+  if ! command -v gpg >/dev/null 2>&1; then
+    print -u2 -r -- "error: gpg not found on host (required to export secret key)"
+    print -u2 -r -- "hint: install gnupg (brew install gnupg)"
+    return 1
+  fi
+
+  _codex_workspace_ensure_container_running "$container" || return $?
+
+  print -r -- "auth: gpg -> $container (key=$key)"
+
+  # Export on host, import into container. Avoid writing key material to disk.
+  if ! gpg --batch --armor --export-secret-keys -- "$key" \
+    | docker exec -i -u codex "$container" bash -c '
+      set -euo pipefail
+      if ! command -v gpg >/dev/null 2>&1; then
+        echo "error: gpg not installed in container" >&2
+        exit 127
+      fi
+      umask 077
+      mkdir -p "$HOME/.gnupg"
+      chmod 700 "$HOME/.gnupg" 2>/dev/null || true
+      gpg --batch --import >/dev/null 2>&1
+    '; then
+    print -u2 -r -- "error: failed to import gpg secret key into $container"
+    print -u2 -r -- "hint: verify the host key exists: gpg --list-secret-keys -- '$key'"
+    return 1
+  fi
+
+  # Best-effort verification (quiet).
+  docker exec -u codex "$container" bash -lc 'gpg --list-secret-keys --keyid-format LONG -- "$1" >/dev/null 2>&1' -- "$key" || {
+    print -u2 -r -- "warn: gpg import completed but key lookup failed in container (key=$key)"
+  }
 
   return 0
 }
@@ -682,6 +770,7 @@ codex-workspace-auth() {
   local container_arg=''
   local profile=''
   local gh_host=''
+  local key=''
   local -i want_help=0
 
   while (( $# > 0 )); do
@@ -722,6 +811,14 @@ codex-workspace-auth() {
         gh_host="${1#*=}"
         shift
         ;;
+      --key)
+        key="${2-}"
+        shift 2 2>/dev/null || true
+        ;;
+      --key=*)
+        key="${1#*=}"
+        shift
+        ;;
       --)
         shift
         break
@@ -747,10 +844,12 @@ codex-workspace-auth() {
 usage:
   codex-workspace auth codex [--profile <name>] [--container <name|container>]
   codex-workspace auth github [--host <host>] [--container <name|container>]
+  codex-workspace auth gpg [--key <keyid|fingerprint>] [--container <name|container>]
 
 notes:
   - GitHub auth uses CODEX_WORKSPACE_AUTH (auto|gh|env|none) and host gh keyring or GH_TOKEN.
   - Codex auth uses CODEX_WORKSPACE_CODEX_PROFILE when set; otherwise syncs CODEX_AUTH_FILE.
+  - GPG auth exports the host secret key and imports it into the container.
 EOF
     return 0
   fi
@@ -767,9 +866,13 @@ EOF
       _codex_workspace_auth_github "$container" "$gh_host"
       return $?
       ;;
+    gpg)
+      _codex_workspace_auth_gpg "$container" "$key"
+      return $?
+      ;;
     *)
       print -u2 -r -- "error: unknown auth provider: $provider"
-      print -u2 -r -- "hint: expected: codex|github"
+      print -u2 -r -- "hint: expected: codex|github|gpg"
       return 2
       ;;
   esac
@@ -1149,6 +1252,22 @@ codex-workspace() {
   local -i want_help=0
   local workspace_name=''
   local codex_profile="${CODEX_WORKSPACE_CODEX_PROFILE-}"
+  local -i want_gpg_import=0
+  local gpg_key="${CODEX_WORKSPACE_GPG_KEY-}"
+
+  local gpg_mode="${CODEX_WORKSPACE_GPG:-none}"
+  case "$gpg_mode" in
+    none|false|"")
+      want_gpg_import=0
+      ;;
+    import|true)
+      want_gpg_import=1
+      ;;
+    *)
+      print -u2 -r -- "error: CODEX_WORKSPACE_GPG must be import|none (got: $gpg_mode)"
+      return 2
+      ;;
+  esac
 
   while (( $# > 0 )); do
     case "$1" in
@@ -1186,6 +1305,24 @@ codex-workspace() {
         ;;
       --no-work-repos)
         no_work_repos=1
+        shift
+        ;;
+      --gpg)
+        want_gpg_import=1
+        shift
+        ;;
+      --no-gpg)
+        want_gpg_import=0
+        shift
+        ;;
+      --gpg-key)
+        gpg_key="${2-}"
+        want_gpg_import=1
+        shift 2 2>/dev/null || true
+        ;;
+      --gpg-key=*)
+        gpg_key="${1#*=}"
+        want_gpg_import=1
         shift
         ;;
       --)
@@ -1590,6 +1727,14 @@ codex-workspace() {
           print -u2 -r -- "warn: failed to clone repo: $extra_repo_raw"
         }
       done
+    fi
+  fi
+
+  if (( want_gpg_import )); then
+    if [[ -z "$container" ]]; then
+      print -u2 -r -- "warn: --gpg enabled but workspace container name was not detected; skipping gpg import"
+    else
+      _codex_workspace_auth_gpg "$container" "$gpg_key" || return $?
     fi
   fi
 

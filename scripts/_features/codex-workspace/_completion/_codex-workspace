@@ -52,7 +52,7 @@ _codex-workspace() {
 
         typeset -a subcmds=()
         subcmds=(
-          'auth:Update workspace auth (codex/github)'
+          'auth:Update workspace auth (codex/github/gpg)'
           'create:Create workspace'
           'ls:List workspaces'
           'exec:Exec into workspace (default: zsh)'
@@ -94,6 +94,10 @@ _codex-workspace() {
             _message 'codex profile (secret name)'
             return 0
           fi
+          if (( orig_current > 2 )) && [[ "${orig_words[orig_current-1]-}" == "--gpg-key" ]]; then
+            _message 'gpg signing key (keyid or fingerprint)'
+            return 0
+          fi
 
           local cur="${orig_words[orig_current]-}"
           cur="${cur%%[[:space:]]#}"
@@ -107,6 +111,9 @@ _codex-workspace() {
               '--name:Workspace name (required with --no-work-repos)'
               '--codex-profile:Codex profile (secret name)'
               '--private-repo:Seed container ~/.private from repo (owner/repo or URL)'
+              '--gpg:Import host gpg signing key into container'
+              '--no-gpg:Disable gpg import (overrides CODEX_WORKSPACE_GPG)'
+              '--gpg-key:GPG signing key to import (keyid or fingerprint)'
             )
             _describe -t options 'option' ws_opts && return 0
             return 0
@@ -141,9 +148,10 @@ _codex-workspace() {
             auth_providers=(
               'codex:Use codex profile for workspace'
               'github:Update GitHub auth for workspace'
+              'gpg:Import host gpg signing key into workspace'
             )
             _describe -t commands 'auth provider' auth_providers && return 0
-            _message 'auth provider (codex|github)'
+            _message 'auth provider (codex|github|gpg)'
             return 0
           fi
 
@@ -159,6 +167,10 @@ _codex-workspace() {
                 ;;
               --host)
                 _message 'GitHub host (default: github.com)'
+                return 0
+                ;;
+              --key)
+                _message 'gpg signing key (keyid or fingerprint)'
                 return 0
                 ;;
               --container|--name)
@@ -187,6 +199,10 @@ _codex-workspace() {
               auth_opts+=(
                 '--host:GitHub host (default: github.com)'
               )
+            elif [[ "$provider" == "gpg" ]]; then
+              auth_opts+=(
+                '--key:GPG signing key (keyid or fingerprint)'
+              )
             fi
             _describe -t options 'option' auth_opts && return 0
             return 0
@@ -210,6 +226,12 @@ _codex-workspace() {
                 idx=$((idx + 2))
                 ;;
               --host=*)
+                idx=$((idx + 1))
+                ;;
+              --key)
+                idx=$((idx + 2))
+                ;;
+              --key=*)
                 idx=$((idx + 1))
                 ;;
               --container|--name)

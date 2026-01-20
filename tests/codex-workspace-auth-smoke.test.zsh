@@ -113,6 +113,23 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-auth-smoke-test.XXXXXX
   } >| "$stub_gh"
   chmod 700 "$stub_gh" || fail "chmod failed: $stub_gh"
 
+  typeset gpg_log="$tmp_dir/gpg.log"
+  : >| "$gpg_log"
+  typeset stub_gpg="$stub_bin/gpg"
+  {
+    print -r -- '#!/usr/bin/env -S zsh -f'
+    print -r -- 'setopt nounset'
+    print -r -- 'log="${CODEX_TEST_GPG_LOG:?missing CODEX_TEST_GPG_LOG}"'
+    print -r -- 'print -r -- "gpg $*" >>| "$log"'
+    print -r -- 'if [[ " $* " == *" --export-secret-keys "* ]]; then'
+    print -r -- '  key="${argv[-1]-}"'
+    print -r -- '  print -r -- "FAKE-SECRET-KEY:${key}"'
+    print -r -- '  exit 0'
+    print -r -- 'fi'
+    print -r -- 'exit 0'
+  } >| "$stub_gpg"
+  chmod 700 "$stub_gpg" || fail "chmod failed: $stub_gpg"
+
   typeset output='' rc=0
   typeset host_auth_file="$tmp_dir/host-auth.json"
   print -r -- '{"tokens":{"access_token":"test"}}' >| "$host_auth_file" || fail "failed to write host auth file"
@@ -178,6 +195,32 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-ws-auth-smoke-test.XXXXXX
   typeset codex_meta=''
   codex_meta="$(command cat "$codex_log" 2>/dev/null || true)"
   assert_contains "$codex_meta" "codex-use work" "auth codex should update host profile" || fail "$codex_meta"
+
+  : >| "$docker_log"
+  : >| "$stdin_log"
+  : >| "$gpg_log"
+
+  output="$( \
+    PATH="$stub_bin:$PATH" \
+    CODEX_TEST_DOCKER_LOG="$docker_log" \
+    CODEX_TEST_DOCKER_STDIN_LOG="$stdin_log" \
+    CODEX_TEST_GPG_LOG="$gpg_log" \
+    codex-workspace auth gpg --key KEY123 ws-test 2>&1 \
+  )"
+  rc=$?
+  assert_eq 0 "$rc" "auth gpg should exit 0" || fail "$output"
+  assert_contains "$output" "auth: gpg -> codex-ws-ws-test (key=KEY123)" "auth gpg should report container/key" || fail "$output"
+
+  docker_meta="$(command cat "$docker_log" 2>/dev/null || true)"
+  assert_contains "$docker_meta" "exec -i -u codex codex-ws-ws-test bash -c" "auth gpg should exec into container" || fail "$docker_meta"
+
+  typeset gpg_meta=''
+  gpg_meta="$(command cat "$gpg_log" 2>/dev/null || true)"
+  assert_contains "$gpg_meta" "--export-secret-keys" "auth gpg should export secret key on host" || fail "$gpg_meta"
+  assert_contains "$gpg_meta" "KEY123" "auth gpg should export the requested key" || fail "$gpg_meta"
+
+  stdin_payload="$(command cat "$stdin_log" 2>/dev/null || true)"
+  assert_contains "$stdin_payload" "FAKE-SECRET-KEY:KEY123" "auth gpg should stream key material via stdin" || fail "$stdin_payload"
 
   print -r -- "OK"
 } always {
