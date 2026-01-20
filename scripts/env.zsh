@@ -3,7 +3,14 @@
 # ──────────────────────────────
 # Shell integration + session
 # ──────────────────────────────
-export GPG_TTY="$(tty 2>/dev/null || true)"
+# `tty` prints "not a tty" to stdout on failure; never export that (it breaks gpg/pinentry).
+typeset _gpg_tty=''
+if _gpg_tty="$(tty 2>/dev/null)"; then
+  export GPG_TTY="$_gpg_tty"
+else
+  unset GPG_TTY 2>/dev/null || true
+fi
+unset _gpg_tty
 
 # ────────────────────────────────────────────────────────
 # FZF Environment config
