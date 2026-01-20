@@ -1,0 +1,121 @@
+#compdef git-pick
+
+_git_pick_remote_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a remotes=()
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    remotes=(${(f)"$(command git remote 2>/dev/null || true)"})
+  fi
+
+  if (( ${#remotes[@]} > 0 )); then
+    print -r -- "${remotes[@]}"
+  fi
+
+  return 0
+}
+
+_git_pick_targets() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a targets=() branches=() remote_refs=()
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branches=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null || true)"})
+    remote_refs=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/remotes 2>/dev/null || true)"})
+  fi
+
+  typeset ref=''
+  for ref in "${remote_refs[@]}"; do
+    [[ "$ref" == */HEAD ]] && continue
+    targets+=("$ref")
+  done
+  targets+=("${branches[@]}")
+
+  targets=(${targets:#})
+  targets=(${(u)targets})
+
+  if (( ${#targets[@]} > 0 )); then
+    print -r -- "${targets[@]}"
+  fi
+
+  return 0
+}
+
+_git_pick_commit_hashes() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a commits=()
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    commits=(${(f)"$(command git log --pretty=format:'%h:%s' -n 20 2>/dev/null || true)"})
+  fi
+
+  if (( ${#commits[@]} > 0 )); then
+    print -r -- "${commits[@]}"
+  fi
+
+  return 0
+}
+
+_git-pick() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  typeset -i orig_current="$CURRENT"
+  typeset -a orig_words=("${words[@]}")
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '(-r --remote)'{-r,--remote}'[Remote to fetch/push]:remote:->remotes' \
+    '(-f --force)'{-f,--force}'[Reset existing CI branch and force-push (with lease)]' \
+    '--no-fetch[Skip git fetch]' \
+    '--stay[Keep checked out on the CI branch]' \
+    '1:target branch/ref:->targets' \
+    '2:commit ref or range:->commits' \
+    '3:name (ci/<target>/<name>):->name' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    remotes)
+      typeset -a remotes=()
+      remotes=(${(f)"$(_git_pick_remote_names)"})
+      _values 'remote' $remotes
+      return 0
+      ;;
+    targets)
+      typeset -a targets=()
+      targets=(${(f)"$(_git_pick_targets)"})
+      if (( ${#targets[@]} > 0 )); then
+        _values 'target' $targets
+        return 0
+      fi
+      _message 'target branch/ref'
+      return 0
+      ;;
+    commits)
+      typeset -a commit_hashes=()
+      commit_hashes=(${(f)"$(_git_pick_commit_hashes)"})
+      if (( ${#commit_hashes[@]} > 0 )); then
+        _describe -t commits 'commit ref or range' commit_hashes && return 0
+      fi
+      _message 'commit ref or range (e.g. abc123, A..B, A^..B)'
+      return 0
+      ;;
+    name)
+      _message 'name (ci/<target>/<name>)'
+      return 0
+      ;;
+    args)
+      # Avoid over-completing after positional args.
+      if (( orig_current > 4 )); then
+        _message 'no more arguments'
+        return 0
+      fi
+      ;;
+  esac
+}
+
+compdef _git-pick git-pick
+

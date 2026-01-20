@@ -175,6 +175,7 @@ _git-tools() {
     'reset:Reset helpers'
     'commit:Commit helpers'
     'branch:Branch cleanup helpers'
+    'ci:CI helpers'
     'help:Show usage'
     'list:Show usage'
   )
@@ -224,6 +225,11 @@ _git-tools() {
           subcmds=(
             'cleanup:Delete merged branches'
             'delete-merged:Delete merged branches'
+          )
+          ;;
+        ci)
+          subcmds=(
+            'pick:Create CI branch from commits'
           )
           ;;
       esac
@@ -322,6 +328,45 @@ _git-tools() {
           case "$cmd" in
             cleanup|delete-merged)
               _git_tools_complete_branch_cleanup
+              return 0
+              ;;
+          esac
+          ;;
+        ci)
+          case "$cmd" in
+            pick)
+              if (( CURRENT == 2 )); then
+                typeset -a targets=() branches=() remote_refs=()
+                branches=(${(f)"$(_git_tools_branch_names)"})
+                remote_refs=(${(f)"$(_git_tools_remote_refs)"})
+                branches=(${branches:#HEAD})
+                targets=("${branches[@]}" "${remote_refs[@]}")
+                targets=(${targets:#})
+                targets=(${(u)targets})
+                if (( ${#targets[@]} > 0 )); then
+                  _values 'target branch/ref' $targets
+                  return 0
+                fi
+                _message 'target branch/ref'
+                return 0
+              fi
+
+              if (( CURRENT == 3 )); then
+                typeset -a commit_hashes=()
+                commit_hashes=(${(f)"$(_git_tools_commit_hashes)"})
+                if (( ${#commit_hashes[@]} > 0 )); then
+                  _describe -t commits 'commit ref or range' commit_hashes && return 0
+                fi
+                _message 'commit ref or range (e.g. abc123, A..B, A^..B)'
+                return 0
+              fi
+
+              if (( CURRENT == 4 )); then
+                _message 'name (ci/<target>/<name>)'
+                return 0
+              fi
+
+              _message 'no more arguments'
               return 0
               ;;
           esac
