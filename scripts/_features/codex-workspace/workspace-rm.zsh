@@ -58,7 +58,7 @@ _codex_workspace_container_names() {
     names=(${(f)"$(docker ps -a --format '{{.Names}}' 2>/dev/null || true)"})
 
     local -a filtered=()
-    local name
+    local name=''
     for name in "${names[@]}"; do
       [[ "$name" == "${prefix}-"* ]] || continue
       filtered+=("$name")
@@ -66,7 +66,7 @@ _codex_workspace_container_names() {
     names=("${filtered[@]}")
   fi
 
-  local name
+  local name=''
   for name in "${names[@]}"; do
     [[ -n "$name" ]] || continue
     print -r -- "$name"
@@ -136,7 +136,7 @@ _codex_workspace_rm_one() {
   local container=''
   container="$(_codex_workspace_normalize_container_name "$name")" || return 1
 
-  local -a volumes
+  local -a volumes=()
   volumes=("${(@f)$(_codex_workspace_volume_names "$container")}")
 
   if (( !want_yes )); then
@@ -158,12 +158,12 @@ _codex_workspace_rm_one() {
     print -u2 -r -- "warn: workspace container not found: $container"
   fi
 
-  local -a removed missing failed
+  local -a removed=() missing=() failed=()
   removed=()
   missing=()
   failed=()
 
-  local vol
+  local vol=''
   for vol in "${volumes[@]}"; do
     if ! docker volume inspect "$vol" >/dev/null 2>&1; then
       missing+=("$vol")
@@ -190,7 +190,7 @@ _codex_workspace_rm_one() {
 
   if (( ${#failed[@]} > 0 )); then
     print -u2 -r -- "error: failed to remove ${#failed[@]} volume(s):"
-    local v
+    local v=''
     for v in "${failed[@]}"; do
       print -u2 -r -- "  - $v"
     done

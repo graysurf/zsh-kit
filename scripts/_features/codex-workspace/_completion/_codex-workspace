@@ -9,7 +9,7 @@ __codex_workspace_container_names() {
   local -a names=()
   names=(${(f)"$(command docker ps -a --format '{{.Names}}' 2>/dev/null || true)"})
 
-  local name
+  local name=''
   for name in "${names[@]}"; do
     [[ "$name" == "${prefix}-"* ]] || continue
     print -r -- "$name"

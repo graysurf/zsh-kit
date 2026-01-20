@@ -60,7 +60,7 @@ _codex_workspace_hex_encode_ascii() {
   [[ -n "$input" ]] || return 1
 
   local -i i=0
-  local out=""
+  local out=''
   for (( i = 1; i <= ${#input}; i++ )); do
     local c="${input[i]}"
     out+="$(printf '%02x' "'$c")"

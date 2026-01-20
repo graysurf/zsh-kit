@@ -27,6 +27,11 @@ jobs:
           set -euo pipefail
           zsh -f ./tools/fix-typeset-empty-string-quotes.zsh --check
 
+      - name: Enforce typeset initializers
+        run: |
+          set -euo pipefail
+          zsh -f ./tools/fix-typeset-initializers.zsh --check
+
       - name: Run smoke check
         run: |
           set -euo pipefail

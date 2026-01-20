@@ -36,7 +36,7 @@ _codex_workspace_confirm_or_abort() {
 _codex_workspace_print_folders() {
   emulate -L zsh
 
-  local folder
+  local folder=''
   for folder in "$@"; do
     print -r -- "  - $folder"
   done
@@ -576,7 +576,7 @@ EOF
     return 0
   fi
 
-  local -a repo_dirs
+  local -a repo_dirs=()
   repo_dirs=("${(@f)repos_out}")
 
   if (( !want_yes )); then
