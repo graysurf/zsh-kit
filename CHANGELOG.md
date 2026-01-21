@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.1 - 2026-01-21
+
+### Added
+- `codex-workspace auth` subcommand with `--codex-profile` support.
+- `codex-workspace` can import GPG signing keys during workspace setup.
+- `codex-workspace` supports VS Code clickable links and shell-native hex encoding.
+- `git-tools git-pick ci` helper for selecting CI branches.
+- `codex-use` completion can display Codex secret rate limits.
+
+### Changed
+- `codex-tools` CLI is reorganized into command groups.
+- Default auth file path is now `~/.codex/auth.json`.
+- `codex-secret rate-limits` display always uses the secret filename.
+- Workspace workflow enforces stricter `typeset` initializers and updates tooling.
+
+### Fixed
+- `codex-workspace` auth sync reliability and git credential helper handling.
+- `codex-rate-limits-async` stability plus stderr/hotkey handling.
+- `git-lock` parses tag arguments correctly.
+- `progress-bar` avoids wrapped updates.
+- `fzf-tools` uses the correct awk preview shebang.
+- `GPG_TTY` detection is more reliable.
+- Workspace launcher tests no longer auto-open VS Code.
+
 ## v2.1.0 - 2026-01-19
 
 ### Added
