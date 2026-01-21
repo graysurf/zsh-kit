@@ -6,7 +6,7 @@
 # (including `zsh -c '...'` and subshells), put it in `$ZDOTDIR/.zshenv` or
 # `scripts/_internal/paths.exports.zsh` instead.
 #
-# See `docs/startup-files.md` for the full startup file roles and load order.
+# See `docs/guides/startup-files.md` for the full startup file roles and load order.
 
 typeset paths_exports="${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.exports.zsh"
 typeset paths_init="${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.init.zsh"
