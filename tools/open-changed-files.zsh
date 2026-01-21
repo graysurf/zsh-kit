@@ -327,6 +327,8 @@ main() {
   typeset -i dry_run=0
   (( ${+opts[--dry-run]} )) && dry_run=1
 
+  typeset -i code_disabled=0
+
   typeset max_raw="${opts[--max-files]-}"
   max_raw="${max_raw#=}"
   [[ -z "$max_raw" ]] && max_raw="${OPEN_CHANGED_FILES_MAX_FILES:-$OCF_DEFAULT_MAX_FILES}"
@@ -338,6 +340,7 @@ main() {
   typeset code_override="${OPEN_CHANGED_FILES_CODE_PATH-}"
   if [[ -n "$code_override" && "$code_override" != "auto" ]]; then
     if [[ "$code_override" == "none" ]]; then
+      code_disabled=1
       OCF_CODE_PATH=''
     else
       if (( dry_run )); then
@@ -360,6 +363,10 @@ main() {
     fi
   else
     OCF_CODE_PATH="$(_ocf::resolve_code_path 2>/dev/null || true)"
+  fi
+  if (( code_disabled )); then
+    _ocf::log "no-op: code disabled"
+    return 0
   fi
   if [[ -z "$OCF_CODE_PATH" ]]; then
     if (( dry_run )); then
