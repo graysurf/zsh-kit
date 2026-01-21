@@ -67,12 +67,35 @@ git-normalize-remote-url() {
     return 1
   }
 
-  normalized=$(printf '%s\n' "$raw_url" | sed \
-    -e 's/^git@/https:\/\//' \
-    -e 's/com:/com\//' \
-    -e 's/\.git$//' \
-    -e 's/^ssh:\/\///' \
-    -e 's/^https:\/\/git@/https:\/\//')
+  normalized="$raw_url"
+
+  typeset slash='/'
+  case "$normalized" in
+    ssh://*)
+      normalized="${normalized#ssh://}"
+      if [[ "$normalized" == git@* ]]; then
+        normalized="${normalized#git@}"
+      fi
+      normalized="https://${normalized}"
+      ;;
+    git@*:*)
+      normalized="${normalized#git@}"
+      normalized="https://${normalized/:/$slash}"
+      ;;
+    git@*/*)
+      normalized="${normalized#git@}"
+      normalized="https://${normalized}"
+      ;;
+    https://git@*)
+      normalized="${normalized#https://git@}"
+      normalized="https://${normalized}"
+      ;;
+    git://*)
+      normalized="https://${normalized#git://}"
+      ;;
+  esac
+
+  normalized="${normalized%.git}"
 
   if [[ -z "$normalized" ]]; then
     print -u2 -r -- "❌ Unable to normalize remote URL for $remote"
