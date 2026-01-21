@@ -294,7 +294,18 @@ _ensure_cached_default_profile() {
         return 1
       }
       # Prune heavy/transient dirs when falling back to cp
-      command rm -rf -- "$target_dir"/{Singleton*,Crashpad,GrShaderCache,GPUCache,ShaderCache,"Code Cache","Service Worker",BrowserMetrics*} 2>/dev/null || true
+      setopt null_glob
+      typeset -a prune_dirs=(
+        "$target_dir"/Singleton*
+        "$target_dir"/Crashpad
+        "$target_dir"/GrShaderCache
+        "$target_dir"/GPUCache
+        "$target_dir"/ShaderCache
+        "$target_dir"/"Code Cache"
+        "$target_dir"/"Service Worker"
+        "$target_dir"/BrowserMetrics*
+      )
+      command rm -rf -- "${prune_dirs[@]}" 2>/dev/null || true
     fi
   fi
 
