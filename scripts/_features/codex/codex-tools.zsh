@@ -371,6 +371,13 @@ _codex_tools_feature_dir() {
   if [[ -z "$script_dir" ]]; then
     typeset zdotdir="${ZDOTDIR-}"
     if [[ -z "$zdotdir" ]]; then
+      typeset preload_path="${_ZSH_BOOTSTRAP_PRELOAD_PATH-}"
+      if [[ -n "$preload_path" ]]; then
+        preload_path="${preload_path:A}"
+        zdotdir="${preload_path:h:h}"
+      fi
+    fi
+    if [[ -z "$zdotdir" ]]; then
       typeset home="${HOME-}"
       [[ -n "$home" ]] || return 1
       zdotdir="$home/.config/zsh"
@@ -398,9 +405,15 @@ _codex_tools_prompts_dir() {
     if [[ -n "$script_dir" ]]; then
       zdotdir="${script_dir:h}"
     else
-      typeset home="${HOME-}"
-      [[ -n "$home" ]] || return 1
-      zdotdir="$home/.config/zsh"
+      typeset preload_path="${_ZSH_BOOTSTRAP_PRELOAD_PATH-}"
+      if [[ -n "$preload_path" ]]; then
+        preload_path="${preload_path:A}"
+        zdotdir="${preload_path:h:h}"
+      else
+        typeset home="${HOME-}"
+        [[ -n "$home" ]] || return 1
+        zdotdir="$home/.config/zsh"
+      fi
     fi
   fi
 
