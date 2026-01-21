@@ -5,11 +5,8 @@
 #   codex-workspace-rm --all [--yes]
 #
 # Notes:
-#   - Always uses `docker rm -f` (removes even if running).
-#   - Always removes workspace volumes:
-#       <container>-work
-#       <container>-home
-#       <container>-codex-home
+#   - Delegates workspace removal to the codex-kit launcher (canonical).
+#   - Removes volumes by default (passes `--volumes` for backwards compatibility).
 
 # _codex_workspace_normalize_container_name <name>
 # Normalize a workspace name into a docker container name (adds CODEX_WORKSPACE_PREFIX when needed).
@@ -75,6 +72,44 @@ _codex_workspace_container_names() {
   return 0
 }
 
+# _codex_workspace_resolve_launcher_for_callthrough
+# Resolve an executable launcher path for call-through commands (ls/rm).
+_codex_workspace_resolve_launcher_for_callthrough() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local launcher="${CODEX_WORKSPACE_LAUNCHER-}"
+  local -i launcher_explicit=0
+  if [[ -n "${launcher//[[:space:]]/}" ]]; then
+    launcher_explicit=1
+  else
+    if (( $+functions[_codex_workspace_launcher_default_path] )); then
+      launcher="$(_codex_workspace_launcher_default_path)"
+    else
+      launcher="$HOME/.config/codex-kit/docker/codex-env/bin/codex-workspace"
+    fi
+  fi
+
+  if (( $+functions[_codex_workspace_ensure_launcher] )); then
+    launcher="$(_codex_workspace_ensure_launcher "$launcher" "$launcher_explicit")" || {
+      if (( launcher_explicit )); then
+        return 1
+      fi
+      print -u2 -r -- "hint: set CODEX_WORKSPACE_LAUNCHER to a local launcher path"
+      print -u2 -r -- "hint: or set CODEX_WORKSPACE_LAUNCHER_URL to override the download URL"
+      return 1
+    }
+  else
+    if [[ ! -x "$launcher" ]]; then
+      print -u2 -r -- "error: launcher not found or not executable: $launcher"
+      return 1
+    fi
+  fi
+
+  print -r -- "$launcher"
+  return 0
+}
+
 # codex-workspace-list
 # List workspace containers (one per line).
 codex-workspace-list() {
@@ -107,25 +142,27 @@ EOF
     return 1
   fi
 
-  local -a containers=()
-  containers=("${(@f)$(_codex_workspace_container_names)}")
-  if (( ${#containers[@]} == 0 )); then
-    print -u2 -r -- "no workspaces found"
-    return 0
-  fi
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
 
-  print -r -- "${(F)containers}"
-  return 0
+  "$launcher" ls
+  return $?
 }
 
-# _codex_workspace_rm_one <name|container> [--yes]
-# Remove a single workspace container and its named volumes.
+# _codex_workspace_rm_one <launcher> <name|container> [--yes]
+# Remove a single workspace container and its named volumes (delegates to launcher).
 _codex_workspace_rm_one() {
   emulate -L zsh
   setopt pipe_fail
 
-  local name="${1:-}"
-  local -i want_yes="${2:-0}"
+  local launcher="${1:-}"
+  local name="${2:-}"
+  local -i want_yes="${3:-0}"
+
+  if [[ -z "$launcher" || ! -x "$launcher" ]]; then
+    print -u2 -r -- "error: launcher not found or not executable: $launcher"
+    return 1
+  fi
 
   if [[ -z "$name" ]]; then
     print -u2 -r -- "error: missing workspace name/container"
@@ -136,68 +173,19 @@ _codex_workspace_rm_one() {
   local container=''
   container="$(_codex_workspace_normalize_container_name "$name")" || return 1
 
-  local -a volumes=()
-  volumes=("${(@f)$(_codex_workspace_volume_names "$container")}")
-
   if (( !want_yes )); then
     print -r -- "This will REMOVE a workspace:"
     print -r -- "  - container: $container"
-    print -r -- "  - volumes:"
-    _codex_workspace_print_folders "${volumes[@]}"
     print -r --
     print -r -- "Actions:"
-    print -r -- "  - docker rm -f $container"
-    print -r -- "  - docker volume rm <volumes...>"
+    print -r -- "  - $launcher rm $container --volumes"
     _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
   fi
 
-  if docker inspect "$container" >/dev/null 2>&1; then
-    print -r -- "+ docker rm -f $container"
-    docker rm -f "$container" >/dev/null
-  else
-    print -u2 -r -- "warn: workspace container not found: $container"
-  fi
+  print -r -- "+ $launcher rm $container --volumes"
+  "$launcher" rm "$container" --volumes
 
-  local -a removed=() missing=() failed=()
-  removed=()
-  missing=()
-  failed=()
-
-  local vol=''
-  for vol in "${volumes[@]}"; do
-    if ! docker volume inspect "$vol" >/dev/null 2>&1; then
-      missing+=("$vol")
-      continue
-    fi
-
-    if docker volume rm "$vol" >/dev/null 2>&1; then
-      removed+=("$vol")
-      continue
-    fi
-
-    failed+=("$vol")
-  done
-
-  if (( ${#removed[@]} > 0 )); then
-    print -r -- "volumes removed:"
-    _codex_workspace_print_folders "${removed[@]}"
-  fi
-
-  if (( ${#missing[@]} > 0 )); then
-    print -r -- "volumes not found (skipped):"
-    _codex_workspace_print_folders "${missing[@]}"
-  fi
-
-  if (( ${#failed[@]} > 0 )); then
-    print -u2 -r -- "error: failed to remove ${#failed[@]} volume(s):"
-    local v=''
-    for v in "${failed[@]}"; do
-      print -u2 -r -- "  - $v"
-    done
-    return 1
-  fi
-
-  return 0
+  return $?
 }
 
 # codex-workspace-rm <name|container> [--yes]
@@ -216,8 +204,7 @@ usage:
 Remove workspace container(s) and their named volumes.
 
 Notes:
-  - Always runs: docker rm -f <container>
-  - Always runs: docker volume rm <container>-work <container>-home <container>-codex-home
+  - Delegates to the codex-kit launcher: <launcher> rm <container> --volumes
   - Add --yes to skip the confirmation prompt.
 EOF
     return 0
@@ -296,14 +283,24 @@ EOF
     return 1
   fi
 
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
   if (( want_all )); then
     if [[ -n "$name" ]]; then
       print -u2 -r -- "error: cannot combine --all with a workspace name"
       return 2
     fi
 
+    local ls_out=''
+    ls_out="$("$launcher" ls)" || return $?
+
     local -a containers=()
-    containers=("${(@f)$(_codex_workspace_container_names)}")
+    local line=''
+    for line in "${(@f)ls_out}"; do
+      [[ -n "$line" ]] || continue
+      containers+=("${line%%$'\t'*}")
+    done
     if (( ${#containers[@]} == 0 )); then
       print -u2 -r -- "no workspaces found"
       return 0
@@ -313,16 +310,14 @@ EOF
       print -r -- "This will REMOVE ${#containers[@]} workspace(s):"
       _codex_workspace_print_folders "${containers[@]}"
       print -r --
-      print -r -- "Actions (per workspace):"
-      print -r -- "  - docker rm -f <container>"
-      print -r -- "  - docker volume rm <container>-work <container>-home <container>-codex-home"
+      print -r -- "Actions (per workspace): $launcher rm <container> --volumes"
       _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
     fi
 
     local -i rc=0
     local container=''
     for container in "${containers[@]}"; do
-      _codex_workspace_rm_one "$container" 1 || rc=1
+      _codex_workspace_rm_one "$launcher" "$container" 1 || rc=1
     done
     return $rc
   fi
@@ -333,6 +328,6 @@ EOF
     return 2
   fi
 
-  _codex_workspace_rm_one "$name" "$want_yes"
+  _codex_workspace_rm_one "$launcher" "$name" "$want_yes"
   return $?
 }
