@@ -116,18 +116,20 @@ assert_contains() {
   export CODEX_STARSHIP_NAME_SOURCE=email
   unset CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED
   output="$(codex-rate-limits --cached --one-line acc_a.json 2>/dev/null)"
-  expected="alice 5h:54% W:63% ${reset_a}"
-  assert_eq "${expected}" "${output}" "name_source=email should use email local-part" || fail "${output}"
+  expected="acc_a 5h:54% W:63% ${reset_a}"
+  assert_eq "${expected}" "${output}" "rate-limits should ignore name_source=email" || fail "${output}"
 
   export CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true
   output="$(codex-rate-limits --cached --one-line acc_a.json 2>/dev/null)"
-  expected="alice@example.com 5h:54% W:63% ${reset_a}"
-  assert_eq "${expected}" "${output}" "show_full_email should print full email" || fail "${output}"
+  expected="acc_a 5h:54% W:63% ${reset_a}"
+  assert_eq "${expected}" "${output}" "rate-limits should ignore show_full_email" || fail "${output}"
 
   output="$(codex-rate-limits-async --cached --jobs 2 2>/dev/null)"
-  assert_contains "${output}" "alice@example.com" "async table should include full email for acc_a" || fail "${output}"
-  assert_contains "${output}" "bob@example.com" "async table should include full email for acc_b" || fail "${output}"
+  assert_contains "${output}" "acc_a" "async table should use secret filename for acc_a" || fail "${output}"
+  assert_contains "${output}" "acc_b" "async table should use secret filename for acc_b" || fail "${output}"
+  if [[ "${output}" == *"alice@example.com"* || "${output}" == *"bob@example.com"* ]]; then
+    fail "async table should not include email addresses when printing names"
+  fi
 
   print -r -- "OK"
 }
-

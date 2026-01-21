@@ -1114,76 +1114,25 @@ _codex_rate_limits_starship_secret_name_for_auth() {
   return 1
 }
 
-# _codex_rate_limits_display_name
-# Convert an email address into a display name (local-part by default).
-# Usage: _codex_rate_limits_display_name <name_or_email>
-_codex_rate_limits_display_name() {
-  emulate -L zsh
-  setopt localoptions pipe_fail nounset
-
-  local raw="${1-}"
-  [[ -n "${raw}" ]] || return 1
-
-  local name="${raw}"
-  if [[ "${name}" == *'@'* ]]; then
-    if ! _codex_is_truthy "${CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED-}" "CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED"; then
-      name="${name%%@*}"
-    fi
-  fi
-
-  [[ -n "${name}" ]] || return 1
-  print -r -- "${name}"
-  return 0
-}
-
-# _codex_rate_limits_display_name_for_target
-# Determine the display name for an auth/secret file based on env:
-# - CODEX_STARSHIP_NAME_SOURCE=secret|email
-# - CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true|false
-# Usage: _codex_rate_limits_display_name_for_target <target_file>
-_codex_rate_limits_display_name_for_target() {
+# _codex_rate_limits_secret_name_for_target
+# Return the secret profile basename (without .json) for a target auth/secret file.
+# Usage: _codex_rate_limits_secret_name_for_target <target_file>
+_codex_rate_limits_secret_name_for_target() {
   emulate -L zsh
   setopt localoptions pipe_fail nounset
 
   local target_file="${1-}"
   [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
 
-  local name_source="${CODEX_STARSHIP_NAME_SOURCE-}"
-  name_source="${name_source:l}"
-  case "${name_source}" in
-    email|mail) name_source='email' ;;
-    secret|secrets|'') name_source='secret' ;;
-    *) name_source='secret' ;;
-  esac
-
-  local secret_name=''
-  if [[ -n "${CODEX_SECRET_DIR-}" && -d "${CODEX_SECRET_DIR-}" && "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
-    secret_name="${target_file:t:r}"
-  elif [[ -n "${CODEX_SECRET_DIR-}" && -d "${CODEX_SECRET_DIR-}" ]]; then
-    secret_name="$(_codex_rate_limits_starship_secret_name_for_auth "${target_file}" 2>/dev/null)" || secret_name=''
-  fi
-
-  if [[ "${name_source}" == 'email' ]]; then
-    local email=''
-    email="$(_codex_auth_email "${target_file}" 2>/dev/null)" || email=''
-    if [[ -n "${email}" ]]; then
-      _codex_rate_limits_display_name "${email}" || return 1
-      return 0
-    fi
-
-    if [[ -n "${secret_name}" ]]; then
-      print -r -- "${secret_name}"
-      return 0
-    fi
-
-    return 1
-  fi
-
-  # Default: keep legacy behavior (only print a name for secrets files).
-  if [[ -n "${CODEX_SECRET_DIR-}" && -d "${CODEX_SECRET_DIR-}" && "${target_file}" == "${CODEX_SECRET_DIR}"/* ]]; then
-    [[ -n "${secret_name}" ]] || return 1
-    print -r -- "${secret_name}"
+  local secret_dir="${CODEX_SECRET_DIR-}"
+  if [[ -n "${secret_dir}" && -d "${secret_dir}" && "${target_file}" == "${secret_dir}/"* ]]; then
+    print -r -- "${target_file:t:r}"
     return 0
+  fi
+
+  if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+    _codex_rate_limits_starship_secret_name_for_auth "${target_file}"
+    return $?
   fi
 
   return 1
@@ -1271,7 +1220,7 @@ _codex_rate_limits_print_starship_cached() {
   weekly_reset_time="$(_codex_epoch_format_local_datetime "${weekly_reset_epoch}")" || return 1
 
   local display_name='' prefix=''
-  display_name="$(_codex_rate_limits_display_name_for_target "${target_file}" 2>/dev/null)" || display_name=''
+  display_name="$(_codex_rate_limits_secret_name_for_target "${target_file}" 2>/dev/null)" || display_name=''
   if [[ -n "${display_name}" ]]; then
     prefix="${display_name} "
   fi
@@ -1362,8 +1311,6 @@ codex-rate-limits() {
         print -r -- "  --all              Query all secrets under CODEX_SECRET_DIR (one line per account)"
         print -r -- "Env:"
         print -r -- "  CODEX_RATE_LIMITS_DEFAULT_ALL_ENABLED=true  Default to --all when no args are provided"
-        print -r -- "  CODEX_STARSHIP_NAME_SOURCE=secret|email  Name source for one-line/all/async outputs"
-        print -r -- "  CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true  Show full email when using email names"
         print -r -- "  CODEX_RATE_LIMITS_CURL_CONNECT_TIMEOUT_SECONDS=2  curl --connect-timeout seconds"
         print -r -- "  CODEX_RATE_LIMITS_CURL_MAX_TIME_SECONDS=8  curl --max-time seconds"
         return 0
@@ -1531,9 +1478,9 @@ codex-rate-limits() {
 	        continue
 	      fi
 
-      local parsed_name='' window_field='' weekly_field='' reset_iso='' weekly_reset_epoch=''
-      IFS=' ' read -r parsed_name window_field weekly_field reset_iso <<< "${line}"
-	      if [[ -z "${parsed_name}" || -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
+      local ignored_name='' window_field='' weekly_field='' reset_iso='' weekly_reset_epoch=''
+      IFS=' ' read -r ignored_name window_field weekly_field reset_iso <<< "${line}"
+	      if [[ -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
 	        rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
 	        rc=1
 	        continue
@@ -1578,7 +1525,7 @@ codex-rate-limits() {
 	      fi
 
 	      window_labels["${window_label}"]=1
-	      rows+=("${parsed_name}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${non_weekly_reset_epoch}${tab}${weekly_remaining}${tab}${weekly_reset_epoch}")
+	      rows+=("${secret_file:t:r}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${non_weekly_reset_epoch}${tab}${weekly_remaining}${tab}${weekly_reset_epoch}")
 	    done
 
     if [[ "$all_progress_active" == 'true' ]]; then
@@ -1600,7 +1547,7 @@ codex-rate-limits() {
     now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
     [[ -n "${now_epoch}" && "${now_epoch}" == <-> ]] || now_epoch='0'
 
-	    printf "%-20.20s  %8.8s  %7.7s  %8.8s  %7.7s  %-11.11s\n" "Name" "${non_weekly_header}" "Left" "Weekly" "Left" "Reset"
+	    printf "%-15.15s  %8.8s  %7.7s  %8.8s  %7.7s  %-11.11s\n" "Name" "${non_weekly_header}" "Left" "Weekly" "Left" "Reset"
 	    print -r -- "-----------------------------------------------------------------------"
 
 	    local -a sortable_rows=() sorted_rows=()
@@ -1647,7 +1594,7 @@ codex-rate-limits() {
 		      non_weekly_display="$(_codex_rate_limits_format_percent_cell "${display_non_weekly}" 8 "${color_enabled}")" || non_weekly_display="${display_non_weekly}"
 		      weekly_display="$(_codex_rate_limits_format_percent_cell "${row_weekly}" 8 "${color_enabled}")" || weekly_display="${row_weekly}"
 
-	      printf "%-20.20s  %s  %7.7s  %s  %7.7s  %-11.11s\n" "${row_name}" "${non_weekly_display}" "${non_weekly_left}" "${weekly_display}" "${weekly_left}" "${reset_display}"
+	      printf "%-15.15s  %s  %7.7s  %s  %7.7s  %-11.11s\n" "${row_name}" "${non_weekly_display}" "${non_weekly_left}" "${weekly_display}" "${weekly_left}" "${reset_display}"
 	    done
 
     return "${rc}"
@@ -1916,7 +1863,7 @@ codex-rate-limits() {
 
   if [[ "${one_line}" == "true" ]]; then
     local display_name=''
-    display_name="$(_codex_rate_limits_display_name_for_target "${target_file}" 2>/dev/null)" || display_name=''
+    display_name="$(_codex_rate_limits_secret_name_for_target "${target_file}" 2>/dev/null)" || display_name=''
 
     local weekly_remaining='' weekly_reset_iso=''
     local non_weekly_label='' non_weekly_remaining=''
@@ -1972,9 +1919,6 @@ codex-rate-limits-async() {
         print -r -- "  --cached           Use codex-starship cache only (no network; one line per account)"
         print -r -- "  --no-refresh-auth  Do not refresh auth tokens on HTTP 401 (no retry)"
         print -r -- "  -d, --debug        Print per-account stderr after the table"
-        print -r -- "Env:"
-        print -r -- "  CODEX_STARSHIP_NAME_SOURCE=secret|email  Name source for the Name column"
-        print -r -- "  CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true  Show full email when using email names"
         return 0
         ;;
       -j|--jobs)
@@ -2259,9 +2203,9 @@ codex-rate-limits-async() {
 	      continue
 	    fi
 
-    local parsed_name='' window_field='' weekly_field='' reset_iso='' weekly_reset_epoch=''
-    IFS=' ' read -r parsed_name window_field weekly_field reset_iso <<< "${event_line}"
-	    if [[ -z "${parsed_name}" || -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
+    local ignored_name='' window_field='' weekly_field='' reset_iso='' weekly_reset_epoch=''
+    IFS=' ' read -r ignored_name window_field weekly_field reset_iso <<< "${event_line}"
+	    if [[ -z "${window_field}" || -z "${weekly_field}" || -z "${reset_iso}" ]]; then
 	      rows+=("${secret_file:t:r}${tab}-${tab}-${tab}-${tab}-${tab}-")
 	      rc=1
 	      continue
@@ -2325,7 +2269,7 @@ codex-rate-limits-async() {
 	    fi
 
 	    window_labels["${window_label}"]=1
-	    rows+=("${parsed_name}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${non_weekly_reset_epoch}${tab}${weekly_remaining}${tab}${weekly_reset_epoch}")
+	    rows+=("${secret_file:t:r}${tab}${window_label}${tab}${non_weekly_remaining}${tab}${non_weekly_reset_epoch}${tab}${weekly_remaining}${tab}${weekly_reset_epoch}")
 	  done
 
   local non_weekly_header="Non-weekly"
@@ -2342,7 +2286,7 @@ codex-rate-limits-async() {
   now_epoch="$(date +%s 2>/dev/null)" || now_epoch=''
   [[ -n "${now_epoch}" && "${now_epoch}" == <-> ]] || now_epoch='0'
 
-	  printf "%-20.20s  %8.8s  %7.7s  %8.8s  %7.7s  %-11.11s\n" "Name" "${non_weekly_header}" "Left" "Weekly" "Left" "Reset"
+	  printf "%-15.15s  %8.8s  %7.7s  %8.8s  %7.7s  %-11.11s\n" "Name" "${non_weekly_header}" "Left" "Weekly" "Left" "Reset"
 	  print -r -- "-----------------------------------------------------------------------"
 
 	  local -a sortable_rows=() sorted_rows=()
@@ -2389,7 +2333,7 @@ codex-rate-limits-async() {
 		    non_weekly_display="$(_codex_rate_limits_format_percent_cell "${display_non_weekly}" 8 "${color_enabled}")" || non_weekly_display="${display_non_weekly}"
 		    weekly_display="$(_codex_rate_limits_format_percent_cell "${row_weekly}" 8 "${color_enabled}")" || weekly_display="${row_weekly}"
 
-	    printf "%-20.20s  %s  %7.7s  %s  %7.7s  %-11.11s\n" "${row_name}" "${non_weekly_display}" "${non_weekly_left}" "${weekly_display}" "${weekly_left}" "${reset_display}"
+	    printf "%-15.15s  %s  %7.7s  %s  %7.7s  %-11.11s\n" "${row_name}" "${non_weekly_display}" "${non_weekly_left}" "${weekly_display}" "${weekly_left}" "${reset_display}"
 	  done
 
   if [[ "${debug_mode}" == 'true' ]]; then

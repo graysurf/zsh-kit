@@ -123,7 +123,7 @@ assert_not_contains() {
   assert_contains "$output" "23h 20m" "two-digit hours/minutes should remain compact" || fail "$output"
   assert_contains "$output" " 1d  1h" "single-digit days/hours should be padded for alignment" || fail "$output"
   assert_contains "$output" "      -" "missing left values should be right-aligned" || fail "$output"
-  assert_not_contains "$output" "acc_12345678901234567890" "names should be truncated to 20 chars" || fail "$output"
+  assert_not_contains "$output" "acc_12345678901234567890" "names should be truncated to 15 chars" || fail "$output"
 
   typeset -a lines=() names=()
   lines=("${(@f)output}")
@@ -137,7 +137,7 @@ assert_not_contains() {
   done
 
   assert_eq 4 "${#names[@]}" "should print one row per secret" || fail "$output"
-  assert_eq "acc_b acc_c acc_1234567890123456 acc_missing" "${(j: :)names}" "rows should be sorted by Reset ascending" || fail "$output"
+  assert_eq "acc_b acc_c acc_12345678901 acc_missing" "${(j: :)names}" "rows should be sorted by Reset ascending" || fail "$output"
 
   cache_file="${cache_dir}/acc_missing.kv"
   {
@@ -198,7 +198,7 @@ assert_not_contains() {
   assert_contains "$output" "23h 20m" "two-digit hours/minutes should remain compact" || fail "$output"
   assert_contains "$output" " 1d  1h" "single-digit days/hours should be padded for alignment" || fail "$output"
   assert_contains "$output" "      -" "missing left values should be right-aligned" || fail "$output"
-  assert_not_contains "$output" "acc_12345678901234567890" "names should be truncated to 20 chars" || fail "$output"
+  assert_not_contains "$output" "acc_12345678901234567890" "names should be truncated to 15 chars" || fail "$output"
 
   lines=("${(@f)output}")
   names=()
@@ -209,7 +209,7 @@ assert_not_contains() {
   done
 
   assert_eq 4 "${#names[@]}" "should print one row per secret" || fail "$output"
-  assert_eq "acc_b acc_c acc_1234567890123456 acc_missing" "${(j: :)names}" "rows should be sorted by Reset ascending" || fail "$output"
+  assert_eq "acc_b acc_c acc_12345678901 acc_missing" "${(j: :)names}" "rows should be sorted by Reset ascending" || fail "$output"
 
   output="$(
     cd "$REPO_ROOT" && \

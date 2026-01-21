@@ -126,7 +126,7 @@ Notes:
 
 - `--async` does not accept positional `secret.json` and does not support `--json` / `--one-line`.
 - `--async` falls back to cached per-account output when a network request fails (use `--debug` to see captured stderr).
-- `CODEX_STARSHIP_NAME_SOURCE=secret|email` controls the displayed name; set `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true` to show full emails.
+- The Name column always uses the secret profile filename (basename of the secret JSON).
 - When printing to a TTY, percent cells are ANSI-colored by default; set `NO_COLOR=1` to disable colors.
 
 ```bash
