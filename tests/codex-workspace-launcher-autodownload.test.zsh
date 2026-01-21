@@ -62,6 +62,8 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   [[ -f "$FEATURE_SCRIPT" ]] || fail "missing feature script: $FEATURE_SCRIPT"
   source "$FEATURE_SCRIPT"
 
+  typeset -gx CODEX_WORKSPACE_OPEN_VSCODE_ENABLED=false
+
   # Keep this test hermetic: avoid calling the real docker-dependent implementation.
   codex-workspace-refresh-opt-repos() {
     emulate -L zsh
