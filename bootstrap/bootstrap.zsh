@@ -14,7 +14,7 @@ if ! source_file_warn_missing "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.zsh"; then
   printf "⚠️  Plugin system failed to load, continuing without plugins.\n"
 fi
 
-export ZSH_PRIVATE_SCRIPT_DIR="$ZDOTDIR/.private"
+export ZSH_PRIVATE_SCRIPT_DIR="${ZSH_PRIVATE_SCRIPT_DIR:-$ZDOTDIR/.private}"
 [[ -d "$ZSH_PRIVATE_SCRIPT_DIR" ]] || mkdir -p "$ZSH_PRIVATE_SCRIPT_DIR"
 
 # ──────────────────────────────
