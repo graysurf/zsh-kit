@@ -1,0 +1,21 @@
+#compdef codex-rate-limits-async crla
+#
+# Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
+
+_codex-rate-limits-async() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '(-j --jobs)'{-j,--jobs}'[Max concurrent requests]:jobs:(1 2 3 4 5 6 8 10)' \
+    '--jobs=[Max concurrent requests]:jobs:(1 2 3 4 5 6 8 10)' \
+    '--cached[Use codex-starship cache only (no network)]' \
+    '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]' \
+    '(-d --debug)'{-d,--debug}'[Print per-account stderr after the table]'
+}
+
+compdef _codex-rate-limits-async codex-rate-limits-async crla

@@ -86,7 +86,7 @@ write_secret() {
   export CODEX_SECRET_DIR="${secret_dir}"
   export CODEX_AUTH_FILE="${auth_file}"
   export ZSH_CACHE_DIR="${cache_root}"
-  source "${REPO_ROOT}/scripts/_features/codex/_codex-secret.zsh"
+  source "${REPO_ROOT}/scripts/_features/codex/codex-secret.zsh"
 
   rm -f -- "${auth_file}"
 

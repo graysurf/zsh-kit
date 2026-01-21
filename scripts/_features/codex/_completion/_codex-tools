@@ -1,4 +1,4 @@
-#compdef codex-tools cx
+#compdef codex-tools cx cxgp cxga cxgk cxgc cxau cxar cxaa cxac cxas cxdr cxcs cxct
 #
 # Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
 
@@ -68,6 +68,60 @@ _codex_tools_completion__rate_limits_desc_for_target() {
 
 _codex-tools() {
   emulate -L zsh -o extendedglob
+
+  typeset cmd="${words[1]-}"
+  if (( CURRENT > 1 )); then
+    case "${cmd}" in
+      cxgp)
+        words=(codex-tools agent prompt "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxga)
+        words=(codex-tools agent advice "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxgk)
+        words=(codex-tools agent knowledge "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxgc)
+        words=(codex-tools agent commit "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxau)
+        words=(codex-tools auth use "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxar)
+        words=(codex-tools auth refresh "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxaa)
+        words=(codex-tools auth auto-refresh "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxac)
+        words=(codex-tools auth current "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxas)
+        words=(codex-tools auth sync "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxdr)
+        words=(codex-tools diag rate-limits "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxcs)
+        words=(codex-tools config show "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      cxct)
+        words=(codex-tools config set "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+    esac
+  fi
 
   local context='' state='' state_descr=''
   local -a line=()
@@ -462,4 +516,4 @@ _codex-tools() {
   esac
 }
 
-compdef _codex-tools codex-tools cx
+compdef _codex-tools codex-tools cx cxgp cxga cxgk cxgc cxau cxar cxaa cxac cxas cxdr cxcs cxct

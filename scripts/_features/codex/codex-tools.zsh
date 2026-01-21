@@ -1,16 +1,6 @@
 typeset -g CODEX_CLI_MODEL="${CODEX_CLI_MODEL:-gpt-5.1-codex-mini}"
 typeset -g CODEX_CLI_REASONING="${CODEX_CLI_REASONING:-medium}"
 
-if command -v safe_unalias >/dev/null; then
-  safe_unalias \
-    cx
-fi
-
-# cx
-# Alias of `codex-tools`.
-# Usage: cx <command> [args...]
-alias cx='codex-tools'
-
 # codex-tools: Opt-in Codex skill wrappers (feature: codex).
 #
 # Provides:
@@ -476,7 +466,7 @@ _codex_tools_require_secrets() {
     return 1
   }
 
-  typeset secrets_file="$feature_dir/_codex-secret.zsh"
+  typeset secrets_file="$feature_dir/codex-secret.zsh"
   if [[ ! -f "$secrets_file" ]]; then
     print -u2 -r -- "codex-tools: missing secrets helper: $secrets_file"
     return 1

@@ -98,7 +98,7 @@ assert_contains() {
   source "${REPO_ROOT}/bootstrap/00-preload.zsh"
   export CODEX_SECRET_DIR="${secret_dir}"
   export ZSH_CACHE_DIR="${cache_root}"
-  source "${REPO_ROOT}/scripts/_features/codex/_codex-secret.zsh"
+  source "${REPO_ROOT}/scripts/_features/codex/codex-secret.zsh"
 
   typeset reset_a='' reset_b=''
   reset_a="$(_codex_epoch_format_local_datetime "${weekly_reset_epoch_a}" 2>/dev/null)" || reset_a=''

@@ -69,9 +69,9 @@ assert_not_contains() {
 
   mkdir -p -- "${module_dir}" "${cache_dir}" || fail "failed to create temp directories"
 
-  typeset secret_script_src="${REPO_ROOT}/scripts/_features/codex/_codex-secret.zsh"
-  typeset secret_script="${module_dir}/_codex-secret.zsh"
-  cp -f -- "${secret_script_src}" "${secret_script}" || fail "failed to copy _codex-secret.zsh for isolated secrets dir"
+  typeset secret_script_src="${REPO_ROOT}/scripts/_features/codex/codex-secret.zsh"
+  typeset secret_script="${module_dir}/codex-secret.zsh"
+  cp -f -- "${secret_script_src}" "${secret_script}" || fail "failed to copy codex-secret.zsh for isolated secrets dir"
 
   typeset fixed_now_epoch=1700000000
   typeset name='' weekly_epoch='' non_weekly_epoch='' cache_file='' secret_file=''

@@ -15,11 +15,12 @@ if [[ -d "$completion_dir" ]] && (( ${fpath[(Ie)$completion_dir]} == 0 )); then
 fi
 
 typeset script=''
-for script in \
-  "$feature_dir/_codex-secret.zsh" \
-  "$feature_dir/codex-auto-refresh.zsh" \
-  "$feature_dir/codex-starship.zsh" \
-  "$feature_dir/codex-tools.zsh"
+	for script in \
+	  "$feature_dir/alias.zsh" \
+	  "$feature_dir/codex-secret.zsh" \
+	  "$feature_dir/codex-auto-refresh.zsh" \
+	  "$feature_dir/codex-starship.zsh" \
+	  "$feature_dir/codex-tools.zsh"
 do
   [[ -r "$script" ]] || continue
   if (( $+functions[source_file] )); then

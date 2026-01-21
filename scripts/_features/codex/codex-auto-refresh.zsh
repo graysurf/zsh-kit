@@ -85,7 +85,7 @@ _codex_auto_refresh_require_codex() {
     return 1
   fi
 
-  typeset secrets_module="${feature_dir}/_codex-secret.zsh"
+  typeset secrets_module="${feature_dir}/codex-secret.zsh"
   if [[ ! -f "${secrets_module}" ]]; then
     print -u2 -r -- "codex-auto-refresh: missing secrets module: ${secrets_module}"
     return 1

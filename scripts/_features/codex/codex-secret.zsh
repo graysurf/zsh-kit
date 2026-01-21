@@ -1,10 +1,5 @@
 #!/usr/bin/env -S zsh -f
 
-if command -v safe_unalias >/dev/null; then
-  safe_unalias \
-    crl crla
-fi
-
 (( ${+_CODEX_SECRET_SOURCED} )) && return 0
 typeset -g _CODEX_SECRET_SOURCED=1
 
@@ -32,14 +27,6 @@ typeset -g CODEX_OAUTH_CLIENT_ID="${CODEX_OAUTH_CLIENT_ID:-app_EMoamEEZ73f0CkXaX
 typeset -gr CODEX_OAUTH_CLIENT_ID="${CODEX_OAUTH_CLIENT_ID-}"
 typeset -gr CODEX_SECRET_CACHE_DIR="${CODEX_SECRET_CACHE_DIR:-${ZSH_CACHE_DIR:-${ZDOTDIR:-$HOME/.config/zsh}/cache}/codex/secrets}"
 typeset -g CODEX_SYNC_AUTH_ON_CHANGE_ENABLED="${CODEX_SYNC_AUTH_ON_CHANGE_ENABLED:-true}"
-
-# crl
-# Alias for codex-rate-limits.
-alias crl='codex-rate-limits'
-
-# crla
-# Alias for codex-rate-limits-async.
-alias crla='codex-rate-limits-async'
 
 # _codex_is_truthy
 # Return 0 when the value is `true` (case-insensitive).
@@ -1725,11 +1712,6 @@ codex-rate-limits() {
           return 3
         fi
       fi
-  fi
-
-  if [[ "$progress_active" == 'true' ]]; then
-    progress_bar::stop "$progress_id" || true
-    progress_active='false'
   fi
 
   if [[ "${http_status}" != "200" ]]; then

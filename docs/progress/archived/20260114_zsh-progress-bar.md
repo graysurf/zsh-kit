@@ -143,7 +143,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [x] Identify first adopters (network-bound): `codex-rate-limits`.
     - [x] Add indeterminate progress wrapper for the wham/usage network fetch (TTY-only).
   - Artifacts:
-    - `scripts/_features/codex/_codex-secret.zsh`
+    - `scripts/_features/codex/codex-secret.zsh`
   - Exit Criteria:
     - [x] Integrations are gated to interactive TTY contexts and do not break piping/capture flows.
     - [x] User-facing commands remain stable and do not emit extra output when non-interactive.
@@ -183,5 +183,5 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
 
 - `scripts/progress-bar.zsh`: determinate and indeterminate progress bar utilities.
 - `bootstrap/00-preload.zsh`: lazy-load shim for cached CLI wrappers.
-- `scripts/_features/codex/_codex-secret.zsh`: indeterminate progress around wham/usage fetch in `codex-rate-limits`.
+- `scripts/_features/codex/codex-secret.zsh`: indeterminate progress around wham/usage fetch in `codex-rate-limits`.
 - `tests/progress-bar.test.zsh`: verification for default silence and `--enabled` rendering.
