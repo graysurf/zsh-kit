@@ -5,6 +5,10 @@ setopt pipe_fail nounset extendedglob null_glob
 typeset -gr SCRIPT_PATH="${0:A}"
 typeset -gr TEST_ROOT="${SCRIPT_PATH:h}"
 
+# Tests should never open VS Code windows (workspace launcher supports auto-open).
+typeset -gx CODEX_WORKSPACE_OPEN_VSCODE_ENABLED=false
+unset CODEX_WORKSPACE_OPEN_VSCODE 2>/dev/null || true
+
 typeset -i failed=0
 typeset file=''
 
