@@ -177,7 +177,6 @@ _git-tools() {
     'branch:Branch cleanup helpers'
     'ci:CI helpers'
     'help:Show usage'
-    'list:Show usage'
   )
 
   _arguments -C -A '-*' \

@@ -97,7 +97,6 @@ _docker-tools() {
     'run:Run interactive containers'
     'alias:Alias set management'
     'help:Show usage'
-    'list:Show usage'
   )
 
   _arguments -C -A '-*' \
@@ -239,4 +238,3 @@ _docker-tools() {
 
 compdef _docker-tools docker-tools
 compdef _docker-aliases docker-aliases
-

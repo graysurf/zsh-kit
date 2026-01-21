@@ -345,7 +345,7 @@ docker-tools() {
   typeset cmd="${2-}"
 
   case "$group" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _docker_tools_usage
       return 0
       ;;

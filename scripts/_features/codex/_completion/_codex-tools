@@ -84,7 +84,6 @@ _codex-tools() {
     'config:Show/set codex-tools config'
     '--:Force raw prompt mode'
     'help:Show usage'
-    'list:Alias of help'
   )
 
   _arguments -C \
@@ -108,7 +107,6 @@ _codex-tools() {
             'knowledge:Get clear explanation and angles for a concept'
             'commit:Run semantic-commit skill (use -a/--auto-stage for semantic-commit-autostage)'
             'help:Show usage'
-            'list:Alias of help'
           )
 
           _arguments -C \
@@ -144,7 +142,7 @@ _codex-tools() {
                   _message 'prompt'
                   return 0
                   ;;
-                help|list)
+                help)
                   _message 'no args'
                   return 0
                   ;;
@@ -164,7 +162,6 @@ _codex-tools() {
             'current:Show which secret matches CODEX_AUTH_FILE'
             'sync:Sync CODEX_AUTH_FILE back into matching secrets'
             'help:Show usage'
-            'list:Alias of help'
           )
 
           _arguments -C \
@@ -272,7 +269,7 @@ _codex-tools() {
                   _message 'no args'
                   return 0
                   ;;
-                help|list)
+                help)
                   _message 'no args'
                   return 0
                   ;;
@@ -288,7 +285,6 @@ _codex-tools() {
           diag_cmds=(
             'rate-limits:Check Codex usage and rate limits'
             'help:Show usage'
-            'list:Alias of help'
           )
 
           _arguments -C \
@@ -373,7 +369,7 @@ _codex-tools() {
 
                   return 0
                   ;;
-                help|list)
+                help)
                   _message 'no args'
                   return 0
                   ;;
@@ -390,7 +386,6 @@ _codex-tools() {
             'show:Show current codex-tools config'
             'set:Set a codex-tools config key'
             'help:Show usage'
-            'list:Alias of help'
           )
 
           _arguments -C \
@@ -443,7 +438,7 @@ _codex-tools() {
                   esac
                   return 0
                   ;;
-                help|list)
+                help)
                   _message 'no args'
                   return 0
                   ;;
@@ -458,7 +453,7 @@ _codex-tools() {
           _message 'prompt'
           return 0
           ;;
-        help|list)
+        help)
           _message 'no args'
           return 0
           ;;

@@ -20,7 +20,6 @@ _opencode-tools() {
     'knowledge:Get clear explanation and angles for a concept'
     'prompt:Run a raw prompt'
     'help:Show usage'
-    'list:Alias of help'
   )
 
   _arguments -C \
@@ -55,7 +54,7 @@ _opencode-tools() {
           _message 'prompt'
           return 0
           ;;
-        help|list)
+        help)
           _message 'no args'
           return 0
           ;;

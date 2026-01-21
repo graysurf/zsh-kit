@@ -436,9 +436,13 @@ opencode-tools() {
   typeset cmd="${1-}"
 
   case "$cmd" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _opencode_tools_usage 1
       return 0
+      ;;
+    list)
+      print -u2 -r -- "opencode-tools: use \`opencode-tools help\`"
+      return 64
       ;;
     *)
       ;;

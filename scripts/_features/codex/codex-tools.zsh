@@ -683,9 +683,13 @@ _codex_tools_run_agent() {
 
   typeset subcmd="${1-}"
   case "${subcmd}" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _codex_tools_usage_agent 1
       return 0
+      ;;
+    list)
+      print -u2 -r -- "codex-tools agent: use \`codex-tools agent help\`"
+      return 64
       ;;
     *)
       ;;
@@ -724,7 +728,7 @@ _codex_tools_run_auth() {
 
   typeset subcmd="${1-}"
   case "${subcmd}" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _codex_tools_usage_auth 1
       return 0
       ;;
@@ -772,7 +776,7 @@ _codex_tools_run_diag() {
 
   typeset subcmd="${1-}"
   case "${subcmd}" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _codex_tools_usage_diag 1
       return 0
       ;;
@@ -802,7 +806,7 @@ _codex_tools_run_config() {
 
   typeset subcmd="${1-}"
   case "${subcmd}" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _codex_tools_usage_config 1
       return 0
       ;;
@@ -898,9 +902,13 @@ codex-tools() {
   typeset cmd="${1-}"
 
   case "$cmd" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _codex_tools_usage 1
       return 0
+      ;;
+    list)
+      print -u2 -r -- "codex-tools: use \`codex-tools help\`"
+      return 64
       ;;
     *)
       ;;

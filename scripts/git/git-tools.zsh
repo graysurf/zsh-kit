@@ -158,7 +158,7 @@ git-tools() {
   typeset cmd="${2-}"
 
   case "$group" in
-    ''|-h|--help|help|list)
+    ''|-h|--help|help)
       _git_tools_usage
       return 0
       ;;
