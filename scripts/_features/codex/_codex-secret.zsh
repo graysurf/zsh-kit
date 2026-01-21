@@ -1291,6 +1291,7 @@ codex-rate-limits() {
   emulate -L zsh
   setopt localoptions pipe_fail nounset SH_WORD_SPLIT
   setopt localtraps
+  unsetopt monitor notify
 
   local output_mode="human"
   local all_mode="false"
@@ -1650,10 +1651,9 @@ codex-rate-limits() {
   [[ -n "${connect_timeout}" && "${connect_timeout}" == <-> ]] || connect_timeout="2"
   [[ -n "${max_time}" && "${max_time}" == <-> ]] || max_time="8"
 
-  local tmp_response='' tmp_status='' http_status=''
+  local tmp_response='' http_status=''
   tmp_response="$(mktemp "${target_file:h}/wham.usage.XXXXXX")"
-  tmp_status="$(mktemp "${target_file:h}/wham.status.XXXXXX")"
-  trap "rm -f -- ${(qq)tmp_response} ${(qq)tmp_status}" EXIT
+  trap "rm -f -- ${(qq)tmp_response}" EXIT
 
   local -a curl_args=()
   curl_args=(
@@ -1671,41 +1671,17 @@ codex-rate-limits() {
     curl_args+=( -H "ChatGPT-Account-Id: ${account_id}" )
   fi
 
-  local progress_id='' progress_active='false'
-  progress_id="codex-rate-limits:${$}"
-
-  if [[ -t 2 ]] && (( $+functions[progress_bar::init_indeterminate] )); then
-    progress_active='true'
-    progress_bar::init_indeterminate "$progress_id" --prefix 'codex-rate-limits' --fd 2 || progress_active='false'
-  fi
-
   local -i curl_rc=0
   http_status=''
-  if [[ "$progress_active" == 'true' ]]; then
-    : >| "${tmp_status}" 2>/dev/null || true
-    curl "${curl_args[@]}" >| "${tmp_status}" &
-    local curl_pid="$!"
-    while kill -0 "$curl_pid" >/dev/null 2>&1; do
-      progress_bar::tick "$progress_id" --suffix 'fetching...' || true
-      sleep 0.1
-    done
-    wait "$curl_pid" || curl_rc=$?
-    http_status="$(<"${tmp_status}" 2>/dev/null)" || http_status=''
+  if http_status="$(curl "${curl_args[@]}")"; then
+    curl_rc=0
   else
-    if http_status="$(curl "${curl_args[@]}")"; then
-      curl_rc=0
-    else
-      curl_rc=$?
-    fi
+    curl_rc=$?
   fi
   http_status="${http_status//$'\n'/}"
   http_status="${http_status//$'\r'/}"
 
   if (( curl_rc != 0 )); then
-    if [[ "$progress_active" == 'true' ]]; then
-      progress_bar::stop "$progress_id" || true
-      progress_active='false'
-    fi
     print -ru2 -r -- "codex-rate-limits: request failed: ${url}"
     return 3
   fi
@@ -1736,31 +1712,15 @@ codex-rate-limits() {
         fi
         curl_rc=0
         http_status=''
-        if [[ "$progress_active" == 'true' ]]; then
-          : >| "${tmp_status}" 2>/dev/null || true
-          curl "${curl_args[@]}" >| "${tmp_status}" &
-          local curl_pid="$!"
-          while kill -0 "$curl_pid" >/dev/null 2>&1; do
-            progress_bar::tick "$progress_id" --suffix 'fetching...' || true
-            sleep 0.1
-          done
-          wait "$curl_pid" || curl_rc=$?
-          http_status="$(<"${tmp_status}" 2>/dev/null)" || http_status=''
+        if http_status="$(curl "${curl_args[@]}")"; then
+          curl_rc=0
         else
-          if http_status="$(curl "${curl_args[@]}")"; then
-            curl_rc=0
-          else
-            curl_rc=$?
-          fi
+          curl_rc=$?
         fi
         http_status="${http_status//$'\n'/}"
         http_status="${http_status//$'\r'/}"
 
         if (( curl_rc != 0 )); then
-          if [[ "$progress_active" == 'true' ]]; then
-            progress_bar::stop "$progress_id" || true
-            progress_active='false'
-          fi
           print -ru2 -r -- "codex-rate-limits: request failed: ${url}"
           return 3
         fi

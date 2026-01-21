@@ -96,12 +96,12 @@ assert_contains() {
         export ZSH_CACHE_DIR="'"${cache_root}"'"
         source "'"${secret_script}"'"
         source scripts/_features/codex/codex-tools.zsh
-        codex-tools rate-limits --all --async --cached --jobs 2
+        codex-tools diag rate-limits --all --async --cached --jobs 2
       ' 2>&1
   )"
   rc=$?
 
-  assert_eq 0 "$rc" "codex-tools rate-limits --async should exit 0" || fail "$output"
+  assert_eq 0 "$rc" "codex-tools diag rate-limits --async should exit 0" || fail "$output"
   assert_contains "$output" "Codex rate limits for all accounts" "should dispatch to async implementation" || fail "$output"
 
   print -r -- "OK"

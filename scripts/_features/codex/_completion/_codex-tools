@@ -2,6 +2,70 @@
 #
 # Feature-gated: loaded only when `ZSH_FEATURES` includes `codex`.
 
+_codex_tools_completion__rate_limits_desc_for_target() {
+  emulate -L zsh -o extendedglob
+  setopt localoptions pipe_fail nounset
+
+  local target_file="${1-}"
+  [[ -n "${target_file}" && -f "${target_file}" ]] || return 1
+
+  local cache_file=''
+  if (( ${+functions[_codex_rate_limits_starship_cache_file_for_target]} )); then
+    cache_file="$(_codex_rate_limits_starship_cache_file_for_target "${target_file}" 2>/dev/null)" || cache_file=''
+  fi
+
+  if [[ -z "${cache_file}" ]]; then
+    local cache_root="${ZSH_CACHE_DIR-}"
+    if [[ -z "${cache_root}" ]]; then
+      local zdotdir="${ZDOTDIR-}"
+      if [[ -z "${zdotdir}" ]]; then
+        local home="${HOME-}"
+        [[ -n "${home}" ]] || return 1
+        zdotdir="${home}/.config/zsh"
+      fi
+      cache_root="${zdotdir}/cache"
+    fi
+    [[ "${cache_root}" == /* ]] || return 1
+
+    local cache_root_abs="${cache_root:a}"
+    [[ -n "${cache_root_abs}" && "${cache_root_abs}" != "/" ]] || return 1
+
+    local cache_dir="${cache_root_abs}/codex/starship-rate-limits"
+    local display_name="${target_file:t:r}"
+
+    local key="${display_name:l}"
+    key="${key//[^a-z0-9]/_}"
+    key="${key##_}"
+    key="${key%%_}"
+    [[ -n "${key}" ]] || return 1
+
+    cache_file="${cache_dir}/${key}.kv"
+  fi
+
+  [[ -n "${cache_file}" && -f "${cache_file}" ]] || return 1
+
+  local non_weekly_remaining='' weekly_remaining=''
+
+  local kv=''
+  while IFS= read -r kv; do
+    case "${kv}" in
+      non_weekly_remaining=*) non_weekly_remaining="${kv#non_weekly_remaining=}" ;;
+      weekly_remaining=*) weekly_remaining="${kv#weekly_remaining=}" ;;
+    esac
+  done < "${cache_file}" 2>/dev/null || true
+
+  local non_weekly_cell='-' weekly_cell='-'
+  if [[ -n "${non_weekly_remaining}" && "${non_weekly_remaining}" == <-> ]]; then
+    non_weekly_cell="${non_weekly_remaining}%"
+  fi
+  if [[ -n "${weekly_remaining}" && "${weekly_remaining}" == <-> ]]; then
+    weekly_cell="${weekly_remaining}%"
+  fi
+
+  printf "%4s %4s\n" "${non_weekly_cell}" "${weekly_cell}"
+  return 0
+}
+
 _codex-tools() {
   emulate -L zsh -o extendedglob
 
@@ -14,13 +78,11 @@ _codex-tools() {
 
   typeset -a subcmds=()
   subcmds=(
-    'commit-with-scope:Run semantic-commit skill (use -a/--auto-stage for semantic-commit-autostage)'
-    'commit:Alias of commit-with-scope'
-    'auto-refresh:Run codex-auto-refresh (token refresh helper)'
-    'rate-limits:Run codex-rate-limits (supports --async for concurrent all-accounts table)'
-    'advice:Get actionable engineering advice'
-    'knowledge:Get clear explanation and angles for a concept'
-    'prompt:Run a raw prompt'
+    'agent:Prompts and skill wrappers (codex exec)'
+    'auth:Codex profile + token helpers'
+    'diag:Diagnostics'
+    'config:Show/set codex-tools config'
+    '--:Force raw prompt mode'
     'help:Show usage'
     'list:Alias of help'
   )
@@ -38,66 +100,361 @@ _codex-tools() {
       local subcmd="${line[1]:-${orig_words[2]-}}"
       subcmd="${subcmd%%[[:space:]]#}"
       case "$subcmd" in
-        commit-with-scope|commit)
-          _arguments \
-            '(-p --push)'{-p,--push}'[Push to remote after commit]' \
-            '(-a --auto-stage)'{-a,--auto-stage}'[Use semantic-commit-autostage (autostage all changes)]' \
-            '*:prompt text:' && return 0
-          return 0
-          ;;
-        auto-refresh)
-          _message 'no args'
-          return 0
-          ;;
-        rate-limits)
+        agent)
+          local -a agent_cmds=()
+          agent_cmds=(
+            'prompt:Run a raw prompt'
+            'advice:Get actionable engineering advice'
+            'knowledge:Get clear explanation and angles for a concept'
+            'commit:Run semantic-commit skill (use -a/--auto-stage for semantic-commit-autostage)'
+            'help:Show usage'
+            'list:Alias of help'
+          )
+
           _arguments -C \
             '(-h --help)'{-h,--help}'[Show help]' \
-            '-c[Clear codex-starship cache before querying]' \
-            '(-d --debug)'{-d,--debug}'[Keep stderr and show per-account errors]' \
-            '--async[Use concurrent all-accounts mode (codex-rate-limits-async)]' \
-            '(-j --jobs)'{-j,--jobs}'[Max concurrent requests (with --async)]:jobs count:' \
-            '--cached[Use codex-starship cache (no network)]' \
-            '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]' \
-            '--json[Print raw wham/usage JSON (single account only)]' \
-            '--one-line[Print a single-line summary (single account only)]' \
-            '--all[Query all secrets under CODEX_SECRET_DIR]' \
-            '1::secret.json:->secrets'
+            '1:agent command:->agent_subcmds' \
+            '*::arg:->agent_args'
 
           case "${state-}" in
-            secrets)
-              local secret_dir=''
-              secret_dir="${CODEX_SECRET_DIR-}"
-              if [[ -z "${secret_dir}" ]]; then
-                secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
-              fi
-
-              local -a secret_files=()
-              if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
-                secret_files=("${secret_dir}"/*.json(N))
-              fi
-
-              local -a secret_names=()
-              local secret_file=''
-              for secret_file in "${secret_files[@]}"; do
-                secret_names+=("${secret_file:t}")
-              done
-
-              (( ${#secret_names[@]} )) && _values 'secret file' "${secret_names[@]}"
+            agent_subcmds)
+              _describe -t commands 'agent command' agent_cmds && return 0
+              return 0
+              ;;
+            agent_args)
+              local agent_subcmd="${line[1]:-${orig_words[3]-}}"
+              agent_subcmd="${agent_subcmd%%[[:space:]]#}"
+              case "${agent_subcmd}" in
+                commit)
+                  _arguments \
+                    '(-p --push)'{-p,--push}'[Push to remote after commit]' \
+                    '(-a --auto-stage)'{-a,--auto-stage}'[Use semantic-commit-autostage (autostage all changes)]' \
+                    '*:prompt text:' && return 0
+                  return 0
+                  ;;
+                advice)
+                  _message 'question'
+                  return 0
+                  ;;
+                knowledge)
+                  _message 'concept'
+                  return 0
+                  ;;
+                prompt|--)
+                  _message 'prompt'
+                  return 0
+                  ;;
+                help|list)
+                  _message 'no args'
+                  return 0
+                  ;;
+              esac
               return 0
               ;;
           esac
 
           return 0
           ;;
-        advice)
-          _message 'question'
+        auth)
+          local -a auth_cmds=()
+          auth_cmds=(
+            'use:Switch CODEX_AUTH_FILE to a profile under CODEX_SECRET_DIR'
+            'refresh:Refresh OAuth tokens (default: active CODEX_AUTH_FILE)'
+            'auto-refresh:Refresh stale tokens across auth + secrets'
+            'current:Show which secret matches CODEX_AUTH_FILE'
+            'sync:Sync CODEX_AUTH_FILE back into matching secrets'
+            'help:Show usage'
+            'list:Alias of help'
+          )
+
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '1:auth command:->auth_subcmds' \
+            '*::arg:->auth_args'
+
+          case "${state-}" in
+            auth_subcmds)
+              _describe -t commands 'auth command' auth_cmds && return 0
+              return 0
+              ;;
+            auth_args)
+              local auth_subcmd="${line[1]:-${orig_words[3]-}}"
+              auth_subcmd="${auth_subcmd%%[[:space:]]#}"
+              case "${auth_subcmd}" in
+                use)
+                  _arguments -C \
+                    '1:profile (or email):->targets'
+
+                  case "${state-}" in
+                    targets)
+                      local show_full_email='false'
+                      if (( ${+functions[zsh_env::is_true]} )) && zsh_env::is_true "${CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED-}" "CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED" 2>/dev/null; then
+                        show_full_email='true'
+                      fi
+
+                      local secret_dir=''
+                      secret_dir="${CODEX_SECRET_DIR-}"
+                      if [[ -z "${secret_dir}" ]]; then
+                        secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
+                      fi
+
+                      local -a secret_files=()
+                      if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+                        secret_files=("${secret_dir}"/*.json(N))
+                      fi
+
+                      local -a secret_items=()
+                      local secret_file='' secret_name='' email='' desc='' rate_desc='' desc_display='' desc_aligned=''
+                      for secret_file in "${secret_files[@]}"; do
+                        secret_name="${secret_file:t:r}"
+                        [[ -n "${secret_name}" ]] || continue
+
+                        desc=''
+                        if (( ${+functions[_codex_auth_email]} )); then
+                          email="$(_codex_auth_email "${secret_file}" 2>/dev/null)" || email=''
+                          if [[ -n "${email}" ]]; then
+                            desc="${email}"
+                            if [[ "${desc}" == *'@'* && "${show_full_email}" != 'true' ]]; then
+                              desc="${desc%%@*}"
+                            fi
+                          fi
+                        fi
+
+                        desc_display="${desc:-secret}"
+                        desc_aligned="$(printf "%-15.15s" "${desc_display}")"
+
+                        rate_desc="$(_codex_tools_completion__rate_limits_desc_for_target "${secret_file}" 2>/dev/null)" || rate_desc=''
+
+                        if [[ -n "${rate_desc}" ]]; then
+                          secret_items+=("${secret_name}:${desc_aligned} ${rate_desc}")
+                        else
+                          secret_items+=("${secret_name}:${desc_aligned}")
+                        fi
+                      done
+
+                      (( ${#secret_items[@]} )) && _describe -t secrets 'codex profile' secret_items
+                      return 0
+                      ;;
+                  esac
+                  return 0
+                  ;;
+                refresh)
+                  _arguments -C \
+                    '1::secret.json:->secrets'
+
+                  case "${state-}" in
+                    secrets)
+                      local secret_dir=''
+                      secret_dir="${CODEX_SECRET_DIR-}"
+                      if [[ -z "${secret_dir}" ]]; then
+                        secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
+                      fi
+
+                      local -a secret_files=()
+                      if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+                        secret_files=("${secret_dir}"/*.json(N))
+                      fi
+
+                      local -a secret_names=()
+                      local secret_file=''
+                      for secret_file in "${secret_files[@]}"; do
+                        secret_names+=("${secret_file:t}")
+                      done
+
+                      (( ${#secret_names[@]} )) && _values 'secret file' "${secret_names[@]}"
+                      return 0
+                      ;;
+                  esac
+
+                  return 0
+                  ;;
+                auto-refresh|current|sync)
+                  _message 'no args'
+                  return 0
+                  ;;
+                help|list)
+                  _message 'no args'
+                  return 0
+                  ;;
+              esac
+              return 0
+              ;;
+          esac
+
           return 0
           ;;
-        knowledge)
-          _message 'concept'
+        diag)
+          local -a diag_cmds=()
+          diag_cmds=(
+            'rate-limits:Check Codex usage and rate limits'
+            'help:Show usage'
+            'list:Alias of help'
+          )
+
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '1:diag command:->diag_subcmds' \
+            '*::arg:->diag_args'
+
+          case "${state-}" in
+            diag_subcmds)
+              _describe -t commands 'diag command' diag_cmds && return 0
+              return 0
+              ;;
+            diag_args)
+              local diag_subcmd="${line[1]:-${orig_words[3]-}}"
+              diag_subcmd="${diag_subcmd%%[[:space:]]#}"
+              case "${diag_subcmd}" in
+                rate-limits)
+                  local -i has_async=0 has_all=0
+                  (( ${orig_words[(Ie)--async]} )) && has_async=1
+                  (( ${orig_words[(Ie)--all]} )) && has_all=1
+
+                  if (( has_async )); then
+                    _arguments -C \
+                      '(-h --help)'{-h,--help}'[Show help]' \
+                      '-c[Clear codex-starship cache before querying]' \
+                      '(-d --debug)'{-d,--debug}'[Keep stderr and show per-account errors]' \
+                      '--async[Use concurrent all-accounts mode (codex-rate-limits-async)]' \
+                      '(-j --jobs)'{-j,--jobs}'[Max concurrent requests (async only)]:jobs count:' \
+                      '--cached[Use codex-starship cache (no network)]' \
+                      '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]'
+                    return 0
+                  fi
+
+                  if (( has_all )); then
+                    _arguments -C \
+                      '(-h --help)'{-h,--help}'[Show help]' \
+                      '-c[Clear codex-starship cache before querying]' \
+                      '(-d --debug)'{-d,--debug}'[Keep stderr and show per-account errors]' \
+                      '--async[Use concurrent all-accounts mode (codex-rate-limits-async)]' \
+                      '--cached[Use codex-starship cache (no network)]' \
+                      '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]' \
+                      '--one-line[Print a single-line summary (implied by --all)]' \
+                      '--all[Query all secrets under CODEX_SECRET_DIR]'
+                    return 0
+                  fi
+
+                  _arguments -C \
+                    '(-h --help)'{-h,--help}'[Show help]' \
+                    '-c[Clear codex-starship cache before querying]' \
+                    '(-d --debug)'{-d,--debug}'[Keep stderr and show per-account errors]' \
+                    '--async[Use concurrent all-accounts mode (codex-rate-limits-async)]' \
+                    '--cached[Use codex-starship cache (no network)]' \
+                    '--no-refresh-auth[Do not refresh auth tokens on HTTP 401]' \
+                    '--json[Print raw wham/usage JSON (single account only)]' \
+                    '--one-line[Print a single-line summary (single account only)]' \
+                    '--all[Query all secrets under CODEX_SECRET_DIR]' \
+                    '1::secret.json:->secrets'
+
+                  case "${state-}" in
+                    secrets)
+                      local secret_dir=''
+                      secret_dir="${CODEX_SECRET_DIR-}"
+                      if [[ -z "${secret_dir}" ]]; then
+                        secret_dir="${ZSH_SCRIPT_DIR-}/_features/codex/secrets"
+                      fi
+
+                      local -a secret_files=()
+                      if [[ -n "${secret_dir}" && -d "${secret_dir}" ]]; then
+                        secret_files=("${secret_dir}"/*.json(N))
+                      fi
+
+                      local -a secret_names=()
+                      local secret_file=''
+                      for secret_file in "${secret_files[@]}"; do
+                        secret_names+=("${secret_file:t}")
+                      done
+
+                      (( ${#secret_names[@]} )) && _values 'secret file' "${secret_names[@]}"
+                      return 0
+                      ;;
+                  esac
+
+                  return 0
+                  ;;
+                help|list)
+                  _message 'no args'
+                  return 0
+                  ;;
+              esac
+              return 0
+              ;;
+          esac
+
           return 0
           ;;
-        prompt|--)
+        config)
+          local -a config_cmds=()
+          config_cmds=(
+            'show:Show current codex-tools config'
+            'set:Set a codex-tools config key'
+            'help:Show usage'
+            'list:Alias of help'
+          )
+
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Show help]' \
+            '1:config command:->config_subcmds' \
+            '*::arg:->config_args'
+
+          case "${state-}" in
+            config_subcmds)
+              _describe -t commands 'config command' config_cmds && return 0
+              return 0
+              ;;
+            config_args)
+              local config_subcmd="${line[1]:-${orig_words[3]-}}"
+              config_subcmd="${config_subcmd%%[[:space:]]#}"
+              case "${config_subcmd}" in
+                show)
+                  _message 'no args'
+                  return 0
+                  ;;
+                set)
+                  _arguments -C \
+                    '1:key:->keys' \
+                    '2:value:->value'
+
+                  case "${state-}" in
+                    keys)
+                      _values 'key' model reasoning dangerous CODEX_CLI_MODEL CODEX_CLI_REASONING CODEX_ALLOW_DANGEROUS_ENABLED
+                      return 0
+                      ;;
+                    value)
+                      local key="${line[1]:-${orig_words[4]-}}"
+                      key="${key%%[[:space:]]#}"
+                      case "${key}" in
+                        reasoning|reason|CODEX_CLI_REASONING)
+                          _values 'value' low medium high
+                          ;;
+                        dangerous|allow-dangerous|CODEX_ALLOW_DANGEROUS_ENABLED)
+                          _values 'value' true false
+                          ;;
+                        model|CODEX_CLI_MODEL)
+                          _message 'model'
+                          ;;
+                        *)
+                          _message 'value'
+                          ;;
+                      esac
+                      return 0
+                      ;;
+                  esac
+                  return 0
+                  ;;
+                help|list)
+                  _message 'no args'
+                  return 0
+                  ;;
+              esac
+              return 0
+              ;;
+          esac
+
+          return 0
+          ;;
+        --)
           _message 'prompt'
           return 0
           ;;

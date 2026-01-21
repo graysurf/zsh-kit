@@ -15,11 +15,14 @@ alias cx='codex-tools'
 #
 # Provides:
 # - `codex-tools` (CLI dispatcher, alias `cx`)
-# - `codex-commit-with-scope`
-# - `codex-advice`
-# - `codex-knowledge`
-# - `codex-tools auto-refresh`
-# - `codex-tools rate-limits`
+# - `codex-commit-with-scope` (agent)
+# - `codex-advice` (agent)
+# - `codex-knowledge` (agent)
+# - `codex-tools agent ...`
+# - `codex-tools auth ...`
+# - `codex-tools diag ...`
+# - `codex-tools config ...`
+# - Note: legacy top-level shortcuts are intentionally avoided; prefer `agent/auth/diag/config` groups.
 
 # _codex_require_allow_dangerous <caller>
 # Guard to prevent running codex with dangerous sandbox bypass unless explicitly enabled.
@@ -245,6 +248,29 @@ codex-commit-with-scope() {
     auto_stage_flag='true'
   fi
 
+  local extra_prompt=''
+  if (( $# )); then
+    extra_prompt="$*"
+  fi
+
+  local skill_name='semantic-commit'
+  if [[ "$auto_stage_flag" == 'true' ]]; then
+    skill_name='semantic-commit-autostage'
+    if ! _codex_tools_semantic_commit_autostage_skill_available; then
+      local expected_skill_path=''
+      if [[ -n "${CODEX_HOME-}" ]]; then
+        expected_skill_path="$CODEX_HOME/skills/automation/semantic-commit-autostage/SKILL.md"
+      fi
+      print -u2 -r -- "codex-commit-with-scope: semantic-commit-autostage skill not found${expected_skill_path:+: $expected_skill_path}"
+      return 1
+    fi
+  else
+    if ! _codex_tools_semantic_commit_skill_available; then
+      _codex_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
+      return $?
+    fi
+  fi
+
   _codex_require_allow_dangerous 'codex-commit-with-scope' || return 1
 
   if ! command -v git >/dev/null; then
@@ -266,29 +292,6 @@ codex-commit-with-scope() {
     if [[ -z "$staged" ]]; then
       print -u2 -r -- "codex-commit-with-scope: no staged changes (stage files then retry)"
       return 1
-    fi
-  fi
-
-  local extra_prompt=''
-  if (( $# )); then
-    extra_prompt="$*"
-  fi
-
-  local skill_name='semantic-commit'
-  if [[ "$auto_stage_flag" == 'true' ]]; then
-    skill_name='semantic-commit-autostage'
-    if ! _codex_tools_semantic_commit_autostage_skill_available; then
-      local expected_skill_path=''
-      if [[ -n "${CODEX_HOME-}" ]]; then
-        expected_skill_path="$CODEX_HOME/skills/automation/semantic-commit-autostage/SKILL.md"
-      fi
-      print -u2 -r -- "codex-commit-with-scope: semantic-commit-autostage skill not found${expected_skill_path:+: $expected_skill_path}"
-      return 1
-    fi
-  else
-    if ! _codex_tools_semantic_commit_skill_available; then
-      _codex_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
-      return $?
     fi
   fi
 
@@ -585,18 +588,283 @@ _codex_tools_usage() {
   print -u"$fd" -r -- '  codex-tools -- <prompt...>   (force prompt mode)'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Commands:'
+  print -u"$fd" -r -- '  agent <command> [args...]                      Prompts and skill wrappers (requires CODEX_ALLOW_DANGEROUS_ENABLED=true)'
+  print -u"$fd" -r -- '  auth <command> [args...]                       Codex profile + token helpers (no codex exec)'
+  print -u"$fd" -r -- '  diag <command> [args...]                       Diagnostics (no codex exec)'
+  print -u"$fd" -r -- '  config <command> [args...]                     Show/set codex-tools config (current shell only)'
+  print -u"$fd" -r --
+  print -u"$fd" -r -- 'Raw prompt mode: unknown commands are treated as a prompt; use `--` to force prompt mode when it starts with a command word.'
+  print -u"$fd" -r -- 'Safety: agent commands run `codex exec` and require CODEX_ALLOW_DANGEROUS_ENABLED=true'
+  print -u"$fd" -r -- 'Config vars: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
+  return 0
+}
+
+# _codex_tools_usage_agent [fd]
+# Print usage for `codex-tools agent`.
+# Usage: _codex_tools_usage_agent [fd]
+_codex_tools_usage_agent() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset fd="${1-1}"
+  print -u"$fd" -r -- 'Usage:'
+  print -u"$fd" -r -- '  codex-tools agent <command> [args...]'
+  print -u"$fd" -r -- 'Commands:'
   print -u"$fd" -r -- '  prompt [prompt...]                             Run a raw prompt (useful when prompt starts with a command word)'
-  print -u"$fd" -r -- '  commit-with-scope [-p|--push] [-a|--auto-stage] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
-  print -u"$fd" -r -- '    -p, --push                                             Push to remote after commit'
-  print -u"$fd" -r -- '    -a, --auto-stage                             Use semantic-commit-autostage (autostage all changes)'
-  print -u"$fd" -r -- '  auto-refresh                                   Run codex-auto-refresh (token refresh helper)'
-  print -u"$fd" -r -- '  rate-limits                                    Run codex-rate-limits (supports --async/--jobs for concurrent all-accounts table)'
   print -u"$fd" -r -- '  advice [question]                              Get actionable engineering advice'
   print -u"$fd" -r -- '  knowledge [concept]                            Get clear explanation and angles for a concept'
+  print -u"$fd" -r -- '  commit [-p|--push] [-a|--auto-stage] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
+  print -u"$fd" -r -- '    -p, --push                                             Push to remote after commit'
+  print -u"$fd" -r -- '    -a, --auto-stage                             Use semantic-commit-autostage (autostage all changes)'
   print -u"$fd" -r --
-  print -u"$fd" -r -- 'Safety: codex exec requires CODEX_ALLOW_DANGEROUS_ENABLED=true'
-  print -u"$fd" -r -- 'Config: CODEX_CLI_MODEL, CODEX_CLI_REASONING'
+  print -u"$fd" -r -- 'Safety: agent commands run `codex exec` and require CODEX_ALLOW_DANGEROUS_ENABLED=true'
   return 0
+}
+
+# _codex_tools_usage_auth [fd]
+# Print usage for `codex-tools auth`.
+# Usage: _codex_tools_usage_auth [fd]
+_codex_tools_usage_auth() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset fd="${1-1}"
+  print -u"$fd" -r -- 'Usage:'
+  print -u"$fd" -r -- '  codex-tools auth <command> [args...]'
+  print -u"$fd" -r -- 'Commands:'
+  print -u"$fd" -r -- '  use <profile|email>                            Switch CODEX_AUTH_FILE to a secret under CODEX_SECRET_DIR'
+  print -u"$fd" -r -- '  refresh [secret.json]                          Refresh OAuth tokens (default: active CODEX_AUTH_FILE)'
+  print -u"$fd" -r -- '  auto-refresh                                   Refresh stale tokens across auth + secrets'
+  print -u"$fd" -r -- '  current                                        Show which secret matches CODEX_AUTH_FILE'
+  print -u"$fd" -r -- '  sync                                           Sync CODEX_AUTH_FILE back into matching secrets'
+  return 0
+}
+
+# _codex_tools_usage_diag [fd]
+# Print usage for `codex-tools diag`.
+# Usage: _codex_tools_usage_diag [fd]
+_codex_tools_usage_diag() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset fd="${1-1}"
+  print -u"$fd" -r -- 'Usage:'
+  print -u"$fd" -r -- '  codex-tools diag <command> [args...]'
+  print -u"$fd" -r -- 'Commands:'
+  print -u"$fd" -r -- '  rate-limits [options] [secret.json]            Check Codex usage and rate limits (supports --all/--async/--cached)'
+  return 0
+}
+
+# _codex_tools_usage_config [fd]
+# Print usage for `codex-tools config`.
+# Usage: _codex_tools_usage_config [fd]
+_codex_tools_usage_config() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset fd="${1-1}"
+  print -u"$fd" -r -- 'Usage:'
+  print -u"$fd" -r -- '  codex-tools config show'
+  print -u"$fd" -r -- '  codex-tools config set <key> <value>'
+  print -u"$fd" -r -- 'Keys:'
+  print -u"$fd" -r -- '  model        (CODEX_CLI_MODEL)'
+  print -u"$fd" -r -- '  reasoning    (CODEX_CLI_REASONING)'
+  print -u"$fd" -r -- '  dangerous    (CODEX_ALLOW_DANGEROUS_ENABLED; true|false)'
+  print -u"$fd" -r --
+  print -u"$fd" -r -- 'Note: `config set` modifies the current shell only (no files are written).'
+  return 0
+}
+
+# _codex_tools_run_agent <subcommand> [args...]
+# Dispatch agent commands.
+_codex_tools_run_agent() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset subcmd="${1-}"
+  case "${subcmd}" in
+    ''|-h|--help|help|list)
+      _codex_tools_usage_agent 1
+      return 0
+      ;;
+    *)
+      ;;
+  esac
+
+  shift || true
+
+  case "${subcmd}" in
+    --|prompt)
+      _codex_tools_run_raw_prompt "$@"
+      ;;
+    advice)
+      codex-advice "$@"
+      ;;
+    knowledge)
+      codex-knowledge "$@"
+      ;;
+    commit)
+      codex-commit-with-scope "$@"
+      ;;
+    commit-with-scope)
+      print -u2 -r -- "codex-tools agent: use \`codex-tools agent commit\`"
+      return 64
+      ;;
+    *)
+      _codex_tools_run_raw_prompt "${subcmd}" "$@"
+      ;;
+  esac
+}
+
+# _codex_tools_run_auth <subcommand> [args...]
+# Dispatch auth commands (no codex exec).
+_codex_tools_run_auth() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset subcmd="${1-}"
+  case "${subcmd}" in
+    ''|-h|--help|help|list)
+      _codex_tools_usage_auth 1
+      return 0
+      ;;
+    *)
+      ;;
+  esac
+
+  shift || true
+
+  _codex_tools_require_secrets || return 1
+
+  case "${subcmd}" in
+    use)
+      codex-use "$@"
+      ;;
+    refresh)
+      codex-refresh-auth "$@"
+      ;;
+    refresh-auth)
+      print -u2 -r -- "codex-tools auth: use \`codex-tools auth refresh\`"
+      return 64
+      ;;
+    auto-refresh)
+      _codex_tools_run_auto_refresh "$@"
+      ;;
+    current)
+      codex-show-current-secret "$@"
+      ;;
+    sync)
+      codex-sync-auth-to-secrets "$@"
+      ;;
+    *)
+      print -u2 -r -- "codex-tools auth: unknown command: ${subcmd}"
+      _codex_tools_usage_auth 2
+      return 64
+      ;;
+  esac
+}
+
+# _codex_tools_run_diag <subcommand> [args...]
+# Dispatch diagnostic commands (no codex exec).
+_codex_tools_run_diag() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset subcmd="${1-}"
+  case "${subcmd}" in
+    ''|-h|--help|help|list)
+      _codex_tools_usage_diag 1
+      return 0
+      ;;
+    *)
+      ;;
+  esac
+
+  shift || true
+
+  case "${subcmd}" in
+    rate-limits)
+      _codex_tools_run_rate_limits "$@"
+      ;;
+    *)
+      print -u2 -r -- "codex-tools diag: unknown command: ${subcmd}"
+      _codex_tools_usage_diag 2
+      return 64
+      ;;
+  esac
+}
+
+# _codex_tools_run_config <subcommand> [args...]
+# Dispatch config commands (current shell only).
+_codex_tools_run_config() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset subcmd="${1-}"
+  case "${subcmd}" in
+    ''|-h|--help|help|list)
+      _codex_tools_usage_config 1
+      return 0
+      ;;
+    *)
+      ;;
+  esac
+
+  shift || true
+
+  case "${subcmd}" in
+    show)
+      print -r -- "CODEX_CLI_MODEL=${CODEX_CLI_MODEL-}"
+      print -r -- "CODEX_CLI_REASONING=${CODEX_CLI_REASONING-}"
+      print -r -- "CODEX_ALLOW_DANGEROUS_ENABLED=${CODEX_ALLOW_DANGEROUS_ENABLED-}"
+
+      if _codex_tools_require_secrets >/dev/null 2>&1; then
+        print -r -- "CODEX_SECRET_DIR=${CODEX_SECRET_DIR-}"
+        print -r -- "CODEX_AUTH_FILE=${CODEX_AUTH_FILE-}"
+        print -r -- "CODEX_SECRET_CACHE_DIR=${CODEX_SECRET_CACHE_DIR-}"
+        print -r -- "CODEX_AUTO_REFRESH_ENABLED=${CODEX_AUTO_REFRESH_ENABLED-}"
+        print -r -- "CODEX_AUTO_REFRESH_MIN_DAYS=${CODEX_AUTO_REFRESH_MIN_DAYS-}"
+      fi
+      ;;
+    set)
+      if (( $# != 2 )); then
+        print -u2 -r -- "codex-tools config: usage: codex-tools config set <key> <value>"
+        return 64
+      fi
+
+      typeset key="${1-}"
+      typeset value="${2-}"
+      case "${key}" in
+        model|CODEX_CLI_MODEL)
+          typeset -g CODEX_CLI_MODEL="${value}"
+          print -r -- "codex-tools: set CODEX_CLI_MODEL=${CODEX_CLI_MODEL}"
+          ;;
+        reasoning|reason|CODEX_CLI_REASONING)
+          typeset -g CODEX_CLI_REASONING="${value}"
+          print -r -- "codex-tools: set CODEX_CLI_REASONING=${CODEX_CLI_REASONING}"
+          ;;
+        dangerous|allow-dangerous|CODEX_ALLOW_DANGEROUS_ENABLED)
+          typeset lowered="${value:l}"
+          if [[ "${lowered}" != 'true' && "${lowered}" != 'false' ]]; then
+            print -u2 -r -- "codex-tools config: dangerous must be true|false (got: ${value})"
+            return 64
+          fi
+          typeset -g CODEX_ALLOW_DANGEROUS_ENABLED="${lowered}"
+          print -r -- "codex-tools: set CODEX_ALLOW_DANGEROUS_ENABLED=${CODEX_ALLOW_DANGEROUS_ENABLED}"
+          ;;
+        *)
+          print -u2 -r -- "codex-tools config: unknown key: ${key}"
+          _codex_tools_usage_config 2
+          return 64
+          ;;
+      esac
+      ;;
+    *)
+      print -u2 -r -- "codex-tools config: unknown command: ${subcmd}"
+      _codex_tools_usage_config 2
+      return 64
+      ;;
+  esac
 }
 
 # _codex_tools_run_raw_prompt [prompt...]
@@ -641,23 +909,44 @@ codex-tools() {
   shift
 
   case "$cmd" in
-    --|prompt)
+    agent)
+      _codex_tools_run_agent "$@"
+      ;;
+    auth)
+      _codex_tools_run_auth "$@"
+      ;;
+    diag)
+      _codex_tools_run_diag "$@"
+      ;;
+    config)
+      _codex_tools_run_config "$@"
+      ;;
+    --)
       _codex_tools_run_raw_prompt "$@"
       ;;
-    commit-with-scope|commit)
-      codex-commit-with-scope "$@"
-      ;;
-    auto-refresh)
-      _codex_tools_run_auto_refresh "$@"
-      ;;
-    rate-limits)
-      _codex_tools_run_rate_limits "$@"
+    prompt)
+      print -u2 -r -- "codex-tools: use \`codex-tools agent prompt\` (or \`codex-tools -- <prompt...>\`)"
+      return 64
       ;;
     advice)
-      codex-advice "$@"
+      print -u2 -r -- "codex-tools: use \`codex-tools agent advice\`"
+      return 64
       ;;
     knowledge)
-      codex-knowledge "$@"
+      print -u2 -r -- "codex-tools: use \`codex-tools agent knowledge\`"
+      return 64
+      ;;
+    commit-with-scope|commit)
+      print -u2 -r -- "codex-tools: use \`codex-tools agent commit\`"
+      return 64
+      ;;
+    auto-refresh)
+      print -u2 -r -- "codex-tools: use \`codex-tools auth auto-refresh\`"
+      return 64
+      ;;
+    rate-limits)
+      print -u2 -r -- "codex-tools: use \`codex-tools diag rate-limits\`"
+      return 64
       ;;
     *)
       _codex_tools_run_raw_prompt "$cmd" "$@"
