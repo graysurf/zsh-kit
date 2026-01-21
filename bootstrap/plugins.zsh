@@ -14,6 +14,8 @@ ZSH_PLUGIN_LIST_FILE="${ZSH_PLUGIN_LIST_FILE:-${ZSH_CONFIG_DIR:-$ZDOTDIR/config}
 
 ZSH_PLUGINS=()
 while IFS= read -r line; do
+  line="${line#"${line%%[![:space:]]*}"}"
+  line="${line%"${line##*[![:space:]]}"}"
   [[ -z "$line" || "$line" == \#* ]] && continue
 	ZSH_PLUGINS+=("$line")
 done < "$ZSH_PLUGIN_LIST_FILE"
@@ -33,6 +35,13 @@ load_plugin_entry() {
 	parts=("${(@s/::/)entry}")
 
   typeset plugin_name="${parts[1]}"
+  plugin_name="${plugin_name#"${plugin_name%%[![:space:]]*}"}"
+  plugin_name="${plugin_name%"${plugin_name##*[![:space:]]}"}"
+  if [[ -z "$plugin_name" || "$plugin_name" == '.' || "$plugin_name" == '..' ]]; then
+    print -u2 -r -- "load_plugin_entry: invalid plugin id in entry: ${entry:-<empty>}"
+    return 1
+  fi
+
   typeset main_file="${parts[2]:-${plugin_name}.plugin.zsh}"
   typeset extra="${parts[3]:-}"
   typeset git_url=''
