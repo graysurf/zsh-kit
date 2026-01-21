@@ -36,7 +36,7 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 ### Quick checks
 
 - Single file syntax check: `zsh -n -- path/to/file.zsh`
-- Repo-wide check (recommended): `./tools/check.zsh`
+- Repo-wide check (recommended): `./tools/check.zsh` (includes fzf-def docblock audit)
 - Test suite: `./tests/run.zsh`
 
 ### Additional checks
@@ -50,8 +50,8 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 ## Suggested workflow
 
 - After any code change: run `./tools/check.zsh`.
-- If you changed functions/aliases/docblocks or added/moved first-party `.zsh` files: also run
-  `./tools/audit-fzf-def-docblocks.zsh --check`.
+- `./tools/check.zsh` includes the fzf-def docblock audit; run `./tools/audit-fzf-def-docblocks.zsh --check`
+  directly only when you want the standalone report.
 - If you changed bootstrap/startup/plugin loading: also run `./tools/check.zsh --smoke`.
 - If you added a new feature: add/update a smoke test under `tests/` (fast, deterministic) and run
   `./tests/run.zsh`.

@@ -427,11 +427,10 @@ _codex_apply_secret() {
   print -r -- "codex: applied ${secret_name} to ${CODEX_AUTH_FILE}"
 }
 
-# codex-use
-# Switch $CODEX_AUTH_FILE to the given secret under $CODEX_SECRET_DIR.
-# Supports:
-# - secret name (with or without .json)
-# - email identity (full email or local-part)
+# _codex_secret_name_for_email_identity <name|name.json|email>
+# Resolve a secret filename in $CODEX_SECRET_DIR for a given identity or name.
+# Usage: _codex_secret_name_for_email_identity <name|name.json|email>
+# Output: prints <secret.json> on stdout; returns 2 if ambiguous.
 _codex_secret_name_for_email_identity() {
   emulate -L zsh
   setopt localoptions pipe_fail err_return nounset nullglob
@@ -484,6 +483,9 @@ _codex_secret_name_for_email_identity() {
   return 2
 }
 
+# codex-use <name|name.json|email>
+# Switch $CODEX_AUTH_FILE to a secret under $CODEX_SECRET_DIR.
+# Usage: codex-use <name|name.json|email>
 codex-use() {
   emulate -L zsh
   setopt localoptions nounset
