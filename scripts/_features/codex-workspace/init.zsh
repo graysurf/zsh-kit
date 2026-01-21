@@ -15,6 +15,7 @@ fi
 
 typeset script=''
 for script in \
+  "$feature_dir/alias.zsh" \
   "$feature_dir/repo-reset.zsh" \
   "$feature_dir/workspace-rm.zsh" \
   "$feature_dir/workspace-launcher.zsh"
@@ -26,4 +27,3 @@ do
     source "$script"
   fi
 done
-

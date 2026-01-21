@@ -15,16 +15,6 @@
 # Env:
 # - CODEX_WORKSPACE_PRIVATE_REPO: optional; clone/pull this repo into ~/.private inside the container.
 
-if command -v safe_unalias >/dev/null; then
-  safe_unalias \
-    cw
-fi
-
-# cw
-# Alias of `codex-workspace`.
-# Usage: cw <subcommand> [args...]
-alias cw='codex-workspace'
-
 # _codex_workspace_tunnel_name_hash4 <input>
 # Print a 4-char hash used for VS Code tunnel name shortening.
 _codex_workspace_tunnel_name_hash4() {
@@ -590,10 +580,10 @@ _codex_workspace_require_codex_use() {
   fi
 
   local source_file_path=''
-  if [[ -f "$HOME/.config/codex_secrets/_codex-secret.zsh" ]]; then
-    source_file_path="$HOME/.config/codex_secrets/_codex-secret.zsh"
-  elif [[ -n "${ZSH_SCRIPT_DIR-}" && -f "${ZSH_SCRIPT_DIR}/_features/codex/_codex-secret.zsh" ]]; then
-    source_file_path="${ZSH_SCRIPT_DIR}/_features/codex/_codex-secret.zsh"
+  if [[ -f "$HOME/.config/codex_secrets/codex-secret.zsh" ]]; then
+    source_file_path="$HOME/.config/codex_secrets/codex-secret.zsh"
+  elif [[ -n "${ZSH_SCRIPT_DIR-}" && -f "${ZSH_SCRIPT_DIR}/_features/codex/codex-secret.zsh" ]]; then
+    source_file_path="${ZSH_SCRIPT_DIR}/_features/codex/codex-secret.zsh"
   fi
 
   if [[ -n "$source_file_path" ]]; then
@@ -738,8 +728,8 @@ _codex_workspace_auth_codex() {
     if ! docker exec -u codex "$container" zsh -lc '
       profile="${1:?missing profile}"
       if ! typeset -f codex-use >/dev/null 2>&1; then
-        if [[ -f /opt/zsh-kit/scripts/_features/codex/_codex-secret.zsh ]]; then
-          source /opt/zsh-kit/scripts/_features/codex/_codex-secret.zsh
+        if [[ -f /opt/zsh-kit/scripts/_features/codex/codex-secret.zsh ]]; then
+          source /opt/zsh-kit/scripts/_features/codex/codex-secret.zsh
         fi
       fi
       codex-use "$profile"

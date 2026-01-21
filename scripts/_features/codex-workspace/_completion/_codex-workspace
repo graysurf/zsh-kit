@@ -1,4 +1,4 @@
-#compdef codex-workspace cw codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-private-repo codex-workspace-reset-work-repos codex-workspace-rm
+#compdef codex-workspace cw cwa cwac cwah cwag cwc cwl cwe cwr cwrr cwrw cwro cwrp cwm cwt codex-workspace-refresh-opt-repos codex-workspace-reset-repo codex-workspace-reset-private-repo codex-workspace-reset-work-repos codex-workspace-rm
 
 __codex_workspace_container_names() {
   emulate -L zsh -o extendedglob
@@ -20,6 +20,82 @@ __codex_workspace_container_names() {
 
 _codex-workspace() {
   emulate -L zsh -o extendedglob
+
+  typeset cmd="${words[1]-}"
+  if (( CURRENT > 1 )); then
+    case "${cmd}" in
+      cwa)
+        words=(codex-workspace auth "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+      cwac)
+        words=(codex-workspace auth codex "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwah)
+        words=(codex-workspace auth github "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwag)
+        words=(codex-workspace auth gpg "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwc)
+        words=(codex-workspace create "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+      cwl)
+        words=(codex-workspace ls "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+      cwe)
+        words=(codex-workspace exec "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+      cwr)
+        words=(codex-workspace reset "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+      cwrr)
+        words=(codex-workspace reset repo "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwrw)
+        words=(codex-workspace reset work-repos "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwro)
+        words=(codex-workspace reset opt-repos "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwrp)
+        words=(codex-workspace reset private-repo "${words[@]:2}")
+        (( CURRENT += 2 ))
+        service='codex-workspace'
+        ;;
+      cwm)
+        words=(codex-workspace rm "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+      cwt)
+        words=(codex-workspace tunnel "${words[@]:2}")
+        (( CURRENT += 1 ))
+        service='codex-workspace'
+        ;;
+    esac
+  fi
 
   local context='' state='' state_descr=''
   local -a line=()

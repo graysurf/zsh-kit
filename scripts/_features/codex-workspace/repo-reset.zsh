@@ -831,7 +831,7 @@ _restore_zsh_kit_codex_secrets_mount() {
   [[ "$dst" != "$src" ]] || return 0
   [[ -d "$dst" ]] || return 0
 
-  if [[ ! -f "$dst/_codex-secret.zsh" ]]; then
+  if [[ ! -f "$dst/codex-secret.zsh" ]]; then
     local -a json_files=("$dst"/*.json(N))
     (( ${#json_files} > 0 )) || return 0
   fi
@@ -966,7 +966,7 @@ _detect_codex_secrets_mount() {
   fi
 
   if [[ -z "$dst" && -d "$HOME/codex_secrets" ]]; then
-    if [[ -f "$HOME/codex_secrets/_codex-secret.zsh" ]]; then
+    if [[ -f "$HOME/codex_secrets/codex-secret.zsh" ]]; then
       dst="$HOME/codex_secrets"
     else
       local -a json_files=("$HOME/codex_secrets"/*.json(N))
@@ -975,7 +975,7 @@ _detect_codex_secrets_mount() {
   fi
 
   if [[ -z "$dst" && -d /home/codex/codex_secrets ]]; then
-    if [[ -f /home/codex/codex_secrets/_codex-secret.zsh ]]; then
+    if [[ -f /home/codex/codex_secrets/codex-secret.zsh ]]; then
       dst="/home/codex/codex_secrets"
     else
       local -a json_files=(/home/codex/codex_secrets/*.json(N))
