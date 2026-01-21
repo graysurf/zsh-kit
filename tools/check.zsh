@@ -15,6 +15,7 @@ print_usage() {
   print -r -- ""
   print -r -- "Checks:"
   print -r -- "  (default) zsh syntax: zsh -n on repo zsh + zsh-style *.sh (excluding plugins/)"
+  print -r -- "  (default) fzf-def docblocks: fail if any first-party defs lack docblocks"
   print -r -- "  --completions: completion lint/check (scripts/_completion + scripts/_features/*/_completion)"
   print -r -- "  --smoke: load .zshrc (and .zprofile) in isolated ZDOTDIR/cache; fails if any stderr is emitted"
   print -r -- "  --bash : bash -n on bash scripts; runs ShellCheck if installed"
@@ -103,6 +104,31 @@ check_zsh_syntax() {
   done
 
   return "$failed"
+}
+
+# check_fzf_def_docblocks <root_dir>
+# Run tools/audit-fzf-def-docblocks.zsh --check (silent on success).
+# Usage: check_fzf_def_docblocks <root_dir>
+check_fzf_def_docblocks() {
+  emulate -L zsh
+  setopt pipe_fail nounset
+
+  typeset root_dir="$1"
+  typeset audit_script="$root_dir/tools/audit-fzf-def-docblocks.zsh"
+
+  if [[ ! -f "$audit_script" ]]; then
+    print -u2 -r -- "docblocks: missing audit script: $audit_script"
+    return 1
+  fi
+
+  typeset output='' rc=0
+  output="$(zsh -f -- "$audit_script" --check --stdout 2>&1)"
+  rc=$?
+  if (( rc != 0 )); then
+    print -u2 -r -- "$output"
+    return "$rc"
+  fi
+  return 0
 }
 
 # check_completions <root_dir>
@@ -346,6 +372,7 @@ main() {
   root_dir="$(repo_root_from_script)"
 
   check_zsh_syntax "$root_dir" || return 1
+  check_fzf_def_docblocks "$root_dir" || return 1
   if (( run_completions )); then
     check_completions "$root_dir" || return 1
   fi
