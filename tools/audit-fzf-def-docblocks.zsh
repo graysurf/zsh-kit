@@ -367,6 +367,10 @@ main() {
 
   typeset tmp_dir='' tmp_file=''
   tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t zsh-kit-audit.XXXXXX)"
+  if [[ -z "$tmp_dir" || ! -d "$tmp_dir" ]]; then
+    print -u2 -r -- "audit-fzf-def-docblocks: failed to create temp dir"
+    return 1
+  fi
   tmp_file="$tmp_dir/fzf-def-docblocks-audit.txt"
 
   write_report "$root_dir" "$ts" >| "$tmp_file"

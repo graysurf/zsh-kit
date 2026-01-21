@@ -162,6 +162,10 @@ check_smoke_load() {
   typeset -i smoke_exit_code=0
 
   tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t zsh-kit-check.XXXXXX)"
+  if [[ -z "$tmp_dir" || ! -d "$tmp_dir" ]]; then
+    print -u2 -r -- "smoke: failed to create temp dir"
+    return 1
+  fi
   stderr_file="$tmp_dir/smoke.stderr"
   : >| "$stderr_file"
 
