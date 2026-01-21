@@ -25,7 +25,6 @@ Show top-level help and available groups.
 ```bash
 git-tools
 git-tools help
-git-tools list
 ```
 
 ---
