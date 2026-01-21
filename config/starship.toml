@@ -51,9 +51,8 @@ show_always = true
 
 [container]
 disabled = false
-format = "[$symbol]($style) "
+format = "$symbol "
 symbol = "🐳"
-style  = "bold red dimmed"
 
 [hostname]
 ssh_only = false
