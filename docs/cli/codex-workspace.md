@@ -6,6 +6,7 @@
 - `cw`: alias of `codex-workspace`
 - `codex-workspace ls`: list workspace containers
 - `codex-workspace exec`: exec into a workspace container (default: `zsh`)
+- `codex-workspace rsync`: rsync files between host and workspace container
 - `codex-workspace tunnel`: open a tunnel for a running workspace (auto-shortens tunnel name to meet VS Code limits)
 - `codex-workspace rm`: remove workspace container(s) + named volumes (`--all` supported)
 - `codex-workspace reset`: reset helpers inside a workspace container (repos, /opt, ~/.private)
@@ -41,6 +42,8 @@ codex-workspace create --no-work-repos --name ws-foo --private-repo OWNER/PRIVAT
 codex-workspace ls
 
 codex-workspace exec <name|container> [--root]
+codex-workspace rsync push [<name|container>] <host_src> <container_dest> [rsync_args...]
+codex-workspace rsync pull [<name|container>] <container_src> <host_dest> [rsync_args...]
 
 codex-workspace rm <name|container> [--yes]
 codex-workspace rm --all [--yes]

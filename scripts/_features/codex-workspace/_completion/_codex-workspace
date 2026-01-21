@@ -132,12 +132,13 @@ _codex-workspace() {
           'create:Create workspace'
           'ls:List workspaces'
           'exec:Exec into workspace (default: zsh)'
+          'rsync:Rsync files between host and workspace'
           'reset:Reset repos inside workspace'
           'rm:Remove workspace(s)'
           'tunnel:Open a tunnel for a workspace'
         )
         _describe -t commands 'codex-workspace command' subcmds && return 0
-        _message 'subcommand (auth|create|ls|rm|exec|reset|tunnel)'
+        _message 'subcommand (auth|create|ls|rm|exec|rsync|reset|tunnel)'
         return 0
       fi
 
@@ -733,8 +734,63 @@ _codex-workspace() {
           _message 'workspace container'
           return 0
           ;;
+        rsync)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          if (( orig_current == 3 )); then
+            if [[ "$cur" == -* ]]; then
+              typeset -a rsync_help_opts=()
+              rsync_help_opts=(
+                '-h:Show help'
+                '--help:Show help'
+              )
+              _describe -t options 'option' rsync_help_opts && return 0
+              return 0
+            fi
+
+            typeset -a rsync_subcmds=()
+            rsync_subcmds=(
+              'push:Copy host -> container'
+              'pull:Copy container -> host'
+            )
+            _describe -t commands 'rsync subcommand' rsync_subcmds && return 0
+            _message 'rsync subcommand (push|pull)'
+            return 0
+          fi
+
+          local op="${orig_words[3]-}"
+          op="${op%%[[:space:]]#}"
+          if [[ "$op" != "push" && "$op" != "pull" ]]; then
+            _message 'rsync subcommand (push|pull)'
+            return 0
+          fi
+
+          if [[ "$cur" == -* ]]; then
+            typeset -a rsync_opts=()
+            rsync_opts=(
+              '-h:Show help'
+              '--help:Show help'
+              '--root:Run rsync as root in container'
+              '--user:Run rsync as user in container'
+              '--delete:Mirror (pass --delete)'
+              '--dry-run:Dry run (pass --dry-run)'
+              '-n:Dry run (pass --dry-run)'
+              '-u:Run rsync as user in container'
+            )
+            _describe -t options 'option' rsync_opts && return 0
+            return 0
+          fi
+
+          # Best-effort: suggest workspace containers for the first positional arg.
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container (optional when only one exists)'
+          return 0
+          ;;
         *)
-          _message 'subcommand (auth|create|ls|rm|exec|reset|tunnel)'
+          _message 'subcommand (auth|create|ls|rm|exec|rsync|reset|tunnel)'
           return 0
           ;;
       esac

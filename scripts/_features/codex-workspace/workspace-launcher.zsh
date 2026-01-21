@@ -162,6 +162,7 @@ usage:
   codex-workspace create [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>] [--gpg|--no-gpg] [--gpg-key <keyid|fingerprint>] [<owner/repo|URL>...]
   codex-workspace create --no-work-repos --name <name> [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>]
   codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
+  codex-workspace rsync <push|pull> [options] [<name|container>] <src> <dest> [rsync_args...]
   codex-workspace rm <name|container> [--yes]
   codex-workspace rm --all [--yes]
   codex-workspace reset repo <name|container> <repo_dir> [--ref <remote/branch>] [--yes]
@@ -186,6 +187,7 @@ example:
   codex-workspace auth gpg --key <fingerprint>
   codex-workspace ls
   codex-workspace exec ws-foo
+  codex-workspace rsync push ws-foo ./src/ /work/src/
   codex-workspace reset work-repos ws-foo --yes
   codex-workspace reset opt-repos ws-foo --yes
   codex-workspace reset private-repo ws-foo --yes
@@ -1236,6 +1238,11 @@ codex-workspace() {
       codex-workspace-exec "$@"
       return $?
       ;;
+    rsync)
+      shift 1 2>/dev/null || true
+      codex-workspace-rsync "$@"
+      return $?
+      ;;
     reset)
       shift 1 2>/dev/null || true
       codex-workspace-reset "$@"
@@ -1248,7 +1255,7 @@ codex-workspace() {
       ;;
     *)
       print -u2 -r -- "error: unknown subcommand: $arg1"
-      print -u2 -r -- "hint: expected: auth|create|ls|rm|exec|reset|tunnel"
+      print -u2 -r -- "hint: expected: auth|create|ls|rm|exec|rsync|reset|tunnel"
       print -u2 -r -- "hint: codex-workspace create [--private-repo ...] [repo...]"
       _codex_workspace_usage
       return 2
