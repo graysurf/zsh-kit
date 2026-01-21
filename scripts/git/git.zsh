@@ -9,7 +9,7 @@ if command -v safe_unalias >/dev/null; then
     gl gp gpf gpff \
     gpo gpfo gpffo \
     git-zip \
-    gt gt2 gt3 gt5
+    gtt gtt2 gtt3 gtt5
 fi
 
 # ────────────────────────────────────────────────────────
@@ -162,22 +162,22 @@ git-tree() {
   return $?
 }
 
-# gt
+# gtt
 # Alias of `git-tree`.
-# Usage: gt [args...]
-alias gt='git-tree'
+# Usage: gtt [args...]
+alias gtt='git-tree'
 
 # gt2
 # Alias of `gt 2` (limit to 2 commits).
 # Usage: gt2 [git-log-args...]
-alias gt2='gt 2'
+alias gt2='gtt 2'
 
 # gt3
 # Alias of `gt 3` (limit to 3 commits).
 # Usage: gt3 [git-log-args...]
-alias gt3='gt 3'
+alias gt3='gtt 3'
 
 # gt5
 # Alias of `gt 5` (limit to 5 commits).
 # Usage: gt5 [git-log-args...]
-alias gt5='gt 5'
+alias gt5='gtt 5'

@@ -1,4 +1,4 @@
-#compdef git-tools git-commit-context gcc git-commit-context-json gccj
+#compdef git-tools gt gth gtu gtr gtc gtb gti gtuz gtuc gtur gtuh gtrs gtrm gtrh gtru gtrbh gtrbc gtrr gtcc gtcj gtcs gtbc gtip git-commit-context gcc git-commit-context-json gccj
 
 _git_tools_commit_hashes() {
   emulate -L zsh -o extendedglob
@@ -138,6 +138,100 @@ _git_tools_complete_reset_remote() {
 
 _git-tools() {
   emulate -L zsh -o extendedglob
+
+  typeset cmd="${words[1]-}"
+  if (( CURRENT > 1 )); then
+    case "${cmd}" in
+      gth)
+        words=(git-tools help "${words[@]:2}")
+        (( CURRENT += 1 ))
+        ;;
+      gtu)
+        words=(git-tools utils "${words[@]:2}")
+        (( CURRENT += 1 ))
+        ;;
+      gtr)
+        words=(git-tools reset "${words[@]:2}")
+        (( CURRENT += 1 ))
+        ;;
+      gtc)
+        words=(git-tools commit "${words[@]:2}")
+        (( CURRENT += 1 ))
+        ;;
+      gtb)
+        words=(git-tools branch "${words[@]:2}")
+        (( CURRENT += 1 ))
+        ;;
+      gti)
+        words=(git-tools ci "${words[@]:2}")
+        (( CURRENT += 1 ))
+        ;;
+      gtuz)
+        words=(git-tools utils zip "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtuc)
+        words=(git-tools utils copy-staged "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtur)
+        words=(git-tools utils root "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtuh)
+        words=(git-tools utils commit-hash "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtrs)
+        words=(git-tools reset soft "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtrm)
+        words=(git-tools reset mixed "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtrh)
+        words=(git-tools reset hard "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtru)
+        words=(git-tools reset undo "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtrbh)
+        words=(git-tools reset back-head "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtrbc)
+        words=(git-tools reset back-checkout "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtrr)
+        words=(git-tools reset remote "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtcc)
+        words=(git-tools commit context "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtcj)
+        words=(git-tools commit context-json "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtcs)
+        words=(git-tools commit to-stash "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtbc)
+        words=(git-tools branch cleanup "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+      gtip)
+        words=(git-tools ci pick "${words[@]:2}")
+        (( CURRENT += 2 ))
+        ;;
+    esac
+  fi
 
   local context='' state='' state_descr=''
   local -a line=()
@@ -375,5 +469,5 @@ _git-tools() {
   esac
 }
 
-compdef _git-tools git-tools
+compdef _git-tools git-tools gt gth gtu gtr gtc gtb gti gtuz gtuc gtur gtuh gtrs gtrm gtrh gtru gtrbh gtrbc gtrr gtcc gtcj gtcs gtbc gtip
 compdef _git-tools git-commit-context gcc git-commit-context-json gccj

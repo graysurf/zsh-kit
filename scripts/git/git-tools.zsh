@@ -6,6 +6,11 @@ if command -v safe_unalias >/dev/null; then
     gr grs grm grh \
     gbh gbc gdb gdbs \
     gcc gccj gdc \
+    gt gtu gtr gtc gtb gti \
+    gtuz gtuc gtur gtuh \
+    gtrs gtrm gtrh gtru gtrbh gtrbc gtrr \
+    gtcc gtcj gtcs \
+    gtbc gtip gth \
     git-tools
 fi
 
@@ -73,6 +78,125 @@ alias gccj='git-commit-context-json'
 # Alias of `git-copy-staged`.
 # Usage: gdc [--stdout|--both]
 alias gdc='git-copy-staged'
+
+# ────────────────────────────────────────────────────────
+# git-tools aliases (gt*)
+# ────────────────────────────────────────────────────────
+
+# gt
+# Alias of `git-tools`.
+# Usage: gt <group> <command> [args...]
+alias gt='git-tools'
+
+# gth
+# Alias of `git-tools help`.
+# Usage: gth
+alias gth='git-tools help'
+
+# gtu
+# Alias of `git-tools utils`.
+# Usage: gtu <command> [args...]
+alias gtu='git-tools utils'
+
+# gtr
+# Alias of `git-tools reset`.
+# Usage: gtr <command> [args...]
+alias gtr='git-tools reset'
+
+# gtc
+# Alias of `git-tools commit`.
+# Usage: gtc <command> [args...]
+alias gtc='git-tools commit'
+
+# gtb
+# Alias of `git-tools branch`.
+# Usage: gtb <command> [args...]
+alias gtb='git-tools branch'
+
+# gti
+# Alias of `git-tools ci`.
+# Usage: gti <command> [args...]
+alias gti='git-tools ci'
+
+# gtuz
+# Alias of `git-tools utils zip`.
+# Usage: gtuz
+alias gtuz='git-tools utils zip'
+
+# gtuc
+# Alias of `git-tools utils copy-staged`.
+# Usage: gtuc [args...]
+alias gtuc='git-tools utils copy-staged'
+
+# gtur
+# Alias of `git-tools utils root`.
+# Usage: gtur
+alias gtur='git-tools utils root'
+
+# gtuh
+# Alias of `git-tools utils commit-hash`.
+# Usage: gtuh [ref]
+alias gtuh='git-tools utils commit-hash'
+
+# gtrs
+# Alias of `git-tools reset soft`.
+# Usage: gtrs [N]
+alias gtrs='git-tools reset soft'
+
+# gtrm
+# Alias of `git-tools reset mixed`.
+# Usage: gtrm [N]
+alias gtrm='git-tools reset mixed'
+
+# gtrh
+# Alias of `git-tools reset hard` (DANGEROUS).
+# Usage: gtrh [N]
+alias gtrh='git-tools reset hard'
+
+# gtru
+# Alias of `git-tools reset undo`.
+# Usage: gtru
+alias gtru='git-tools reset undo'
+
+# gtrbh
+# Alias of `git-tools reset back-head`.
+# Usage: gtrbh
+alias gtrbh='git-tools reset back-head'
+
+# gtrbc
+# Alias of `git-tools reset back-checkout`.
+# Usage: gtrbc
+alias gtrbc='git-tools reset back-checkout'
+
+# gtrr
+# Alias of `git-tools reset remote`.
+# Usage: gtrr [args...]
+alias gtrr='git-tools reset remote'
+
+# gtcc
+# Alias of `git-tools commit context`.
+# Usage: gtcc [args...]
+alias gtcc='git-tools commit context'
+
+# gtcj
+# Alias of `git-tools commit context-json`.
+# Usage: gtcj [args...]
+alias gtcj='git-tools commit context-json'
+
+# gtcs
+# Alias of `git-tools commit to-stash`.
+# Usage: gtcs [commit]
+alias gtcs='git-tools commit to-stash'
+
+# gtbc
+# Alias of `git-tools branch cleanup`.
+# Usage: gtbc [args...]
+alias gtbc='git-tools branch cleanup'
+
+# gtip
+# Alias of `git-tools ci pick`.
+# Usage: gtip [target] [commit-range] [name]
+alias gtip='git-tools ci pick'
 
 # ────────────────────────────────────────────────────────
 # Git tools CLI entrypoint
