@@ -121,6 +121,12 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t open-changed-files-test.XXXXXX)
   assert_eq 0 "$rc" "missing code should exit 0" || fail "$output"
   assert_eq "" "$output" "missing code should be silent" || fail "$output"
 
+  # --dry-run should be a silent no-op when `code` is disabled.
+  output="$(OPEN_CHANGED_FILES_CODE_PATH=none "$ZSH_BIN" -f -- "$TOOL_SCRIPT" --dry-run "$file1_abs" 2>&1)"
+  rc=$?
+  assert_eq 0 "$rc" "dry-run with code disabled should exit 0" || fail "$output"
+  assert_eq "" "$output" "dry-run with code disabled should be silent" || fail "$output"
+
   # Normal mode should be a silent no-op when `OPEN_CHANGED_FILES_CODE_PATH` is invalid.
   typeset missing_code="$tmp_dir/missing-code"
   output="$(OPEN_CHANGED_FILES_CODE_PATH="$missing_code" "$ZSH_BIN" -f -- "$TOOL_SCRIPT" "$file1_abs" 2>&1)"
