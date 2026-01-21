@@ -413,7 +413,6 @@ fzf-history-select() {
       if (cmd ~ /^[[:cntrl:][:punct:][:space:]]*$/) next
       if (cmd ~ /[^[:print:]]/) next
 
-      gsub(/\\/, "\\\\", cmd)
       printf "%s | %4d | %s\n", ts, NR, cmd
     }
   ' | tac | fzf --ansi --reverse --height=50% \
