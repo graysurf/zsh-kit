@@ -1587,26 +1587,22 @@ codex-workspace() {
 
   # Forward launcher human output to stdout (tests expect it), while capturing stdout-only JSON.
   local -i rc=0
-  if (( no_work_repos )); then
-    { "${env_prefix[@]}" "$launcher" create \
-      --no-clone \
-      --name "$workspace_name" \
-      --host "$gh_host" \
-      "${secrets_args[@]}" \
-      "${codex_profile_arg[@]}" \
-      --persist-gh-token \
-      --setup-git \
-      --output json } 3>&1 1>"$tmp_json" 2>&3
-    rc=$?
-  else
-    { "${env_prefix[@]}" "$launcher" create "$repo" \
-      "${secrets_args[@]}" \
-      "${codex_profile_arg[@]}" \
-      --persist-gh-token \
-      --setup-git \
-      --output json } 3>&1 1>"$tmp_json" 2>&3
-    rc=$?
-  fi
+	  if (( no_work_repos )); then
+	    { "${env_prefix[@]}" "$launcher" create \
+	      --no-clone \
+	      --name "$workspace_name" \
+	      --host "$gh_host" \
+	      "${secrets_args[@]}" \
+	      "${codex_profile_arg[@]}" \
+	      --output json } 3>&1 1>"$tmp_json" 2>&3
+	    rc=$?
+	  else
+	    { "${env_prefix[@]}" "$launcher" create "$repo" \
+	      "${secrets_args[@]}" \
+	      "${codex_profile_arg[@]}" \
+	      --output json } 3>&1 1>"$tmp_json" 2>&3
+	    rc=$?
+	  fi
   if (( rc != 0 )); then
     rm -f -- "$tmp_json" 2>/dev/null || true
     return $rc
@@ -1671,11 +1667,17 @@ codex-workspace() {
         print -u2 -r -- "warn: $container:/home/codex/.config is not writable (maybe created with --config-dir :ro mount)"
         print -u2 -r -- "warn: re-create the workspace to switch to snapshot mode (rm --volumes, then re-run)"
       fi
-    fi
+	    fi
 
-    if (( no_extras == 0 )); then
-      if [[ -n "${private_repo_raw//[[:space:]]/}" ]]; then
-        local private_repo_input="${private_repo_raw//[[:space:]]/}"
+	    # Apply GitHub auth inside the container without persisting GH_TOKEN/GITHUB_TOKEN
+	    # as container env. This keeps auth refreshable via `codex-workspace auth github`.
+	    if [[ -n "$chosen_token" ]]; then
+	      _codex_workspace_auth_github "$container" "$gh_host" || return $?
+	    fi
+	
+	    if (( no_extras == 0 )); then
+	      if [[ -n "${private_repo_raw//[[:space:]]/}" ]]; then
+	        local private_repo_input="${private_repo_raw//[[:space:]]/}"
         local -a private_parsed=()
         if ! _codex_workspace_parse_repo_spec "$private_repo_input" "$gh_host"; then
           print -u2 -r -- "warn: invalid private repo (expected OWNER/REPO or URL): $private_repo_raw"
