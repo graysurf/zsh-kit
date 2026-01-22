@@ -15,31 +15,6 @@
 # Env:
 # - CODEX_WORKSPACE_PRIVATE_REPO: optional; clone/pull this repo into ~/.private inside the container.
 
-# _codex_workspace_tunnel_name_hash4 <input>
-# Print a 4-char hash used for VS Code tunnel name shortening.
-_codex_workspace_tunnel_name_hash4() {
-  emulate -L zsh
-  setopt pipe_fail
-
-  local input="${1:-}"
-  [[ -n "$input" ]] || return 1
-
-  local hash4=''
-  if command -v shasum >/dev/null 2>&1; then
-    hash4="$(print -n -r -- "$input" | shasum -a 1 2>/dev/null | awk '{print $1}' | cut -c1-4)"
-  elif command -v sha1sum >/dev/null 2>&1; then
-    hash4="$(print -n -r -- "$input" | sha1sum 2>/dev/null | awk '{print $1}' | cut -c1-4)"
-  elif command -v openssl >/dev/null 2>&1; then
-    hash4="$(print -n -r -- "$input" | openssl sha1 2>/dev/null | awk '{print $2}' | cut -c1-4)"
-  elif command -v python3 >/dev/null 2>&1; then
-    hash4="$(python3 -c 'import hashlib,sys; print(hashlib.sha1(sys.argv[1].encode()).hexdigest()[:4])' "$input" 2>/dev/null || true)"
-  fi
-
-  [[ -n "$hash4" ]] || hash4="0000"
-  print -r -- "$hash4"
-  return 0
-}
-
 # _codex_workspace_hex_encode_ascii <input>
 # Print lowercase hex encoding of ASCII input (best-effort).
 _codex_workspace_hex_encode_ascii() {
@@ -60,64 +35,61 @@ _codex_workspace_hex_encode_ascii() {
   return 0
 }
 
-# _codex_workspace_tunnel_name_sanitize <name>
-# Normalize a tunnel name candidate (lowercase, alnum + '-') for VS Code.
-_codex_workspace_tunnel_name_sanitize() {
-  emulate -L zsh
-
-  local name="${1:-}"
-  name="${name:l}"
-  name="${name//[^a-z0-9-]/-}"
-  while [[ "$name" == *--* ]]; do
-    name="${name//--/-}"
-  done
-  name="${name##-}"
-  name="${name%%-}"
-  [[ -n "$name" ]] || name="ws"
-
-  print -r -- "$name"
-  return 0
-}
-
-# _codex_workspace_tunnel_default_name <container>
-# Derive a default VS Code tunnel name (<= 20 chars) from the workspace container name.
-_codex_workspace_tunnel_default_name() {
+# _codex_workspace_json_get <json> <path>
+# Print a value from launcher JSON output (best-effort; prints empty string for null/missing).
+_codex_workspace_json_get() {
   emulate -L zsh
   setopt pipe_fail
 
-  local container="${1:-}"
-  [[ -n "$container" ]] || return 1
+  local json="${1:-}"
+  local json_path="${2:-}"
+  [[ -n "$json" && -n "$json_path" ]] || return 1
 
-  local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
-  local base="${container#${prefix}-}"
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$json_path" "$json" <<'PY'
+import json
+import sys
 
-  # Common pattern: <owner>-<repo>-YYYYMMDD-HHMMSS
-  local candidate="$base"
-  if [[ "$candidate" == *-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9] ]]; then
-    candidate="${candidate%-[0-9][0-9][0-9][0-9][0-9][0-9]}"
-    candidate="${candidate%-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]}"
+path = sys.argv[1].lstrip(".")
+raw = sys.argv[2]
+try:
+  data = json.loads(raw)
+except Exception:
+  sys.exit(2)
+
+cursor = data
+for part in path.split("."):
+  if not part:
+    continue
+  if isinstance(cursor, dict):
+    cursor = cursor.get(part)
+  else:
+    cursor = None
+  if cursor is None:
+    break
+
+if cursor is None:
+  sys.exit(0)
+
+if isinstance(cursor, bool):
+  sys.stdout.write("true" if cursor else "false")
+else:
+  sys.stdout.write(str(cursor))
+PY
+    return $?
   fi
 
-  candidate="$(_codex_workspace_tunnel_name_sanitize "$candidate")"
-
-  local -i max_len=20
-  if (( ${#candidate} <= max_len )); then
-    print -r -- "$candidate"
+  if command -v jq >/dev/null 2>&1; then
+    local query="$json_path"
+    [[ "$query" == .* ]] || query=".$query"
+    local out=''
+    out="$(print -r -- "$json" | jq -r --exit-status "${query} // empty" 2>/dev/null)" || return 1
+    print -r -- "$out"
     return 0
   fi
 
-  local hash4="$(_codex_workspace_tunnel_name_hash4 "$container")"
-  local -i prefix_len=$(( max_len - 5 )) # "<prefix>-<hash4>"
-  local short_prefix="${candidate[1,prefix_len]}"
-  while [[ "$short_prefix" == *- ]]; do
-    short_prefix="${short_prefix%-}"
-  done
-  [[ -n "$short_prefix" ]] || short_prefix="ws"
-  short_prefix="$(_codex_workspace_tunnel_name_sanitize "$short_prefix")"
-
-  local shortened="${short_prefix}-${hash4}"
-  print -r -- "${shortened[1,max_len]}"
-  return 0
+  print -u2 -r -- "error: missing JSON parser (need python3 or jq) to consume launcher --output json"
+  return 1
 }
 
 # _codex_workspace_repo_default_from_cwd
@@ -159,6 +131,8 @@ usage:
   codex-workspace
   codex-workspace auth <provider> [options] [<name|container>]
   codex-workspace ls
+  codex-workspace start [<name|container>]
+  codex-workspace stop [<name|container>]
   codex-workspace create [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>] [--gpg|--no-gpg] [--gpg-key <keyid|fingerprint>] [<owner/repo|URL>...]
   codex-workspace create --no-work-repos --name <name> [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>]
   codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
@@ -186,6 +160,8 @@ example:
   codex-workspace auth codex --profile work
   codex-workspace auth gpg --key <fingerprint>
   codex-workspace ls
+  codex-workspace start ws-foo
+  codex-workspace stop ws-foo
   codex-workspace exec ws-foo
   codex-workspace rsync push ws-foo ./src/ /work/src/
   codex-workspace reset work-repos ws-foo --yes
@@ -1028,8 +1004,8 @@ usage: codex-workspace-tunnel [--name <tunnel_name>] [--detach] <name|container>
 Start a VS Code tunnel inside a workspace container.
 
 Notes:
+  - Delegates to the codex-kit launcher: <launcher> tunnel <container> ...
   - VS Code tunnel names are limited to 20 characters.
-  - Default naming strips the workspace timestamp (e.g., -YYYYMMDD-HHMMSS) and auto-shortens when needed.
   - Override the name with --name or CODEX_WORKSPACE_TUNNEL_NAME.
   - Options may appear before or after the container name.
 EOF
@@ -1096,8 +1072,8 @@ usage: codex-workspace-tunnel [--name <tunnel_name>] [--detach] <name|container>
 Start a VS Code tunnel inside a workspace container.
 
 Notes:
+  - Delegates to the codex-kit launcher: <launcher> tunnel <container> ...
   - VS Code tunnel names are limited to 20 characters.
-  - Default naming strips the workspace timestamp (e.g., -YYYYMMDD-HHMMSS) and auto-shortens when needed.
   - Override the name with --name or CODEX_WORKSPACE_TUNNEL_NAME.
   - Options may appear before or after the container name.
 EOF
@@ -1115,76 +1091,95 @@ EOF
     return 2
   fi
 
-  _codex_workspace_require_docker || return $?
-  if ! docker info >/dev/null 2>&1; then
-    print -u2 -r -- "error: docker daemon not running (start OrbStack/Docker Desktop)"
-    return 1
-  fi
-
   local container=''
-  if (( $+functions[_codex_workspace_normalize_container_name] )); then
-    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
-  else
-    local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
-    if [[ "$name" == "${prefix}-"* ]]; then
-      container="$name"
-    else
-      container="${prefix}-${name}"
-    fi
+  container="$(_codex_workspace_resolve_container "$name")" || return $?
+
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
+  local -a tunnel_args=(tunnel "$container")
+  if [[ -n "$tunnel_name" ]]; then
+    tunnel_args+=(--name "$tunnel_name")
+  fi
+  if (( detach )); then
+    tunnel_args+=(--detach)
   fi
 
-  _codex_workspace_require_container "$container" || return $?
+  print -r -- "+ $launcher ${(j: :)tunnel_args}"
+  "$launcher" "${tunnel_args[@]}"
+  return $?
+}
 
-  local container_status=''
-  container_status="$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null || true)"
-  if [[ "$container_status" != "running" ]]; then
-    print -r -- "+ docker start $container"
-    docker start "$container" >/dev/null || return 1
-  fi
+# codex-workspace-start [<name|container>]
+# Start a workspace container (delegates to the codex-kit launcher).
+codex-workspace-start() {
+  emulate -L zsh
+  setopt pipe_fail
 
-  if ! docker exec -u codex "$container" bash -lc 'command -v code >/dev/null 2>&1'; then
-    print -u2 -r -- "error: missing 'code' in container (build with INSTALL_VSCODE=1)"
-    return 1
-  fi
-
-  if [[ -z "$tunnel_name" ]]; then
-    tunnel_name="$(_codex_workspace_tunnel_default_name "$container")" || return 1
-  else
-    tunnel_name="$(_codex_workspace_tunnel_name_sanitize "$tunnel_name")"
-  fi
-
-  local -i max_len=20
-  if (( ${#tunnel_name} > max_len )); then
-    print -u2 -r -- "error: VS Code tunnel name too long (${#tunnel_name} > ${max_len}): $tunnel_name"
-    print -u2 -r -- "hint: pass a shorter one via: codex-workspace tunnel $container --name <short>"
+  if (( $# > 1 )); then
+    print -u2 -r -- "error: unexpected args: $*"
     return 2
   fi
 
-  local log_path="/home/codex/.codex-env/logs/code-tunnel.log"
-  if docker exec -u codex "$container" bash -lc 'pgrep -fa "[c]ode-tunnel tunnel|[c]ode tunnel" >/dev/null 2>&1'; then
-    print -u2 -r -- "warn: code tunnel already running in $container"
-    print -r -- "status:"
-    docker exec -u codex "$container" bash -lc "code tunnel status 2>/dev/null || true"
-    print -r -- "log: $log_path"
-    print -r -- "tail: docker exec -it $container bash -lc 'tail -f $log_path'"
+  local arg1="${1:-}"
+  if [[ "$arg1" == "-h" || "$arg1" == "--help" ]]; then
+    cat <<'EOF'
+usage: codex-workspace start [<name|container>]
+
+Start a workspace container.
+
+Notes:
+  - Delegates to the codex-kit launcher: <launcher> start <container>
+  - When <name|container> is omitted, auto-picks only when exactly one workspace exists.
+EOF
     return 0
   fi
 
-  if (( detach )); then
-    docker exec -u codex "$container" bash -lc 'mkdir -p "$(dirname "$1")" && : >"$1"' _ "$log_path" >/dev/null 2>&1 || true
-    docker exec -u codex -d "$container" bash -lc 'code tunnel --accept-server-license-terms --name "$1" >"$2" 2>&1' _ "$tunnel_name" "$log_path"
-    print -r -- "started: code tunnel ($tunnel_name) in $container"
-    print -r -- "status:"
-    sleep 1
-    docker exec -u codex "$container" bash -lc "code tunnel status 2>/dev/null || true"
-    print -r -- "log: $log_path"
-    print -r -- "tail: docker exec -it $container bash -lc 'tail -f $log_path'"
+  local container=''
+  container="$(_codex_workspace_resolve_container "$arg1")" || return $?
+
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
+  print -r -- "+ $launcher start $container"
+  "$launcher" start "$container"
+  return $?
+}
+
+# codex-workspace-stop [<name|container>]
+# Stop a workspace container (delegates to the codex-kit launcher).
+codex-workspace-stop() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  if (( $# > 1 )); then
+    print -u2 -r -- "error: unexpected args: $*"
+    return 2
+  fi
+
+  local arg1="${1:-}"
+  if [[ "$arg1" == "-h" || "$arg1" == "--help" ]]; then
+    cat <<'EOF'
+usage: codex-workspace stop [<name|container>]
+
+Stop a workspace container.
+
+Notes:
+  - Delegates to the codex-kit launcher: <launcher> stop <container>
+  - When <name|container> is omitted, auto-picks only when exactly one workspace exists.
+EOF
     return 0
   fi
 
-  print -r -- "Starting VS Code tunnel (name: $tunnel_name)."
-  print -r -- "If this is the first run, follow the device-code login prompts."
-  docker exec -u codex -it "$container" code tunnel --accept-server-license-terms --name "$tunnel_name"
+  local container=''
+  container="$(_codex_workspace_resolve_container "$arg1")" || return $?
+
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
+  print -r -- "+ $launcher stop $container"
+  "$launcher" stop "$container"
+  return $?
 }
 
 # codex-workspace <subcommand> [args...]
@@ -1208,6 +1203,16 @@ codex-workspace() {
     ls)
       shift 1 2>/dev/null || true
       codex-workspace-list "$@"
+      return $?
+      ;;
+    start)
+      shift 1 2>/dev/null || true
+      codex-workspace-start "$@"
+      return $?
+      ;;
+    stop)
+      shift 1 2>/dev/null || true
+      codex-workspace-stop "$@"
       return $?
       ;;
     list)
@@ -1255,7 +1260,7 @@ codex-workspace() {
       ;;
     *)
       print -u2 -r -- "error: unknown subcommand: $arg1"
-      print -u2 -r -- "hint: expected: auth|create|ls|rm|exec|rsync|reset|tunnel"
+      print -u2 -r -- "hint: expected: auth|create|ls|start|stop|rm|exec|rsync|reset|tunnel"
       print -u2 -r -- "hint: codex-workspace create [--private-repo ...] [repo...]"
       _codex_workspace_usage
       return 2
@@ -1447,16 +1452,6 @@ codex-workspace() {
     return 1
   fi
 
-  local tmp_out=''
-  tmp_out="$(mktemp "${TMPDIR:-/tmp}/codex-workspace.XXXXXX" 2>/dev/null || true)"
-  if [[ -z "$tmp_out" ]]; then
-    tmp_out="$(mktemp -t codex-workspace.XXXXXX 2>/dev/null || true)"
-  fi
-  if [[ -z "$tmp_out" ]]; then
-    print -u2 -r -- "error: mktemp failed"
-    return 1
-  fi
-
   # Opinionated defaults:
   # - No host bind-mounts for workspace/config (works with remote Docker hosts),
   #   except codex secrets (local path bind-mount).
@@ -1552,59 +1547,82 @@ codex-workspace() {
     print -u2 -r -- "auth: using gh keyring token for $gh_host (set CODEX_WORKSPACE_AUTH=env to force GH_TOKEN)"
   fi
 
-  if [[ -n "$chosen_token" ]]; then
-    if (( no_work_repos )); then
-      GH_TOKEN="$chosen_token" GITHUB_TOKEN="" "$launcher" up \
-        --no-clone \
-        --name "$workspace_name" \
-        --host "$gh_host" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
-    else
-      GH_TOKEN="$chosen_token" GITHUB_TOKEN="" "$launcher" up "$repo" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
-    fi
+  local -i supports_json=0
+  if "$launcher" --supports output-json >/dev/null 2>&1; then
+    supports_json=1
   else
-    if (( no_work_repos )); then
-      "$launcher" up \
-        --no-clone \
-        --name "$workspace_name" \
-        --host "$gh_host" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
-    else
-      "$launcher" up "$repo" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
+    local launcher_help=''
+    launcher_help="$("$launcher" --help 2>/dev/null || true)"
+    if [[ "$launcher_help" == *"--output json"* ]]; then
+      supports_json=1
     fi
   fi
 
-  local rc=$?
-  local out=''
-  out="$(cat "$tmp_out" 2>/dev/null || true)"
-  rm -f -- "$tmp_out" 2>/dev/null || true
-  [[ $rc -eq 0 ]] || return $rc
+  if (( !supports_json )); then
+    print -u2 -r -- "error: launcher does not support --output json (required)"
+    print -u2 -r -- "hint: update the launcher or point CODEX_WORKSPACE_LAUNCHER to a newer codex-kit checkout"
+    return 1
+  fi
+
+  local secrets_dir="$HOME/.config/codex_secrets"
+  local -a secrets_args=()
+  if [[ -d "$secrets_dir" ]]; then
+    secrets_args=(--secrets-dir "$secrets_dir" --secrets-mount /home/codex/codex_secrets)
+  fi
+
+  local tmp_json=''
+  tmp_json="$(mktemp "${TMPDIR:-/tmp}/codex-workspace.XXXXXX" 2>/dev/null || true)"
+  if [[ -z "$tmp_json" ]]; then
+    tmp_json="$(mktemp -t codex-workspace.XXXXXX 2>/dev/null || true)"
+  fi
+  if [[ -z "$tmp_json" ]]; then
+    print -u2 -r -- "error: mktemp failed"
+    return 1
+  fi
+
+  local -a env_prefix=()
+  if [[ -n "$chosen_token" ]]; then
+    env_prefix=(env GH_TOKEN="$chosen_token" GITHUB_TOKEN="")
+  fi
+
+  # Forward launcher human output to stdout (tests expect it), while capturing stdout-only JSON.
+  local -i rc=0
+  if (( no_work_repos )); then
+    { "${env_prefix[@]}" "$launcher" create \
+      --no-clone \
+      --name "$workspace_name" \
+      --host "$gh_host" \
+      "${secrets_args[@]}" \
+      "${codex_profile_arg[@]}" \
+      --persist-gh-token \
+      --setup-git \
+      --output json } 3>&1 1>"$tmp_json" 2>&3
+    rc=$?
+  else
+    { "${env_prefix[@]}" "$launcher" create "$repo" \
+      "${secrets_args[@]}" \
+      "${codex_profile_arg[@]}" \
+      --persist-gh-token \
+      --setup-git \
+      --output json } 3>&1 1>"$tmp_json" 2>&3
+    rc=$?
+  fi
+  if (( rc != 0 )); then
+    rm -f -- "$tmp_json" 2>/dev/null || true
+    return $rc
+  fi
+
+  local launcher_json=''
+  launcher_json="$(cat "$tmp_json" 2>/dev/null || true)"
+  rm -f -- "$tmp_json" 2>/dev/null || true
 
   local repo_dir=''
-  repo_dir="$(print -r -- "$out" | sed -nE 's/^path:[[:space:]]*//p' | tail -n 1)"
+  repo_dir="$(_codex_workspace_json_get "$launcher_json" path 2>/dev/null || true)"
 
   local container=''
-  container="$(print -r -- "$out" | sed -nE 's/^workspace:[[:space:]]*//p' | tail -n 1)"
+  container="$(_codex_workspace_json_get "$launcher_json" workspace 2>/dev/null || true)"
   if [[ -z "$container" ]]; then
-    print -u2 -r -- "warn: failed to detect workspace container name from output"
+    print -u2 -r -- "warn: failed to detect workspace container name from launcher JSON output"
     print -u2 -r -- "warn: skipping ~/.config snapshot and ~/.private setup"
   else
     docker exec -u codex "$container" bash -lc '

@@ -95,17 +95,39 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
     print -r -- 'if [ -n "$log" ]; then printf "%s\n" "$*" >>"$log"; fi'
     print -r --
     print -r -- 'case "${1-}" in'
+    print -r -- '  --version)'
+    print -r -- '    printf "%s\n" "0.1.0"'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- '  capabilities)'
+    print -r -- '    printf "%s\n" "{\"version\":\"0.1.0\",\"capabilities\":[\"output-json\",\"supports-flag\",\"create-alias\"]}"'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- '  --supports)'
+    print -r -- '    case "${2-}" in'
+    print -r -- '      output-json|supports-flag|create-alias)'
+    print -r -- '        exit 0'
+    print -r -- '        ;;'
+    print -r -- '    esac'
+    print -r -- '    exit 1'
+    print -r -- '    ;;'
     print -r -- '  -h|--help|help|"")'
     print -r -- '    printf "%s\n" "--no-clone"'
+    print -r -- '    printf "%s\n" "--output json"'
     print -r -- '    exit 0'
     print -r -- '    ;;'
     print -r -- 'esac'
     print -r --
-    print -r -- 'if [ "${1-}" = up ]; then'
-    print -r -- '  printf "%s\n" "workspace:  codex-ws-test"'
-    print -r -- '  printf "%s\n" "path:       /work"'
-    print -r -- '  exit 0'
-    print -r -- 'fi'
+    print -r -- 'cmd="${1-}"'
+    print -r -- 'shift || true'
+    print -r -- 'case "$cmd" in'
+    print -r -- '  up|create)'
+    print -r -- '    printf "%s\n" "workspace:  codex-ws-test" >&2'
+    print -r -- '    printf "%s\n" "path:       /work" >&2'
+    print -r -- '    printf "%s\n" "{\"workspace\":\"codex-ws-test\",\"path\":\"/work\"}"'
+    print -r -- '    exit 0'
+    print -r -- '    ;;'
+    print -r -- 'esac'
     print -r --
     print -r -- 'exit 0'
     print -r -- 'EOF'
@@ -249,6 +271,7 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
 
   typeset fake_home="$tmp_dir/fake-home"
   mkdir -p -- "$fake_home" || fail "mkdir failed: $fake_home"
+  mkdir -p -- "$fake_home/.config/codex_secrets" || fail "mkdir failed: $fake_home/.config/codex_secrets"
 
 	  output="$( \
 	    PATH="$stub_bin:$PATH" \
@@ -276,9 +299,11 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
   typeset launcher_args=''
   launcher_args="$(command cat -- "$launcher_args_log" 2>/dev/null || true)"
   assert_contains "$launcher_args" "--help" "create should probe launcher --help" || fail "$launcher_args"
-  assert_contains "$launcher_args" "up --no-clone" "create should call launcher up --no-clone" || fail "$launcher_args"
+  assert_contains "$launcher_args" "--supports output-json" "create should probe launcher capabilities" || fail "$launcher_args"
+  assert_contains "$launcher_args" "create --no-clone" "create should call launcher create --no-clone" || fail "$launcher_args"
   assert_contains "$launcher_args" "--name ws" "create should pass --name" || fail "$launcher_args"
   assert_contains "$launcher_args" "--host github.com" "create should pass --host" || fail "$launcher_args"
+  assert_contains "$launcher_args" "--output json" "create should request JSON output" || fail "$launcher_args"
   assert_contains "$launcher_args" "--secrets-dir" "create should pass secrets args" || fail "$launcher_args"
   assert_not_contains "$launcher_args" "foo/bar" "create --no-work-repos should not pass repo args" || fail "$launcher_args"
 

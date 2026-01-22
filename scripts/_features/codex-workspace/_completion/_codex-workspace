@@ -131,6 +131,8 @@ _codex-workspace() {
           'auth:Update workspace auth (codex/github/gpg)'
           'create:Create workspace'
           'ls:List workspaces'
+          'start:Start a workspace container'
+          'stop:Stop a workspace container'
           'exec:Exec into workspace (default: zsh)'
           'rsync:Rsync files between host and workspace'
           'reset:Reset repos inside workspace'
@@ -138,7 +140,7 @@ _codex-workspace() {
           'tunnel:Open a tunnel for a workspace'
         )
         _describe -t commands 'codex-workspace command' subcmds && return 0
-        _message 'subcommand (auth|create|ls|rm|exec|rsync|reset|tunnel)'
+        _message 'subcommand (auth|create|ls|start|stop|rm|exec|rsync|reset|tunnel)'
         return 0
       fi
 
@@ -160,6 +162,49 @@ _codex-workspace() {
             _describe -t options 'option' list_opts && return 0
             return 0
           fi
+          return 0
+          ;;
+        start|stop)
+          local cur="${orig_words[orig_current]-}"
+          cur="${cur%%[[:space:]]#}"
+
+          if [[ "$cur" == -* ]]; then
+            typeset -a lifecycle_opts=()
+            lifecycle_opts=(
+              '-h:Show help'
+              '--help:Show help'
+            )
+            _describe -t options 'option' lifecycle_opts && return 0
+            return 0
+          fi
+
+          local -i idx=3
+          local workspace=''
+          while (( idx < orig_current )); do
+            local w="${orig_words[idx]-}"
+            case "$w" in
+              -h|--help)
+                return 0
+                ;;
+              --)
+                idx=$((idx + 1))
+                ;;
+              -*)
+                idx=$((idx + 1))
+                ;;
+              *)
+                workspace="$w"
+                break
+                ;;
+            esac
+          done
+
+          [[ -n "$workspace" ]] && return 0
+
+          if (( ${#containers[@]} > 0 )); then
+            _values 'workspace container' $containers && return 0
+          fi
+          _message 'workspace container'
           return 0
           ;;
         create)
@@ -351,6 +396,8 @@ _codex-workspace() {
               '-h:Show help'
               '--help:Show help'
               '--all:Remove all workspaces'
+              '--keep-volumes:Keep workspace volumes'
+              '--volumes:Remove workspace volumes (default)'
               '-y:Skip confirmation'
               '--yes:Skip confirmation'
             )
@@ -373,6 +420,9 @@ _codex-workspace() {
                 return 0
                 ;;
               --all)
+                idx=$((idx + 1))
+                ;;
+              --keep-volumes|--volumes)
                 idx=$((idx + 1))
                 ;;
               -y|--yes)
