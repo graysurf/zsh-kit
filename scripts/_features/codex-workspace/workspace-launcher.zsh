@@ -60,6 +60,63 @@ _codex_workspace_hex_encode_ascii() {
   return 0
 }
 
+# _codex_workspace_json_get <json> <path>
+# Print a value from launcher JSON output (best-effort; prints empty string for null/missing).
+_codex_workspace_json_get() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  local json="${1:-}"
+  local json_path="${2:-}"
+  [[ -n "$json" && -n "$json_path" ]] || return 1
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$json_path" "$json" <<'PY'
+import json
+import sys
+
+path = sys.argv[1].lstrip(".")
+raw = sys.argv[2]
+try:
+  data = json.loads(raw)
+except Exception:
+  sys.exit(2)
+
+cursor = data
+for part in path.split("."):
+  if not part:
+    continue
+  if isinstance(cursor, dict):
+    cursor = cursor.get(part)
+  else:
+    cursor = None
+  if cursor is None:
+    break
+
+if cursor is None:
+  sys.exit(0)
+
+if isinstance(cursor, bool):
+  sys.stdout.write("true" if cursor else "false")
+else:
+  sys.stdout.write(str(cursor))
+PY
+    return $?
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    local query="$json_path"
+    [[ "$query" == .* ]] || query=".$query"
+    local out=''
+    out="$(print -r -- "$json" | jq -r --exit-status "${query} // empty" 2>/dev/null)" || return 1
+    print -r -- "$out"
+    return 0
+  fi
+
+  print -u2 -r -- "error: missing JSON parser (need python3 or jq) to consume launcher --output json"
+  return 1
+}
+
 # _codex_workspace_tunnel_name_sanitize <name>
 # Normalize a tunnel name candidate (lowercase, alnum + '-') for VS Code.
 _codex_workspace_tunnel_name_sanitize() {
@@ -159,6 +216,8 @@ usage:
   codex-workspace
   codex-workspace auth <provider> [options] [<name|container>]
   codex-workspace ls
+  codex-workspace start [<name|container>]
+  codex-workspace stop [<name|container>]
   codex-workspace create [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>] [--gpg|--no-gpg] [--gpg-key <keyid|fingerprint>] [<owner/repo|URL>...]
   codex-workspace create --no-work-repos --name <name> [--no-extras] [--codex-profile <name>] [--private-repo <owner/repo|URL>]
   codex-workspace exec [--root] [--user <user>] <name|container> [--] [cmd...]
@@ -186,6 +245,8 @@ example:
   codex-workspace auth codex --profile work
   codex-workspace auth gpg --key <fingerprint>
   codex-workspace ls
+  codex-workspace start ws-foo
+  codex-workspace stop ws-foo
   codex-workspace exec ws-foo
   codex-workspace rsync push ws-foo ./src/ /work/src/
   codex-workspace reset work-repos ws-foo --yes
@@ -1187,6 +1248,78 @@ EOF
   docker exec -u codex -it "$container" code tunnel --accept-server-license-terms --name "$tunnel_name"
 }
 
+# codex-workspace-start [<name|container>]
+# Start a workspace container (delegates to the codex-kit launcher).
+codex-workspace-start() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  if (( $# > 1 )); then
+    print -u2 -r -- "error: unexpected args: $*"
+    return 2
+  fi
+
+  local arg1="${1:-}"
+  if [[ "$arg1" == "-h" || "$arg1" == "--help" ]]; then
+    cat <<'EOF'
+usage: codex-workspace start [<name|container>]
+
+Start a workspace container.
+
+Notes:
+  - Delegates to the codex-kit launcher: <launcher> start <container>
+  - When <name|container> is omitted, auto-picks only when exactly one workspace exists.
+EOF
+    return 0
+  fi
+
+  local container=''
+  container="$(_codex_workspace_resolve_container "$arg1")" || return $?
+
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
+  print -r -- "+ $launcher start $container"
+  "$launcher" start "$container"
+  return $?
+}
+
+# codex-workspace-stop [<name|container>]
+# Stop a workspace container (delegates to the codex-kit launcher).
+codex-workspace-stop() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  if (( $# > 1 )); then
+    print -u2 -r -- "error: unexpected args: $*"
+    return 2
+  fi
+
+  local arg1="${1:-}"
+  if [[ "$arg1" == "-h" || "$arg1" == "--help" ]]; then
+    cat <<'EOF'
+usage: codex-workspace stop [<name|container>]
+
+Stop a workspace container.
+
+Notes:
+  - Delegates to the codex-kit launcher: <launcher> stop <container>
+  - When <name|container> is omitted, auto-picks only when exactly one workspace exists.
+EOF
+    return 0
+  fi
+
+  local container=''
+  container="$(_codex_workspace_resolve_container "$arg1")" || return $?
+
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
+  print -r -- "+ $launcher stop $container"
+  "$launcher" stop "$container"
+  return $?
+}
+
 # codex-workspace <subcommand> [args...]
 # Host entrypoint for creating and managing Codex workspace containers.
 codex-workspace() {
@@ -1208,6 +1341,16 @@ codex-workspace() {
     ls)
       shift 1 2>/dev/null || true
       codex-workspace-list "$@"
+      return $?
+      ;;
+    start)
+      shift 1 2>/dev/null || true
+      codex-workspace-start "$@"
+      return $?
+      ;;
+    stop)
+      shift 1 2>/dev/null || true
+      codex-workspace-stop "$@"
       return $?
       ;;
     list)
@@ -1255,7 +1398,7 @@ codex-workspace() {
       ;;
     *)
       print -u2 -r -- "error: unknown subcommand: $arg1"
-      print -u2 -r -- "hint: expected: auth|create|ls|rm|exec|rsync|reset|tunnel"
+      print -u2 -r -- "hint: expected: auth|create|ls|start|stop|rm|exec|rsync|reset|tunnel"
       print -u2 -r -- "hint: codex-workspace create [--private-repo ...] [repo...]"
       _codex_workspace_usage
       return 2
@@ -1447,16 +1590,6 @@ codex-workspace() {
     return 1
   fi
 
-  local tmp_out=''
-  tmp_out="$(mktemp "${TMPDIR:-/tmp}/codex-workspace.XXXXXX" 2>/dev/null || true)"
-  if [[ -z "$tmp_out" ]]; then
-    tmp_out="$(mktemp -t codex-workspace.XXXXXX 2>/dev/null || true)"
-  fi
-  if [[ -z "$tmp_out" ]]; then
-    print -u2 -r -- "error: mktemp failed"
-    return 1
-  fi
-
   # Opinionated defaults:
   # - No host bind-mounts for workspace/config (works with remote Docker hosts),
   #   except codex secrets (local path bind-mount).
@@ -1552,59 +1685,82 @@ codex-workspace() {
     print -u2 -r -- "auth: using gh keyring token for $gh_host (set CODEX_WORKSPACE_AUTH=env to force GH_TOKEN)"
   fi
 
-  if [[ -n "$chosen_token" ]]; then
-    if (( no_work_repos )); then
-      GH_TOKEN="$chosen_token" GITHUB_TOKEN="" "$launcher" up \
-        --no-clone \
-        --name "$workspace_name" \
-        --host "$gh_host" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
-    else
-      GH_TOKEN="$chosen_token" GITHUB_TOKEN="" "$launcher" up "$repo" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
-    fi
+  local -i supports_json=0
+  if "$launcher" --supports output-json >/dev/null 2>&1; then
+    supports_json=1
   else
-    if (( no_work_repos )); then
-      "$launcher" up \
-        --no-clone \
-        --name "$workspace_name" \
-        --host "$gh_host" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
-    else
-      "$launcher" up "$repo" \
-        --secrets-dir "$HOME/.config/codex_secrets" \
-        --secrets-mount /home/codex/codex_secrets \
-        "${codex_profile_arg[@]}" \
-        --persist-gh-token \
-        --setup-git 2>&1 | tee "$tmp_out"
+    local launcher_help=''
+    launcher_help="$("$launcher" --help 2>/dev/null || true)"
+    if [[ "$launcher_help" == *"--output json"* ]]; then
+      supports_json=1
     fi
   fi
 
-  local rc=$?
-  local out=''
-  out="$(cat "$tmp_out" 2>/dev/null || true)"
-  rm -f -- "$tmp_out" 2>/dev/null || true
-  [[ $rc -eq 0 ]] || return $rc
+  if (( !supports_json )); then
+    print -u2 -r -- "error: launcher does not support --output json (required)"
+    print -u2 -r -- "hint: update the launcher or point CODEX_WORKSPACE_LAUNCHER to a newer codex-kit checkout"
+    return 1
+  fi
+
+  local secrets_dir="$HOME/.config/codex_secrets"
+  local -a secrets_args=()
+  if [[ -d "$secrets_dir" ]]; then
+    secrets_args=(--secrets-dir "$secrets_dir" --secrets-mount /home/codex/codex_secrets)
+  fi
+
+  local tmp_json=''
+  tmp_json="$(mktemp "${TMPDIR:-/tmp}/codex-workspace.XXXXXX" 2>/dev/null || true)"
+  if [[ -z "$tmp_json" ]]; then
+    tmp_json="$(mktemp -t codex-workspace.XXXXXX 2>/dev/null || true)"
+  fi
+  if [[ -z "$tmp_json" ]]; then
+    print -u2 -r -- "error: mktemp failed"
+    return 1
+  fi
+
+  local -a env_prefix=()
+  if [[ -n "$chosen_token" ]]; then
+    env_prefix=(env GH_TOKEN="$chosen_token" GITHUB_TOKEN="")
+  fi
+
+  # Forward launcher human output to stdout (tests expect it), while capturing stdout-only JSON.
+  local -i rc=0
+  if (( no_work_repos )); then
+    { "${env_prefix[@]}" "$launcher" create \
+      --no-clone \
+      --name "$workspace_name" \
+      --host "$gh_host" \
+      "${secrets_args[@]}" \
+      "${codex_profile_arg[@]}" \
+      --persist-gh-token \
+      --setup-git \
+      --output json } 3>&1 1>"$tmp_json" 2>&3
+    rc=$?
+  else
+    { "${env_prefix[@]}" "$launcher" create "$repo" \
+      "${secrets_args[@]}" \
+      "${codex_profile_arg[@]}" \
+      --persist-gh-token \
+      --setup-git \
+      --output json } 3>&1 1>"$tmp_json" 2>&3
+    rc=$?
+  fi
+  if (( rc != 0 )); then
+    rm -f -- "$tmp_json" 2>/dev/null || true
+    return $rc
+  fi
+
+  local launcher_json=''
+  launcher_json="$(cat "$tmp_json" 2>/dev/null || true)"
+  rm -f -- "$tmp_json" 2>/dev/null || true
 
   local repo_dir=''
-  repo_dir="$(print -r -- "$out" | sed -nE 's/^path:[[:space:]]*//p' | tail -n 1)"
+  repo_dir="$(_codex_workspace_json_get "$launcher_json" path 2>/dev/null || true)"
 
   local container=''
-  container="$(print -r -- "$out" | sed -nE 's/^workspace:[[:space:]]*//p' | tail -n 1)"
+  container="$(_codex_workspace_json_get "$launcher_json" workspace 2>/dev/null || true)"
   if [[ -z "$container" ]]; then
-    print -u2 -r -- "warn: failed to detect workspace container name from output"
+    print -u2 -r -- "warn: failed to detect workspace container name from launcher JSON output"
     print -u2 -r -- "warn: skipping ~/.config snapshot and ~/.private setup"
   else
     docker exec -u codex "$container" bash -lc '

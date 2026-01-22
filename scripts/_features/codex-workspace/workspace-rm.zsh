@@ -6,7 +6,8 @@
 #
 # Notes:
 #   - Delegates workspace removal to the codex-kit launcher (canonical).
-#   - Removes volumes by default (passes `--volumes` for backwards compatibility).
+#   - Removes volumes by default; pass `--keep-volumes` to preserve volumes.
+#   - `--volumes` is accepted for backwards compatibility (no-op; launcher removes volumes by default).
 
 # _codex_workspace_normalize_container_name <name>
 # Normalize a workspace name into a docker container name (adds CODEX_WORKSPACE_PREFIX when needed).
@@ -149,7 +150,7 @@ EOF
   return $?
 }
 
-# _codex_workspace_rm_one <launcher> <name|container> [--yes]
+# _codex_workspace_rm_one <launcher> <name|container> [--keep-volumes] [--yes]
 # Remove a single workspace container and its named volumes (delegates to launcher).
 _codex_workspace_rm_one() {
   emulate -L zsh
@@ -157,7 +158,8 @@ _codex_workspace_rm_one() {
 
   local launcher="${1:-}"
   local name="${2:-}"
-  local -i want_yes="${3:-0}"
+  local -i keep_volumes="${3:-0}"
+  local -i want_yes="${4:-0}"
 
   if [[ -z "$launcher" || ! -x "$launcher" ]]; then
     print -u2 -r -- "error: launcher not found or not executable: $launcher"
@@ -173,23 +175,28 @@ _codex_workspace_rm_one() {
   local container=''
   container="$(_codex_workspace_normalize_container_name "$name")" || return 1
 
+  local -a rm_args=(rm "$container")
+  if (( keep_volumes )); then
+    rm_args+=(--keep-volumes)
+  fi
+
   if (( !want_yes )); then
     print -r -- "This will REMOVE a workspace:"
     print -r -- "  - container: $container"
     print -r --
     print -r -- "Actions:"
-    print -r -- "  - $launcher rm $container --volumes"
+    print -r -- "  - $launcher ${(j: :)rm_args}"
     _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
   fi
 
-  print -r -- "+ $launcher rm $container --volumes"
-  "$launcher" rm "$container" --volumes
+  print -r -- "+ $launcher ${(j: :)rm_args}"
+  "$launcher" "${rm_args[@]}"
 
   return $?
 }
 
-# codex-workspace-rm <name|container> [--yes]
-# codex-workspace-rm --all [--yes]
+# codex-workspace-rm <name|container> [--keep-volumes] [--yes]
+# codex-workspace-rm --all [--keep-volumes] [--yes]
 # Remove workspace container(s) and their named volumes.
 codex-workspace-rm() {
   emulate -L zsh
@@ -198,13 +205,14 @@ codex-workspace-rm() {
   if (( $# == 0 )); then
     cat <<'EOF'
 usage:
-  codex-workspace-rm <name|container> [--yes]
-  codex-workspace-rm --all [--yes]
+  codex-workspace-rm <name|container> [--keep-volumes] [--yes]
+  codex-workspace-rm --all [--keep-volumes] [--yes]
 
 Remove workspace container(s) and their named volumes.
 
 Notes:
-  - Delegates to the codex-kit launcher: <launcher> rm <container> --volumes
+  - Delegates to the codex-kit launcher: <launcher> rm <container>
+  - By default, volumes are removed; pass --keep-volumes to preserve them.
   - Add --yes to skip the confirmation prompt.
 EOF
     return 0
@@ -212,6 +220,7 @@ EOF
 
   local -i want_all=0
   local -i want_yes=0
+  local -i keep_volumes=0
   local -i want_help=0
   local name=''
   local -a extra_args=()
@@ -224,6 +233,14 @@ EOF
         ;;
       --all)
         want_all=1
+        shift
+        ;;
+      --keep-volumes)
+        keep_volumes=1
+        shift
+        ;;
+      --volumes)
+        keep_volumes=0
         shift
         ;;
       -y|--yes)
@@ -259,14 +276,14 @@ EOF
   if (( want_help )); then
     cat <<'EOF'
 usage:
-  codex-workspace-rm <name|container> [--yes]
-  codex-workspace-rm --all [--yes]
+  codex-workspace-rm <name|container> [--keep-volumes] [--yes]
+  codex-workspace-rm --all [--keep-volumes] [--yes]
 
 Remove workspace container(s) and their named volumes.
 
 Notes:
-  - Always runs: docker rm -f <container>
-  - Always runs: docker volume rm <container>-work <container>-home <container>-codex-home
+  - Delegates to: <launcher> rm <container> [--keep-volumes]
+  - By default, volumes are removed; pass --keep-volumes to preserve them.
   - Add --yes to skip the confirmation prompt.
 EOF
     return 0
@@ -310,14 +327,18 @@ EOF
       print -r -- "This will REMOVE ${#containers[@]} workspace(s):"
       _codex_workspace_print_folders "${containers[@]}"
       print -r --
-      print -r -- "Actions (per workspace): $launcher rm <container> --volumes"
+      if (( keep_volumes )); then
+        print -r -- "Actions (per workspace): $launcher rm <container> --keep-volumes"
+      else
+        print -r -- "Actions (per workspace): $launcher rm <container>"
+      fi
       _codex_workspace_confirm_or_abort "❓ Proceed? [y/N] " || return 1
     fi
 
     local -i rc=0
     local container=''
     for container in "${containers[@]}"; do
-      _codex_workspace_rm_one "$launcher" "$container" 1 || rc=1
+      _codex_workspace_rm_one "$launcher" "$container" "$keep_volumes" 1 || rc=1
     done
     return $rc
   fi
@@ -328,6 +349,6 @@ EOF
     return 2
   fi
 
-  _codex_workspace_rm_one "$launcher" "$name" "$want_yes"
+  _codex_workspace_rm_one "$launcher" "$name" "$keep_volumes" "$want_yes"
   return $?
 }
