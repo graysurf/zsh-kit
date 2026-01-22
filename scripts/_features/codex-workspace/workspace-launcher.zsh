@@ -15,31 +15,6 @@
 # Env:
 # - CODEX_WORKSPACE_PRIVATE_REPO: optional; clone/pull this repo into ~/.private inside the container.
 
-# _codex_workspace_tunnel_name_hash4 <input>
-# Print a 4-char hash used for VS Code tunnel name shortening.
-_codex_workspace_tunnel_name_hash4() {
-  emulate -L zsh
-  setopt pipe_fail
-
-  local input="${1:-}"
-  [[ -n "$input" ]] || return 1
-
-  local hash4=''
-  if command -v shasum >/dev/null 2>&1; then
-    hash4="$(print -n -r -- "$input" | shasum -a 1 2>/dev/null | awk '{print $1}' | cut -c1-4)"
-  elif command -v sha1sum >/dev/null 2>&1; then
-    hash4="$(print -n -r -- "$input" | sha1sum 2>/dev/null | awk '{print $1}' | cut -c1-4)"
-  elif command -v openssl >/dev/null 2>&1; then
-    hash4="$(print -n -r -- "$input" | openssl sha1 2>/dev/null | awk '{print $2}' | cut -c1-4)"
-  elif command -v python3 >/dev/null 2>&1; then
-    hash4="$(python3 -c 'import hashlib,sys; print(hashlib.sha1(sys.argv[1].encode()).hexdigest()[:4])' "$input" 2>/dev/null || true)"
-  fi
-
-  [[ -n "$hash4" ]] || hash4="0000"
-  print -r -- "$hash4"
-  return 0
-}
-
 # _codex_workspace_hex_encode_ascii <input>
 # Print lowercase hex encoding of ASCII input (best-effort).
 _codex_workspace_hex_encode_ascii() {
@@ -115,66 +90,6 @@ PY
 
   print -u2 -r -- "error: missing JSON parser (need python3 or jq) to consume launcher --output json"
   return 1
-}
-
-# _codex_workspace_tunnel_name_sanitize <name>
-# Normalize a tunnel name candidate (lowercase, alnum + '-') for VS Code.
-_codex_workspace_tunnel_name_sanitize() {
-  emulate -L zsh
-
-  local name="${1:-}"
-  name="${name:l}"
-  name="${name//[^a-z0-9-]/-}"
-  while [[ "$name" == *--* ]]; do
-    name="${name//--/-}"
-  done
-  name="${name##-}"
-  name="${name%%-}"
-  [[ -n "$name" ]] || name="ws"
-
-  print -r -- "$name"
-  return 0
-}
-
-# _codex_workspace_tunnel_default_name <container>
-# Derive a default VS Code tunnel name (<= 20 chars) from the workspace container name.
-_codex_workspace_tunnel_default_name() {
-  emulate -L zsh
-  setopt pipe_fail
-
-  local container="${1:-}"
-  [[ -n "$container" ]] || return 1
-
-  local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
-  local base="${container#${prefix}-}"
-
-  # Common pattern: <owner>-<repo>-YYYYMMDD-HHMMSS
-  local candidate="$base"
-  if [[ "$candidate" == *-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9] ]]; then
-    candidate="${candidate%-[0-9][0-9][0-9][0-9][0-9][0-9]}"
-    candidate="${candidate%-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]}"
-  fi
-
-  candidate="$(_codex_workspace_tunnel_name_sanitize "$candidate")"
-
-  local -i max_len=20
-  if (( ${#candidate} <= max_len )); then
-    print -r -- "$candidate"
-    return 0
-  fi
-
-  local hash4="$(_codex_workspace_tunnel_name_hash4 "$container")"
-  local -i prefix_len=$(( max_len - 5 )) # "<prefix>-<hash4>"
-  local short_prefix="${candidate[1,prefix_len]}"
-  while [[ "$short_prefix" == *- ]]; do
-    short_prefix="${short_prefix%-}"
-  done
-  [[ -n "$short_prefix" ]] || short_prefix="ws"
-  short_prefix="$(_codex_workspace_tunnel_name_sanitize "$short_prefix")"
-
-  local shortened="${short_prefix}-${hash4}"
-  print -r -- "${shortened[1,max_len]}"
-  return 0
 }
 
 # _codex_workspace_repo_default_from_cwd
@@ -1089,8 +1004,8 @@ usage: codex-workspace-tunnel [--name <tunnel_name>] [--detach] <name|container>
 Start a VS Code tunnel inside a workspace container.
 
 Notes:
+  - Delegates to the codex-kit launcher: <launcher> tunnel <container> ...
   - VS Code tunnel names are limited to 20 characters.
-  - Default naming strips the workspace timestamp (e.g., -YYYYMMDD-HHMMSS) and auto-shortens when needed.
   - Override the name with --name or CODEX_WORKSPACE_TUNNEL_NAME.
   - Options may appear before or after the container name.
 EOF
@@ -1157,8 +1072,8 @@ usage: codex-workspace-tunnel [--name <tunnel_name>] [--detach] <name|container>
 Start a VS Code tunnel inside a workspace container.
 
 Notes:
+  - Delegates to the codex-kit launcher: <launcher> tunnel <container> ...
   - VS Code tunnel names are limited to 20 characters.
-  - Default naming strips the workspace timestamp (e.g., -YYYYMMDD-HHMMSS) and auto-shortens when needed.
   - Override the name with --name or CODEX_WORKSPACE_TUNNEL_NAME.
   - Options may appear before or after the container name.
 EOF
@@ -1176,76 +1091,23 @@ EOF
     return 2
   fi
 
-  _codex_workspace_require_docker || return $?
-  if ! docker info >/dev/null 2>&1; then
-    print -u2 -r -- "error: docker daemon not running (start OrbStack/Docker Desktop)"
-    return 1
-  fi
-
   local container=''
-  if (( $+functions[_codex_workspace_normalize_container_name] )); then
-    container="$(_codex_workspace_normalize_container_name "$name")" || return 1
-  else
-    local prefix="${CODEX_WORKSPACE_PREFIX:-codex-ws}"
-    if [[ "$name" == "${prefix}-"* ]]; then
-      container="$name"
-    else
-      container="${prefix}-${name}"
-    fi
+  container="$(_codex_workspace_resolve_container "$name")" || return $?
+
+  local launcher=''
+  launcher="$(_codex_workspace_resolve_launcher_for_callthrough)" || return $?
+
+  local -a tunnel_args=(tunnel "$container")
+  if [[ -n "$tunnel_name" ]]; then
+    tunnel_args+=(--name "$tunnel_name")
   fi
-
-  _codex_workspace_require_container "$container" || return $?
-
-  local container_status=''
-  container_status="$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null || true)"
-  if [[ "$container_status" != "running" ]]; then
-    print -r -- "+ docker start $container"
-    docker start "$container" >/dev/null || return 1
-  fi
-
-  if ! docker exec -u codex "$container" bash -lc 'command -v code >/dev/null 2>&1'; then
-    print -u2 -r -- "error: missing 'code' in container (build with INSTALL_VSCODE=1)"
-    return 1
-  fi
-
-  if [[ -z "$tunnel_name" ]]; then
-    tunnel_name="$(_codex_workspace_tunnel_default_name "$container")" || return 1
-  else
-    tunnel_name="$(_codex_workspace_tunnel_name_sanitize "$tunnel_name")"
-  fi
-
-  local -i max_len=20
-  if (( ${#tunnel_name} > max_len )); then
-    print -u2 -r -- "error: VS Code tunnel name too long (${#tunnel_name} > ${max_len}): $tunnel_name"
-    print -u2 -r -- "hint: pass a shorter one via: codex-workspace tunnel $container --name <short>"
-    return 2
-  fi
-
-  local log_path="/home/codex/.codex-env/logs/code-tunnel.log"
-  if docker exec -u codex "$container" bash -lc 'pgrep -fa "[c]ode-tunnel tunnel|[c]ode tunnel" >/dev/null 2>&1'; then
-    print -u2 -r -- "warn: code tunnel already running in $container"
-    print -r -- "status:"
-    docker exec -u codex "$container" bash -lc "code tunnel status 2>/dev/null || true"
-    print -r -- "log: $log_path"
-    print -r -- "tail: docker exec -it $container bash -lc 'tail -f $log_path'"
-    return 0
-  fi
-
   if (( detach )); then
-    docker exec -u codex "$container" bash -lc 'mkdir -p "$(dirname "$1")" && : >"$1"' _ "$log_path" >/dev/null 2>&1 || true
-    docker exec -u codex -d "$container" bash -lc 'code tunnel --accept-server-license-terms --name "$1" >"$2" 2>&1' _ "$tunnel_name" "$log_path"
-    print -r -- "started: code tunnel ($tunnel_name) in $container"
-    print -r -- "status:"
-    sleep 1
-    docker exec -u codex "$container" bash -lc "code tunnel status 2>/dev/null || true"
-    print -r -- "log: $log_path"
-    print -r -- "tail: docker exec -it $container bash -lc 'tail -f $log_path'"
-    return 0
+    tunnel_args+=(--detach)
   fi
 
-  print -r -- "Starting VS Code tunnel (name: $tunnel_name)."
-  print -r -- "If this is the first run, follow the device-code login prompts."
-  docker exec -u codex -it "$container" code tunnel --accept-server-license-terms --name "$tunnel_name"
+  print -r -- "+ $launcher ${(j: :)tunnel_args}"
+  "$launcher" "${tunnel_args[@]}"
+  return $?
 }
 
 # codex-workspace-start [<name|container>]
