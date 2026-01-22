@@ -411,7 +411,7 @@ _launch_rdp() {
         sleep 0.2
       fi
 
-      if !_wait_for_browser_exit "$app_name" "$exe_path"; then
+      if ! _wait_for_browser_exit "$app_name" "$exe_path"; then
         print -r -- "⚠️ $app_name processes are still exiting; attempting force kill."
         _kill_all_chrome_processes "$app_name" "$exe_path"
         sleep 0.2
@@ -453,7 +453,7 @@ _launch_rdp() {
         sleep 0.2
       fi
 
-      if !_wait_for_browser_exit "$app_name" "$exe_path"; then
+      if ! _wait_for_browser_exit "$app_name" "$exe_path"; then
         print -r -- "⚠️ $app_name processes are still exiting; attempting force kill."
         _kill_all_chrome_processes "$app_name" "$exe_path"
         sleep 0.2
