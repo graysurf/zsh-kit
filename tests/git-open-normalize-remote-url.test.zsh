@@ -64,9 +64,21 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t git-open-normalize-test.XXXXXX)
 
   set_remote_and_assert \
     "$repo_dir" \
+    "alice@github.com:org/repo.git" \
+    "https://github.com/org/repo" \
+    "scp-style non-git user should normalize" || fail "scp-style non-git user failed"
+
+  set_remote_and_assert \
+    "$repo_dir" \
     "ssh://git@github.com/org/repo.git" \
     "https://github.com/org/repo" \
     "ssh url should normalize" || fail "ssh url failed"
+
+  set_remote_and_assert \
+    "$repo_dir" \
+    "ssh://alice@github.com/org/repo.git" \
+    "https://github.com/org/repo" \
+    "ssh url with non-git user should normalize" || fail "ssh url non-git user failed"
 
   set_remote_and_assert \
     "$repo_dir" \
@@ -79,6 +91,12 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t git-open-normalize-test.XXXXXX)
     "https://git@github.com/org/repo.git" \
     "https://github.com/org/repo" \
     "https url with git@ should normalize" || fail "https git@ failed"
+
+  set_remote_and_assert \
+    "$repo_dir" \
+    "https://user:token@github.com/org/repo.git" \
+    "https://github.com/org/repo" \
+    "https url with userinfo should strip credentials" || fail "https userinfo failed"
 
   set_remote_and_assert \
     "$repo_dir" \
