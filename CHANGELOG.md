@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.2 - 2026-01-22
+
+### Added
+- `codex-workspace start` / `codex-workspace stop` for managing existing workspaces.
+- `codex-workspace rsync` command for syncing host workspaces into containers.
+- `git-tools` shorthand aliases (`gt*`) and refreshed `git-tree` aliases.
+
+### Changed
+- `codex-workspace` delegates `ls`/`rm` and tunnel management to the codex-kit workspace launcher.
+- Codex secrets module renamed to `codex-secret.zsh` and alias wiring centralized.
+- Starship container module config simplified.
+
+### Fixed
+- `codex-workspace` no longer persists `GH_TOKEN` into workspace container env during setup.
+- `git-open` remote normalization handles non-https remotes and strips userinfo.
+- `chrome-devtools-rdp` profile pruning and wait-for-exit logic.
+- Plugin fetcher guards invalid plugin entries.
+- `open-changed-files` respects code disable in dry-run.
+- `fzf-history` preserves backslash-escaped spaces.
+- Test harness no longer auto-opens VS Code during runs.
+- Safer temp directory creation in tooling.
+
 ## v2.1.1 - 2026-01-21
 
 ### Added
