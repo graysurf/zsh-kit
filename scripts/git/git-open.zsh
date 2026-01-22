@@ -70,30 +70,70 @@ git-normalize-remote-url() {
   normalized="$raw_url"
 
   typeset slash='/'
-  case "$normalized" in
-    ssh://*)
-      normalized="${normalized#ssh://}"
-      if [[ "$normalized" == git@* ]]; then
-        normalized="${normalized#git@}"
-      fi
-      normalized="https://${normalized}"
-      ;;
-    git@*:*)
-      normalized="${normalized#git@}"
-      normalized="https://${normalized/:/$slash}"
-      ;;
-    git@*/*)
-      normalized="${normalized#git@}"
-      normalized="https://${normalized}"
-      ;;
-    https://git@*)
-      normalized="${normalized#https://git@}"
-      normalized="https://${normalized}"
-      ;;
-    git://*)
-      normalized="https://${normalized#git://}"
-      ;;
-  esac
+  if [[ "$normalized" == *"://"* ]]; then
+    case "$normalized" in
+      ssh://*)
+        normalized="${normalized#ssh://}"
+        typeset host_part="${normalized%%/*}"
+        typeset rest=''
+        if [[ "$normalized" == */* ]]; then
+          rest="${normalized#*/}"
+        fi
+        host_part="${host_part##*@}"
+        if [[ -n "$rest" && "$rest" != "$normalized" ]]; then
+          normalized="${host_part}/${rest}"
+        else
+          normalized="${host_part}"
+        fi
+        normalized="https://${normalized}"
+        ;;
+      git://*)
+        normalized="${normalized#git://}"
+        typeset host_part="${normalized%%/*}"
+        typeset rest=''
+        if [[ "$normalized" == */* ]]; then
+          rest="${normalized#*/}"
+        fi
+        host_part="${host_part##*@}"
+        if [[ -n "$rest" && "$rest" != "$normalized" ]]; then
+          normalized="${host_part}/${rest}"
+        else
+          normalized="${host_part}"
+        fi
+        normalized="https://${normalized}"
+        ;;
+      http://*|https://*)
+        typeset scheme="${normalized%%://*}"
+        typeset rest="${normalized#*://}"
+        typeset host_part="${rest%%/*}"
+        typeset path_part=''
+        if [[ "$rest" == */* ]]; then
+          path_part="${rest#*/}"
+        fi
+        host_part="${host_part##*@}"
+        if [[ -n "$path_part" && "$path_part" != "$rest" ]]; then
+          normalized="${scheme}://${host_part}/${path_part}"
+        else
+          normalized="${scheme}://${host_part}"
+        fi
+        ;;
+    esac
+  else
+    case "$normalized" in
+      *@*:*)
+        typeset user_host="${normalized%%:*}"
+        typeset path_part="${normalized#*:}"
+        user_host="${user_host##*@}"
+        normalized="https://${user_host}/${path_part}"
+        ;;
+      *@*/*)
+        typeset user_host="${normalized%%/*}"
+        typeset path_part="${normalized#*/}"
+        user_host="${user_host##*@}"
+        normalized="https://${user_host}/${path_part}"
+        ;;
+    esac
+  fi
 
   normalized="${normalized%.git}"
 
