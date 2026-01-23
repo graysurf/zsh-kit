@@ -12,16 +12,17 @@ _git-scope() {
 
   typeset -a subcommands=()
   subcommands=(
-    'tracked:Show all tracked files (filtered by prefix, supports -p)'
-    'staged:Show staged files (index contents, supports -p)'
-    'unstaged:Show unstaged files (not yet staged, supports -p)'
-    'all:Show all changed files (staged + unstaged, supports -p)'
-    'untracked:Show untracked files (not added to Git, supports -p)'
-    'commit:Inspect a specific commit (metadata, file list, and optionally file contents)'
+    'tracked:Show tracked files (optional path prefix filter)'
+    'staged:Show staged changes'
+    'unstaged:Show unstaged changes'
+    'all:Show staged + unstaged changes'
+    'untracked:Show untracked files'
+    'commit:Inspect a commit (supports --parent for merges)'
     'help:Display help message for git-scope'
   )
 
   _arguments -C \
+    '--no-color[Disable ANSI colors (also via NO_COLOR)]' \
     '1:command:->subcmds' \
     '*::arg:->args'
 
@@ -36,8 +37,11 @@ _git-scope() {
       case "$subcmd" in
         commit)
           _arguments -C \
+            '--no-color[Disable ANSI colors (also via NO_COLOR)]' \
             '(-p --print)'{-p,--print}'[Print contents of each file in the commit (from HEAD or working tree)]' \
-            '1:commit hash:->commit_hashes'
+            '--parent=[For merge commits: show diff against parent <n>]:parent index:' \
+            '-P+[For merge commits: show diff against parent <n>]:parent index:' \
+            '1:commit-ish:->commit_hashes'
 
           case "${state-}" in
             commit_hashes)
@@ -60,6 +64,7 @@ _git-scope() {
           ;;
         tracked|staged|unstaged|all|untracked)
           _arguments -C \
+            '--no-color[Disable ANSI colors (also via NO_COLOR)]' \
             '(-p --print)'{-p,--print}'[Print the contents of each file]' \
             '1:prefix:_files -/' \
             '*:prefix:_files -/' \

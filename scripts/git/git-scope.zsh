@@ -56,7 +56,8 @@ _git_scope_color_reset() {
 # Render a directory tree from a list of file paths.
 # Usage: _git_scope_render_tree <newline_separated_paths>
 _git_scope_render_tree() {
-  typeset -a file_list=("${(@f)}$1")
+  typeset -a file_list=("${(@f)1}")
+  file_list=("${(@)file_list:#}")
 
   if [[ "${#file_list[@]}" -eq 0 ]]; then
     printf "⚠️ No files to render as tree\n"
@@ -97,9 +98,13 @@ _git_scope_render_tree() {
 
 # _git_scope_render_with_type <name_status_lines>
 # Render `git diff --name-status`-style lines and show a directory tree.
-# Usage: _git_scope_render_with_type <name_status_lines>
+# Usage: _git_scope_render_with_type <name_status_lines> [print_mode]
+# - print_mode:
+#   - worktree (default): `print_file_content` (working tree, fallback to HEAD)
+#   - index: `print_file_content_index` (index, fallback to HEAD when deleted)
 _git_scope_render_with_type() {
   typeset input="$1"
+  typeset print_mode="${2:-worktree}"
 
   if [[ -z "$input" ]]; then
     printf "⚠️  No matching files\n"
@@ -131,7 +136,12 @@ _git_scope_render_with_type() {
   if [[ "$_git_scope_should_print" == true ]]; then
     printf "\n📦 Printing file contents:\n"
     for file in "${files[@]}"; do
-      print_file_content "$file"
+      case "$print_mode" in
+        index)
+          print_file_content_index "$file" ;;
+        *)
+          print_file_content "$file" ;;
+      esac
       printf "\n"
     done
   fi
@@ -166,13 +176,13 @@ _git_scope_collect() {
         "$(git -c core.quotepath=false diff --cached --name-status --diff-filter=ACMRTUXB)" \
         "$(git -c core.quotepath=false diff --name-status --diff-filter=ACMRTUXB)" \
         | grep -v '^$' | sort -u ;;
-    tracked)
-      typeset -a prefixes=("${args[@]}")
-      typeset files='' all_filtered=''
-      files=$(git -c core.quotepath=false ls-files)
-      if [[ ${#prefixes[@]} -gt 0 ]]; then
-        typeset -a file_list=("${(@f)files}")
-        for prefix in "${prefixes[@]}"; do
+	    tracked)
+	      typeset -a prefixes=("${args[@]}")
+	      typeset files='' all_filtered='' clean_prefix=''
+	      files=$(git -c core.quotepath=false ls-files)
+	      if [[ ${#prefixes[@]} -gt 0 ]]; then
+	        typeset -a file_list=("${(@f)files}")
+	        for prefix in "${prefixes[@]}"; do
           clean_prefix="${prefix%/}"
           clean_prefix="${clean_prefix#./}"
           if [[ -z "$clean_prefix" || "$clean_prefix" == "." ]]; then
@@ -257,17 +267,143 @@ print_file_content() {
   fi
 }
 
+# print_file_content_index <path>
+# Print file contents from the Git index, or fallback to `HEAD:<path>` when missing in index.
+# Usage: print_file_content_index <path>
+print_file_content_index() {
+  typeset file="$1"
+
+  if [[ -z "$file" ]]; then
+    printf "❗ Missing file path\n"
+    return 1
+  fi
+
+  if git cat-file -e ":$file" 2>/dev/null; then
+    typeset tmp=''
+    tmp="$(mktemp)"
+
+    if ! git show ":$file" > "$tmp" 2>/dev/null; then
+      rm -f "$tmp"
+      printf "❗ Failed to read file from index: %s\n" "$file"
+      return 1
+    fi
+
+    if file --mime "$tmp" | grep -q 'charset=binary'; then
+      printf "📄 %s (binary file in index)\n" "$file"
+      printf "🔹 [Binary file content omitted]\n"
+    else
+      printf "📄 %s (index)\n" "$file"
+      printf '```\n'
+      cat -- "$tmp"
+      printf '\n```\n'
+    fi
+
+    rm -f "$tmp"
+    return 0
+  fi
+
+  if git cat-file -e "HEAD:$file" 2>/dev/null; then
+    typeset tmp=''
+    tmp="$(mktemp)"
+    git show "HEAD:$file" > "$tmp"
+
+    if file --mime "$tmp" | grep -q 'charset=binary'; then
+      printf "📄 %s (deleted in index; binary file in HEAD)\n" "$file"
+      printf "🔹 [Binary file content omitted]\n"
+    else
+      printf "📄 %s (deleted in index; from HEAD)\n" "$file"
+      printf '```\n'
+      cat -- "$tmp"
+      printf '\n```\n'
+    fi
+
+    rm -f "$tmp"
+    return 0
+  fi
+
+  printf "❗ File not found in index: %s\n" "$file"
+  return 1
+}
+
 # Command handlers
 # _git_scope_tracked: Handler for `git-scope tracked`.
-_git_scope_tracked()   { _git_scope_render_with_type "$(_git_scope_collect tracked "$@")"; }
+_git_scope_tracked()   { _git_scope_render_with_type "$(_git_scope_collect tracked "$@")" worktree; }
 # _git_scope_staged: Handler for `git-scope staged`.
-_git_scope_staged()    { _git_scope_render_with_type "$(_git_scope_collect staged "$@")"; }
+_git_scope_staged()    { _git_scope_render_with_type "$(_git_scope_collect staged "$@")" index; }
 # _git_scope_unstaged: Handler for `git-scope unstaged`.
-_git_scope_unstaged()  { _git_scope_render_with_type "$(_git_scope_collect unstaged "$@")"; }
+_git_scope_unstaged()  { _git_scope_render_with_type "$(_git_scope_collect unstaged "$@")" worktree; }
 # _git_scope_all: Handler for `git-scope all`.
-_git_scope_all()       { _git_scope_render_with_type "$(_git_scope_collect all "$@")"; }
+_git_scope_all() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  typeset combined="$(_git_scope_collect all "$@")"
+  typeset staged_lines="$(_git_scope_collect staged "$@")"
+  typeset unstaged_lines="$(_git_scope_collect unstaged "$@")"
+
+  typeset -A staged_paths=() unstaged_paths=()
+
+  while IFS=$'\t' read -r kind src dest; do
+    [[ -z "$src" ]] && continue
+    typeset file_path="$src"
+    if [[ ( "$kind" == R* || "$kind" == C* ) && -n "$dest" ]]; then
+      file_path="$dest"
+    fi
+    staged_paths["$file_path"]=1
+  done <<< "$staged_lines"
+
+  while IFS=$'\t' read -r kind src dest; do
+    [[ -z "$src" ]] && continue
+    typeset file_path="$src"
+    if [[ ( "$kind" == R* || "$kind" == C* ) && -n "$dest" ]]; then
+      file_path="$dest"
+    fi
+    unstaged_paths["$file_path"]=1
+  done <<< "$unstaged_lines"
+
+  typeset should_print="$_git_scope_should_print"
+  _git_scope_should_print=false
+  _git_scope_render_with_type "$combined" worktree || return 1
+  _git_scope_should_print="$should_print"
+
+  if [[ "$should_print" != true ]]; then
+    return 0
+  fi
+
+  typeset -a files=()
+  while IFS=$'\t' read -r kind src dest; do
+    [[ -z "$src" ]] && continue
+    typeset file_path="$src"
+    if [[ ( "$kind" == R* || "$kind" == C* ) && -n "$dest" ]]; then
+      file_path="$dest"
+    fi
+    files+=("$file_path")
+  done <<< "$combined"
+
+  printf "\n📦 Printing file contents:\n"
+  for file in "${files[@]}"; do
+    typeset printed=false
+
+    if (( $+staged_paths["$file"] )); then
+      print_file_content_index "$file"
+      printed=true
+      printf "\n"
+    fi
+
+    if (( $+unstaged_paths["$file"] )); then
+      print_file_content "$file"
+      printed=true
+      printf "\n"
+    fi
+
+    if [[ "$printed" != true ]]; then
+      print_file_content "$file"
+      printf "\n"
+    fi
+  done
+}
 # _git_scope_untracked: Handler for `git-scope untracked`.
-_git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untracked "$@")"; }
+_git_scope_untracked() { _git_scope_render_with_type "$(_git_scope_collect untracked "$@")" worktree; }
 
 # _git_scope_commit - Show detailed information of a git commit
 #
@@ -453,13 +589,13 @@ _git_scope_render_commit_files() {
       _git_scope_commit_file_list=()
       return
     fi
-  else
-    ns_lines=$(git show --pretty=format: --name-status "$commit")
-    numstat_lines=$(git show --pretty=format: --numstat "$commit")
+	  else
+	    ns_lines=$(git -c core.quotepath=false show --pretty=format: --name-status "$commit")
+	    numstat_lines=$(git -c core.quotepath=false show --pretty=format: --numstat "$commit")
 
-    if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
-      printf "\n📄 Changed files:\n"
-      printf "  ℹ️  No file-level changes recorded for this commit\n"
+	    if [[ -z "$ns_lines" || -z "$numstat_lines" ]]; then
+	      printf "\n📄 Changed files:\n"
+	      printf "  ℹ️  No file-level changes recorded for this commit\n"
       _git_scope_commit_file_list=()
       return
     fi
@@ -558,7 +694,7 @@ git-scope() {
 
   typeset -a filtered_args=()
   for arg in "$@"; do
-    if [[ "$arg" == "--no-color" || "$arg" == "no-color" ]]; then
+    if [[ "$arg" == "--no-color" ]]; then
       _git_scope_no_color=true
     else
       filtered_args+=("$arg")
