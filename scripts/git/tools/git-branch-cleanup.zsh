@@ -137,7 +137,7 @@ git-delete-merged-branches() {
         return 1
       }
 
-      if [[ -n "$cherry_output" ]] && printf '%s\n' "$cherry_output" | command grep -q '^\+'; then
+      if [[ -n "$cherry_output" ]] && printf '%s\n' "$cherry_output" | command grep -q '^[+]'; then
         continue
       fi
 
