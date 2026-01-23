@@ -3,3 +3,4 @@
 # Linux-only required tools (installed via Homebrew on Linux).
 # Keep this file empty unless a tool is required on Linux but not on macOS.
 
+libnotify::libnotify::Send Linux desktop notifications (notify-send)
