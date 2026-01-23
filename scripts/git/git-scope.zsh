@@ -168,29 +168,35 @@ _git_scope_collect() {
         | grep -v '^$' | sort -u ;;
     tracked)
       typeset -a prefixes=("${args[@]}")
-      typeset -a file_list=() all_filtered=()
-      typeset files=''
+      typeset files='' all_filtered=''
       files=$(git -c core.quotepath=false ls-files)
-      file_list=("${(@f)files}")
       if [[ ${#prefixes[@]} -gt 0 ]]; then
+        typeset -a file_list=("${(@f)files}")
         for prefix in "${prefixes[@]}"; do
           clean_prefix="${prefix%/}"
+          clean_prefix="${clean_prefix#./}"
+          if [[ -z "$clean_prefix" || "$clean_prefix" == "." ]]; then
+            all_filtered+=$'\n'"${(F)file_list}"
+            continue
+          fi
           if [[ -d "$clean_prefix" ]]; then
-            typeset dir_prefix="${clean_prefix%/}/"
-            for f in "${file_list[@]}"; do
-              [[ "$f" == "${dir_prefix}"* ]] && all_filtered+=("$f")
-            done
+            all_filtered+=$'\n'"$(
+              printf '%s\n' "${file_list[@]}" \
+                | awk -v p="${clean_prefix}/" 'index($0,p)==1'
+            )"
           elif [[ -f "$clean_prefix" ]]; then
-            for f in "${file_list[@]}"; do
-              [[ "$f" == "$clean_prefix" ]] && all_filtered+=("$f")
-            done
+            all_filtered+=$'\n'"$(
+              printf '%s\n' "${file_list[@]}" \
+                | awk -v p="${clean_prefix}" '$0==p'
+            )"
           else
-            for f in "${file_list[@]}"; do
-              [[ "$f" == "${clean_prefix}"* ]] && all_filtered+=("$f")
-            done
+            all_filtered+=$'\n'"$(
+              printf '%s\n' "${file_list[@]}" \
+                | awk -v p="${clean_prefix}" 'index($0,p)==1'
+            )"
           fi
         done
-        files="$(printf '%s\n' "${all_filtered[@]}" | grep -v '^$' | sort -u)"
+        files="$(printf '%s\n' "$all_filtered" | grep -v '^$' | sort -u)"
       fi
       printf '%s\n' "$files" | while IFS= read -r f; do
         [[ -n "$f" ]] && printf "-\t%s\n" "$f"
