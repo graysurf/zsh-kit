@@ -106,6 +106,12 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t git-open-normalize-test.XXXXXX)
 
   set_remote_and_assert \
     "$repo_dir" \
+    "https://github.com/org/repo.git/" \
+    "https://github.com/org/repo" \
+    "https url with trailing slash should normalize" || fail "https trailing slash failed"
+
+  set_remote_and_assert \
+    "$repo_dir" \
     "git@github.com/org/repo.git" \
     "https://github.com/org/repo" \
     "git@host/path should normalize" || fail "git@host/path failed"

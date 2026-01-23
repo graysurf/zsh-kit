@@ -142,6 +142,7 @@ git-normalize-remote-url() {
     esac
   fi
 
+  normalized="${normalized%/}"
   normalized="${normalized%.git}"
 
   if [[ -z "$normalized" ]]; then
