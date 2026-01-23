@@ -168,20 +168,29 @@ _git_scope_collect() {
         | grep -v '^$' | sort -u ;;
     tracked)
       typeset -a prefixes=("${args[@]}")
-      typeset files='' all_filtered=''
+      typeset -a file_list=() all_filtered=()
+      typeset files=''
       files=$(git -c core.quotepath=false ls-files)
+      file_list=("${(@f)files}")
       if [[ ${#prefixes[@]} -gt 0 ]]; then
         for prefix in "${prefixes[@]}"; do
           clean_prefix="${prefix%/}"
           if [[ -d "$clean_prefix" ]]; then
-            all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}/")
+            typeset dir_prefix="${clean_prefix%/}/"
+            for f in "${file_list[@]}"; do
+              [[ "$f" == "${dir_prefix}"* ]] && all_filtered+=("$f")
+            done
           elif [[ -f "$clean_prefix" ]]; then
-            all_filtered+=$'\n'$(printf '%s\n' "$files" | grep -x "$clean_prefix")
+            for f in "${file_list[@]}"; do
+              [[ "$f" == "$clean_prefix" ]] && all_filtered+=("$f")
+            done
           else
-            all_filtered+=$'\n'$(printf '%s\n' "$files" | grep "^${clean_prefix}")
+            for f in "${file_list[@]}"; do
+              [[ "$f" == "${clean_prefix}"* ]] && all_filtered+=("$f")
+            done
           fi
         done
-        files="$(printf '%s\n' "$all_filtered" | grep -v '^$' | sort -u)"
+        files="$(printf '%s\n' "${all_filtered[@]}" | grep -v '^$' | sort -u)"
       fi
       printf '%s\n' "$files" | while IFS= read -r f; do
         [[ -n "$f" ]] && printf "-\t%s\n" "$f"
