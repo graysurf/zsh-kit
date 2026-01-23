@@ -126,6 +126,13 @@ git-normalize-remote-url() {
         user_host="${user_host##*@}"
         normalized="https://${user_host}/${path_part}"
         ;;
+      *:*)
+        typeset host_part="${normalized%%:*}"
+        typeset path_part="${normalized#*:}"
+        if [[ -n "$host_part" && -n "$path_part" ]]; then
+          normalized="https://${host_part}/${path_part}"
+        fi
+        ;;
       *@*/*)
         typeset user_host="${normalized%%/*}"
         typeset path_part="${normalized#*/}"

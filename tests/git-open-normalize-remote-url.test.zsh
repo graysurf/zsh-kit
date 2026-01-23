@@ -64,6 +64,12 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t git-open-normalize-test.XXXXXX)
 
   set_remote_and_assert \
     "$repo_dir" \
+    "github.com:org/repo.git" \
+    "https://github.com/org/repo" \
+    "scp-style without user should normalize" || fail "scp-style without user failed"
+
+  set_remote_and_assert \
+    "$repo_dir" \
     "alice@github.com:org/repo.git" \
     "https://github.com/org/repo" \
     "scp-style non-git user should normalize" || fail "scp-style non-git user failed"
