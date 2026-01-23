@@ -66,6 +66,16 @@ _git_scope_render_tree() {
 
   printf "\n📂 Directory tree:\n"
 
+  if ! command -v tree >/dev/null 2>&1; then
+    printf "⚠️  tree is not installed. Install it to see the directory tree.\n"
+    return 0
+  fi
+
+  if ! command tree --fromfile </dev/null >/dev/null 2>&1; then
+    printf "⚠️  tree does not support --fromfile. Please upgrade tree to enable directory tree output.\n"
+    return 0
+  fi
+
   typeset -a tree_args=(--fromfile)
   typeset strip_color=false
   if [[ "$_git_scope_no_color" == true ]]; then
