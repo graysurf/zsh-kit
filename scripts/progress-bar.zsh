@@ -32,7 +32,15 @@ typeset -gA _progress_bar_state=()
 _progress_bar::is_utf8_locale() {
   emulate -L zsh
 
-  typeset locale_raw="${LC_ALL-}${LC_CTYPE-}${LANG-}"
+  typeset locale_raw=''
+  if [[ -n "${LC_ALL-}" ]]; then
+    locale_raw="${LC_ALL-}"
+  elif [[ -n "${LC_CTYPE-}" ]]; then
+    locale_raw="${LC_CTYPE-}"
+  else
+    locale_raw="${LANG-}"
+  fi
+
   locale_raw="${locale_raw:u}"
   [[ -n "$locale_raw" && "$locale_raw" == *"UTF-8"* ]] && return 0
   [[ -n "$locale_raw" && "$locale_raw" == *"UTF8"* ]] && return 0
