@@ -52,6 +52,22 @@ _git_scope_color_reset() {
   printf '\033[0m'
 }
 
+# _git_scope_mktemp
+# Create a temp file path with a fallback when TMPDIR is invalid.
+# Usage: _git_scope_mktemp
+_git_scope_mktemp() {
+  typeset tmp=''
+  tmp="$(mktemp 2>/dev/null)" || tmp=''
+  if [[ -z "$tmp" ]]; then
+    tmp="$(mktemp -t git-scope.XXXXXX 2>/dev/null)" || tmp=''
+  fi
+  if [[ -z "$tmp" ]]; then
+    print -u2 -r -- "❗ Failed to create temp file"
+    return 1
+  fi
+  print -r -- "$tmp"
+}
+
 # _git_scope_render_tree <newline_separated_paths>
 # Render a directory tree from a list of file paths.
 # Usage: _git_scope_render_tree <newline_separated_paths>
@@ -257,7 +273,7 @@ print_file_content() {
     fi
   elif git cat-file -e "HEAD:$file" 2>/dev/null; then
     typeset tmp=''
-    tmp="$(mktemp)"
+    tmp="$(_git_scope_mktemp)" || return 1
     git show "HEAD:$file" > "$tmp"
 
     if file --mime "$tmp" | grep -q 'charset=binary'; then
@@ -290,7 +306,7 @@ print_file_content_index() {
 
   if git cat-file -e ":$file" 2>/dev/null; then
     typeset tmp=''
-    tmp="$(mktemp)"
+    tmp="$(_git_scope_mktemp)" || return 1
 
     if ! git show ":$file" > "$tmp" 2>/dev/null; then
       rm -f "$tmp"
@@ -314,7 +330,7 @@ print_file_content_index() {
 
   if git cat-file -e "HEAD:$file" 2>/dev/null; then
     typeset tmp=''
-    tmp="$(mktemp)"
+    tmp="$(_git_scope_mktemp)" || return 1
     git show "HEAD:$file" > "$tmp"
 
     if file --mime "$tmp" | grep -q 'charset=binary'; then
