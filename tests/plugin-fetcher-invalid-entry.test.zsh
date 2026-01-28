@@ -40,3 +40,13 @@ plugin_fetch_if_missing_from_entry "::git=https://example.com/repo.git" && fail 
 plugin_fetch_if_missing_from_entry "   " && fail "expected whitespace entry to fail"
 [[ -d "$plugins_dir" ]] || fail "plugins dir should remain after whitespace entry"
 [[ -f "$plugins_dir/keep.txt" ]] || fail "sentinel should remain after whitespace entry"
+
+typeset traversal_dir="$tmp_dir/evil"
+mkdir -p -- "$traversal_dir" || fail "failed to create traversal dir"
+print -r -- "evil-sentinel" >| "$traversal_dir/keep.txt" || fail "failed to write traversal sentinel"
+
+plugin_fetch_if_missing_from_entry "../evil" && fail "expected traversal entry to fail"
+[[ -d "$plugins_dir" ]] || fail "plugins dir should remain after traversal entry"
+[[ -f "$plugins_dir/keep.txt" ]] || fail "sentinel should remain after traversal entry"
+[[ -d "$traversal_dir" ]] || fail "traversal dir should remain after traversal entry"
+[[ -f "$traversal_dir/keep.txt" ]] || fail "traversal sentinel should remain after traversal entry"

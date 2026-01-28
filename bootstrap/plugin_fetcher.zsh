@@ -28,7 +28,7 @@ plugin_fetch_if_missing_from_entry() {
   plugin_name="${parts[1]}"
   plugin_name="${plugin_name#"${plugin_name%%[![:space:]]*}"}"
   plugin_name="${plugin_name%"${plugin_name##*[![:space:]]}"}"
-  if [[ -z "$plugin_name" || "$plugin_name" == '.' || "$plugin_name" == '..' ]]; then
+  if [[ -z "$plugin_name" || "$plugin_name" == '.' || "$plugin_name" == '..' || "$plugin_name" == *[^A-Za-z0-9._-]* ]]; then
     print -u2 -r -- "plugin_fetch_if_missing_from_entry: invalid plugin id in entry: ${entry:-<empty>}"
     return 1
   fi
