@@ -10,8 +10,8 @@ if command -v safe_unalias >/dev/null; then
   safe_unalias _git_lock
 fi
 
-typeset -r GIT_LOCK_TIMESTAMP_PATTERN='^timestamp='
-typeset -r GIT_LOCK_ABORTED_MSG='🚫 Aborted'
+typeset -gr GIT_LOCK_TIMESTAMP_PATTERN='^timestamp='
+typeset -gr GIT_LOCK_ABORTED_MSG='🚫 Aborted'
 
 # _git_lock_confirm <prompt> [printf_args...]
 # Prompt for y/N confirmation (returns 0 only on "y"/"Y").
@@ -172,10 +172,14 @@ _git_lock_list() {
   typeset file='' tmp_list=()
   for file in "$lock_dir/${repo_id}-"*.lock; do
     [[ -e "$file" && "$(basename "$file")" != "${repo_id}-latest.lock" ]] || continue
-    typeset ts_line='' epoch=''
-    ts_line=$(grep "$GIT_LOCK_TIMESTAMP_PATTERN" "$file")
+    typeset ts_line='' timestamp='' epoch=''
+    ts_line=$(grep "$GIT_LOCK_TIMESTAMP_PATTERN" "$file" 2>/dev/null || true)
     timestamp=${ts_line#timestamp=}
-    epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null || date -d "$timestamp" "+%s")
+    epoch="$(
+      date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" "+%s" 2>/dev/null \
+        || date -d "$timestamp" "+%s" 2>/dev/null
+    )"
+    [[ -n "$epoch" ]] || epoch=0
     tmp_list+=("$epoch|$file")
   done
 
