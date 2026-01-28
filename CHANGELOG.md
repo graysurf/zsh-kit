@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.3 - 2026-01-28
+
+### Added
+- `git-scope` can print staged changes with index-aware output.
+- `git-open` can normalize scp-style remote URLs without a user.
+- Linux tool list now includes `libnotify`.
+
+### Changed
+- `git-scope` tracked file filtering refactored to use arrays for improved performance.
+- CI check workflow extended for broader coverage.
+
+### Fixed
+- Hardened plugin id parsing to reject unsafe plugin ids.
+- `git-scope` supports `./` prefixes in tracked filters and adds a `mktemp` fallback.
+- `git-tools` avoids grep warnings in `gdbs`.
+- `bundle-wrapper` syncs from codex-kit and adds a docblock for the sources parser.
+- Git scope lookups treat empty results as success.
+- `progress-bar` prefers an explicit locale environment order.
+- `git-open` trims trailing slashes in normalized remotes.
+- `git-lock list` guards timestamp parsing to avoid `date -d` on macOS.
+
 ## v2.1.2 - 2026-01-22
 
 ### Added
