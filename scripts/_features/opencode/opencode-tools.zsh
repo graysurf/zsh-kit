@@ -106,7 +106,7 @@ _opencode_tools_commit_with_scope_fallback() {
   fi
 
   typeset staged=''
-  staged="$(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACMRTUXB 2>/dev/null || true)"
+  staged="$(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACMRTUXBD 2>/dev/null || true)"
   if [[ -z "$staged" ]]; then
     print -u2 -r -- "opencode-commit-with-scope: no staged changes (stage files then retry)"
     return 1
@@ -256,7 +256,7 @@ opencode-commit-with-scope() {
     git -C "$git_root" add -A || return 1
   else
     local staged=''
-    staged="$(git -C "$git_root" -c core.quotepath=false diff --cached --name-only --diff-filter=ACMRTUXB 2>/dev/null || true)"
+    staged="$(git -C "$git_root" -c core.quotepath=false diff --cached --name-only --diff-filter=ACMRTUXBD 2>/dev/null || true)"
     if [[ -z "$staged" ]]; then
       print -u2 -r -- "opencode-commit-with-scope: no staged changes (stage files then retry)"
       return 1
