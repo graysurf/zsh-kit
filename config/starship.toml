@@ -70,7 +70,7 @@ disabled = false
 
 [package]
 style = "bold #7fdbca"
-disabled = false
+disabled = true
 
 [time]
 style = "bold #637777"
