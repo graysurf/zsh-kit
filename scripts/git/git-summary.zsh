@@ -31,6 +31,75 @@ _git_summary_date() {
   return 0
 }
 
+# _git_summary_require_git
+# Ensure git is available and we're in a Git repo.
+# Usage: _git_summary_require_git
+_git_summary_require_git() {
+  if ! command -v git >/dev/null 2>&1; then
+    printf "❗ git is required but was not found in PATH.\n"
+    return 1
+  fi
+
+  if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    printf "⚠️ Not a Git repository. Run this command inside a Git project.\n"
+    return 1
+  fi
+
+  return 0
+}
+
+# _git_summary_validate_date <YYYY-MM-DD>
+# Validate date format and value using BSD/GNU date.
+# Usage: _git_summary_validate_date 2024-01-01
+_git_summary_validate_date() {
+  emulate -L zsh
+  typeset input="${1-}"
+  typeset fmt="${GIT_SUMMARY_DATE_FMT:-%Y-%m-%d}"
+  typeset parsed=''
+
+  if [[ -z "$input" ]]; then
+    print "❌ Missing date value."
+    return 1
+  fi
+
+  if [[ ! "$input" =~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' ]]; then
+    print "❌ Invalid date format: $input (expected YYYY-MM-DD)."
+    return 1
+  fi
+
+  if [[ "$GIT_SUMMARY_DATE_HAS_V" == true ]]; then
+    parsed=$(date -j -f "$fmt" "$input" +"$fmt" 2>/dev/null) || parsed=''
+  else
+    parsed=$(date -d "$input" +"$fmt" 2>/dev/null) || parsed=''
+  fi
+
+  if [[ -z "$parsed" || "$parsed" != "$input" ]]; then
+    print "❌ Invalid date value: $input."
+    return 1
+  fi
+
+  return 0
+}
+
+# _git_summary_validate_range <since> <until>
+# Validate that both dates are valid and since <= until.
+# Usage: _git_summary_validate_range 2024-01-01 2024-01-31
+_git_summary_validate_range() {
+  emulate -L zsh
+  typeset since="${1-}"
+  typeset until="${2-}"
+
+  _git_summary_validate_date "$since" || return 1
+  _git_summary_validate_date "$until" || return 1
+
+  if [[ "$since" > "$until" ]]; then
+    print "❌ Start date must be on or before end date."
+    return 1
+  fi
+
+  return 0
+}
+
 # ───────────────────────────────────────────────────────
 # Aliases and Unalias
 # ────────────────────────────────────────────────────────
@@ -45,6 +114,11 @@ fi
 # - Provide both dates or neither (full history).
 # - Filters out common lockfiles from line counts.
 _git_summary() {
+  emulate -L zsh
+  setopt pipe_fail
+
+  _git_summary_require_git || return 1
+
   typeset since_param="$1"
   typeset until_param="$2"
   typeset log_args=()
@@ -58,6 +132,7 @@ _git_summary() {
   if [[ -z "$since_param" && -z "$until_param" ]]; then
     log_args=(--no-merges)
   else
+    _git_summary_validate_range "$since_param" "$until_param" || return 1
     # Use local calendar boundaries with explicit timezone, so Git parses them in local time.
     typeset tz_raw="$(date +%z)" # e.g., +0800
     typeset since_bound="$since_param 00:00:00 $tz_raw"
@@ -208,38 +283,46 @@ _git_this_week() {
 # Notes:
 # - Dates are `YYYY-MM-DD` and interpreted in local timezone boundaries.
 git-summary() {
+  emulate -L zsh
   typeset cmd="${1-}"
   typeset arg1="${1-}"
   typeset arg2="${2-}"
 
   case "$cmd" in
     all)
+      _git_summary_require_git || return 1
       print "\n📅 Git summary for all commits"
       print
       _git_summary
       return $?
       ;;
     today)
+      _git_summary_require_git || return 1
       _git_today
       return $?
       ;;
     yesterday)
+      _git_summary_require_git || return 1
       _git_yesterday
       return $?
       ;;
     this-month)
+      _git_summary_require_git || return 1
       _git_this_month
       return $?
       ;;
     last-month)
+      _git_summary_require_git || return 1
       _git_last_month
       return $?
       ;;
     this-week)
+      _git_summary_require_git || return 1
       _git_this_week
       return $?
       ;;
     last-week)
+      _git_summary_require_git || return 1
       _git_last_week
       return $?
       ;;
@@ -257,10 +340,11 @@ git-summary() {
         last-week      "Last Mon–Sun"
       printf "  %-16s  %s\n" "<from> <to>" "Custom date range (YYYY-MM-DD)"
       printf "\n"
-      return 1
+      return 0
       ;;
     *)
       if [[ -n "$arg1" && -n "$arg2" ]]; then
+        _git_summary_require_git || return 1
         _git_summary "$arg1" "$arg2"
         return $?
       else
