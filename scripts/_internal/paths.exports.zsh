@@ -43,6 +43,9 @@ typeset -a _zsh_path_prepend=()
 # Homebrew (Apple Silicon)
 [[ -d /opt/homebrew/bin ]] && _zsh_path_prepend+=(/opt/homebrew/bin /opt/homebrew/sbin)
 
+# Rust (rustup)
+[[ -d "$HOME/.cargo/bin" ]] && _zsh_path_prepend+=("$HOME/.cargo/bin")
+
 _zsh_path_prepend+=(
   /usr/local/bin
   /usr/bin
