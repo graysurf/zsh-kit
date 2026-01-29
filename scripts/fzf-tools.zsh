@@ -814,8 +814,8 @@ fzf-git-checkout() {
 # - Optional query pre-fills the initial fzf search. If it also resolves to a commit ref, uses its short hash.
 # - Default behavior opens the file in the current working tree (HEAD) at the same path; if missing, prompts to open snapshot.
 # - Uses `FZF_FILE_OPEN_WITH` to choose editor: `vi` (default) or `vscode`.
-# - In file picker: Enter opens multiple worktree files (up to `OPEN_CHANGED_FILES_MAX_FILES`); Ctrl-F opens the selected file only.
-#   With `--snapshot`, Enter opens the selected snapshot; Ctrl-F opens the selected worktree file.
+# - In file picker: Enter opens multiple worktree files (up to `OPEN_CHANGED_FILES_MAX_FILES`); Ctrl-O opens the selected file only.
+#   With `--snapshot`, Enter opens the selected snapshot; Ctrl-O opens the selected worktree file.
 fzf-git-commit() {
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     printf "❌ Not inside a Git repository. Aborting.\n" >&2
@@ -887,8 +887,8 @@ fzf-git-commit() {
     local fzf_result='' mode_key='' selected_line='' selected_file=''
     fzf_result=$(printf "%s\n" "${file_list[@]}" |
       fzf --ansi \
-          --expect=ctrl-f \
-          --header='enter: open all (worktree) | ctrl-f: open selected' \
+          --expect=ctrl-o \
+          --header='enter: open all (worktree) | ctrl-o: open selected' \
           --prompt="📄 Files in $commit > " \
           --preview-window='right:50%:wrap' \
           --preview='bash -c "
@@ -907,9 +907,9 @@ fzf-git-commit() {
     fi
 
     local open_snapshot="$snapshot"
-    [[ "$mode_key" == "ctrl-f" ]] && open_snapshot=false
+    [[ "$mode_key" == "ctrl-o" ]] && open_snapshot=false
 
-    if [[ "$mode_key" != "ctrl-f" ]] && ! $open_snapshot; then
+    if [[ "$mode_key" != "ctrl-o" ]] && ! $open_snapshot; then
       local -a worktree_files=()
       local rel='' abs=''
       for rel in "${file_paths[@]}"; do

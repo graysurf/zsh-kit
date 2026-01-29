@@ -91,15 +91,15 @@ Optionally pass a query to pre-fill the initial fuzzy search. If the input also 
 
 By default, press `Enter` to open multiple files from the current working tree (worktree) at the same paths as in
 the selected commit (limited by `OPEN_CHANGED_FILES_MAX_FILES`).
-Press `Ctrl-F` to open the selected file only; if that path no longer exists, you’ll be prompted to open the commit
+Press `Ctrl-O` to open the selected file only; if that path no longer exists, you’ll be prompted to open the commit
 snapshot instead. For deleted files, the snapshot opens the pre-delete version from the parent commit.
-With `--snapshot`, press `Enter` to open the selected file snapshot; press `Ctrl-F` to open the selected worktree file.
+With `--snapshot`, press `Enter` to open the selected file snapshot; press `Ctrl-O` to open the selected worktree file.
 
 **Preview includes:**
 
 - `bat`-highlighted file content
 - Commit-specific snapshot
-- Open files in your editor (`Enter`: multiple worktree files; `Ctrl-F`: selected file; `--snapshot`: selected snapshot)
+- Open files in your editor (`Enter`: multiple worktree files; `Ctrl-O`: selected file; `--snapshot`: selected snapshot)
 
 ### 🧭 Two-step interaction
 
@@ -111,7 +111,7 @@ With `--snapshot`, press `Enter` to open the selected file snapshot; press `Ctrl
    After selecting a commit, choose a modified file.  
    The preview shows a colorized `git diff` via `delta`.  
    Press `Enter` to open multiple files from the current working tree (worktree).  
-   Press `Ctrl-F` to open the selected file only. (With `--snapshot`, `Enter` opens the snapshot and `Ctrl-F` opens the worktree file.)
+   Press `Ctrl-O` to open the selected file only. (With `--snapshot`, `Enter` opens the snapshot and `Ctrl-O` opens the worktree file.)
 
 #### 📌 Step 1: Commit selection with scope preview
 
@@ -122,7 +122,7 @@ With `--snapshot`, press `Enter` to open the selected file snapshot; press `Ctrl
 ![fzf-git-commit-2](../../assets/fzf-git-commit-2.png)
 
 > Press `Enter` to open multiple worktree files (default) or the selected snapshot (`--snapshot`).  
-> Press `Ctrl-F` to open the selected file only (worktree).  
+> Press `Ctrl-O` to open the selected file only (worktree).  
 > Configure `FZF_FILE_OPEN_WITH` to choose the opener: `vi` (default) or `vscode`.  
 > Use `--snapshot` to always open the selected file snapshot (exported to a temp file). (Multi-file open is worktree only.)
 
