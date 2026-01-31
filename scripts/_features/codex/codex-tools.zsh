@@ -55,34 +55,41 @@ _codex_exec_dangerous() {
     -- "$prompt"
 }
 
-# _codex_tools_semantic_commit_skill_available
-# Return 0 when the semantic-commit skill exists locally.
-# Usage: _codex_tools_semantic_commit_skill_available
-_codex_tools_semantic_commit_skill_available() {
+# _codex_tools_semantic_commit_prompt <mode>
+# Print the semantic-commit workflow prompt by reading a local prompt template.
+# Usage: _codex_tools_semantic_commit_prompt <staged|autostage>
+_codex_tools_semantic_commit_prompt() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  typeset codex_home="${CODEX_HOME-}"
-  [[ -n "$codex_home" ]] || return 1
+  local mode="${1-}"
+  local template_name=''
+  case "$mode" in
+    staged) template_name='semantic-commit-staged' ;;
+    autostage) template_name='semantic-commit-autostage' ;;
+    *)
+      print -u2 -r -- "_codex_tools_semantic_commit_prompt: invalid mode: $mode"
+      return 1
+      ;;
+  esac
 
-  [[ -f "$codex_home/skills/tools/devex/semantic-commit/SKILL.md" || -f "$codex_home/skills/semantic-commit/SKILL.md" ]]
-}
+  local prompts_dir=''
+  prompts_dir="$(_codex_tools_prompts_dir)" || {
+    print -u2 -r -- "_codex_tools_semantic_commit_prompt: prompts dir not found (expected: \$ZDOTDIR/prompts)"
+    return 1
+  }
 
-# _codex_tools_semantic_commit_autostage_skill_available
-# Return 0 when the semantic-commit-autostage skill exists locally.
-# Usage: _codex_tools_semantic_commit_autostage_skill_available
-_codex_tools_semantic_commit_autostage_skill_available() {
-  emulate -L zsh
-  setopt pipe_fail err_return nounset
+  local prompt_file="$prompts_dir/${template_name}.md"
+  if [[ ! -f "$prompt_file" ]]; then
+    print -u2 -r -- "_codex_tools_semantic_commit_prompt: prompt template not found: $prompt_file"
+    return 1
+  fi
 
-  typeset codex_home="${CODEX_HOME-}"
-  [[ -n "$codex_home" ]] || return 1
-
-  [[ -f "$codex_home/skills/automation/semantic-commit-autostage/SKILL.md" || -f "$codex_home/skills/semantic-commit-autostage/SKILL.md" ]]
+  cat -- "$prompt_file" || return 1
 }
 
 # _codex_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
-# Local Conventional Commit fallback for when semantic-commit skill is unavailable.
+# Local Conventional Commit fallback for when semantic-commit is unavailable.
 # Usage: _codex_tools_commit_with_scope_fallback <push_flag> [extra prompt...]
 _codex_tools_commit_with_scope_fallback() {
   emulate -L zsh
@@ -109,11 +116,7 @@ _codex_tools_commit_with_scope_fallback() {
     return 1
   fi
 
-  typeset expected_skill_path=''
-  if [[ -n "${CODEX_HOME-}" ]]; then
-    expected_skill_path="$CODEX_HOME/skills/tools/devex/semantic-commit/SKILL.md"
-  fi
-  print -u2 -r -- "codex-commit-with-scope: semantic-commit skill not found${expected_skill_path:+: $expected_skill_path}"
+  print -u2 -r -- "codex-commit-with-scope: semantic-commit not found on PATH (fallback mode)"
 
   if [[ -n "$extra_prompt" ]]; then
     print -u2 -r -- "codex-commit-with-scope: note: extra prompt is ignored in fallback mode"
@@ -212,10 +215,10 @@ _codex_tools_commit_with_scope_fallback() {
 }
 
 # codex-commit-with-scope [-p|--push] [-a|--auto-stage] [extra prompt...]
-# Run the semantic-commit skill to create a Semantic Commit and report git-scope output.
+# Run a Semantic Commit workflow (rules embedded in prompt; no skill lookup).
 # Options:
 #   -p, --push    Push to remote after a successful commit.
-#   -a, --auto-stage  Use semantic-commit-autostage (autostage all changes) instead of semantic-commit.
+#   -a, --auto-stage  Autostage all changes before committing.
 codex-commit-with-scope() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -243,26 +246,6 @@ codex-commit-with-scope() {
     extra_prompt="$*"
   fi
 
-  local skill_name='semantic-commit'
-  if [[ "$auto_stage_flag" == 'true' ]]; then
-    skill_name='semantic-commit-autostage'
-    if ! _codex_tools_semantic_commit_autostage_skill_available; then
-      local expected_skill_path=''
-      if [[ -n "${CODEX_HOME-}" ]]; then
-        expected_skill_path="$CODEX_HOME/skills/automation/semantic-commit-autostage/SKILL.md"
-      fi
-      print -u2 -r -- "codex-commit-with-scope: semantic-commit-autostage skill not found${expected_skill_path:+: $expected_skill_path}"
-      return 1
-    fi
-  else
-    if ! _codex_tools_semantic_commit_skill_available; then
-      _codex_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
-      return $?
-    fi
-  fi
-
-  _codex_require_allow_dangerous 'codex-commit-with-scope' || return 1
-
   if ! command -v git >/dev/null; then
     print -u2 -r -- "codex-commit-with-scope: missing binary: git"
     return 1
@@ -285,8 +268,19 @@ codex-commit-with-scope() {
     fi
   fi
 
+  if ! command -v semantic-commit >/dev/null; then
+    _codex_tools_commit_with_scope_fallback "$push_flag" "$extra_prompt"
+    return $?
+  fi
+
+  _codex_require_allow_dangerous 'codex-commit-with-scope' || return 1
+
   local prompt=''
-  prompt="Use the ${skill_name} skill."
+  if [[ "$auto_stage_flag" == 'true' ]]; then
+    prompt="$(_codex_tools_semantic_commit_prompt autostage)" || return 1
+  else
+    prompt="$(_codex_tools_semantic_commit_prompt staged)" || return 1
+  fi
 
   if [[ "$push_flag" == 'true' ]]; then
     prompt+=$'\n\nFurthermore, please push the committed changes to the remote repository.'
@@ -616,9 +610,9 @@ _codex_tools_usage_agent() {
   print -u"$fd" -r -- '  prompt [prompt...]                             Run a raw prompt (useful when prompt starts with a command word)'
   print -u"$fd" -r -- '  advice [question]                              Get actionable engineering advice'
   print -u"$fd" -r -- '  knowledge [concept]                            Get clear explanation and angles for a concept'
-  print -u"$fd" -r -- '  commit [-p|--push] [-a|--auto-stage] [extra prompt...]  Run semantic-commit skill (with git-scope context)'
+  print -u"$fd" -r -- '  commit [-p|--push] [-a|--auto-stage] [extra prompt...]  Run a semantic-commit workflow (rules embedded in prompt)'
   print -u"$fd" -r -- '    -p, --push                                             Push to remote after commit'
-  print -u"$fd" -r -- '    -a, --auto-stage                             Use semantic-commit-autostage (autostage all changes)'
+  print -u"$fd" -r -- '    -a, --auto-stage                             Autostage all changes before committing'
   print -u"$fd" -r --
   print -u"$fd" -r -- 'Safety: agent commands run `codex exec` and require CODEX_ALLOW_DANGEROUS_ENABLED=true'
   return 0
