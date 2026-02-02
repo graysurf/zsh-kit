@@ -4,7 +4,8 @@ __git_lock_labels() {
   emulate -L zsh -o extendedglob
 
   local toplevel='' repo_id='' lock_dir='' file=''
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  local cache_dir="${ZSH_CACHE_DIR:-${ZDOTDIR:-$HOME/.config/zsh}/cache}"
+  lock_dir="$cache_dir/git-locks"
 
   toplevel="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
   repo_id="${toplevel:t}"
