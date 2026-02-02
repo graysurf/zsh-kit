@@ -13,6 +13,38 @@ fi
 typeset -gr GIT_LOCK_TIMESTAMP_PATTERN='^timestamp='
 typeset -gr GIT_LOCK_ABORTED_MSG='🚫 Aborted'
 
+# _git_lock_cache_dir
+# Resolve the git-lock cache dir (fallback to ZDOTDIR/cache or ~/.config/zsh/cache).
+# Usage: _git_lock_cache_dir
+_git_lock_cache_dir() {
+  emulate -L zsh
+  setopt pipe_fail err_return
+
+  typeset cache_dir="${ZSH_CACHE_DIR-}"
+  if [[ -z "$cache_dir" ]]; then
+    typeset zdotdir="${ZDOTDIR-}"
+    if [[ -n "$zdotdir" ]]; then
+      cache_dir="$zdotdir/cache"
+    else
+      cache_dir="$HOME/.config/zsh/cache"
+    fi
+  fi
+
+  print -r -- "$cache_dir"
+}
+
+# _git_lock_lock_dir
+# Resolve the git-lock storage dir.
+# Usage: _git_lock_lock_dir
+_git_lock_lock_dir() {
+  emulate -L zsh
+  setopt pipe_fail err_return
+
+  typeset cache_dir=''
+  cache_dir="$(_git_lock_cache_dir)" || return 1
+  print -r -- "$cache_dir/git-locks"
+}
+
 # _git_lock_confirm <prompt> [printf_args...]
 # Prompt for y/N confirmation (returns 0 only on "y"/"Y").
 # Usage: _git_lock_confirm <prompt> [printf_args...]
@@ -45,8 +77,11 @@ _git_lock_resolve_label() {
   typeset repo_id='' lock_dir='' latest_file=''
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
-  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
+  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir" || {
+    print -u2 -r -- "❌ Failed to create git-lock dir: $lock_dir"
+    return 1
+  }
   latest_file="$lock_dir/${repo_id}-latest"
 
   if [[ -n "$input_label" ]]; then
@@ -77,7 +112,7 @@ _git_lock() {
   commit="${commit_arg:-HEAD}"
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
   lock_file="$lock_dir/${repo_id}-${label}.lock"
   latest_file="$lock_dir/${repo_id}-latest"
   timestamp=$(date "+%Y-%m-%d %H:%M:%S")
@@ -87,7 +122,10 @@ _git_lock() {
     return 1
   }
 
-  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
+  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir" || {
+    print -u2 -r -- "❌ Failed to create git-lock dir: $lock_dir"
+    return 1
+  }
 
   {
     printf "%s # %s\n" "$hash" "$note"
@@ -113,10 +151,13 @@ _git_lock_unlock() {
   typeset label='' repo_id='' lock_dir='' lock_file='' latest_file=''
   typeset label_arg="${1-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
   latest_file="$lock_dir/${repo_id}-latest"
 
-  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir"
+  [[ -d "$lock_dir" ]] || mkdir -p "$lock_dir" || {
+    print -u2 -r -- "❌ Failed to create git-lock dir: $lock_dir"
+    return 1
+  }
 
   if [[ -n "$label_arg" ]]; then
     label="$label_arg"
@@ -160,7 +201,7 @@ _git_lock_unlock() {
 _git_lock_list() {
   typeset repo_id='' lock_dir='' latest=''
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
 
   [[ -d "$lock_dir" ]] || {
     printf "📬 No git-locks found for [%s]\n" "$repo_id"
@@ -222,7 +263,7 @@ _git_lock_copy() {
   typeset src_label_arg="${1-}"
   typeset dst_label_arg="${2-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
 
   [[ -d "$lock_dir" ]] || {
     printf "❌ No git-locks found\n"
@@ -279,7 +320,7 @@ _git_lock_delete() {
   typeset repo_id='' lock_dir='' label='' lock_file='' latest_file='' latest_label=''
   typeset label_arg="${1-}"
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
   latest_file="$lock_dir/${repo_id}-latest"
 
   [[ -d "$lock_dir" ]] || {
@@ -373,7 +414,7 @@ _git_lock_diff() {
   }
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
   file1="$lock_dir/${repo_id}-${label1}.lock"
   file2="$lock_dir/${repo_id}-${label2}.lock"
 
@@ -452,7 +493,7 @@ _git_lock_tag() {
   }
 
   repo_id=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  lock_dir="$ZSH_CACHE_DIR/git-locks"
+  lock_dir="$(_git_lock_lock_dir)" || return 1
   lock_file="$lock_dir/${repo_id}-${label}.lock"
 
   [[ -f "$lock_file" ]] || {
