@@ -158,6 +158,7 @@ if command -v codex-cli >/dev/null 2>&1; then
   # ZLE widget: run `codex-cli diag rate-limits --all --async` without clobbering the current buffer.
   codex-cli-rate-limits-async-widget() {
     emulate -L zsh
+    setopt localoptions pipe_fail
 
     local saved_buffer="${BUFFER}"
     local -i saved_cursor="${CURSOR}"
@@ -166,11 +167,9 @@ if command -v codex-cli >/dev/null 2>&1; then
     zle -I
     codex-cli diag rate-limits --all --async
     rc=$?
-    zle -I
 
     BUFFER="${saved_buffer}"
     CURSOR="${saved_cursor}"
-    zle reset-prompt
     return $rc
   }
 
