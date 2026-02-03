@@ -31,6 +31,7 @@
 typeset -gr SCRIPT_PATH="${0:A}"
 typeset -gr REPO_ROOT="${SCRIPT_PATH:h}"
 export ZDOTDIR="$REPO_ROOT"
+typeset -gr GRAYSURF_HOMEBREW_TAP_NAME="graysurf/tap"
 
 typeset -gr PATHS_FILE="$ZDOTDIR/scripts/_internal/paths.exports.zsh"
 if [[ -f "$PATHS_FILE" ]]; then
@@ -80,6 +81,53 @@ function _install_tools::apply_homebrew_env() {
   fi
 
   return 0
+}
+
+function _install_tools::tap_graysurf_homebrew_tap() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  local quiet="$1"
+  local tap_name="$GRAYSURF_HOMEBREW_TAP_NAME"
+
+  local home="${HOME-}"
+  local -a candidates=(
+    /opt/homebrew/bin/brew
+    /usr/local/bin/brew
+    /home/linuxbrew/.linuxbrew/bin/brew
+  )
+  [[ -n "$home" ]] && candidates+=("$home/.linuxbrew/bin/brew")
+
+  local -a brew_paths=()
+  local brew_path=''
+  brew_path="$(whence -p brew || true)"
+  if [[ -n "$brew_path" && -x "$brew_path" ]]; then
+    brew_paths+=("$brew_path")
+  fi
+
+  local candidate=''
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "$candidate" ]] && (( ${brew_paths[(Ie)$candidate]} == 0 )); then
+      brew_paths+=("$candidate")
+    fi
+  done
+
+  if (( ${#brew_paths[@]} == 0 )); then
+    print -u2 -r -- "warn: brew not found; skipping tap ${tap_name}"
+    return 0
+  fi
+
+  local brew_bin=''
+  for brew_bin in "${brew_paths[@]}"; do
+    local prefix="${brew_bin:h:h}"
+    if [[ "$quiet" == true ]]; then
+      HOMEBREW_PREFIX="$prefix" HOMEBREW_CELLAR="$prefix/Cellar" HOMEBREW_REPOSITORY="$prefix" \
+        "$brew_bin" tap "$tap_name" >/dev/null 2>&1
+    else
+      HOMEBREW_PREFIX="$prefix" HOMEBREW_CELLAR="$prefix/Cellar" HOMEBREW_REPOSITORY="$prefix" \
+        "$brew_bin" tap "$tap_name"
+    fi
+  done
 }
 
 function _install_tools::ensure_homebrew() {
@@ -220,6 +268,7 @@ function _install_tools::main() {
 
   if [[ "$dry_run" != true ]]; then
     _install_tools::ensure_homebrew "$quiet"
+    _install_tools::tap_graysurf_homebrew_tap "$quiet"
     _install_tools::brew_update_upgrade "$quiet"
     _install_tools::ensure_coreutils "$quiet"
   fi

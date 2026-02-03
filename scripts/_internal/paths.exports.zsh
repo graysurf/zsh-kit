@@ -46,9 +46,6 @@ typeset -a _zsh_path_prepend=()
 # Rust (rustup)
 [[ -d "$HOME/.cargo/bin" ]] && _zsh_path_prepend+=("$HOME/.cargo/bin")
 
-# Nils CLI
-[[ -d "$HOME/.local/nils-cli" ]] && _zsh_path_prepend+=("$HOME/.local/nils-cli")
-
 _zsh_path_prepend+=(
   /usr/local/bin
   /usr/bin
