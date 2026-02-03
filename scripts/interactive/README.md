@@ -99,8 +99,8 @@ ZLE widgets are defined in `hotkeys.zsh`:
 
 Note: `Ctrl+F` overrides the default Emacs-style cursor movement binding.
 
-### Codex Hotkeys (feature: codex)
+### Codex CLI Hotkeys
 
-If you enable the `codex` feature (`ZSH_FEATURES=codex`), extra widgets may be available:
+If `codex-cli` is installed, extra widgets may be available:
 
-- `Ctrl+U`: `codex-rate-limits-async` (query rate limits for all configured accounts)
+- `Ctrl+U`: `codex-cli diag rate-limits --all --async` (query rate limits for all configured accounts)

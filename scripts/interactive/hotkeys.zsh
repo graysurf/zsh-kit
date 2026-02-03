@@ -144,14 +144,14 @@ zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
 # ────────────────────────────────────────────────────────
-# Codex feature hotkeys (optional)
+# Codex CLI hotkeys (optional)
 # ────────────────────────────────────────────────────────
 
-# Bind `codex-rate-limits-async` to Ctrl+U when feature:codex is enabled.
-if (( $+functions[codex-rate-limits-async] )); then
-  # codex-rate-limits-async-widget
-  # ZLE widget: run `codex-rate-limits-async` without clobbering the current buffer.
-  codex-rate-limits-async-widget() {
+# Bind `codex-cli diag rate-limits --all --async` to Ctrl+U when codex-cli is installed.
+if command -v codex-cli >/dev/null 2>&1; then
+  # codex-cli-rate-limits-async-widget
+  # ZLE widget: run `codex-cli diag rate-limits --all --async` without clobbering the current buffer.
+  codex-cli-rate-limits-async-widget() {
     emulate -L zsh
 
     local saved_buffer="${BUFFER}"
@@ -159,8 +159,7 @@ if (( $+functions[codex-rate-limits-async] )); then
     local -i rc=0
 
     zle -I
-    print -r --
-    codex-rate-limits-async
+    codex-cli diag rate-limits --all --async
     rc=$?
     zle -I
 
@@ -170,6 +169,6 @@ if (( $+functions[codex-rate-limits-async] )); then
     return $rc
   }
 
-  zle -N codex-rate-limits-async-widget
-  bindkey '^U' codex-rate-limits-async-widget
+  zle -N codex-cli-rate-limits-async-widget
+  bindkey '^U' codex-cli-rate-limits-async-widget
 fi
