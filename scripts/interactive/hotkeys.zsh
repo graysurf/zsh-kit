@@ -1,21 +1,24 @@
 # ────────────────────────────────────────────────────────
-# Interactive launcher for `fzf-tools`
+# Interactive launcher for `fzf-cli`
 # - Bound to Ctrl+F
 # - Presents categorized, emoji-enhanced command list via `fzf`
 # - Inserts selected subcommand into shell prompt
 # ────────────────────────────────────────────────────────
 
-# fzf-tools-launcher-widget
-# ZLE widget: pick an `fzf-tools` subcommand via `fzf` and execute it.
-# Usage: fzf-tools-launcher-widget
+# Only enable fzf-cli widgets when fzf-cli is installed.
+if command -v fzf-cli >/dev/null 2>&1; then
+
+# fzf-cli-launcher-widget
+# ZLE widget: pick an `fzf-cli` subcommand via `fzf` and execute it.
+# Usage: fzf-cli-launcher-widget
 # Notes:
 # - Bound to Ctrl+F.
 # - Requires an interactive ZLE session and `fzf`.
-fzf-tools-launcher-widget() {
+fzf-cli-launcher-widget() {
   typeset raw='' selected='' subcommand=''
 
   raw=$(cat <<EOF | fzf --ansi \
-    --prompt="🔧 fzf-tools > " \
+    --prompt="🔧 fzf-cli > " \
     --height=50% \
     --reverse \
     --tiebreak=begin,length
@@ -41,71 +44,73 @@ EOF
   # Remove the leading emoji to get the actual command (split by space)
   subcommand="${selected#* }"
 
-  BUFFER="fzf-tools $subcommand"
+  BUFFER="fzf-cli $subcommand"
   CURSOR=${#BUFFER}
   zle accept-line
   return 0
 }
 
 # Register ZLE widget and bind to Ctrl+F
-zle -N fzf-tools-launcher-widget
-bindkey '^F' fzf-tools-launcher-widget
+zle -N fzf-cli-launcher-widget
+bindkey '^F' fzf-cli-launcher-widget
 
 # ────────────────────────────────────────────────────────
-# `fzf-tools file` widget (intentionally unbound)
+# `fzf-cli file` widget (intentionally unbound)
 # ────────────────────────────────────────────────────────
 
-# fzf-tools-file-widget
-# ZLE widget: prefix the current buffer with `fzf-tools file` and execute it.
-# Usage: fzf-tools-file-widget
+# fzf-cli-file-widget
+# ZLE widget: prefix the current buffer with `fzf-cli file` and execute it.
+# Usage: fzf-cli-file-widget
 # Notes:
 # - Intentionally not bound to a hotkey.
-fzf-tools-file-widget() {
-  BUFFER="fzf-tools file $BUFFER"
+fzf-cli-file-widget() {
+  BUFFER="fzf-cli file $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
   return 0
 }
 
-zle -N fzf-tools-file-widget
+zle -N fzf-cli-file-widget
 
 # ────────────────────────────────────────────────────────
-# Bind `fzf-tools def` to Ctrl+T
+# Bind `fzf-cli def` to Ctrl+T
 # ────────────────────────────────────────────────────────
 
-# fzf-tools-def-widget
-# ZLE widget: prefix the current buffer with `fzf-tools def` and execute it.
-# Usage: fzf-tools-def-widget
+# fzf-cli-def-widget
+# ZLE widget: prefix the current buffer with `fzf-cli def` and execute it.
+# Usage: fzf-cli-def-widget
 # Notes:
 # - Bound to Ctrl+T.
-fzf-tools-def-widget() {
-  BUFFER="fzf-tools def $BUFFER"
+fzf-cli-def-widget() {
+  BUFFER="fzf-cli def $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
   return 0
 }
 
-zle -N fzf-tools-def-widget
-bindkey '^T' fzf-tools-def-widget
+zle -N fzf-cli-def-widget
+bindkey '^T' fzf-cli-def-widget
 
 # ────────────────────────────────────────────────────────
-# Bind `fzf-tools git-commit` to Ctrl+G
+# Bind `fzf-cli git-commit` to Ctrl+G
 # ────────────────────────────────────────────────────────
 
-# fzf-tools-git-commit-widget
-# ZLE widget: prefix the current buffer with `fzf-tools git-commit` and execute it.
-# Usage: fzf-tools-git-commit-widget
+# fzf-cli-git-commit-widget
+# ZLE widget: prefix the current buffer with `fzf-cli git-commit` and execute it.
+# Usage: fzf-cli-git-commit-widget
 # Notes:
 # - Bound to Ctrl+G.
-fzf-tools-git-commit-widget() {
-  BUFFER="fzf-tools git-commit $BUFFER"
+fzf-cli-git-commit-widget() {
+  BUFFER="fzf-cli git-commit $BUFFER"
   CURSOR=${#BUFFER}
   zle accept-line
   return 0
 }
 
-zle -N fzf-tools-git-commit-widget
-bindkey '^G' fzf-tools-git-commit-widget
+zle -N fzf-cli-git-commit-widget
+bindkey '^G' fzf-cli-git-commit-widget
+
+fi
 
 # ────────────────────────────────────────────────────────
 # Interactive command history search using fzf
@@ -118,7 +123,7 @@ bindkey '^G' fzf-tools-git-commit-widget
 # Usage: fzf-history-widget
 # Notes:
 # - Bound to Ctrl+R.
-# - Depends on `fzf-history-select` (defined in `scripts/fzf-tools.zsh`).
+# - Depends on `fzf-history-select` (provided by the core fzf helpers).
 fzf-history-widget() {
   local selected='' output='' cmd=''
 

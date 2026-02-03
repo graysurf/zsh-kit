@@ -9,7 +9,7 @@ expected to run only in an interactive environment.
 Primary files:
 
 - `runtime.zsh`: prompt + runtime behaviors (zoxide, starship, options)
-- `hotkeys.zsh`: ZLE widgets and key bindings (including `fzf-tools` hotkeys)
+- `hotkeys.zsh`: ZLE widgets and key bindings (including `fzf-cli` hotkeys)
 - `completion.zsh`: completion bootstrap (`compinit`) and completion-related fixes
 - `plugin-hooks.zsh`: post-plugin-load hooks / overrides
 
@@ -88,13 +88,13 @@ bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 ```
 
-### fzf-tools Hotkeys
+### fzf-cli Hotkeys
 
-ZLE widgets are defined in `hotkeys.zsh`:
+If `fzf-cli` is installed, ZLE widgets are defined in `hotkeys.zsh`:
 
-- `Ctrl+F`: `fzf-tools-launcher-widget` (pick a subcommand via `fzf` and execute it)
-- `Ctrl+T`: `fzf-tools-def-widget` (run `fzf-tools def [query]`)
-- `Ctrl+G`: `fzf-tools-git-commit-widget` (run `fzf-tools git-commit [--snapshot] [query]`)
+- `Ctrl+F`: `fzf-cli-launcher-widget` (pick a subcommand via `fzf` and execute it)
+- `Ctrl+T`: `fzf-cli-def-widget` (run `fzf-cli def [query]`)
+- `Ctrl+G`: `fzf-cli-git-commit-widget` (run `fzf-cli git-commit [--snapshot] [query]`)
 - `Ctrl+R`: `fzf-history-widget` (fzf history insert; no execution)
 
 Note: `Ctrl+F` overrides the default Emacs-style cursor movement binding.
