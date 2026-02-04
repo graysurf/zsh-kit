@@ -1,0 +1,16 @@
+#compdef gs
+
+emulate -L zsh -o extendedglob
+
+# Delegate to the `git-scope` completion when provided by the native installation.
+words[1]='git-scope'
+
+autoload -Uz _git-scope 2>/dev/null || true
+if (( $+functions[_git-scope] )); then
+  _git-scope
+  return $?
+fi
+
+_message 'git-scope'
+return 0
+

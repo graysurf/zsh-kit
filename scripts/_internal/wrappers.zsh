@@ -502,6 +502,25 @@ _wrappers::cleanup_feature_opencode() {
   return 0
 }
 
+# _wrappers::cleanup_legacy_native_overrides
+# Remove cached wrappers for commands that are now expected to be provided by native binaries.
+# Usage: _wrappers::cleanup_legacy_native_overrides
+_wrappers::cleanup_legacy_native_overrides() {
+  emulate -L zsh
+  setopt pipe_fail err_return nounset
+
+  typeset bin_dir=''
+  bin_dir="$(_wrappers::bin_dir)"
+  [[ -d "$bin_dir" ]] || return 0
+
+  command rm -f -- \
+    "$bin_dir/fzf-tools" \
+    "$bin_dir/git-scope" \
+    "$bin_dir/codex-tools" \
+    >/dev/null 2>&1 || true
+  return 0
+}
+
 # _wrappers::ensure_core
 # Generate cached CLI wrapper scripts for core commands.
 # Usage: _wrappers::ensure_core
@@ -511,17 +530,11 @@ _wrappers::ensure_core() {
 
   _wrappers::ensure_path
 
-  _wrappers::write_wrapper fzf-tools fzf-tools \
-    --exec tools/open-changed-files.zsh \
-    git/tools/git-utils.zsh \
-    git/git-scope.zsh \
-    fzf-tools.zsh
+  # Do not shadow native binaries for archived legacy tools.
+  _wrappers::cleanup_legacy_native_overrides
 
   _wrappers::write_wrapper git-open git-open \
     git/git-open.zsh
-
-  _wrappers::write_wrapper git-scope git-scope \
-    git/git-scope.zsh
 
   _wrappers::write_wrapper git-lock git-lock \
     git/git-lock.zsh
@@ -537,7 +550,6 @@ _wrappers::ensure_core() {
     git/tools/git-reset.zsh \
     git/tools/git-branch-cleanup.zsh \
     git/tools/git-commit.zsh \
-    git/git-scope.zsh \
     git/git-tools.zsh
 
   return 0
@@ -552,9 +564,6 @@ _wrappers::ensure_feature_codex() {
 
   _wrappers::write_wrapper codex-starship codex-starship \
     _features/codex/codex-starship.zsh
-
-  _wrappers::write_wrapper codex-tools codex-tools \
-    _features/codex/codex-tools.zsh
 
   return 0
 }

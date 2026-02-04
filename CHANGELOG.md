@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.4 - 2026-02-04
+
+### Changed
+- Archived legacy Zsh implementations for `fzf-tools`, `git-scope`, and `codex-tools` under `archive/legacy-zsh-cli-tools/`.
+- Cached wrapper generation no longer emits wrappers for those tools to avoid shadowing native binaries.
+- Added lightweight alias shims (`ft`, `gs`, `cx`, etc.) that target the native binaries.
+
+### Removed
+- Repo-shipped completion scripts for the archived tools (moved to `archive/legacy-zsh-cli-tools/`).
+- Legacy tests for the archived tools (moved to `archive/legacy-zsh-cli-tools/`).
+
 ## v2.1.3 - 2026-01-28
 
 ### Added

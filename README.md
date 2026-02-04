@@ -19,15 +19,21 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 > The following tools are developed as part of this environment and tightly integrated.
 > Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
 
-- 🔎 [fzf-tools](docs/cli/fzf-tools.md): Interactive fuzzy-driven launcher for files, Git, processes, and history
 - 🔗 [git-open](docs/cli/git-open.md): Open repo/branch/commit/PR pages in browser
-- 📂 [git-scope](docs/cli/git-scope.md): Tree-based visualizations of tracked, staged, modified, or untracked files
 - 🔐 [git-lock](docs/cli/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
 - 🧰 [git-tools](docs/cli/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
 - 📊 [git-summary](docs/cli/git-summary.md): Author-based contribution stats over time ranges
-- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Opt-in Codex wrappers (feature: `codex`) with safety gate
+- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Codex feature integration (expects native `codex-tools`)
 - 🧠 [OpenCode CLI helpers](docs/cli/opencode-cli-helpers.md): Opt-in OpenCode prompt wrappers (feature: `opencode`)
 - 🐳 [docker-tools](docs/cli/docker-tools.md): Opt-in Docker helpers (feature: `docker`)
+
+## 🧩 Native CLI tool integrations (external)
+
+These commands are expected to be installed separately (native binaries) and are integrated by this
+repo via aliases and optional completion wiring:
+
+- 🔎 [fzf-tools](docs/cli/fzf-tools.md): Native fuzzy-driven launcher (legacy Zsh implementation archived)
+- 📂 [git-scope](docs/cli/git-scope.md): Native tree-based viewers (legacy Zsh implementation archived)
 
 ## Structure
 
@@ -111,7 +117,7 @@ export ZSH_FEATURES="codex,opencode"
 
 Current features:
 
-- `codex`: enables `codex-tools` and `codex-starship` (plus `codex-tools` completion)
+- `codex`: enables codex integration helpers and `codex-starship` (expects native `codex-tools`)
 - `codex-workspace`: enables `codex-workspace` helpers (plus `codex-workspace` completion)
 - `opencode`: enables `opencode-tools` (plus `opencode-tools` completion)
 - `docker`: enables `docker-tools` + `docker-aliases` (plus `docker-tools` + `docker` completion)
