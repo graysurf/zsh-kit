@@ -478,10 +478,6 @@ _wrappers::cleanup_feature_codex() {
   bin_dir="$(_wrappers::bin_dir)"
   [[ -d "$bin_dir" ]] || return 0
 
-  command rm -f -- \
-    "$bin_dir/codex-starship" \
-    "$bin_dir/codex-tools" \
-    >/dev/null 2>&1 || true
   return 0
 }
 
@@ -513,11 +509,6 @@ _wrappers::cleanup_legacy_native_overrides() {
   bin_dir="$(_wrappers::bin_dir)"
   [[ -d "$bin_dir" ]] || return 0
 
-  command rm -f -- \
-    "$bin_dir/fzf-tools" \
-    "$bin_dir/git-scope" \
-    "$bin_dir/codex-tools" \
-    >/dev/null 2>&1 || true
   return 0
 }
 

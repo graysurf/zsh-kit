@@ -34,7 +34,7 @@ export FZF_DEF_DELIM
 : "${FZF_DEF_DELIM_END:="[FZF-DEF-END]"}"
 export FZF_DEF_DELIM_END
 
-# fzf-def docs cache (for fzf-tools fzf-def/fzf-function/fzf-alias)
+# fzf-def docs cache (for fzf-cli def/function/alias)
 : "${FZF_DEF_DOC_CACHE_ENABLED:=true}"
 export FZF_DEF_DOC_CACHE_ENABLED
 

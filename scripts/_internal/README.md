@@ -59,8 +59,6 @@ How it is used:
 Notes:
 
 - The wrappers are generated under `cache/` and should remain gitignored (they are runtime artifacts).
-- Wrappers for `fzf-tools`, `git-scope`, and `codex-tools` are intentionally **not** generated to avoid
-  shadowing native binaries.
 - Wrappers are bundled into **single-file** executables via `tools/bundle-wrapper.zsh`.
 - `bundle-wrapper.zsh` supports `typeset -a exec_sources=(...)` to embed runtime-executed `tools/*` scripts into the wrapper.
 - Bundled wrappers include `bootstrap/00-preload.zsh` so helpers like `set_clipboard` are available.
