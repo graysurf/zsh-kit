@@ -1,3 +1,4 @@
 # tool::brew-name::comment
 
 terminal-notifier::terminal-notifier::Send macOS notifications from the CLI
+hs::hammerspoon::Automation tool for macOS
