@@ -2,3 +2,4 @@
 
 terminal-notifier::terminal-notifier::Send macOS notifications from the CLI
 hs::hammerspoon::Automation tool for macOS
+im-select::im-select::Switch macOS input source from CLI

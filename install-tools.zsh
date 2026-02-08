@@ -32,6 +32,7 @@ typeset -gr SCRIPT_PATH="${0:A}"
 typeset -gr REPO_ROOT="${SCRIPT_PATH:h}"
 export ZDOTDIR="$REPO_ROOT"
 typeset -gr GRAYSURF_HOMEBREW_TAP_NAME="graysurf/tap"
+typeset -gr DAIPEIHUST_HOMEBREW_TAP_NAME="daipeihust/tap"
 
 typeset -gr PATHS_FILE="$ZDOTDIR/scripts/_internal/paths.exports.zsh"
 if [[ -f "$PATHS_FILE" ]]; then
@@ -88,7 +89,10 @@ function _install_tools::tap_graysurf_homebrew_tap() {
   setopt errexit nounset pipefail
 
   local quiet="$1"
-  local tap_name="$GRAYSURF_HOMEBREW_TAP_NAME"
+  local -a tap_names=(
+    "$GRAYSURF_HOMEBREW_TAP_NAME"
+    "$DAIPEIHUST_HOMEBREW_TAP_NAME"
+  )
 
   local home="${HOME-}"
   local -a candidates=(
@@ -118,15 +122,18 @@ function _install_tools::tap_graysurf_homebrew_tap() {
   fi
 
   local brew_bin=''
+  local tap_name=''
   for brew_bin in "${brew_paths[@]}"; do
     local prefix="${brew_bin:h:h}"
-    if [[ "$quiet" == true ]]; then
-      HOMEBREW_PREFIX="$prefix" HOMEBREW_CELLAR="$prefix/Cellar" HOMEBREW_REPOSITORY="$prefix" \
-        "$brew_bin" tap "$tap_name" >/dev/null 2>&1
-    else
-      HOMEBREW_PREFIX="$prefix" HOMEBREW_CELLAR="$prefix/Cellar" HOMEBREW_REPOSITORY="$prefix" \
-        "$brew_bin" tap "$tap_name"
-    fi
+    for tap_name in "${tap_names[@]}"; do
+      if [[ "$quiet" == true ]]; then
+        HOMEBREW_PREFIX="$prefix" HOMEBREW_CELLAR="$prefix/Cellar" HOMEBREW_REPOSITORY="$prefix" \
+          "$brew_bin" tap "$tap_name" >/dev/null 2>&1
+      else
+        HOMEBREW_PREFIX="$prefix" HOMEBREW_CELLAR="$prefix/Cellar" HOMEBREW_REPOSITORY="$prefix" \
+          "$brew_bin" tap "$tap_name"
+      fi
+    done
   done
 }
 
