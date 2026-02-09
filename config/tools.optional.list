@@ -54,6 +54,7 @@ sqlcmd::sqlcmd::Microsoft SQL Server CLI (sqlcmd)
 # Repo / files / system utilities
 glow::glow::Render markdown on the CLI
 repomix::repomix::Packs entire repository into a AI-friendly file
+sccache::sccache::Compiler cache for Rust/C/C++ builds
 yazi::yazi::Blazing fast terminal file manager
 
 # Image processing
