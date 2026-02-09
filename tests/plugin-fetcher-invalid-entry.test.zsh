@@ -23,7 +23,11 @@ typeset plugins_dir="$tmp_dir/plugins"
 mkdir -p -- "$plugins_dir" || fail "failed to create plugins dir"
 print -r -- "sentinel" >| "$plugins_dir/keep.txt" || fail "failed to write sentinel"
 
+typeset cache_dir="$tmp_dir/cache"
+mkdir -p -- "$cache_dir" || fail "failed to create cache dir"
+
 typeset -x ZSH_PLUGINS_DIR="$plugins_dir"
+typeset -x ZSH_CACHE_DIR="$cache_dir"
 typeset -x PLUGIN_FETCH_FORCE_ENABLED=true
 typeset -x PLUGIN_FETCH_DRY_RUN_ENABLED=false
 

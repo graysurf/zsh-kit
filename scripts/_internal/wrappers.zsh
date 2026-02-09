@@ -478,6 +478,9 @@ _wrappers::cleanup_feature_codex() {
   bin_dir="$(_wrappers::bin_dir)"
   [[ -d "$bin_dir" ]] || return 0
 
+  command rm -f -- \
+    "$bin_dir/codex-starship" \
+    >/dev/null 2>&1 || true
   return 0
 }
 
@@ -553,8 +556,9 @@ _wrappers::ensure_feature_codex() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
 
-  _wrappers::write_wrapper codex-starship codex-starship \
-    _features/codex/codex-starship.zsh
+  # The codex feature scripts are retired; keep this as cleanup-only
+  # so enabled legacy feature flags do not trigger missing-file bundle errors.
+  _wrappers::cleanup_feature_codex
 
   return 0
 }
