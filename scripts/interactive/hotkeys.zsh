@@ -8,6 +8,65 @@
 # Only enable fzf-cli widgets when fzf-cli is installed.
 if command -v fzf-cli >/dev/null 2>&1; then
 
+# fzf-history-select
+# Build and select shell history entries.
+# Usage: fzf-history-select [query]
+# Output:
+# - Returns two lines (key, selected) for consumption by fzf-history.
+# Notes:
+# - Presents history with timestamps; preview shows formatted time + command.
+fzf-history-select() {
+  local default_query="${1-}"
+  [[ -z "$default_query" ]] && default_query="${BUFFER:-}"
+
+  iconv -f utf-8 -t utf-8 -c "$HISTFILE" |
+  awk -F';' '
+    /^:/ {
+      if (NF < 2) next
+      split($1, meta, ":")
+      cmd = $2
+      ts = meta[2]
+
+      if (cmd ~ /^[[:space:]]*$/) next
+      if (cmd ~ /^[[:cntrl:][:punct:][:space:]]*$/) next
+      if (cmd ~ /[^[:print:]]/) next
+
+      printf "%s | %4d | %s\n", ts, NR, cmd
+    }
+  ' | tac | fzf --ansi --reverse --height=50% \
+         --query="$default_query" \
+         --preview-window='right:50%:wrap' \
+         --preview='ts=$(printf "%s\n" {} | cut -d"|" -f1 | sed -E "s/^[[:space:]]+//; s/[[:space:]]+$//"); \
+fts=""; \
+case "$ts" in (""|*[!0-9]*)) ;; (*) \
+  if date -r "$ts" "+%Y-%m-%d %H:%M:%S" >/dev/null 2>&1; then \
+    fts=$(date -r "$ts" "+%Y-%m-%d %H:%M:%S"); \
+  elif date -d "@$ts" "+%Y-%m-%d %H:%M:%S" >/dev/null 2>&1; then \
+    fts=$(date -d "@$ts" "+%Y-%m-%d %H:%M:%S"); \
+  fi ;; \
+esac; \
+cmd=$(printf "%s\n" {} | cut -d"|" -f3- | sed -E "s/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//"); \
+printf "🕒 %s\n\n%s" "$fts" "$cmd"' \
+         --expect=enter
+}
+
+# fzf-history
+# Search and execute a history command.
+# Usage: fzf-history [query]
+# Notes:
+# - Uses fzf-history-select; executes selected command.
+fzf-history() {
+  local selected='' output='' cmd=''
+
+  output="$(fzf-history-select "$*")"
+  selected="$(printf "%s\n" "$output" | sed -n '2p')"
+
+  cmd="$(printf "%s\n" "$selected" | cut -d'|' -f3- | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+  cmd="$(printf "%s\n" "$cmd" | sed -E 's/^[[:space:]]*(🖥️|🧪|🐧|🐳|🛠️)?[[:space:]]*//')"
+
+  [[ -n "$cmd" ]] && eval "$cmd"
+}
+
 # fzf-cli-launcher-widget
 # ZLE widget: pick an `fzf-cli` subcommand via `fzf` and execute it.
 # Usage: fzf-cli-launcher-widget
