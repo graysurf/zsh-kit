@@ -14,27 +14,6 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 - 🔧 Modular and lazy-friendly structure under `scripts/`
 - 🧹 Centralized `cache/` and `.private/` folders for clean separation of history, state, and secrets
 
-## 🛠 Built-in CLI Tools
-
-> The following tools are developed as part of this environment and tightly integrated.
-> Each has a dedicated documentation file and serves a focused task in the Git or shell workflow.
-
-- 🔗 [git-open](docs/cli/git-open.md): Open repo/branch/commit/PR pages in browser
-- 🔐 [git-lock](docs/cli/git-lock.md): Commit locking system for safe checkpoints, diffs, and tagging
-- 🧰 [git-tools](docs/cli/git-tools.md): Grouped git helper router (reset/commit/branch/utils)
-- 📊 [git-summary](docs/cli/git-summary.md): Author-based contribution stats over time ranges
-- 🤖 [Codex CLI helpers](docs/cli/codex-cli-helpers.md): Codex feature integration (expects native `codex-tools`)
-- 🧠 [OpenCode CLI helpers](docs/cli/opencode-cli-helpers.md): Opt-in OpenCode prompt wrappers (feature: `opencode`)
-- 🐳 [docker-tools](docs/cli/docker-tools.md): Opt-in Docker helpers (feature: `docker`)
-
-## 🧩 Native CLI tool integrations (external)
-
-These commands are expected to be installed separately (native binaries) and are integrated by this
-repo via aliases and optional completion wiring:
-
-- 🔎 [fzf-tools](docs/cli/fzf-tools.md): Native fuzzy-driven launcher (legacy Zsh implementation archived)
-- 📂 [git-scope](docs/cli/git-scope.md): Native tree-based viewers (legacy Zsh implementation archived)
-
 ## Structure
 
 ```text
@@ -53,12 +32,8 @@ repo via aliases and optional completion wiring:
 ├── scripts/           # Modular Zsh behavior scripts
 │   ├── _completion/   # Custom completions for CLI tools or aliases
 │   ├── _features/     # Optional feature modules (opt-in via `ZSH_FEATURES`)
-│   │   ├── codex/     # Codex helpers (disabled by default)
-│   │   ├── docker/    # Docker helpers (disabled by default)
-│   │   └── opencode/  # OpenCode prompt helpers (disabled by default)
 │   ├── _internal/     # Internal modules (not auto-loaded; paths, wrapper generator, etc.)
 │   ├── git/           # Git workflow tools and custom logic
-│   │   └── tools/     # Git tool implementations (autoloaded)
 │   └── interactive/   # Interactive shell scripts (completion, plugin hooks, etc.)
 ├── tests/             # Zsh test scripts (audit, regression, etc.)
 ├── tools/             # Standalone executable scripts or compiled helpers
@@ -112,12 +87,11 @@ Some modules are disabled by default (not sourced; no wrappers generated).
 Enable them by setting `ZSH_FEATURES` in your **home** `~/.zshenv` **before** sourcing this repo:
 
 ```bash
-export ZSH_FEATURES="codex,opencode"
+export ZSH_FEATURES="docker,opencode"
 ```
 
 Current features:
 
-- `codex`: enables codex integration helpers and `codex-starship` (expects native `codex-tools`)
 - `codex-workspace`: enables `codex-workspace` helpers (plus `codex-workspace` completion)
 - `opencode`: enables `opencode-tools` (plus `opencode-tools` completion)
 - `docker`: enables `docker-tools` + `docker-aliases` (plus `docker-tools` + `docker` completion)
