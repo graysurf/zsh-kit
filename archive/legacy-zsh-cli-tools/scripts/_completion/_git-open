@@ -1,0 +1,412 @@
+#compdef git-open gho
+
+__git_open_commit_hashes() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a commits=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    commits=(${(f)"$(command git log --pretty=format:'%h:%s' 2>/dev/null || true)"})
+  fi
+
+  if (( ${#commits[@]} > 0 )); then
+    print -rl -- "${commits[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_remote_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a remotes=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    remotes=(${(f)"$(command git remote 2>/dev/null || true)"})
+  fi
+
+  if (( ${#remotes[@]} > 0 )); then
+    print -rl -- "${remotes[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_branch_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a branches=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branches=(HEAD)
+    branches+=(${(f)"$(command git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null || true)"})
+  fi
+
+  if (( ${#branches[@]} > 0 )); then
+    print -rl -- "${branches[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_remote_refs() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a refs=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    refs=(${(f)"$(command git for-each-ref --format='%(refname)' refs/remotes 2>/dev/null || true)"})
+  fi
+
+  if (( ${#refs[@]} > 0 )); then
+    typeset -A seen=()
+    typeset full_ref='' ref='' remote='' branch=''
+
+    for full_ref in "${refs[@]}"; do
+      [[ "$full_ref" == */HEAD ]] && continue
+
+      ref="${full_ref#refs/remotes/}"
+      [[ "$ref" == "$full_ref" ]] && continue
+
+      remote="${ref%%/*}"
+      branch="${ref#*/}"
+      [[ -z "$remote" || -z "$branch" || "$branch" == "$ref" ]] && continue
+
+      [[ -n "${seen[$branch]-}" ]] && continue
+      seen[$branch]=1
+
+      print -r -- "$branch"
+    done
+  fi
+
+  return 0
+}
+
+__git_open_tag_names() {
+  emulate -L zsh -o extendedglob
+
+  typeset -a tags=()
+
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    tags=(${(f)"$(command git for-each-ref --sort=-creatordate --format='%(refname:short)' refs/tags 2>/dev/null || true)"})
+  fi
+
+  if (( ${#tags[@]} > 0 )); then
+    print -rl -- "${tags[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_cache_policy() {
+  emulate -L zsh -o extendedglob
+
+  typeset cache_path="${1-}"
+
+  [[ -z "$cache_path" ]] && return 0
+  [[ "$cache_path" != */git-open/prs/* ]] && return 1
+
+  # GIT_OPEN_PR_CACHE_TTL_SECONDS
+  # Override the completion cache TTL (in seconds) for git-open PR candidates.
+  # Default: 60
+  typeset -i pr_cache_ttl_default=60
+  typeset -i pr_cache_ttl_current="${GIT_OPEN_PR_CACHE_TTL_SECONDS:-$pr_cache_ttl_default}"
+  (( pr_cache_ttl_current <= 0 )) && pr_cache_ttl_current="$pr_cache_ttl_default"
+
+  typeset -i mtime=0
+
+  if zmodload -F zsh/stat b:zstat 2>/dev/null; then
+    typeset -a stat=()
+    zstat -A stat +mtime -- "$cache_path" 2>/dev/null || return 0
+    mtime="${stat[1]-0}"
+  else
+    mtime="$(command stat -f %m -- "$cache_path" 2>/dev/null)" || \
+      mtime="$(command stat -c %Y -- "$cache_path" 2>/dev/null)" || return 0
+  fi
+
+  (( EPOCHSECONDS - mtime > pr_cache_ttl_current )) && return 0
+  return 1
+}
+
+__git_open_pr_numbers() {
+  emulate -L zsh -o extendedglob
+
+  autoload -Uz _cache_invalid _retrieve_cache _store_cache
+
+  # GIT_OPEN_PR_LIST_LIMIT
+  # Override the `gh pr list --limit` used for PR number completion.
+  # Default: 100
+  typeset -i pr_list_limit_default=100
+  typeset -i pr_list_limit_current="${GIT_OPEN_PR_LIST_LIMIT:-$pr_list_limit_default}"
+  (( pr_list_limit_current <= 0 )) && pr_list_limit_current="$pr_list_limit_default"
+
+  typeset cache_policy=''
+  zstyle -s ":completion:${curcontext}:" cache-policy cache_policy
+  [[ -z "$cache_policy" ]] && zstyle ":completion:${curcontext}:" cache-policy __git_open_cache_policy
+
+  command git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+
+  typeset -i cache_version_target=1
+  typeset -i pr_cache_version=0
+  typeset -i pr_list_limit=0
+  typeset -a pr_rows=()
+  typeset repo_root=''
+  typeset repo_key=''
+  typeset cache_id=''
+
+  repo_root="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  repo_key="${repo_root//\//_}"
+  repo_key="${repo_key//[^A-Za-z0-9_.-]/_}"
+  cache_id="git-open/prs/${repo_key}"
+
+  if _retrieve_cache "$cache_id"; then
+    if (( pr_cache_version != cache_version_target || pr_list_limit != pr_list_limit_current )); then
+      pr_cache_version=0
+      pr_list_limit=0
+      pr_rows=()
+    fi
+  fi
+
+  if (( pr_cache_version != cache_version_target )); then
+    pr_list_limit="$pr_list_limit_current"
+    if command -v gh >/dev/null 2>&1; then
+      pr_rows=(${(f)"$(command gh pr list --state all --limit "$pr_list_limit" --json number,title,state,isDraft --jq '.[] | "\(.number)\t\(.state)\t\(.isDraft)\t\(.title | gsub("[\\t\\n]+"; " "))"' 2>/dev/null || true)"})
+    fi
+
+    pr_cache_version="$cache_version_target"
+    _store_cache "$cache_id" pr_cache_version pr_list_limit pr_rows >/dev/null 2>&1 || true
+  fi
+
+  if (( ${#pr_rows[@]} > 0 )); then
+    print -rl -- "${pr_rows[@]}"
+  fi
+
+  return 0
+}
+
+__git_open_workflow_files() {
+  emulate -L zsh -o extendedglob
+
+  typeset repo_root='' wf_dir=''
+
+  repo_root="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  wf_dir="$repo_root/.github/workflows"
+
+  [[ -d "$wf_dir" ]] || return 0
+
+  typeset -a files=()
+  files=("${wf_dir}/"*.yml(N:t) "${wf_dir}/"*.yaml(N:t))
+
+  if (( ${#files[@]} > 0 )); then
+    print -rl -- "${files[@]}"
+  fi
+
+  return 0
+}
+
+_git-open() {
+  emulate -L zsh -o extendedglob
+
+  local context='' state='' state_descr=''
+  local -a line=()
+  typeset -A opt_args=()
+
+  typeset -i orig_current="$CURRENT"
+  typeset -a orig_words=("${words[@]}")
+
+  typeset -a subcmds=()
+  subcmds=(
+    'repo:Open repo page'
+    'branch:Open branch/tree (optional ref)'
+    'default-branch:Open default branch page'
+    'commit:Open commit page (optional ref)'
+    'compare:Open compare page (optional base/head)'
+    'pr:Open PR/MR (optional number)'
+    'pulls:Open PR/MR list (optional number)'
+    'issues:Open issues list (optional number)'
+    'actions:Open GitHub Actions (optional workflow/query)'
+    'releases:Open releases list (optional tag)'
+    'tags:Open tags list (optional tag; opens release page)'
+    'commits:Open commit history (optional ref)'
+    'file:Open file view at ref'
+    'blame:Open blame view at ref'
+    'help:Show help'
+    'default:Alias of default-branch'
+    'issue:Alias of issues'
+    'action:Alias of actions'
+    'release:Alias of releases'
+    'tag:Alias of tags'
+    'history:Alias of commits'
+    'blob:Alias of file'
+    'pull-request:Alias of pr'
+    'merge-request:Alias of pr'
+    'mr:Alias of pr'
+    'prs:Alias of pulls'
+    'merge-requests:Alias of pulls'
+    'mrs:Alias of pulls'
+  )
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:command:->subcmds' \
+    '*::arg:->args'
+
+  case "${state-}" in
+    subcmds)
+      _describe -t commands 'git-open command' subcmds && return 0
+      ;;
+    args)
+      typeset subcmd="${line[1]:-${orig_words[2]-}}"
+      subcmd="${subcmd%%[[:space:]]#}"
+
+      case "$subcmd" in
+        repo)
+          if (( orig_current == 3 )); then
+            _values 'remote' $(__git_open_remote_names)
+            return 0
+          fi
+          ;;
+        default|default-branch)
+          if (( orig_current == 3 )); then
+            _values 'remote' $(__git_open_remote_names)
+            return 0
+          fi
+          ;;
+        branch|compare|commits|history)
+          if (( orig_current == 3 || orig_current == 4 )); then
+            typeset -a refs=()
+            refs=(${(f)"$(__git_open_branch_names)"})
+            refs+=(${(f)"$(__git_open_remote_refs)"})
+            refs+=(${(f)"$(__git_open_tag_names)"})
+            if (( ${#refs[@]} > 0 )); then
+              local expl=''
+              _wanted -V refs expl 'ref' compadd -- $refs && return 0
+            fi
+            _message 'ref (default upstream branch)'
+            return 0
+          fi
+          ;;
+        commit)
+          if (( orig_current == 3 )); then
+            typeset -a commit_entries=()
+            typeset -a commit_hashes=()
+            typeset -a commit_displays=()
+
+            commit_entries=(${(f)"$(__git_open_commit_hashes)"})
+
+            if (( ${#commit_entries[@]} > 0 )); then
+              typeset entry='' hash='' subject=''
+              for entry in "${commit_entries[@]}"; do
+                hash="${entry%%:*}"
+                subject="${entry#*:}"
+                [[ -z "$hash" ]] && continue
+                commit_hashes+=("$hash")
+                commit_displays+=("${hash}  -- ${subject}")
+              done
+            fi
+
+            if (( ${#commit_hashes[@]} > 0 )); then
+              local expl=''
+              _wanted -V commits expl 'commit ref' compadd -d commit_displays -- $commit_hashes && return 0
+            fi
+
+            _message 'commit ref (default HEAD)'
+            return 0
+          fi
+          ;;
+        pr|pull-request|mr|merge-request|pulls|prs|merge-requests|mrs)
+          if (( orig_current == 3 )); then
+            typeset -a pr_rows=()
+            typeset -i added=0
+
+            pr_rows=(${(f)"$(__git_open_pr_numbers)"})
+
+            if (( ${#pr_rows[@]} > 0 )); then
+              typeset row='' rest='' number='' pr_state='' is_draft='' title=''
+
+              for row in "${pr_rows[@]}"; do
+                number="${row%%$'\t'*}"
+                rest="${row#*$'\t'}"
+                pr_state="${rest%%$'\t'*}"
+                rest="${rest#*$'\t'}"
+                is_draft="${rest%%$'\t'*}"
+                title="${rest#*$'\t'}"
+
+                [[ "$number" == <-> ]] || continue
+
+                typeset word="#${number}"
+                typeset display="${word}  -- ${title}"
+                typeset group=''
+                if [[ "$is_draft" == 'true' ]]; then
+                  group='DRAFT'
+                else
+                  case "$pr_state" in
+                    OPEN|MERGED|CLOSED) group="$pr_state" ;;
+                    *) group='OPEN' ;;
+                  esac
+                fi
+
+                typeset -a displays=("$display")
+                compadd -V prs -X "$group" -d displays -- "$word"
+                (( added++ ))
+              done
+            fi
+
+            if (( added > 0 )); then
+              return 0
+            fi
+
+            _message 'number (optional, e.g. 123 or #123)'
+            return 0
+          fi
+          ;;
+        issues|issue)
+          if (( orig_current == 3 )); then
+            _message 'number (optional, e.g. 123 or #123)'
+            return 0
+          fi
+          ;;
+        actions|action)
+          if (( orig_current == 3 )); then
+            typeset -a workflow_files=()
+            workflow_files=(${(f)"$(__git_open_workflow_files)"})
+            if (( ${#workflow_files[@]} > 0 )); then
+              _values 'workflow file' $workflow_files
+              return 0
+            fi
+            _message 'workflow (optional, file.yml or query)'
+            return 0
+          fi
+          ;;
+        releases|release|tags|tag)
+          if (( orig_current == 3 )); then
+            typeset -a tags=()
+            tags=(${(f)"$(__git_open_tag_names)"})
+            if (( ${#tags[@]} > 0 )); then
+              local expl=''
+              _wanted -V tags expl 'tag' compadd -- $tags && return 0
+            fi
+            _message 'tag (optional)'
+            return 0
+          fi
+          ;;
+        file|blob|blame)
+          if (( orig_current == 3 )); then
+            _files
+            return 0
+          fi
+          if (( orig_current == 4 )); then
+            typeset -a refs=()
+            refs=(${(f)"$(__git_open_branch_names)"})
+            refs+=(${(f)"$(__git_open_remote_refs)"})
+            refs+=(${(f)"$(__git_open_tag_names)"})
+            _values 'ref' $refs
+            return 0
+          fi
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _git-open git-open gho

@@ -88,17 +88,17 @@ set -euo pipefail
 repo_dir="${1:?missing repo_dir}"
 ref="${2:-origin/main}"
 
-# _load_git_reset_remote
-# Load git-reset-remote when available (preferred: function, fallback: zsh-kit file).
-_load_git_reset_remote() {
-  if typeset -f git-reset-remote >/dev/null 2>&1; then
-    return 0
+# _run_remote_reset <resolved_ref>
+# Run `git-cli reset remote`; return non-zero when unavailable or failed.
+_run_remote_reset() {
+  local resolved_ref="${1:-}"
+  [[ -n "$resolved_ref" ]] || return 1
+
+  if ! command -v git-cli >/dev/null 2>&1; then
+    return 1
   fi
-  if [[ -f /opt/zsh-kit/scripts/git/tools/git-reset.zsh ]]; then
-    source /opt/zsh-kit/scripts/git/tools/git-reset.zsh
-    return 0
-  fi
-  return 1
+
+  git-cli reset remote --ref "$resolved_ref" --no-fetch --clean --yes
 }
 
 # _resolve_target_ref <remote/branch>
@@ -187,8 +187,7 @@ _reset_repo_to_ref() {
     _force_checkout_branch "$branch" "$resolved_ref"
   fi
 
-  if _load_git_reset_remote; then
-    git-reset-remote --ref "$resolved_ref" --no-fetch --clean --yes
+  if _run_remote_reset "$resolved_ref"; then
     return 0
   fi
 
@@ -596,17 +595,17 @@ set -euo pipefail
 
 ref="${1:-origin/main}"
 
-# _load_git_reset_remote
-# Load git-reset-remote when available (preferred: function, fallback: zsh-kit file).
-_load_git_reset_remote() {
-  if typeset -f git-reset-remote >/dev/null 2>&1; then
-    return 0
+# _run_remote_reset <resolved_ref>
+# Run `git-cli reset remote`; return non-zero when unavailable or failed.
+_run_remote_reset() {
+  local resolved_ref="${1:-}"
+  [[ -n "$resolved_ref" ]] || return 1
+
+  if ! command -v git-cli >/dev/null 2>&1; then
+    return 1
   fi
-  if [[ -f /opt/zsh-kit/scripts/git/tools/git-reset.zsh ]]; then
-    source /opt/zsh-kit/scripts/git/tools/git-reset.zsh
-    return 0
-  fi
-  return 1
+
+  git-cli reset remote --ref "$resolved_ref" --no-fetch --clean --yes
 }
 
 # _resolve_target_ref <remote/branch>
@@ -693,8 +692,7 @@ _reset_repo_to_ref() {
     _force_checkout_branch "$branch" "$resolved_ref"
   fi
 
-  if _load_git_reset_remote; then
-    git-reset-remote --ref "$resolved_ref" --no-fetch --clean --yes
+  if _run_remote_reset "$resolved_ref"; then
     return 0
   fi
 
@@ -738,7 +736,7 @@ Force-update the image-bundled repos inside a workspace container:
   - /opt/zsh-kit
 
 Notes:
-  - Uses `git-reset-remote --yes` when available (fallback: git fetch/reset/clean).
+  - Uses `git-cli reset remote --yes`; fallback: git fetch/reset/clean.
   - Re-wires zsh-kit codex secrets symlink when secrets are mounted.
   - Syncs /opt/codex-kit -> $CODEX_HOME (default: /home/codex/.codex) via rsync.
   - Add --yes to skip the preflight confirmation prompt.
@@ -764,7 +762,7 @@ Force-update the image-bundled repos inside a workspace container:
   - /opt/zsh-kit
 
 Notes:
-  - Uses `git-reset-remote --yes` when available (fallback: git fetch/reset/clean).
+  - Uses `git-cli reset remote --yes`; fallback: git fetch/reset/clean.
   - Re-wires zsh-kit codex secrets symlink when secrets are mounted.
   - Syncs /opt/codex-kit -> $CODEX_HOME (default: /home/codex/.codex) via rsync.
   - Add --yes to skip the preflight confirmation prompt.
@@ -844,17 +842,17 @@ _restore_zsh_kit_codex_secrets_mount() {
   ln -s "$dst" "$src"
 }
 
-# _load_git_reset_remote
-# Load git-reset-remote when available (preferred: function, fallback: zsh-kit file).
-_load_git_reset_remote() {
-  if typeset -f git-reset-remote >/dev/null 2>&1; then
-    return 0
+# _run_remote_reset <resolved_ref>
+# Run `git-cli reset remote`; return non-zero when unavailable or failed.
+_run_remote_reset() {
+  local resolved_ref="${1:-}"
+  [[ -n "$resolved_ref" ]] || return 1
+
+  if ! command -v git-cli >/dev/null 2>&1; then
+    return 1
   fi
-  if [[ -f /opt/zsh-kit/scripts/git/tools/git-reset.zsh ]]; then
-    source /opt/zsh-kit/scripts/git/tools/git-reset.zsh
-    return 0
-  fi
-  return 1
+
+  git-cli reset remote --ref "$resolved_ref" --no-fetch --clean --yes
 }
 
 # _resolve_target_ref <remote/branch>
@@ -941,12 +939,11 @@ _reset_repo_to_ref() {
     _force_checkout_branch "$branch" "$resolved_ref"
   fi
 
-  if _load_git_reset_remote; then
-    git-reset-remote --ref "$resolved_ref" --no-fetch --clean --yes
+  if _run_remote_reset "$resolved_ref"; then
     return 0
   fi
 
-  print -u2 -r -- "warn: git-reset-remote not found; falling back to git reset/clean ($repo_dir)"
+  print -u2 -r -- "warn: git-cli reset remote unavailable/failed; falling back to git reset/clean ($repo_dir)"
   git reset --hard "$resolved_ref"
   git clean -fd
 }
