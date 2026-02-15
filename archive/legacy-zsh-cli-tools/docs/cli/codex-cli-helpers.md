@@ -75,8 +75,8 @@ Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
 
 Fallback:
 
-- If `semantic-commit` skill is not installed (missing `$CODEX_HOME/skills/tools/devex/semantic-commit/SKILL.md`), the command falls back to a local interactive Conventional Commit flow (and `-p` still pushes).
-- If `-a|--auto-stage` is set but `semantic-commit-autostage` is not installed (missing `$CODEX_HOME/skills/automation/semantic-commit-autostage/SKILL.md`), the command errors.
+- If `semantic-commit` skill is not installed (missing `$AGENTS_HOME/skills/tools/devex/semantic-commit/SKILL.md`), the command falls back to a local interactive Conventional Commit flow (and `-p` still pushes).
+- If `-a|--auto-stage` is set but `semantic-commit-autostage` is not installed (missing `$AGENTS_HOME/skills/automation/semantic-commit-autostage/SKILL.md`), the command errors.
 
 Options:
 

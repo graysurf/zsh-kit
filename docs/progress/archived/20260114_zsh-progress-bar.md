@@ -119,7 +119,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
         - `./tools/check.zsh`
         - `./tools/audit-fzf-def-docblocks.zsh --check`
       - Non-TTY default silence (should produce no output):
-        - `mkdir -p "$CODEX_HOME/out" && zsh -fc 'source bootstrap/00-preload.zsh; progress_bar::init pb --prefix Test --total 3; progress_bar::update pb 1; progress_bar::finish pb' 2> "$CODEX_HOME/out/progress.err" && wc -c "$CODEX_HOME/out/progress.err"`
+        - `mkdir -p "$AGENTS_HOME/out" && zsh -fc 'source bootstrap/00-preload.zsh; progress_bar::init pb --prefix Test --total 3; progress_bar::update pb 1; progress_bar::finish pb' 2> "$AGENTS_HOME/out/progress.err" && wc -c "$AGENTS_HOME/out/progress.err"`
       - Manual TTY demo (interactive):
         - `source bootstrap/00-preload.zsh`
         - `progress_bar::init_indeterminate pb --prefix 'Job'`

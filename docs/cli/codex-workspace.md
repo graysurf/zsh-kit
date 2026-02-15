@@ -111,7 +111,7 @@ All `CODEX_WORKSPACE_*` env vars supported by the host helper live in:
 
 | Env | Default | Values | Used by | Description |
 | --- | --- | --- | --- | --- |
-| `CODEX_WORKSPACE_LAUNCHER` | auto-detect: `~/.codex/docker/codex-env/bin/codex-workspace` (if executable), else `~/.config/codex-kit/docker/codex-env/bin/codex-workspace` (and auto-download to `CODEX_WORKSPACE_LAUNCHER_AUTO_PATH` when missing) | host path | `create` | Override the host launcher path. |
+| `CODEX_WORKSPACE_LAUNCHER` | auto-detect: `~/.agents/docker/codex-env/bin/codex-workspace` (if executable), else `~/.config/codex-kit/docker/codex-env/bin/codex-workspace` (and auto-download to `CODEX_WORKSPACE_LAUNCHER_AUTO_PATH` when missing) | host path | `create` | Override the host launcher path. |
 | `CODEX_WORKSPACE_LAUNCHER_AUTO_DOWNLOAD` | `true` | `true\|false` (empty = `true`) | `create` | Auto-download the launcher when not found and `CODEX_WORKSPACE_LAUNCHER` is not explicitly set. |
 | `CODEX_WORKSPACE_LAUNCHER_AUTO_PATH` | `${XDG_CACHE_HOME:-~/.cache}/codex-workspace/launcher/codex-workspace` | host path | `create` | Where the auto-downloaded launcher is installed. |
 | `CODEX_WORKSPACE_LAUNCHER_URL` | `https://raw.githubusercontent.com/graysurf/codex-kit/main/docker/codex-env/bin/codex-workspace` | `https://...` | `create` | Override the launcher download URL (GitHub `.../blob/...` URLs are normalized to `raw.githubusercontent.com`). |

@@ -738,7 +738,7 @@ Force-update the image-bundled repos inside a workspace container:
 Notes:
   - Uses `git-cli reset remote --yes`; fallback: git fetch/reset/clean.
   - Re-wires zsh-kit codex secrets symlink when secrets are mounted.
-  - Syncs /opt/codex-kit -> $CODEX_HOME (default: /home/codex/.codex) via rsync.
+  - Syncs /opt/codex-kit -> $AGENTS_HOME (default: /home/codex/.agents) via rsync.
   - Add --yes to skip the preflight confirmation prompt.
 EOF
     return 0
@@ -764,7 +764,7 @@ Force-update the image-bundled repos inside a workspace container:
 Notes:
   - Uses `git-cli reset remote --yes`; fallback: git fetch/reset/clean.
   - Re-wires zsh-kit codex secrets symlink when secrets are mounted.
-  - Syncs /opt/codex-kit -> $CODEX_HOME (default: /home/codex/.codex) via rsync.
+  - Syncs /opt/codex-kit -> $AGENTS_HOME (default: /home/codex/.agents) via rsync.
   - Add --yes to skip the preflight confirmation prompt.
 EOF
         return 0
@@ -817,7 +817,7 @@ if command -v gh >/dev/null 2>&1; then
   gh config set git_protocol https -h github.com 2>/dev/null || gh config set git_protocol https 2>/dev/null || true
 fi
 
-codex_home="${CODEX_HOME:-/home/codex/.codex}"
+agents_home="${AGENTS_HOME:-/home/codex/.agents}"
 codex_src="/opt/codex-kit"
 
 # _restore_zsh_kit_codex_secrets_mount <dst>
@@ -991,12 +991,12 @@ _reset_repo_to_ref /opt/zsh-kit origin/main
 _restore_zsh_kit_codex_secrets_mount "$codex_secrets_mount"
 
 if ! command -v rsync >/dev/null 2>&1; then
-  print -u2 -r -- "warn: rsync not available; skipped /opt/codex-kit -> ${codex_home} sync"
+  print -u2 -r -- "warn: rsync not available; skipped /opt/codex-kit -> ${agents_home} sync"
   exit 0
 fi
 
-mkdir -p "$codex_home"
-print -r -- "+ rsync /opt/codex-kit -> ${codex_home} (delete + excludes)"
+mkdir -p "$agents_home"
+print -r -- "+ rsync /opt/codex-kit -> ${agents_home} (delete + excludes)"
 rsync -a --delete \
   --exclude='.env' \
   --exclude='.venv' \
@@ -1009,6 +1009,6 @@ rsync -a --delete \
   --exclude='sessions/' \
   --exclude='shell_snapshots/' \
   --exclude='tmp/' \
-  "${codex_src%/}/" "${codex_home%/}/"
+  "${codex_src%/}/" "${agents_home%/}/"
 EOF
 }

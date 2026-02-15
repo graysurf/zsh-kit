@@ -1,7 +1,7 @@
 # Remote debugging ports for the browser RDP helpers.
 typeset -x CHROME_REMOTE_DEBUG_PORT_DEFAULT="${CHROME_REMOTE_DEBUG_PORT_DEFAULT:-19222}"
 
-typeset -x CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT="${CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT:-${HOME}/.codex/chrome-profile}"
+typeset -x CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT="${CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT:-${AGENTS_HOME:-${HOME}/.agents}/chrome-profile}"
 typeset -x CHROME_DEFAULT_PROFILE_DIR="${CHROME_DEFAULT_PROFILE_DIR:-${HOME}/Library/Application Support/Google/Chrome}"
 typeset -x CHROME_DEFAULT_LOCAL_STATE="${CHROME_DEFAULT_LOCAL_STATE:-${CHROME_DEFAULT_PROFILE_DIR}/Local State}"
 
@@ -336,7 +336,7 @@ _ensure_cached_default_profile() {
 # Env:
 # - RDP_ASSUME_YES_ENABLED: when true, auto-confirm prompts.
 # - RDP_DEBUG_ENABLED: when true, write debug log.
-# - RDP_DEBUG_LOG: debug log path (default: ~/.codex/chrome-rdp.log).
+# - RDP_DEBUG_LOG: debug log path (default: ~/.agents/chrome-rdp.log).
 # Safety:
 # - May terminate browser processes and remove stale profile lock files.
 _launch_rdp() {
@@ -352,7 +352,7 @@ _launch_rdp() {
   if zsh_env::is_true "${RDP_DEBUG_ENABLED-}" "RDP_DEBUG_ENABLED"; then
     rdp_debug=1
   fi
-  typeset rdp_debug_log="${RDP_DEBUG_LOG:-${HOME}/.codex/chrome-rdp.log}"
+  typeset rdp_debug_log="${RDP_DEBUG_LOG:-${AGENTS_HOME:-${HOME}/.agents}/chrome-rdp.log}"
 
   [[ -x "$exe_path" ]] || { print -r -- "❌ Executable not found: $exe_path"; return 1; }
 
@@ -556,7 +556,7 @@ _launch_rdp() {
 # - CHROME_REMOTE_DEBUG_PORT_DEFAULT: remote debugging port (default: 19222).
 # - CHROME_REMOTE_DEBUG_USER_DATA_DIR: explicit profile dir (skip auto-caching).
 # - RDP_USE_ISOLATED_PROFILE_ENABLED: when true, use CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT.
-# - CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT: isolated profile dir (default: ~/.codex/chrome-profile).
+# - CHROME_REMOTE_DEBUG_PROFILE_DIR_DEFAULT: isolated profile dir (default: ~/.agents/chrome-profile).
 # - RDP_ASSUME_YES_ENABLED: when true, auto-confirm prompts.
 # - RDP_DEBUG_ENABLED: when true, write debug log.
 # - RDP_DEBUG_LOG: debug log path.

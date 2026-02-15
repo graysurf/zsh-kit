@@ -7,7 +7,7 @@
 Links:
 
 - PR: https://github.com/graysurf/zsh-kit/pull/29
-- CODEX_HOME PR: https://github.com/graysurf/codex-kit/pull/47
+- AGENTS_HOME PR: https://github.com/graysurf/codex-kit/pull/47
 - Docs: None
 - Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
@@ -40,7 +40,7 @@ Links:
     - `tools/`
     - `config/`
     - `docs/`
-  - Update `$CODEX_HOME` desktop notification scripts/docs for the renamed desktop notify env flags.
+  - Update `$AGENTS_HOME` desktop notification scripts/docs for the renamed desktop notify env flags.
 - Out-of-scope:
   - Backwards compatibility / legacy aliases for old env names or `0/1` values.
   - Third-party/upstream env vars (e.g. `NO_COLOR`, `NONINTERACTIVE`, `SHELL_SESSIONS_DISABLE`).
@@ -53,7 +53,7 @@ Links:
 
 - User-configured env flags (see Inventory) set via shell startup (`~/.zshenv`, `.private/priv-env.zsh`, etc.).
 - Repo source files that read/parse these env flags.
-- `$CODEX_HOME` desktop-notify scripts (for `CODEX_DESKTOP_NOTIFY*`).
+- `$AGENTS_HOME` desktop-notify scripts (for `CODEX_DESKTOP_NOTIFY*`).
 
 ### Output
 
@@ -79,8 +79,8 @@ Links:
 
 ### Risks / Uncertainties
 
-- Cross-repo coordination: `$CODEX_HOME` must be updated in lockstep for desktop notify env changes.
-  - Mitigation: keep CODEX_HOME edits isolated and ship them as a separate PR (linked from implementation PR).
+- Cross-repo coordination: `$AGENTS_HOME` must be updated in lockstep for desktop notify env changes.
+  - Mitigation: keep AGENTS_HOME edits isolated and ship them as a separate PR (linked from implementation PR).
 - Some existing flags are presence-based (set/unset) today; converting them to value-based booleans changes semantics.
   - Mitigation: explicitly list all affected flags in Inventory; no implicit refactors.
 
@@ -92,7 +92,7 @@ Proposed project rules (this repo):
 - Invalid values: warn to stderr and treat as `false`.
 - Naming: project-owned boolean flags end with `_ENABLED`.
 
-| Env (current) | Env (new) | zsh-kit touchpoints | `$CODEX_HOME` touchpoints | Notes |
+| Env (current) | Env (new) | zsh-kit touchpoints | `$AGENTS_HOME` touchpoints | Notes |
 | --- | --- | --- | --- | --- |
 | `CODEX_ALLOW_DANGEROUS` | `CODEX_ALLOW_DANGEROUS_ENABLED` | `.private/priv-env.zsh`<br>`scripts/_features/codex/codex-tools.zsh`<br>`docs/cli/codex-cli-helpers.md` | None | Rename; strict `true|false` only. |
 | `CODEX_DESKTOP_NOTIFY` | `CODEX_DESKTOP_NOTIFY_ENABLED` | `.private/priv-env.zsh` | `skills/tools/devex/desktop-notify/SKILL.md`<br>`skills/tools/devex/desktop-notify/scripts/desktop-notify.sh`<br>`skills/tools/devex/desktop-notify/scripts/project-notify.sh` | Rename; switch from `0/1` examples/defaults to `true|false`. |
@@ -132,7 +132,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned.
     - [x] Data flow and I/O contract are defined.
-    - [x] Risks and rollout plan are defined (including cross-repo coordination for `$CODEX_HOME`).
+    - [x] Risks and rollout plan are defined (including cross-repo coordination for `$AGENTS_HOME`).
     - [x] Verification commands are defined:
       - `./tools/check.zsh --all`
       - `./tools/audit-env-bools.zsh --check`
@@ -141,14 +141,14 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [x] Introduce a shared boolean env parser helper (single source of truth).
     - [x] Apply env renames + strict parsing across all Inventory flags in this repo.
     - [x] Update `.private/priv-env.zsh` to the new names and `true|false` values.
-    - [x] Update `$CODEX_HOME` desktop-notify scripts/docs for `CODEX_DESKTOP_NOTIFY*_ENABLED`.
+    - [x] Update `$AGENTS_HOME` desktop-notify scripts/docs for `CODEX_DESKTOP_NOTIFY*_ENABLED`.
   - Artifacts:
     - Updated sources under `.private/`, `bootstrap/`, `scripts/`, `tools/`, `config/`, `docs/`
-    - Updated `$CODEX_HOME/skills/tools/devex/desktop-notify/` sources
+    - Updated `$AGENTS_HOME/skills/tools/devex/desktop-notify/` sources
   - Exit Criteria:
     - [x] `./tools/check.zsh --all` passes (record output in PR Testing).
     - [x] `.private/priv-env.zsh` uses only the new names and `true|false` for Inventory flags.
-    - [x] Desktop notifications still work with the new env flags (smoke via `$CODEX_HOME/.../project-notify.sh`).
+    - [x] Desktop notifications still work with the new env flags (smoke via `$AGENTS_HOME/.../project-notify.sh`).
 - [x] Step 2: Expansion / integration
   - Work Items:
     - [x] Add `tools/audit-env-bools.zsh --check` and integrate into `./tools/check.zsh --all`.
@@ -174,10 +174,10 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
       - `./tools/audit-env-bools.zsh --check`: pass
       - `./tools/check.zsh --all`: pass (Semgrep reports 4 findings; JSON: `out/semgrep/semgrep-zsh-20260116-101642.json`)
       - `./tools/audit-fzf-def-docblocks.zsh --check`: pass (report: `cache/fzf-def-docblocks-audit.txt`)
-      - `$CODEX_HOME/scripts/check.sh --all`: pass (118 tests; Semgrep JSON: `$CODEX_HOME/out/semgrep/semgrep-codex-kit-20260116-101515.json`)
+      - `$AGENTS_HOME/scripts/check.sh --all`: pass (118 tests; Semgrep JSON: `$AGENTS_HOME/out/semgrep/semgrep-codex-kit-20260116-101515.json`)
 - [x] Step 4: Release / wrap-up
   - Work Items:
-    - [x] Open $CODEX_HOME follow-up PR: https://github.com/graysurf/codex-kit/pull/47
+    - [x] Open $AGENTS_HOME follow-up PR: https://github.com/graysurf/codex-kit/pull/47
     - [x] Set Status to `DONE`, archive progress file, and update index.
     - [x] Patch PR `## Progress` link to point to the base branch (post-merge).
   - Artifacts:

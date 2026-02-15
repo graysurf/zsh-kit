@@ -276,6 +276,7 @@ tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t codex-workspace-launcher-test.X
 	  output="$( \
 	    PATH="$stub_bin:$PATH" \
 	    HOME="$fake_home" \
+	    AGENTS_HOME="$fake_home/.agents" \
 	    XDG_CACHE_HOME="$tmp_dir/xdg-cache" \
 	    CODEX_TEST_CURL_LOG="$curl_log" \
 	    CODEX_TEST_DOCKER_LOG="$docker_log" \

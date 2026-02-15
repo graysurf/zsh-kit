@@ -339,7 +339,10 @@ _codex_workspace_parse_repo_spec() {
 _codex_workspace_launcher_default_path() {
   emulate -L zsh
 
-  local primary="$HOME/.codex/docker/codex-env/bin/codex-workspace"
+  local agents_home="${AGENTS_HOME:-$HOME/.agents}"
+  agents_home="${agents_home%/}"
+
+  local primary="$agents_home/docker/codex-env/bin/codex-workspace"
   if [[ -x "$primary" ]]; then
     print -r -- "$primary"
     return 0
