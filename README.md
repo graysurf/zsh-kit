@@ -92,7 +92,6 @@ export ZSH_FEATURES="docker,opencode"
 
 Current features:
 
-- `codex-workspace`: enables `codex-workspace` helpers (plus `codex-workspace` completion)
 - `opencode`: enables `opencode-tools` (plus `opencode-tools` completion)
 - `docker`: enables `docker-tools` + `docker-aliases` (plus `docker-tools` + `docker` completion)
 
