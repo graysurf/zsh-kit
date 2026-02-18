@@ -527,24 +527,8 @@ _wrappers::ensure_core() {
   # Do not shadow native binaries for archived legacy tools.
   _wrappers::cleanup_legacy_native_overrides
 
-  _wrappers::write_wrapper git-open git-open \
-    git/git-open.zsh
-
-  _wrappers::write_wrapper git-lock git-lock \
-    git/git-lock.zsh
-
-  _wrappers::write_wrapper git-summary git-summary \
-    git/git-summary.zsh
-
   _wrappers::write_exec_wrapper open-changed-files \
     tools/open-changed-files.zsh
-
-  _wrappers::write_wrapper git-tools git-tools \
-    git/tools/git-utils.zsh \
-    git/tools/git-reset.zsh \
-    git/tools/git-branch-cleanup.zsh \
-    git/tools/git-commit.zsh \
-    git/git-tools.zsh
 
   return 0
 }
