@@ -1,4 +1,5 @@
 # fzf_def_docblocks: Backfill docblocks for fzf-def previews
+<!-- markdownlint-disable-file MD013 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |

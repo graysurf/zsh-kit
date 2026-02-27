@@ -1,6 +1,7 @@
-> Note: Before committing, replace all `[[...]]` placeholder tokens (use `TBD` if unknown; use `None` if not applicable).
-
 # [[feature]]: [[short title]]
+
+> Note: Before committing, replace all `[[...]]` placeholder tokens
+> (use `TBD` if unknown; use `None` if not applicable).
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -56,7 +57,8 @@ Links:
 
 ## Steps (Checklist)
 
-Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason: ...` or a nested `- Reason: ...`) before close-progress-pr can complete. Step 4 is excluded (post-merge / wrap-up).
+Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason: ...` or a nested `- Reason: ...`)
+before close-progress-pr can complete. Step 4 is excluded (post-merge / wrap-up).
 
 - [ ] Step 0: [[Alignment / prerequisites]]
   - Work Items:

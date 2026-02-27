@@ -1,6 +1,7 @@
 # zsh-kit
 
-A modular, self-contained Zsh environment focused on manual control, clean structure, and script-based extensibility — with emoji-powered UX and built-in Git tools.
+A modular, self-contained Zsh environment focused on manual control, clean structure, and script-based extensibility,
+with emoji-powered UX and built-in Git tools.
 
 ## ✨ Core Features
 
@@ -42,7 +43,8 @@ A modular, self-contained Zsh environment focused on manual control, clean struc
 
 ## 🪄 Startup Snapshot
 
-> Login messages include randomly selected inspirational quotes and an optional cached wttr.in weather snapshot, stored in local files that grow over time.
+> Login messages include randomly selected inspirational quotes and an optional cached wttr.in weather snapshot,
+> stored in local files that grow over time.
 
 An example Zsh startup log with this config:
 

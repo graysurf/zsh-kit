@@ -1,4 +1,5 @@
 # git_open_collab_remote: Prefer a collab remote for git-open collaboration pages
+<!-- markdownlint-disable-file MD013 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -108,7 +109,7 @@ Links:
     - [x] Open PR.
     - [x] Set Status to DONE and move this file to `docs/progress/archived/`.
   - Artifacts:
-    - PR: https://github.com/graysurf/zsh-kit/pull/13
+    - PR: <https://github.com/graysurf/zsh-kit/pull/13>
   - Exit Criteria:
     - [x] Progress archived and index updated.
 

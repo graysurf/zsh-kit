@@ -6,7 +6,8 @@ This document explains how to write and maintain completion scripts in
 ## Scope and Load Order
 
 - Completion files live under `scripts/_completion`.
-- Some completions are feature-gated and live under `scripts/_features/<name>/_completion` (added to `fpath` by the feature `init.zsh` before `compinit`).
+- Some completions are feature-gated and live under `scripts/_features/<name>/_completion`
+  (added to `fpath` by the feature `init.zsh` before `compinit`).
 - `scripts/interactive/completion.zsh` adds this directory to `fpath` and runs `compinit`.
 - If a new completion does not show up, rebuild the compdump:
   - `rm -f "$ZSH_COMPDUMP"`
@@ -210,7 +211,8 @@ Fix patterns:
 - Use `command git ...` to avoid alias pollution.
 - Keep candidates small (e.g., last 20 commits) to avoid slow completion.
 - Avoid expensive IO in completion: no network, no large directory scans, no slow commands.
-- If dynamic candidates are unavoidable, cache (compsys cache: `_retrieve_cache`/`_store_cache`/`_cache_invalid`, plus a `cache-policy` TTL via `zstyle`).
+- If dynamic candidates are unavoidable, cache
+  (compsys cache: `_retrieve_cache`/`_store_cache`/`_cache_invalid`, plus a `cache-policy` TTL via `zstyle`).
 - Prefer stable outputs:
   - commits: `git log --pretty=format:'%h:%s' -n 20`
   - branches: `git for-each-ref --format='%(refname:short)' refs/heads`

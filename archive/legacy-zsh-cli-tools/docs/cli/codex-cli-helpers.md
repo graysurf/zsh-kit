@@ -4,8 +4,8 @@
 
 This feature is disabled by default. Enable it by including `codex` in `ZSH_FEATURES` (e.g. in your home `~/.zshenv`).
 
-`archive/legacy-zsh-cli-tools/scripts/_features/codex/codex-tools.zsh` adds a `codex-tools` dispatcher plus several `codex-*` commands that invoke
-Codex skills or prompts with a consistent, interactive CLI interface.
+`archive/legacy-zsh-cli-tools/scripts/_features/codex/codex-tools.zsh` adds a `codex-tools` dispatcher plus several
+`codex-*` commands that invoke Codex skills or prompts with a consistent, interactive CLI interface.
 The helpers are intentionally opt-in and only run when you
 explicitly allow the dangerous sandbox bypass.
 
@@ -75,8 +75,10 @@ Runs the `semantic-commit` skill and attaches any optional guidance you pass in.
 
 Fallback:
 
-- If `semantic-commit` skill is not installed (missing `$AGENTS_HOME/skills/tools/devex/semantic-commit/SKILL.md`), the command falls back to a local interactive Conventional Commit flow (and `-p` still pushes).
-- If `-a|--auto-stage` is set but `semantic-commit-autostage` is not installed (missing `$AGENTS_HOME/skills/automation/semantic-commit-autostage/SKILL.md`), the command errors.
+- If `semantic-commit` skill is not installed (missing `$AGENTS_HOME/skills/tools/devex/semantic-commit/SKILL.md`),
+  the command falls back to a local interactive Conventional Commit flow (and `-p` still pushes).
+- If `-a|--auto-stage` is set but `semantic-commit-autostage` is not installed
+  (missing `$AGENTS_HOME/skills/automation/semantic-commit-autostage/SKILL.md`), the command errors.
 
 Options:
 
@@ -247,4 +249,4 @@ Use them only when you trust the workflow and want to bypass Codex sandbox const
 | Env | Default | Options | Description |
 | --- | --- | --- | --- |
 | `CODEX_CLI_MODEL` | `gpt-5.1-codex-mini` | any `codex exec -m` value | Model passed to `codex exec -m`. |
-| `CODEX_CLI_REASONING` | `medium` | e.g. `low|medium\|high` \| Forwarded as `model_reasoning_effort`. |
+| `CODEX_CLI_REASONING` | `medium` | e.g. `low\|medium\|high` | Forwarded as `model_reasoning_effort`. |

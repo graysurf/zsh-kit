@@ -120,7 +120,8 @@ format = "[$symbol$output ](bold #637777)"
 Notes:
 
 - `codex-starship` prints nothing on cold cache/failure; the `[$output ](...)` group avoids printing stray spaces when empty.
-- `codex-starship` is disabled by default; enable feature `codex` (`ZSH_FEATURES=codex`) and set `CODEX_STARSHIP_ENABLED=true` to show this module.
+- `codex-starship` is disabled by default; enable feature `codex` (`ZSH_FEATURES=codex`) and set
+  `CODEX_STARSHIP_ENABLED=true` to show this module.
 
 ---
 
@@ -128,14 +129,14 @@ Notes:
 
 | Env | Default | Options | Description |
 | --- | --- | --- | --- |
-| `CODEX_STARSHIP_ENABLED` | `false` | `true|false` | Enable `codex-starship` output + refresh. |
-| `CODEX_STARSHIP_TTL` | `5m` | `seconds` or `Ns|Nm|Nh|Nd|Nw` | Cache TTL. |
-| `CODEX_STARSHIP_SHOW_5H_ENABLED` | `true` | `true|false` | Show the non-weekly window (typically `5h`). |
-| `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED` | `false` | `true|false` | When no profile match, show a fallback name (email local-part when available; otherwise JWT identity). |
-| `CODEX_STARSHIP_NAME_SOURCE` | `secret` | `secret|email` | Name source (`secret` = profile filename; `email` = JWT email). |
-| `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED` | `false` | `true|false` | When using email names, show full email (otherwise local-part only). |
+| `CODEX_STARSHIP_ENABLED` | `false` | `true\|false` | Enable `codex-starship` output + refresh. |
+| `CODEX_STARSHIP_TTL` | `5m` | `seconds` or `Ns\|Nm\|Nh\|Nd\|Nw` | Cache TTL. |
+| `CODEX_STARSHIP_SHOW_5H_ENABLED` | `true` | `true\|false` | Show the non-weekly window (typically `5h`). |
+| `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED` | `false` | `true\|false` | When no profile match, show a fallback name (email local-part when available; otherwise JWT identity). |
+| `CODEX_STARSHIP_NAME_SOURCE` | `secret` | `secret\|email` | Name source (`secret` = profile filename; `email` = JWT email). |
+| `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED` | `false` | `true\|false` | When using email names, show full email (otherwise local-part only). |
 | `CODEX_STARSHIP_REFRESH_MIN_SECONDS` | `30` | integer seconds | Minimum seconds between background refresh attempts. |
-| `CODEX_STARSHIP_STALE_SUFFIX` | ` (stale)` | string (empty disables) | Suffix appended when cached output is stale. |
+| `CODEX_STARSHIP_STALE_SUFFIX` | `(stale)` | string (empty disables) | Suffix appended when cached output is stale. |
 | `CODEX_STARSHIP_LOCK_STALE_SECONDS` | `90` | integer seconds | Consider refresh artifacts stale after N seconds and clear them. |
 | `CODEX_STARSHIP_AUTH_HASH_CACHE_KEEP` | `5` | integer (`0` disables) | Max number of `auth_<sha256>` cache entries to keep. |
 | `CODEX_STARSHIP_CURL_CONNECT_TIMEOUT_SECONDS` | `2` | integer seconds | `curl` connect timeout for `wham/usage` fetch. |

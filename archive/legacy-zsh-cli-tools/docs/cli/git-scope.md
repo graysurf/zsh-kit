@@ -1,6 +1,7 @@
 # 📂 git-scope: Git Scope Viewers
 
-`git-scope` is a collection of tree-based Git viewers for inspecting your working directory or commits by status category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
+`git-scope` is a collection of tree-based Git viewers for inspecting your working directory or commits by status
+category. It helps you understand what has changed, what is staged, and what remains untracked, using visual hierarchy.
 
 ---
 

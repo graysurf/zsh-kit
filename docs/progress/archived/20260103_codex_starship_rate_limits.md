@@ -14,8 +14,8 @@ Links:
 
 ### 2026-01-07
 
-- `codex-starship`: append ` (stale)` when the cache is stale so Starship can tell the displayed usage is expired (cold cache still prints nothing).
-- `CODEX_STARSHIP_STALE_SUFFIX`: customize/disable the stale suffix (default: ` (stale)`; set empty to disable).
+- `codex-starship`: append `(stale)` when the cache is stale so Starship can tell the displayed usage is expired (cold cache still prints nothing).
+- `CODEX_STARSHIP_STALE_SUFFIX`: customize/disable the stale suffix (default: `(stale)`; set empty to disable).
 
 ## Goal
 

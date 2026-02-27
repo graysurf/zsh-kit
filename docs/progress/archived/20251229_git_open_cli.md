@@ -120,7 +120,7 @@ Links:
     - [x] Open PR and collect review feedback.
     - [x] Set Status to DONE and move to `docs/progress/archived/`.
   - Artifacts:
-    - PR: https://github.com/graysurf/zsh-kit/pull/11
+    - PR: <https://github.com/graysurf/zsh-kit/pull/11>
   - Exit Criteria:
     - [x] Documentation completed and entry points updated.
     - [x] Cleanup completed (status DONE; archived; index updated).

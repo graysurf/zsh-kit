@@ -1,4 +1,5 @@
 # env_bools: Boolean env flags standardization
+<!-- markdownlint-disable-file MD013 MD033 MD056 MD060 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -6,8 +7,8 @@
 
 Links:
 
-- PR: https://github.com/graysurf/zsh-kit/pull/29
-- AGENTS_HOME PR: https://github.com/graysurf/codex-kit/pull/47
+- PR: <https://github.com/graysurf/zsh-kit/pull/29>
+- AGENTS_HOME PR: <https://github.com/graysurf/codex-kit/pull/47>
 - Docs: None
 - Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
@@ -177,7 +178,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
       - `$AGENTS_HOME/scripts/check.sh --all`: pass (118 tests; Semgrep JSON: `$AGENTS_HOME/out/semgrep/semgrep-codex-kit-20260116-101515.json`)
 - [x] Step 4: Release / wrap-up
   - Work Items:
-    - [x] Open $AGENTS_HOME follow-up PR: https://github.com/graysurf/codex-kit/pull/47
+    - [x] Open $AGENTS_HOME follow-up PR: <https://github.com/graysurf/codex-kit/pull/47>
     - [x] Set Status to `DONE`, archive progress file, and update index.
     - [x] Patch PR `## Progress` link to point to the base branch (post-merge).
   - Artifacts:

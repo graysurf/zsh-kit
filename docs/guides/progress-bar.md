@@ -25,7 +25,7 @@ source "$ZDOTDIR/bootstrap/00-preload.zsh"
 
 ## 🧩 API
 
-### Determinate
+### Determinate Example
 
 ```zsh
 progress_bar::init <id> --prefix <text> --total <n> [--width <n>] [--head-len <n>] [--fd <n>] [--enabled|--disabled]
@@ -33,7 +33,7 @@ progress_bar::update <id> <current> [--suffix <text>] [--force]
 progress_bar::finish <id> [--suffix <text>]
 ```
 
-### Indeterminate
+### Indeterminate Example
 
 ```zsh
 progress_bar::init_indeterminate <id> --prefix <text> [--width <n>] [--head-len <n>] [--fd <n>] [--enabled|--disabled]
@@ -104,4 +104,3 @@ fi
   fi
 }
 ```
-

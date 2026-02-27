@@ -1,4 +1,5 @@
 # git_open_pr_completion_cache: Cached PR number completion for git-open
+<!-- markdownlint-disable-file MD013 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -140,7 +141,7 @@ Links:
     - [x] Merge PR and delete feature branch.
     - [x] Set Status to DONE and move to `docs/progress/archived/`.
   - Artifacts:
-    - PR: https://github.com/graysurf/zsh-kit/pull/12
+    - PR: <https://github.com/graysurf/zsh-kit/pull/12>
   - Exit Criteria:
     - [x] PR merged; progress archived; index updated.
 

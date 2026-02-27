@@ -60,7 +60,8 @@ Want to adjust the mood?
 
 Need a silent login? Wrap `login.zsh` in a toggle and only load when `$SHOW_LOGIN_BANNER=true`.
 
-Need weather tweaks? Set `ZSH_WEATHER_URL='https://wttr.in/Taipei?0'` or `ZSH_WEATHER_INTERVAL=900` ahead of sourcing `.zshrc` to change location/refresh cadence.
+Need weather tweaks? Set `ZSH_WEATHER_URL='https://wttr.in/Taipei?0'` or `ZSH_WEATHER_INTERVAL=900` ahead of
+sourcing `.zshrc` to change location/refresh cadence.
 
 ---
 
@@ -79,7 +80,8 @@ If you want a one-line enabled feature summary on each startup, set:
 export ZSH_BOOT_FEATURES_ENABLED=true
 ```
 
-If `ZSH_BOOT_WEATHER_ENABLED=true`, the login banner is preceded by the cached wttr.in snapshot managed by `bootstrap/weather.zsh` (refreshes once per hour; override via `ZSH_WEATHER_INTERVAL=<seconds>`), e.g.:
+If `ZSH_BOOT_WEATHER_ENABLED=true`, the login banner is preceded by the cached wttr.in snapshot managed by
+`bootstrap/weather.zsh` (refreshes once per hour; override via `ZSH_WEATHER_INTERVAL=<seconds>`), e.g.:
 
 ```text
 Weather report: Taipei City, Taiwan

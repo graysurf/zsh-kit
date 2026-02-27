@@ -39,4 +39,3 @@ This subtree mirrors the original repo layout to preserve navigability and histo
 - These files are **not sourced** by default.
 - Repo tooling (`./tools/check.zsh`, `./tests/run.zsh`) intentionally ignores `archive/`.
 - Some archived docs may reference screenshots under `assets/` (which remain at repo root).
-

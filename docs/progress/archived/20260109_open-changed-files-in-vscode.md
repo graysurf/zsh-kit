@@ -1,4 +1,5 @@
 # Open changed files in VSCode
+<!-- markdownlint-disable-file MD013 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -6,7 +7,7 @@
 
 Links:
 
-- PR: https://github.com/graysurf/zsh-kit/pull/18
+- PR: <https://github.com/graysurf/zsh-kit/pull/18>
 - Planning PR (merged): [#17](https://github.com/graysurf/zsh-kit/pull/17)
 - Docs: [docs/cli/open-changed-files.md](../../cli/open-changed-files.md)
 - Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)

@@ -16,4 +16,3 @@ This directory contains **frozen, read-only** historical artifacts kept for refe
 
 - `legacy-zsh-cli-tools/`: Legacy Zsh implementations (scripts/docs/completions/tests) that have been
   superseded by native binaries.
-

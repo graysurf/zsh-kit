@@ -55,7 +55,8 @@ Conventions:
 - Source-time work is allowed and expected (e.g. `bindkey`/`zle`, `zstyle`, `compinit`, `setopt`).
 - Guard interactive-only features (ZLE, key bindings, `compinit`) with `[[ -o interactive && -t 0 ]]` where relevant.
 - Prefer feature detection (`command -v ...`, `(( ${+functions[...]} ))`) and degrade gracefully when optional tools/plugins are missing.
-- Keep completion initialization centralized in `scripts/interactive/completion.zsh`; completion definitions live in `scripts/_completion/_*` and follow `scripts/_completion/README.md`.
+- Keep completion initialization centralized in `scripts/interactive/completion.zsh`; completion definitions live in
+  `scripts/_completion/_*` and follow `scripts/_completion/README.md`.
 
 ## Default zsh function template
 
@@ -134,7 +135,8 @@ Some execution paths run in a new process (e.g. `fzf --preview`, `xargs`, `sh -c
 - Do not assume zsh builtins/functions exist there.
 - Use `printf` instead of `print` in those contexts.
 - If you need zsh-only behavior, wrap the command as `zsh -fc '...'`.
-- If the subshell needs functions from a module, source it explicitly inside that subshell (guarded by `[[ -f ... ]]`), and prefer locating files via `${ZSH_SCRIPT_DIR-}` / `${ZDOTDIR-}`.
+- If the subshell needs functions from a module, source it explicitly inside that subshell (guarded by `[[ -f ... ]]`),
+  and prefer locating files via `${ZSH_SCRIPT_DIR-}` / `${ZDOTDIR-}`.
 
 ## Zsh string quoting rules
 

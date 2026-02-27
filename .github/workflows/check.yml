@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Install zsh (if missing)
         run: |
           set -euo pipefail
@@ -51,6 +56,11 @@ jobs:
         run: |
           set -euo pipefail
           zsh -f ./tools/check-completions.zsh
+
+      - name: Run markdown lint audit
+        run: |
+          set -euo pipefail
+          bash ./scripts/ci/markdownlint-audit.sh --strict
 
       - name: Run env bool audit
         run: |

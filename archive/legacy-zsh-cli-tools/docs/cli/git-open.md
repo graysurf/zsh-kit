@@ -1,6 +1,7 @@
 # 🔗 git-open: Open Remote Git Pages
 
-`git-open` is a single CLI entrypoint that opens common repository pages (repo, branch, commit, PR, etc.) in your browser for the current Git repo.
+`git-open` is a single CLI entrypoint that opens common repository pages (repo, branch, commit, PR, etc.) in your
+browser for the current Git repo.
 
 ## ✨ Why `git-open` (vs `gh browse`)
 

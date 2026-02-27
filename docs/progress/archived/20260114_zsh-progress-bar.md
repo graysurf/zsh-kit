@@ -1,4 +1,5 @@
 # progress_bar: Zsh progress bar utilities
+<!-- markdownlint-disable-file MD013 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -6,8 +7,8 @@
 
 Links:
 
-- PR: https://github.com/graysurf/zsh-kit/pull/20
-- Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
+- PR: <https://github.com/graysurf/zsh-kit/pull/20>
+- Planning PR (merged): <https://github.com/graysurf/zsh-kit/pull/19>
 - Docs: [docs/guides/progress-bar.md](../../guides/progress-bar.md)
 - Glossary: [docs/templates/PROGRESS_GLOSSARY.md](../../templates/PROGRESS_GLOSSARY.md)
 
@@ -106,7 +107,7 @@ Note: Any unchecked checkbox in Step 0–3 must include a Reason (inline `Reason
     - [x] Define verification commands and expected outcomes (see Exit Criteria).
   - Artifacts:
     - `docs/progress/archived/20260114_zsh-progress-bar.md` (this file)
-    - Planning PR (merged): https://github.com/graysurf/zsh-kit/pull/19
+    - Planning PR (merged): <https://github.com/graysurf/zsh-kit/pull/19>
   - Exit Criteria:
     - [x] Requirements, scope, and acceptance criteria are aligned: progress PR review notes.
     - [x] Data flow and I/O contract are defined: see I/O Contract.

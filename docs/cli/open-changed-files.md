@@ -38,7 +38,8 @@ If the wrapper isn't available in your environment, call the script directly via
 - Workspace behavior:
   - Default (`--workspace-mode pwd`): open everything in a single VSCode window with workspace set to `$PWD`.
   - `--workspace-mode git`: search up to 5 parent directories for a `.git` root per file, and open different git roots in different VSCode windows.
-  - When opening many files (after increasing `--max-files`): opens per-workspace in batches of 50 to avoid argv limits (first batch uses `--new-window`, subsequent batches use `--reuse-window`).
+  - When opening many files (after increasing `--max-files`): opens per-workspace in batches of 50 to avoid argv
+    limits (first batch uses `--new-window`, subsequent batches use `--reuse-window`).
 
 ## Usage
 

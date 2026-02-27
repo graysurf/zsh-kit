@@ -1,4 +1,5 @@
 # completion_audit: Audit compinit and CLI completions
+<!-- markdownlint-disable-file MD013 -->
 
 | Status | Created | Updated |
 | --- | --- | --- |
@@ -172,37 +173,38 @@ Note: For intentionally deferred / not-do items in Step 0–3, use `- [ ] ~~like
 Status: PASS (with fixes noted below).
 
 - `fzf-tools` / `ft`: PASS
-  - Evidence: `SMOKE_BUFFER:ft def `
+  - Evidence: `SMOKE_BUFFER:ft def`
 - `git-summary`: PASS
-  - Evidence: `SMOKE_BUFFER:git-summary all `
+  - Evidence: `SMOKE_BUFFER:git-summary all`
 - `git-lock`: PASS
-  - Evidence: `SMOKE_BUFFER:git-lock copy `, `SMOKE_BUFFER:git-lock unlock alpha `, `SMOKE_BUFFER:git-lock diff --no-color `, `SMOKE_BUFFER:git-lock tag --push `
+  - Evidence: `SMOKE_BUFFER:git-lock copy`, `SMOKE_BUFFER:git-lock unlock alpha`, `SMOKE_BUFFER:git-lock diff --no-color`, `SMOKE_BUFFER:git-lock tag --push`
 - `git-scope` / `gs`: PASS
-  - Evidence: `SMOKE_BUFFER:git-scope all `, `SMOKE_BUFFER:git-scope commit 079a3e6 `, `SMOKE_BUFFER:git-scope tracked README.md `
+  - Evidence: `SMOKE_BUFFER:git-scope all`, `SMOKE_BUFFER:git-scope commit 079a3e6`, `SMOKE_BUFFER:git-scope tracked README.md`
   - Fix: adjusted positional index so commit hashes/prefixes complete at arg1 (`scripts/_completion/_git-scope`).
 - `git-open` / `gho`: PASS
-  - Evidence: `SMOKE_BUFFER:git-open repo `, `SMOKE_BUFFER:git-open --help `
+  - Evidence: `SMOKE_BUFFER:git-open repo`, `SMOKE_BUFFER:git-open --help`
 - `git-tools`: PASS
-  - Evidence: `SMOKE_BUFFER:git-tools branch `, `SMOKE_BUFFER:git-tools branch cleanup `
+  - Evidence: `SMOKE_BUFFER:git-tools branch`, `SMOKE_BUFFER:git-tools branch cleanup`
 - `git-commit-context` / `gcc`: PASS
-  - Evidence: `SMOKE_BUFFER:gcc --include=README.md `
+  - Evidence: `SMOKE_BUFFER:gcc --include=README.md`
 - `codex-workspace` / `cw`: PASS
-  - Evidence: `SMOKE_BUFFER:cw exec `, `SMOKE_BUFFER:cw rm --all `, `SMOKE_BUFFER:cw exec codex-ws-graysurf-zsh-kit-20260119-062255 `, `SMOKE_BUFFER:cw rm codex-ws-graysurf-zsh-kit-20260119-062255 `
+  - Evidence: `SMOKE_BUFFER:cw exec`, `SMOKE_BUFFER:cw rm --all`, `SMOKE_BUFFER:cw exec codex-ws-graysurf-zsh-kit-20260119-062255`, `SMOKE_BUFFER:cw rm codex-ws-graysurf-zsh-kit-20260119-062255`
 - `codex-tools` / `cx`: PASS (post-fix)
-  - Evidence: `SMOKE_BUFFER:cx advice `, `SMOKE_BUFFER:cx commit --push `, `SMOKE_BUFFER:cx commit --auto-stage `
+  - Evidence: `SMOKE_BUFFER:cx advice`, `SMOKE_BUFFER:cx commit --push`, `SMOKE_BUFFER:cx commit --auto-stage`
   - Fix: completion spec corrected to accept `--push` (`scripts/_features/codex/_completion/_codex-tools`).
 - `codex-rate-limits` / `crl`: PASS
-  - Evidence: `SMOKE_BUFFER:crl account-a.json `, `SMOKE_BUFFER:crl --cached `
+  - Evidence: `SMOKE_BUFFER:crl account-a.json`, `SMOKE_BUFFER:crl --cached`
 - `docker-tools` / `docker-aliases`: PASS
-  - Evidence: `SMOKE_BUFFER:docker-tools container `, `SMOKE_BUFFER:docker-tools container zsh --user `, `SMOKE_BUFFER:docker-tools container zsh codex-ws-graysurf-zsh-kit-20260119-062255\ codex-ws-victory `, `SMOKE_BUFFER:docker-aliases status `
+  - Evidence: `SMOKE_BUFFER:docker-tools container`, `SMOKE_BUFFER:docker-tools container zsh --user`, `SMOKE_BUFFER:docker-tools container zsh codex-ws-graysurf-zsh-kit-20260119-062255\ codex-ws-victory`, `SMOKE_BUFFER:docker-aliases status`
   - Note: multiple running containers are inserted as space-separated candidates when no prefix is provided.
 - `docker-compose`: PASS
-  - Evidence: `SMOKE_BUFFER:docker-compose --all-resources `
+  - Evidence: `SMOKE_BUFFER:docker-compose --all-resources`
 - `opencode-tools` / `oc`: PASS (post-fix)
-  - Evidence: `SMOKE_BUFFER:oc advice `, `SMOKE_BUFFER:oc commit --push `, `SMOKE_BUFFER:oc commit --auto-stage `
+  - Evidence: `SMOKE_BUFFER:oc advice`, `SMOKE_BUFFER:oc commit --push`, `SMOKE_BUFFER:oc commit --auto-stage`
   - Fix: completion spec corrected to accept `--push` (`scripts/_features/opencode/_completion/_opencode-tools`).
 
 Checks:
+
 - `./tools/check.zsh`: pass (2026-01-19).
 
 ## Completion Entrypoints

@@ -14,4 +14,3 @@ The remaining `codex` feature in this repo focuses on:
 - Archived documentation (historical reference): [`archive/legacy-zsh-cli-tools/docs/cli/codex-cli-helpers.md`](../../archive/legacy-zsh-cli-tools/docs/cli/codex-cli-helpers.md)
 - Archived Zsh implementation: [`archive/legacy-zsh-cli-tools/scripts/_features/codex/codex-tools.zsh`](../../archive/legacy-zsh-cli-tools/scripts/_features/codex/codex-tools.zsh)
 - Archived completion: [`archive/legacy-zsh-cli-tools/scripts/_features/codex/_completion/_codex-tools`](../../archive/legacy-zsh-cli-tools/scripts/_features/codex/_completion/_codex-tools)
-

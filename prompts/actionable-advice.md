@@ -1,4 +1,5 @@
 ---
+title: actionable-advice
 description: Produce an explicit, actionable answer with clarifying questions, multiple feasible options, and a single recommendation.
 argument-hint: question
 ---
@@ -9,6 +10,7 @@ USER QUESTION
 $ARGUMENTS
 
 CONTEXT (optional but recommended)
+
 - System/product context: <...>
 - Current state: <...>
 - Target outcome (DoD): <...>
@@ -16,6 +18,7 @@ CONTEXT (optional but recommended)
 - Environment/stack: <...>
 
 RULES (must follow)
+
 1) Do NOT guess intent. First decide whether the question is answerable without making unstated assumptions.
 2) If any critical information is missing, ask clarifying questions and STOP (no options, no recommendation).
    - Ask at most 6 questions.
@@ -31,20 +34,24 @@ OUTPUT FORMAT (strict)
 Do not wrap your output in Markdown code fences.
 If clarification is required, output ONLY:
 ❓ Clarifying Questions:
+
 1. ...
 2. ...
 (Stop here.)
 
 Otherwise, output exactly:
 🔎 Problem Statement:
+
 - ...
 
 📌 Constraints / DoD:
+
 - ...
 
 🧩 Options:
 (Provide 3–5 options labeled Option A/B/C/D/E. For each option, include exactly these fields:)
-Option <X> — <name>
+Option &lt;X&gt; — &lt;name&gt;
+
 - When to choose it:
 - Prerequisites:
 - Steps:
@@ -52,21 +59,27 @@ Option <X> — <name>
 - Failure modes / gotchas:
 
 ⚖️ Comparison (optional):
+
 - ...
 
 ✅ Recommendation:
-- Best choice: Option <X> because <...>
+
+- Best choice: Option &lt;X&gt; because <...>
 - If phased: do <step 1>, then <step 2>, then <step 3>
 
 📋 Implementation Checklist:
+
 - [ ] ...
 - [ ] ...
 
 🧪 Validation Plan:
+
 - ...
 
 ⚠️ Risks / Edge Cases:
+
 - ...
 
 ❓ Open Questions (if any remain):
+
 - ...

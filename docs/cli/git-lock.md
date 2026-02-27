@@ -1,6 +1,8 @@
 # 🔐 git-lock: Git Commit Locking System
 
-git-lock is a lightweight commit-locking utility for Git repositories. It allows you to "lock" the current commit hash under a named label, restore it later, list and compare saved locks, and even tag them. This helps developers maintain checkpoints during complex feature development or hotfix workflows.
+git-lock is a lightweight commit-locking utility for Git repositories. It allows you to "lock" the current commit hash
+under a named label, restore it later, list and compare saved locks, and even tag them. This helps developers maintain
+checkpoints during complex feature development or hotfix workflows.
 
 ---
 

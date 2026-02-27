@@ -217,7 +217,7 @@ This is a two-step flow:
 - `Ctrl-D`: `cd` to the selected directory (then exit)
 - `Esc`: back to Step 1 (preserves your Step 1 query)
 
-#### ⚙️ Environment variables
+#### ⚙️ Environment variables (file)
 
 - `FZF_FILE_MAX_DEPTH`: max depth for Step 2 file listing (default: `10`)
 - `FZF_FILE_OPEN_WITH`: file opener for Step 2 (`vi` default, or `vscode`)
@@ -254,9 +254,10 @@ If provided, `query` pre-fills the initial fzf search input.
 
 #### ⚙️ Environment variables
 
-- `FZF_FILE_OPEN_WITH`: file opener (`vi` default, or `vscode`); when `vscode`, uses the nearest Git root (up to 5 parent dirs) as the VSCode workspace root, and opens a new window when switching repos
+- `FZF_FILE_OPEN_WITH`: file opener (`vi` default, or `vscode`); when `vscode`, uses the nearest Git root
+  (up to 5 parent dirs) as the VSCode workspace root, and opens a new window when switching repos
 
-#### ⚙️ Options
+#### ⚙️ File options
 
 - `--vi`: open the selected file in `vi` (overrides `FZF_FILE_OPEN_WITH`)
 - `--vscode`: open the selected file in VSCode (overrides `FZF_FILE_OPEN_WITH`)
@@ -280,7 +281,7 @@ fzf-tools process [-k|--kill] [-9|--force] [query]
 Lightweight fallback using `ps` with fuzzy search for diagnostic use.
 If provided, `query` pre-fills the initial fzf search input.
 
-#### 🔪 Kill mode
+#### 🔪 Kill mode (port)
 
 Add `-k` or `--kill` to immediately terminate selected PID(s) (SIGTERM). Add `-9` or `--force` for SIGKILL.
 
