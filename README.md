@@ -23,9 +23,7 @@ with emoji-powered UX and built-in Git tools.
 ├── cache/             # Runtime cache dir (.zcompdump, plugin update timestamps, etc.)
 ├── docs/              # Markdown documentation
 │   ├── cli/           # User-facing commands
-│   ├── guides/        # Concepts and system behavior
-│   ├── progress/      # Implementation logs (active + archived)
-│   └── templates/     # Progress templates + glossary
+│   └── guides/        # Concepts and system behavior
 ├── prompts/           # Shared prompt templates (used by codex/opencode helpers)
 ├── bootstrap/         # Script orchestrator and plugin logic
 ├── config/            # Configuration files for third-party tools

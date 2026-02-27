@@ -161,7 +161,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - Support for legacy boolean vocab (`0/1`, `yes/no`, `on/off`) for project-owned boolean env flags.
-- Legacy env flag names listed in `docs/progress/archived/20260116_env-bool-flags.md`.
+- Legacy env flag names tracked in historical migration notes.
 
 ## v1.0.3 - 2026-01-16
 

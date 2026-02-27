@@ -17,7 +17,7 @@ print_usage() {
   print -r -- "  Enforce project boolean env rules for the Inventory flags."
   print -r --
   print -r -- "Checks (Inventory flags):"
-  print -r -- "  - No legacy env names in tracked code/docs (excludes docs/progress/*)."
+  print -r -- "  - No legacy env names in tracked code/docs."
   print -r -- "  - No 0/1/yes/no/on/off assignments (only true|false allowed)."
   print -r -- "  - .private/priv-env.zsh exports use only true|false (if file exists)."
   print -r --
@@ -37,7 +37,7 @@ repo_root_from_script() {
 }
 
 # list_scan_files <root_dir>
-# Print the absolute file paths to scan (tracked files excluding docs/progress; plus .private text files).
+# Print the absolute file paths to scan (tracked files plus .private text files).
 list_scan_files() {
   emulate -L zsh
   setopt pipe_fail err_return nounset
@@ -51,7 +51,6 @@ list_scan_files() {
       [[ -n "$rel" ]] || continue
 
       case "$rel" in
-        docs/progress/*) continue ;;
         plugins/*) continue ;;
         out/*) continue ;;
         cache/*) continue ;;
@@ -65,7 +64,6 @@ list_scan_files() {
       files+=("$file")
     done
     for file in "$root_dir"/bootstrap/**/*(N.) "$root_dir"/scripts/**/*(N.) "$root_dir"/tools/**/*(N.) "$root_dir"/docs/**/*(N.) "$root_dir"/config/**/*(N.); do
-      [[ "$file" == "$root_dir/docs/progress/"* ]] && continue
       [[ "$file" == "$root_dir/plugins/"* ]] && continue
       [[ "$file" == "$root_dir/out/"* ]] && continue
       [[ "$file" == "$root_dir/cache/"* ]] && continue
@@ -101,7 +99,7 @@ grep_hits() {
 }
 
 # check_no_legacy_names <files...>
-# Ensure legacy env names are not referenced (excluding docs/progress which is already excluded from file list).
+# Ensure legacy env names are not referenced.
 check_no_legacy_names() {
   emulate -L zsh
   setopt pipe_fail err_return nounset

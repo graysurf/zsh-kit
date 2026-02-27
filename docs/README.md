@@ -13,9 +13,7 @@ or the **CLI docs** (how to use shipped commands).
 docs/
 ├── README.md                 # This index
 ├── guides/                   # Concepts and system behavior
-├── cli/                      # User-facing commands
-├── progress/                 # Implementation logs (active + archived)
-└── templates/                # Progress file templates + glossary
+└── cli/                      # User-facing commands
 ```
 
 ---
@@ -44,9 +42,3 @@ docs/
 - [`cli/open-changed-files.md`](cli/open-changed-files.md) — Open changed files in VS Code (`open-changed-files`)
 
 ---
-
-## 🗂 Progress System
-
-- [`progress/README.md`](progress/README.md) — How to write and archive progress logs
-- [`templates/PROGRESS_TEMPLATE.md`](templates/PROGRESS_TEMPLATE.md) — Progress template
-- [`templates/PROGRESS_GLOSSARY.md`](templates/PROGRESS_GLOSSARY.md) — Naming + terminology rules
