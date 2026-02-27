@@ -23,6 +23,9 @@ export ZSH_PRIVATE_SCRIPT_DIR="${ZSH_PRIVATE_SCRIPT_DIR:-$ZDOTDIR/.private}"
 ZSH_SCRIPT_EXCLUDE_LIST=(
   "$ZSH_SCRIPT_DIR"/interactive/**/*.sh(N)
   "$ZSH_SCRIPT_DIR"/interactive/**/*.zsh(N)
+  # CI entrypoints are executable scripts, not sourceable shell modules.
+  "$ZSH_SCRIPT_DIR"/ci/**/*.sh(N)
+  "$ZSH_SCRIPT_DIR"/ci/**/*.zsh(N)
 )
 
 ZSH_SCRIPT_LAST_LIST=(
