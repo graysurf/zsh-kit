@@ -38,8 +38,8 @@ format = "[$output](bold #ffcb6b) "
 
 [custom.codex_rate_limits]
 symbol = "🌟 "
-command = "codex-cli starship --time-format '%m-%d %H:%M'"
-when = "command -v codex-cli >/dev/null 2>&1 && codex-cli starship --is-enabled"
+command = "codex-cli prompt-segment --time-format '%m-%d %H:%M'"
+when = "command -v codex-cli >/dev/null 2>&1 && codex-cli prompt-segment --is-enabled"
 format = "[$symbol$output ](bold #637777)"
 
 [username]
