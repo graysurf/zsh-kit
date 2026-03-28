@@ -6,7 +6,7 @@ usage() {
 Usage:
   markdownlint-audit.sh [--strict]
 
-Run workspace Markdown lint checks using markdownlint-cli2 and the repo baseline config.
+Run workspace Markdown lint checks using rumdl and the repo baseline config.
 
 Options:
   --strict   Treat lint failures as hard failures (exit 1)
@@ -40,15 +40,15 @@ if [[ -z "$repo_root" || ! -d "$repo_root" ]]; then
 fi
 cd "$repo_root"
 
-if ! command -v npx >/dev/null 2>&1; then
-  echo "error: missing required tool on PATH: npx" >&2
-  echo "hint: install Node.js (includes npx)" >&2
+if ! command -v rumdl >/dev/null 2>&1; then
+  echo "error: missing required tool on PATH: rumdl" >&2
+  echo "hint: install rumdl from https://github.com/rvben/rumdl" >&2
   exit 2
 fi
 
-config_file="$repo_root/.markdownlint-cli2.jsonc"
+config_file="$repo_root/.rumdl.toml"
 if [[ ! -f "$config_file" ]]; then
-  echo "error: missing markdownlint config: $config_file" >&2
+  echo "error: missing rumdl config: $config_file" >&2
   exit 2
 fi
 
@@ -63,7 +63,8 @@ if [[ "${#md_files[@]}" -eq 0 ]]; then
 fi
 
 lint_cmd=(
-  npx --yes markdownlint-cli2@0.21.0
+  rumdl
+  check
   --config "$config_file"
 )
 lint_cmd+=("${md_files[@]}")

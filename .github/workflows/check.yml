@@ -20,10 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
+      - name: Install rumdl
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -LsSf https://github.com/rvben/rumdl/releases/download/v0.1.62/rumdl-v0.1.62-x86_64-unknown-linux-gnu.tar.gz \
+            | tar xzf - -C "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install zsh (if missing)
         run: |

@@ -1,0 +1,15 @@
+# Preserve the current markdownlint-cli2 baseline while switching execution to rumdl.
+[global]
+disable = ["MD064"]
+extend-enable = ["MD060"]
+
+[per-file-ignores]
+"README.md" = ["MD009"]
+"prompts/actionable-knowledge.md" = ["MD033"]
+"archive/legacy-zsh-cli-tools/docs/cli/git-open.md" = ["MD057"]
+
+[MD013]
+line-length = 140
+code-blocks = false
+headings = false
+tables = false

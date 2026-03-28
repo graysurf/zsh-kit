@@ -42,7 +42,7 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 ### Additional checks
 
 - Docblock audit (fzf-def; missing docblocks are failures): `./tools/audit-fzf-def-docblocks.zsh --check`
-- Markdown lint audit: `bash ./scripts/ci/markdownlint-audit.sh --strict`
+- Markdown lint audit: `bash ./scripts/ci/markdownlint-audit.sh --strict` (uses `rumdl`)
 - Smoke load (isolated ZDOTDIR/cache; any stderr is a failure): `./tools/check.zsh --smoke`
 - Bash scripts (only when touching `#!/bin/bash` files; runs ShellCheck if installed): `./tools/check.zsh --bash`
 - Semgrep scan (bash/zsh; JSON output under `out/semgrep/`): `./tools/check.zsh --semgrep`
