@@ -74,6 +74,13 @@ zsh_env::is_true "${ZSH_BOOT_QUOTE_ENABLED-}" "ZSH_BOOT_QUOTE_ENABLED" && source
 source "$ZSH_BOOTSTRAP_SCRIPT_DIR/bootstrap.zsh"
 
 # ──────────────────────────────
+# External tool launchers
+# ──────────────────────────────
+# agent-memory: defines `claude-persona` + per-persona `claude-<id>` shortcuts.
+[[ -r "$HOME/.config/agent-memory/shell/agent-memory.zsh" ]] && \
+  source "$HOME/.config/agent-memory/shell/agent-memory.zsh"
+
+# ──────────────────────────────
 # Enabled features (always visible)
 # ──────────────────────────────
 # Print the effective, successfully-loaded feature list (from `ZSH_FEATURES`).
