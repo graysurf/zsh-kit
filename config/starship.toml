@@ -20,6 +20,7 @@ $java\
 $package\
 $kubernetes\
 $docker_context\
+${custom.claude_rate_limits}\
 ${custom.codex_rate_limits}\
 $cmd_duration\
 $line_break\
@@ -39,8 +40,14 @@ format = "[$output](bold #ffcb6b) "
 [custom.codex_rate_limits]
 symbol = "🌟 "
 command = "codex-cli prompt-segment --time-format '%m-%d %H:%M'"
-when = "command -v codex-cli >/dev/null 2>&1 && codex-cli prompt-segment --is-enabled"
+when = "false"  # disabled; revert to: command -v codex-cli >/dev/null 2>&1 && codex-cli prompt-segment --is-enabled
 format = "[$symbol$output ](bold #637777)"
+
+[custom.claude_rate_limits]
+symbol = "🌀 "
+command = "claude-prompt-segment --time-format '%m-%d %H:%M'"
+when = "command -v claude-prompt-segment >/dev/null 2>&1 && claude-prompt-segment --is-enabled"
+format = "[$symbol$output ](bold #c792ea)"
 
 [username]
 style_user = "bold #ffffff"
