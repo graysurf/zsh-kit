@@ -40,7 +40,7 @@ Notes:
 - `<name>` defaults to the matched profile filename under `CODEX_SECRET_DIR`:
   - Prefer: JWT identity + `account_id` (stable across token refreshes).
   - Fallback: SHA-256 whole-file hash (requires the profile file to be byte-identical).
-  - If a friendly profile match is not found, the name is omitted by default; set `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED=true`
+  - If a friendly profile match is not found, the name is omitted by default; set `CODEX_PROMPT_SEGMENT_SHOW_FALLBACK_NAME_ENABLED=true`
     to show a fallback name (prefer JWT `.email` local-part when available; otherwise JWT-derived identity like `user-...`).
 - Set `CODEX_STARSHIP_NAME_SOURCE=email` to show the JWT email instead of the secrets/profile filename.
   - Default: show only the local-part (before `@`); set `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED=true` to show the full email.
@@ -121,7 +121,7 @@ Notes:
 
 - `codex-starship` prints nothing on cold cache/failure; the `[$output ](...)` group avoids printing stray spaces when empty.
 - `codex-starship` is disabled by default; enable feature `codex` (`ZSH_FEATURES=codex`) and set
-  `CODEX_STARSHIP_ENABLED=true` to show this module.
+  `CODEX_PROMPT_SEGMENT_ENABLED=true` to show this module.
 
 ---
 
@@ -129,10 +129,10 @@ Notes:
 
 | Env | Default | Options | Description |
 | --- | --- | --- | --- |
-| `CODEX_STARSHIP_ENABLED` | `false` | `true\|false` | Enable `codex-starship` output + refresh. |
+| `CODEX_PROMPT_SEGMENT_ENABLED` | `false` | `true\|false` | Enable `codex-starship` output + refresh. |
 | `CODEX_STARSHIP_TTL` | `5m` | `seconds` or `Ns\|Nm\|Nh\|Nd\|Nw` | Cache TTL. |
-| `CODEX_STARSHIP_SHOW_5H_ENABLED` | `true` | `true\|false` | Show the non-weekly window (typically `5h`). |
-| `CODEX_STARSHIP_SHOW_FALLBACK_NAME_ENABLED` | `false` | `true\|false` | When no profile match, show a fallback name (email local-part when available; otherwise JWT identity). |
+| `CODEX_PROMPT_SEGMENT_SHOW_5H_ENABLED` | `true` | `true\|false` | Show the non-weekly window (typically `5h`). |
+| `CODEX_PROMPT_SEGMENT_SHOW_FALLBACK_NAME_ENABLED` | `false` | `true\|false` | When no profile match, show a fallback name (email local-part when available; otherwise JWT identity). |
 | `CODEX_STARSHIP_NAME_SOURCE` | `secret` | `secret\|email` | Name source (`secret` = profile filename; `email` = JWT email). |
 | `CODEX_STARSHIP_SHOW_FULL_EMAIL_ENABLED` | `false` | `true\|false` | When using email names, show full email (otherwise local-part only). |
 | `CODEX_STARSHIP_REFRESH_MIN_SECONDS` | `30` | integer seconds | Minimum seconds between background refresh attempts. |
