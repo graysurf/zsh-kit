@@ -40,6 +40,9 @@ typeset -a _zsh_path_prepend=()
 [[ -d /usr/local/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/usr/local/opt/mssql-tools18/bin)
 [[ -d /home/linuxbrew/.linuxbrew/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/home/linuxbrew/.linuxbrew/opt/mssql-tools18/bin)
 
+# nils-cli dev override (shadows brew when ~/.local/nils-cli/bin is populated)
+[[ -d "$HOME/.local/nils-cli/bin" ]] && _zsh_path_prepend+=("$HOME/.local/nils-cli/bin")
+
 # Homebrew (Apple Silicon)
 [[ -d /opt/homebrew/bin ]] && _zsh_path_prepend+=(/opt/homebrew/bin /opt/homebrew/sbin)
 
