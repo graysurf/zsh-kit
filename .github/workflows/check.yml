@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload fzf-def docblock audit report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: fzf-def-docblocks-audit
           path: cache/fzf-def-docblocks-audit.txt
@@ -109,7 +109,7 @@ jobs:
 
       - name: Upload semgrep report (optional)
         if: ${{ always() && (vars.CI_SEMGREP_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.semgrep == 'true')) }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: semgrep-report
           path: out/semgrep/*.json
