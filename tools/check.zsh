@@ -276,16 +276,20 @@ semgrep_summary() {
     return 0
   fi
 
-  typeset python_bin="$root_dir/.venv/bin/python"
-  if [[ ! -x "$python_bin" ]]; then
-    python_bin="$(command -v python3 || true)"
+  typeset -a python_cmd=()
+  if command -v uv >/dev/null 2>&1 && [[ -f "$root_dir/pyproject.toml" ]]; then
+    python_cmd=(uv --project "$root_dir" run --locked python)
+  elif [[ -x "$root_dir/.venv/bin/python" ]]; then
+    python_cmd=("$root_dir/.venv/bin/python")
+  elif command -v python3 >/dev/null 2>&1; then
+    python_cmd=(python3)
   fi
-  if [[ -z "$python_bin" ]]; then
-    print -u2 -r -- "warning: python3 not found; skipping semgrep summary"
+  if (( ${#python_cmd[@]} == 0 )); then
+    print -u2 -r -- "warning: python not found; skipping semgrep summary"
     return 0
   fi
 
-  "$python_bin" - "$json_path" "$limit" <<'PY'
+  "${python_cmd[@]}" - "$json_path" "$limit" <<'PY'
 import json
 import sys
 

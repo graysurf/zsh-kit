@@ -18,6 +18,14 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 - `scripts/**`: see `scripts/README.md`
 - `scripts/_completion/_*`: see `scripts/_completion/README.md`
 
+## Python tooling
+
+- Python virtualenvs are managed by `uv`.
+- Create or refresh the repo environment with `uv sync --locked`.
+- Run Python-backed tools through repo scripts or `uv run --locked <command>`.
+- Semgrep is tracked in the `dev` dependency group and installed into `.venv` by `uv sync`.
+  The semgrep runner uses `uv run --locked --only-group dev semgrep`.
+
 ## First-party Zsh baselines
 
 - Target shell: first-party shell code supports **Zsh only**.

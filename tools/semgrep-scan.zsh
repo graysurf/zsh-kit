@@ -74,13 +74,17 @@ main() {
   repo_root="$(repo_root_from_script)"
   cd "$repo_root" || return 1
 
-  typeset semgrep_bin="$repo_root/.venv/bin/semgrep"
-  if [[ ! -x "$semgrep_bin" ]]; then
-    semgrep_bin="$(command -v semgrep || true)"
+  typeset -a semgrep_cmd=()
+  if command -v uv >/dev/null 2>&1 && [[ -f "$repo_root/pyproject.toml" ]]; then
+    semgrep_cmd=(uv --project "$repo_root" run --locked --only-group dev semgrep)
+  elif [[ -x "$repo_root/.venv/bin/semgrep" ]]; then
+    semgrep_cmd=(env VIRTUAL_ENV="$repo_root/.venv" PATH="$repo_root/.venv/bin:$PATH" "$repo_root/.venv/bin/semgrep")
+  elif command -v semgrep >/dev/null 2>&1; then
+    semgrep_cmd=(semgrep)
   fi
-  if [[ -z "$semgrep_bin" ]]; then
+  if (( ${#semgrep_cmd[@]} == 0 )); then
     print -u2 -r -- "error: semgrep not found"
-    print -u2 -r -- "hint: install semgrep (or create $repo_root/.venv with semgrep installed)"
+    print -u2 -r -- "hint: install uv and run 'uv sync --locked' from $repo_root"
     return 1
   fi
 
@@ -140,7 +144,7 @@ main() {
   typeset out_json="$out_dir/semgrep-${repo_name}-$(date +%Y%m%d-%H%M%S).json"
 
   typeset -i rc=0
-  if "$semgrep_bin" scan \
+  if "${semgrep_cmd[@]}" scan \
     "${configs[@]}" \
     --json \
     --metrics=off \

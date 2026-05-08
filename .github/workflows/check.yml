@@ -90,16 +90,13 @@ jobs:
           path: cache/fzf-def-docblocks-audit.txt
           if-no-files-found: warn
 
-      - name: Install semgrep (optional)
+      - name: Install Python tooling with uv (optional)
         if: ${{ vars.CI_SEMGREP_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.semgrep == 'true') }}
         run: |
           set -euo pipefail
-          if ! command -v python3 >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y python3 python3-pip
-          fi
-          python3 -m pip install --upgrade pip
-          python3 -m pip install semgrep
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/uv" sync --locked --only-group dev
 
       - name: Run semgrep scan (optional)
         if: ${{ vars.CI_SEMGREP_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.semgrep == 'true') }}
