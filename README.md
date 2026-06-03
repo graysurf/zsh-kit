@@ -72,6 +72,34 @@ export ZSH_BOOT_FEATURES_ENABLED=true
 
 This repo is designed to be used as your Zsh config directory via `ZDOTDIR`.
 
+### Runtime Setup With `zsh-kit`
+
+The repository exposes a stable setup hook at
+`bootstrap/zsh-kit-setup.zsh`. The nils-cli `zsh-kit` binary clones or updates
+the repository, validates this hook, and dispatches the repo-owned setup
+behavior:
+
+```bash
+zsh-kit setup --repo git@github.com:graysurf/zsh-kit.git --dry-run
+zsh-kit setup --repo git@github.com:graysurf/zsh-kit.git --apply --install-tools skip
+```
+
+Forward optional feature flags with `--features`:
+
+```bash
+zsh-kit setup --repo git@github.com:graysurf/zsh-kit.git --apply --features docker,opencode
+```
+
+Tool installation is explicit. `--install-tools skip` performs no package
+installation. `--install-tools repo` delegates to this repository's
+`install-tools.zsh`; direct hook dry-runs use the installer's `--dry-run` mode.
+
+For repository-local validation, the hook can be run without private mutations:
+
+```bash
+bootstrap/zsh-kit-setup.zsh --features docker --install-tools skip --dry-run --smoke
+```
+
 In your `~/.zshenv`, set the custom config location **and explicitly source** this repo’s `.zshenv`:
 
 ```bash
