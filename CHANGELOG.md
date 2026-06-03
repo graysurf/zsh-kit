@@ -3,6 +3,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.2.1 - 2026-06-04
+
+### Changed
+
+- Publish the current Zsh runtime setup surface for Docker/opencode consumers after the nils-cli
+  `zsh-kit --write-zshenv` bootstrap update. The setup hook remains the owner of shell-specific
+  feature wiring while nils-cli owns clone/update/bootstrap dispatch.
+
 ## v2.2.0 - 2026-06-03
 
 ### Changed
