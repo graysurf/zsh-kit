@@ -1,0 +1,50 @@
+# Git hooks managed by lefthook. Mirrors the fast half of the CI gate
+# (.github/workflows/check.yml) locally: staged-file mechanical checks on
+# pre-commit, the repo-wide check + test suite and a signed-commit guard on
+# pre-push. Wire into a clone with `lefthook install`.
+#
+# Scope is deliberately narrow:
+#   - Smoke load (`./tools/check.zsh --smoke`) needs a clean tty wrapper in
+#     automation, the env bool audit takes ~30s, and semgrep needs the uv dev
+#     group, so none of them are gated here — CI stays authoritative for all
+#     three.
+#   - The signed-commit guard is pre-push only by design: CI checkouts have no
+#     keyring, so the check would misfire there.
+pre-commit:
+  parallel: true
+  jobs:
+    - name: whitespace
+      run: git diff --check --cached
+
+    - name: zsh-syntax
+      glob: "*.zsh"
+      exclude:
+        - "plugins/**"
+      run: bash -c 'for f; do zsh -n -- "$f" || exit 1; done' -- {staged_files}
+
+    - name: typeset-empty-string-quotes
+      glob: "*.zsh"
+      run: zsh -f ./tools/fix-typeset-empty-string-quotes.zsh --check
+
+    - name: typeset-initializers
+      glob: "*.zsh"
+      run: zsh -f ./tools/fix-typeset-initializers.zsh --check
+
+    - name: markdown-lint
+      glob: "*.md"
+      run: bash scripts/ci/markdownlint-audit.sh --strict
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: signed-commits
+      run: bash scripts/ci/verify-signed-commits.sh
+
+    - name: zsh-check
+      run: zsh -f ./tools/check.zsh
+
+    - name: completions
+      run: zsh -f ./tools/check-completions.zsh
+
+    - name: tests
+      run: zsh -f ./tests/run.zsh

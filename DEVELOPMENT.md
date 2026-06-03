@@ -56,6 +56,27 @@ Unless stated otherwise, the rules below apply only to first-party Zsh code.
 - Semgrep scan (bash/zsh; JSON output under `out/semgrep/`): `./tools/check.zsh --semgrep`
 - Everything: `./tools/check.zsh --all`
 
+## Local git hooks
+
+Local hooks are managed by [lefthook](https://github.com/evilmartians/lefthook) via the
+tracked `lefthook.yml`:
+
+- Install the runner once: `brew install lefthook`
+- Wire hooks into this clone: `lefthook install`
+
+What runs:
+
+- `pre-commit`: fast staged-file checks — whitespace, `zsh -n` syntax on staged `*.zsh`
+  (excluding `plugins/`), the typeset gates, and the markdown lint audit.
+- `pre-push`: signed-commit guard (`scripts/ci/verify-signed-commits.sh`), `./tools/check.zsh`,
+  `./tools/check-completions.zsh`, and `./tests/run.zsh`.
+
+Heavier checks (smoke load, env bool audit, semgrep) are not gated locally; CI
+(`.github/workflows/check.yml`) remains the authoritative enforcement point because local
+hooks can be bypassed (`--no-verify`, `LEFTHOOK=0`) or left uninstalled. Run a hook
+manually with `lefthook run pre-commit --all-files` or `lefthook run pre-push --all-files`
+(without `--all-files`, manual runs have no staged/push file list and the jobs skip).
+
 ## Suggested workflow
 
 - After any code change: run `./tools/check.zsh`.
