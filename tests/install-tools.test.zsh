@@ -6,6 +6,7 @@ typeset -gr SCRIPT_PATH="${0:A}"
 typeset -gr TEST_DIR="${SCRIPT_PATH:h}"
 typeset -gr REPO_ROOT="${TEST_DIR:h}"
 typeset -gr INSTALLER="$REPO_ROOT/bootstrap/install-tools.zsh"
+typeset -gr ROOT_INSTALLER="$REPO_ROOT/install-tools.zsh"
 typeset -gr ZSH_BIN="$(command -v zsh)"
 
 fail() {
@@ -45,7 +46,7 @@ typeset tmp_dir=''
 tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t zsh-kit-install-tools-test.XXXXXX)" || fail "mktemp failed"
 
 {
-  mkdir -p -- "$tmp_dir/bin" "$tmp_dir/config" "$tmp_dir/cache"
+  mkdir -p -- "$tmp_dir/bin" "$tmp_dir/gnubin" "$tmp_dir/config" "$tmp_dir/cache"
   printf '%s\n' 'fake-tool::fake-tool::test tool' > "$tmp_dir/config/tools.list"
   : > "$tmp_dir/config/tools.macos.list"
   : > "$tmp_dir/config/tools.linux.list"
@@ -66,6 +67,20 @@ EOF
   chmod +x "$tmp_dir/bin/brew"
 
   typeset output='' rc=0
+  output="$(
+    PATH="$tmp_dir/gnubin:/usr/bin" \
+      _ZSH_INTERNAL_PATHS_EXPORTS_SOURCED=1 \
+      ZDOTDIR="$REPO_ROOT" \
+      ZSH_BOOTSTRAP_SCRIPT_DIR="$REPO_ROOT/bootstrap" \
+      ZSH_CONFIG_DIR="$tmp_dir/config" \
+      ZSH_CACHE_DIR="$tmp_dir/cache" \
+      "$ZSH_BIN" -f -- "$ROOT_INSTALLER" --dry-run --quiet \
+      2>&1
+  )"
+  rc=$?
+  assert_eq 0 "$rc" "root wrapper dry-run should not depend on PATH zsh for delegation" || fail "$output"
+  assert_contains "$output" "fake-tool" "root wrapper dry-run output" || fail "$output"
+
   output="$(
     PATH="$tmp_dir/bin:/usr/bin:/bin" \
       _ZSH_INTERNAL_PATHS_EXPORTS_SOURCED=1 \

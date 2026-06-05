@@ -44,6 +44,40 @@ else
   exit 1
 fi
 
+function _install_tools::ensure_system_paths() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  local dir=''
+  typeset -U path=($path)
+  for dir in /usr/bin /bin; do
+    [[ -d "$dir" ]] || continue
+    if (( ${path[(Ie)$dir]} == 0 )); then
+      path+=("$dir")
+    fi
+  done
+}
+
+function _install_tools::zsh_executable() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  local -a candidates=()
+  local candidate=''
+  [[ -n "${commands[zsh]-}" ]] && candidates+=("${commands[zsh]}")
+  candidates+=(/bin/zsh /usr/bin/zsh /usr/local/bin/zsh /opt/homebrew/bin/zsh)
+
+  for candidate in "${candidates[@]}"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+      print -r -- "$candidate"
+      return 0
+    fi
+  done
+
+  print -u2 -r -- "zsh executable not found; expected zsh on PATH or at a standard system path"
+  return 1
+}
+
 function _install_tools::apply_homebrew_env() {
   emulate -L zsh
   setopt errexit nounset pipefail
@@ -259,6 +293,10 @@ function _install_tools::main() {
     return 1
   fi
 
+  _install_tools::ensure_system_paths
+  local zsh_bin=''
+  zsh_bin="$(_install_tools::zsh_executable)"
+
   local dry_run=false
   local quiet=false
   local include_optional=false
@@ -293,7 +331,7 @@ function _install_tools::main() {
     _install_tools::ensure_coreutils "$quiet"
   fi
 
-  exec "$bootstrap_script" "$@"
+  exec "$zsh_bin" -f -- "$bootstrap_script" "$@"
 }
 
 _install_tools::main "$@"
