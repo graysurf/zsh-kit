@@ -49,6 +49,26 @@ work_dir="$(mktemp -d "$TEST_ROOT/private-overlay-symlink.XXXXXX")" ||
   [[ -L "$zdotdir/.private" && ! -e "$zdotdir/.private" ]] ||
     fail "broken private symlink was replaced or removed"
 
+  output="$(
+    HOME="$home_dir" \
+      ZDOTDIR="$zdotdir" \
+      ZSH_PRIVATE_SCRIPT_DIR="$zdotdir/.private" \
+      ZSH_BOOTSTRAP_SCRIPT_DIR="$REPO_ROOT/bootstrap" \
+      TEST_REPO_ROOT="$REPO_ROOT" \
+      "$ZSH_BIN" -f -c '
+        source_file() { return 0 }
+        source_file_warn_missing() { return 0 }
+        load_script_group_ordered() { return 0 }
+        source "$TEST_REPO_ROOT/bootstrap/bootstrap.zsh"
+      ' 2>&1
+  )"
+  rc=$?
+  [[ "$rc" == 1 ]] || fail "bootstrap should reject a broken private symlink, got exit $rc"
+  [[ "$output" == *'broken .private symlink'* ]] ||
+    fail "bootstrap broken-symlink diagnostic missing: $output"
+  [[ -L "$zdotdir/.private" && ! -e "$zdotdir/.private" ]] ||
+    fail "bootstrap replaced or removed the broken private symlink"
+
   typeset audit_repo="$work_dir/audit-repo"
   typeset audit_target="$work_dir/audit-target"
   mkdir -p -- "$audit_repo/tools" "$audit_target/_lib/shared/env"
