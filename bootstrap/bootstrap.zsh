@@ -15,6 +15,10 @@ if ! source_file_warn_missing "$ZSH_BOOTSTRAP_SCRIPT_DIR/plugins.zsh"; then
 fi
 
 export ZSH_PRIVATE_SCRIPT_DIR="${ZSH_PRIVATE_SCRIPT_DIR:-$ZDOTDIR/.private}"
+if [[ -L "$ZSH_PRIVATE_SCRIPT_DIR" && ! -e "$ZSH_PRIVATE_SCRIPT_DIR" ]]; then
+  print -u2 -r -- "zsh-kit: broken .private symlink: $ZSH_PRIVATE_SCRIPT_DIR"
+  return 1
+fi
 [[ -d "$ZSH_PRIVATE_SCRIPT_DIR" ]] || mkdir -p "$ZSH_PRIVATE_SCRIPT_DIR"
 
 # ──────────────────────────────

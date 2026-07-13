@@ -183,3 +183,17 @@ machines.
 
 The `.private/zshenv.zsh` file is optional. Other Macs do not need it to run
 the bootstrap.
+
+For a private overlay shared between hosts, keep its Git checkout outside this
+repository and link it into the runtime slot:
+
+```sh
+git clone git@github.com:graysurf/local-scripts.git \
+  "$HOME/Project/graysurf/local-scripts"
+ln -s ../../Project/graysurf/local-scripts "$HOME/.config/zsh/.private"
+```
+
+The relative target is identical on macOS and Linux. Run Git, worktree, and
+sync operations against `~/Project/graysurf/local-scripts`, not through the
+compatibility link. Startup reports a broken `.private` symlink instead of
+silently creating a replacement directory.

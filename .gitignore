@@ -1,5 +1,5 @@
 # Private / Sensitive
-.private/
+.private
 
 # Dotenv / env (local only)
 .env

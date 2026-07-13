@@ -45,6 +45,7 @@ list_scan_files() {
   typeset root_dir="$1"
   typeset -a files=()
   typeset rel='' file=''
+  typeset private_root="$root_dir/.private"
 
   if command -v git >/dev/null 2>&1 && git -C "$root_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     while IFS= read -r rel; do
@@ -72,13 +73,14 @@ list_scan_files() {
     done
   fi
 
-  if [[ -d "$root_dir/.private" ]]; then
+  if [[ -d "$private_root" ]]; then
+    private_root="${private_root:A}"
     while IFS= read -r file; do
       [[ -n "$file" ]] && files+=("$file")
     done < <(
-      command find "$root_dir/.private" -type f \
+      command find "$private_root" -type f \
         \( -name '*.zsh' -o -name '*.sh' -o -name '*.md' -o -name '*.txt' -o -name '*.toml' -o -name '*.yaml' -o -name '*.yml' \) \
-        ! -path "$root_dir/.private/.git/*" \
+        ! -path "$private_root/.git/*" \
         -print 2>/dev/null | command sort
     )
   fi
@@ -296,7 +298,9 @@ main() {
   check_no_legacy_names "${files[@]}" || failed=1
   check_no_forbidden_values "${files[@]}" || failed=1
 
-  typeset private_env_file="$root_dir/.private/zshenv.zsh"
+  typeset private_root="$root_dir/.private"
+  [[ -d "$private_root" ]] && private_root="${private_root:A}"
+  typeset private_env_file="$private_root/zshenv.zsh"
   check_private_exports "$private_env_file" || failed=1
 
   if (( failed )); then

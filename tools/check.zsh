@@ -75,6 +75,7 @@ check_zsh_syntax() {
   typeset root_dir="$1"
   typeset -i failed=0
   typeset -a zsh_files=() sh_files=()
+  typeset private_root="$root_dir/.private"
 
   [[ -f "$root_dir/.zshenv" ]] && zsh_files+=("$root_dir/.zshenv")
   [[ -f "$root_dir/.zshrc" ]] && zsh_files+=("$root_dir/.zshrc")
@@ -84,9 +85,12 @@ check_zsh_syntax() {
   zsh_files+=("$root_dir"/bootstrap/**/*.zsh(.N))
   zsh_files+=("$root_dir"/scripts/**/*.zsh(.N))
   zsh_files+=("$root_dir"/tools/**/*.zsh(.N))
-  zsh_files+=("$root_dir"/.private/**/*.zsh(.N))
+  if [[ -d "$private_root" ]]; then
+    private_root="${private_root:A}"
+    zsh_files+=("$private_root"/**/*.zsh(.N))
+  fi
 
-  sh_files+=("$root_dir"/.private/**/*.sh(.N))
+  sh_files+=("$private_root"/**/*.sh(.N))
 
   for file in "${zsh_files[@]}"; do
     if ! zsh -n -- "$file"; then
@@ -207,8 +211,10 @@ check_bash_scripts() {
   typeset root_dir="$1"
   typeset -i failed=0
   typeset -a sh_files=() bash_files=()
+  typeset private_root="$root_dir/.private"
 
-  sh_files+=("$root_dir"/.private/**/*.sh(.N))
+  [[ -d "$private_root" ]] && private_root="${private_root:A}"
+  sh_files+=("$private_root"/**/*.sh(.N))
 
   for file in "${sh_files[@]}"; do
     typeset first_line=''

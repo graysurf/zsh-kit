@@ -36,8 +36,15 @@ with emoji-powered UX and built-in Git tools.
 │   └── interactive/   # Interactive shell scripts (completion, plugin hooks, etc.)
 ├── tests/             # Zsh test scripts (audit, regression, etc.)
 ├── tools/             # Standalone executable scripts or compiled helpers
-└── .private/          # Local state + secrets (not for sharing)
+└── .private           # Ignored local overlay dir, or symlink to its canonical checkout
 ```
+
+For the shared personal overlay, the physical repository lives at
+`~/Project/graysurf/local-scripts` on every host. Keep `.private` as the relative
+compatibility symlink `../../Project/graysurf/local-scripts`; Zsh continues to
+load the logical path while Git and sync tools operate on the Project checkout.
+A broken `.private` symlink is a startup error and is never replaced by a new
+directory.
 
 ## 🪄 Startup Snapshot
 

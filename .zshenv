@@ -16,6 +16,13 @@
 [[ -r "${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.exports.zsh" ]] && \
   source "${ZDOTDIR:-$HOME/.config/zsh}/scripts/_internal/paths.exports.zsh"
 
-typeset zsh_local_zshenv="${ZDOTDIR:-$HOME/.config/zsh}/.private/zshenv.zsh"
+typeset zsh_private_root="${ZDOTDIR:-$HOME/.config/zsh}/.private"
+if [[ -L "$zsh_private_root" && ! -e "$zsh_private_root" ]]; then
+  print -u2 -r -- "zsh-kit: broken .private symlink: $zsh_private_root"
+  unset zsh_private_root
+  return 1 2>/dev/null || exit 1
+fi
+
+typeset zsh_local_zshenv="$zsh_private_root/zshenv.zsh"
 [[ -r "$zsh_local_zshenv" ]] && source "$zsh_local_zshenv"
-unset zsh_local_zshenv
+unset zsh_local_zshenv zsh_private_root
