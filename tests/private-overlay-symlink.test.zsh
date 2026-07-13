@@ -55,13 +55,14 @@ work_dir="$(mktemp -d "$TEST_ROOT/private-overlay-symlink.XXXXXX")" ||
   cp -- "$REPO_ROOT/tools/audit-env-bools.zsh" "$audit_repo/tools/"
   git -C "$audit_repo" init -q
   ln -s ../audit-target "$audit_repo/.private"
-  print -r -- 'export CODEX_ALLOW_DANGEROUS=true' >| "$audit_target/_lib/shared/env/invalid.zsh"
+  typeset legacy_name='CODEX_ALLOW_''DANGEROUS'
+  print -r -- "export ${legacy_name}=true" >| "$audit_target/_lib/shared/env/invalid.zsh"
 
   output="$(zsh -f -- "$audit_repo/tools/audit-env-bools.zsh" --check 2>&1)"
   rc=$?
   [[ "$rc" == 1 ]] ||
     fail "env audit did not traverse the private symlink: $output"
-  [[ "$output" == *'legacy env name referenced: CODEX_ALLOW_DANGEROUS'* ]] ||
+  [[ "$output" == *"legacy env name referenced: $legacy_name"* ]] ||
     fail "env audit missed symlinked private content: $output"
 
   print -r -- "OK"
