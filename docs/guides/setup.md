@@ -189,11 +189,11 @@ repository and link it into the runtime slot:
 
 ```sh
 git clone git@github.com:serenvia/local-scripts.git \
-  "$HOME/Project/graysurf/local-scripts"
-ln -s ../../Project/graysurf/local-scripts "$HOME/.config/zsh/.private"
+  "$HOME/Project/serenvia/local-scripts"
+ln -s ../../Project/serenvia/local-scripts "$HOME/.config/zsh/.private"
 ```
 
 The relative target is identical on macOS and Linux. Run Git, worktree, and
-sync operations against `~/Project/graysurf/local-scripts`, not through the
+sync operations against `~/Project/serenvia/local-scripts`, not through the
 compatibility link. Startup reports a broken `.private` symlink instead of
 silently creating a replacement directory.

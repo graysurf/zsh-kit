@@ -29,17 +29,17 @@ work_dir="$(mktemp -d "$TEST_ROOT/private-overlay-symlink.XXXXXX")" ||
 
   typeset home_dir="$work_dir/home"
   typeset zdotdir="$home_dir/.config/zsh"
-  typeset canonical="$home_dir/Project/graysurf/local-scripts"
+  typeset canonical="$home_dir/Project/serenvia/local-scripts"
   mkdir -p -- "$zdotdir" "$canonical"
   print -r -- 'export PRIVATE_SYMLINK_ENV_LOADED=yes' >| "$canonical/zshenv.zsh"
-  ln -s ../../Project/graysurf/local-scripts "$zdotdir/.private"
+  ln -s ../../Project/serenvia/local-scripts "$zdotdir/.private"
 
   typeset loaded=''
   loaded="$(HOME="$home_dir" ZDOTDIR="$zdotdir" TEST_REPO_ROOT="$REPO_ROOT" "$ZSH_BIN" -f -c 'source "$TEST_REPO_ROOT/.zshenv"; print -r -- "${PRIVATE_SYMLINK_ENV_LOADED:-no}"')"
   [[ "$loaded" == yes ]] || fail "valid relative private symlink did not load: $loaded"
 
   rm -- "$zdotdir/.private"
-  ln -s ../../Project/graysurf/missing-local-scripts "$zdotdir/.private"
+  ln -s ../../Project/serenvia/missing-local-scripts "$zdotdir/.private"
   typeset output='' rc=0
   output="$(HOME="$home_dir" ZDOTDIR="$zdotdir" TEST_REPO_ROOT="$REPO_ROOT" "$ZSH_BIN" -f -c 'source "$TEST_REPO_ROOT/.zshenv"' 2>&1)"
   rc=$?

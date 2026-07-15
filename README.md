@@ -40,8 +40,8 @@ with emoji-powered UX and built-in Git tools.
 ```
 
 For the shared personal overlay, the physical repository lives at
-`~/Project/graysurf/local-scripts` on every host. Keep `.private` as the relative
-compatibility symlink `../../Project/graysurf/local-scripts`; Zsh continues to
+`~/Project/serenvia/local-scripts` on every host. Keep `.private` as the relative
+compatibility symlink `../../Project/serenvia/local-scripts`; Zsh continues to
 load the logical path while Git and sync tools operate on the Project checkout.
 A broken `.private` symlink is a startup error and is never replaced by a new
 directory.
