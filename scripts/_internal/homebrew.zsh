@@ -64,8 +64,10 @@ zsh_brew::discover() {
 }
 
 # zsh_brew::apply_env <brew_path>
-# Export HOMEBREW_* and prepend brew's bin/sbin/site-functions/man/info to the
-# environment. Returns 1 when given a non-absolute or non-executable path.
+# Export HOMEBREW_* and ensure brew's bin/sbin/site-functions/man/info are in
+# the environment. Existing PATH entries keep their order so a login-shell
+# refresh cannot displace an earlier managed command shim; missing entries are
+# prepended. Returns 1 for a non-absolute or non-executable path.
 # Usage: zsh_brew::apply_env /opt/homebrew/bin/brew
 zsh_brew::apply_env() {
   emulate -L zsh
@@ -82,14 +84,11 @@ zsh_brew::apply_env() {
 
   typeset hb_bin="$homebrew_prefix/bin"
   typeset hb_sbin="$homebrew_prefix/sbin"
-  typeset -a prefix_paths=() rest_paths=()
-  [[ -d "$hb_bin" ]] && prefix_paths+=("$hb_bin")
-  [[ -d "$hb_sbin" ]] && prefix_paths+=("$hb_sbin")
-  if (( ${#prefix_paths[@]} > 0 )); then
-    rest_paths=("${path[@]}")
-    rest_paths=("${(@)rest_paths:#$hb_bin}")
-    rest_paths=("${(@)rest_paths:#$hb_sbin}")
-    path=("${prefix_paths[@]}" "${rest_paths[@]}")
+  typeset -a missing_paths=()
+  [[ -d "$hb_bin" && ${path[(Ie)$hb_bin]} == 0 ]] && missing_paths+=("$hb_bin")
+  [[ -d "$hb_sbin" && ${path[(Ie)$hb_sbin]} == 0 ]] && missing_paths+=("$hb_sbin")
+  if (( ${#missing_paths[@]} > 0 )); then
+    path=("${missing_paths[@]}" "${path[@]}")
   fi
 
   typeset hb_fpath="$homebrew_prefix/share/zsh/site-functions"
