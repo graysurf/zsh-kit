@@ -48,9 +48,9 @@ typeset -a _zsh_path_prepend=()
 [[ -d /usr/local/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/usr/local/opt/mssql-tools18/bin)
 [[ -d /home/linuxbrew/.linuxbrew/opt/mssql-tools18/bin ]] && _zsh_path_prepend+=(/home/linuxbrew/.linuxbrew/opt/mssql-tools18/bin)
 
-# nils-cli dev override is applied late in `.zshrc` (after `.zprofile`
-# re-prepends /opt/homebrew/bin). Doing it here would be a no-op for
-# login shells, so keep the override centralised in `.zshrc`.
+# The interactive nils-cli dev override is applied in `.zshrc` before Starship
+# initialization. Homebrew login setup preserves established PATH order; keep
+# the dev-only override centralized at its interactive consumer boundary.
 
 # Preserve an active fnm multishell ahead of Homebrew so commands keep using
 # the same Node/npm prefix that launched the shell.

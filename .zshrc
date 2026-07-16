@@ -21,9 +21,9 @@ fi
 # ──────────────────────────────
 # nils-cli dev override (before Starship init)
 # ──────────────────────────────
-# `.zprofile` re-prepends /opt/homebrew/bin which would demote any prepend
-# done earlier in `paths.exports.zsh`. Re-apply the override before bootstrap
-# so Starship's session environment and ordinary shell commands agree.
+# Apply the interactive override before bootstrap so Starship's session
+# environment and ordinary shell commands agree. Homebrew login setup now
+# preserves the PATH order already established by earlier startup layers.
 # The local dev install (`scripts/install-local-release-binaries.sh` →
 # ~/.local/nils-cli/bin) wins over the brew formula when populated. After
 # `brew upgrade nils-cli` the bump skill clears that dir, so brew wins again.
